@@ -452,10 +452,10 @@ packages:
     dependency: "direct main"
     description:
       name: mpv_audio_kit
-      sha256: "31407a8ada9aa27cb80a0d29f52182ee94a62e8bd525f252d600975d684592e0"
+      sha256: "98c61d1cc9a8ef88f615dc5ba73a29ae57fc4d51af7dbd952bb7ea6a83c796e7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.3"
+    version: "0.4.4"
   path:
     dependency: transitive
     description:
