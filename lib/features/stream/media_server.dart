@@ -392,6 +392,12 @@ class JellyfinServer implements MediaServer {
     required int pageSize,
     String query = '',
   }) async {
+    // `fields` is left at its default (empty — the server's own projection)
+    // deliberately: since dart_jellyfin 0.1.1 the music field set is opt-in
+    // (`JellyfinItemsApi.musicFields`) and none of it is used here. Title,
+    // Artists, Album, AlbumArtist and RunTimeTicks are always sent, and the
+    // favourite flag rides on UserData (`enableUserData`, on by default), so
+    // the lighter payload costs nothing.
     final res = await _client!.items.list(
       includeItemTypes: const [JellyfinItemKind.audio],
       recursive: true,
@@ -690,7 +696,11 @@ class PlexServer implements MediaServer {
       start: startIndex,
       size: pageSize,
       sort: 'titleSort',
-      title: query.isEmpty ? null : query,
+      // Substring title match — the typed form of the old `title:` argument
+      // (dart_plex 0.1.1 folded it into the `filters` list).
+      filters: [
+        if (query.isNotEmpty) PlexFilter.titleContains(query),
+      ],
     );
     final tracks = [
       for (final m in res.items)

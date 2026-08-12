@@ -1,3 +1,8 @@
+## [0.2.12] - 12-08-2026
+
+### Changed
+- Updated `dart_plex`, `dart_jellyfin` and `dart_smb2` to version `0.1.1`.
+
 ## [0.2.11] - 3-08-2026
 
 ### Changed

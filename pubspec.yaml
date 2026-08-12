@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.2.11
+version: 0.2.12
 
 environment:
   sdk: ^3.6.0
@@ -17,15 +17,15 @@ dependencies:
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}
-  dart_jellyfin: ^0.1.0
+  dart_jellyfin: ^0.1.1
 
   # dart_plex
   #dart_plex: {path: ../../Tools/dart_plex}
-  dart_plex: ^0.1.0
+  dart_plex: ^0.1.1
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}
-  dart_smb2: ^0.1.0
+  dart_smb2: ^0.1.1
 
   # Other dependencies
   file_selector: ^1.0.3
