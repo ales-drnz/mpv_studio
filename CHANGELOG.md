@@ -1,3 +1,8 @@
+## [0.2.14] - 24-08-2026
+
+### Changed
+- Updated `dart_smb2` to version `0.1.2`.
+
 ## [0.2.13] - 22-08-2026
 
 ### Changed
