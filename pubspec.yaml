@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.2.15
+version: 0.2.16
 
 environment:
   sdk: ^3.6.0
@@ -21,7 +21,7 @@ dependencies:
 
   # dart_plex
   #dart_plex: {path: ../../Tools/dart_plex}
-  dart_plex: ^0.1.1
+  dart_plex: ^0.1.2
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}

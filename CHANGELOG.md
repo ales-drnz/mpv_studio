@@ -1,3 +1,8 @@
+## [0.2.16] - 9-09-2026
+
+### Changed
+- Updated `dart_plex` to version `0.1.2`.
+
 ## [0.2.15] - 9-09-2026
 
 ### Changed
