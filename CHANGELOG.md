@@ -1,3 +1,8 @@
+## [0.2.15] - 9-09-2026
+
+### Changed
+- Updated `dart_jellyfin` to version `0.2.0`.
+
 ## [0.2.14] - 24-08-2026
 
 ### Changed

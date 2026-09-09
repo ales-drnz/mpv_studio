@@ -101,10 +101,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_jellyfin
-      sha256: "4cb4045abae95a0f6e27e1391ab8bcd9d584de91f1b25d7fc9bb2f65b5e10f95"
+      sha256: ac3a6c1b24d564a235e569b742764b2653669fc6b127b4a8316a55a927844194
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.2.0"
   dart_plex:
     dependency: "direct main"
     description:

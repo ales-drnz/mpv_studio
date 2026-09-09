@@ -437,12 +437,14 @@ class JellyfinServer implements MediaServer {
   }
 
   // Primary (album) image. The images API omits the token, so append it —
-  // private servers reject image requests otherwise. A 404 (no art) just
-  // falls through to the placeholder in the UI.
+  // private servers reject image requests otherwise. The parameter is
+  // `ApiKey`: Jellyfin 12 only reads the older `api_key` spelling when
+  // legacy authorization is on, which it no longer is by default. A 404
+  // (no art) just falls through to the placeholder in the UI.
   String _imageUrl(String itemId, String token) {
     final u = _client!.images
         .url(itemId: itemId, fillWidth: 400, fillHeight: 400);
-    return u.contains('?') ? '$u&api_key=$token' : '$u?api_key=$token';
+    return u.contains('?') ? '$u&ApiKey=$token' : '$u?ApiKey=$token';
   }
 
   @override
