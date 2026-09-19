@@ -1,3 +1,9 @@
+## [0.2.17] - 19-09-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.4.6`.
+- Updated `dart_smb2` to version `0.1.3`.
+
 ## [0.2.16] - 9-09-2026
 
 ### Changed

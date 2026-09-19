@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.2.16
+version: 0.2.17
 
 environment:
   sdk: ^3.6.0
@@ -13,7 +13,7 @@ dependencies:
 
   # mpv_audio_kit
   #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.4.5
+  mpv_audio_kit: ^0.4.6
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}
@@ -25,13 +25,13 @@ dependencies:
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}
-  dart_smb2: ^0.1.2
+  dart_smb2: ^0.1.3
 
   # Other dependencies
   file_selector: ^1.0.3
-  desktop_drop: ^0.7.1
+  desktop_drop: ^0.8.4
   shared_preferences: ^2.5.4
-  go_router: ^17.2.3
+  go_router: ^18.0.1
   infinite_scroll_pagination: ^5.1.1
   flutter_launcher_icons: ^0.14.4
   device_info_plus: ^13.1.0
