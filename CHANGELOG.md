@@ -1,3 +1,10 @@
+## [0.2.18] - 24-09-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.4.8`.
+- Updated `dart_jellyfin` to version `0.2.1`.
+- Updated `dart_plex` to version `0.1.3`.
+
 ## [0.2.17] - 19-09-2026
 
 ### Changed
