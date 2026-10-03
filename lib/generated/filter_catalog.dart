@@ -1540,7 +1540,7 @@ final List<FilterDescriptor> kFilterCatalog = [
           get: (e) => (e as AphaserEffect).decay,
           set: (e, v) => (e as AphaserEffect).copyWith(decay: v)),
       DoubleParam('delay',
-          min: 0.0,
+          min: 0.1,
           max: 5.0,
           def: 3.0,
           get: (e) => (e as AphaserEffect).delay,
@@ -1760,7 +1760,7 @@ final List<FilterDescriptor> kFilterCatalog = [
     params: [
       IntParam('sample_rate',
           min: 0,
-          max: 2147483647,
+          max: 768000,
           def: 0,
           get: (e) => (e as AresampleEffect).sampleRate,
           set: (e, v) => (e as AresampleEffect).copyWith(sampleRate: v)),
@@ -2891,7 +2891,7 @@ final List<FilterDescriptor> kFilterCatalog = [
     fileParam: null,
     params: [
       DoubleParam('accuracy',
-          min: 0.0,
+          min: 3.0,
           max: 1e10,
           def: 5.0,
           get: (e) => (e as FirequalizerEffect).accuracy,
