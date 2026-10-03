@@ -1,13 +1,15 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-/// Serialises the *curated* subset of [AudioEffects] that MPV Studio
+import 'effects_chain.dart';
+
+/// Serialises the *curated* stages of the effects chain that MPV Studio
 /// exposes in its rack to/from a plain JSON-able map, for persistence
 /// via `AppSettings.effects`.
 ///
-/// Only the modules the UI surfaces are encoded; every other effect in
-/// the bundle stays at its disabled default. Decoding an empty / partial
-/// map yields defaults for the missing modules, so the format is
-/// forward- and backward-compatible.
+/// Only the modules the UI surfaces are encoded; the other stages are not
+/// kept across launches. Decoding an empty / partial map yields defaults
+/// for the missing modules, so the format is forward- and
+/// backward-compatible.
 class EffectsCodec {
   EffectsCodec._();
 
@@ -17,18 +19,26 @@ class EffectsCodec {
   static Map<String, Object?> _m(Object? v) =>
       v is Map ? v.cast<String, Object?>() : const {};
 
-  static Map<String, Object?> encode(AudioEffects e) {
-    // 0.4.0: nullable slots — encode the defaults for never-configured ones
-    // so presets stay shape-stable.
-    final superequalizer = e.superequalizer ?? const SuperequalizerSettings();
-    final acompressor = e.acompressor ?? const AcompressorSettings();
-    final bass = e.bass ?? const BassSettings();
-    final treble = e.treble ?? const TrebleSettings();
-    final crossfeed = e.crossfeed ?? const CrossfeedSettings();
-    final crystalizer = e.crystalizer ?? const CrystalizerSettings();
-    final extrastereo = e.extrastereo ?? const ExtrastereoSettings();
-    final asubboost = e.asubboost ?? const AsubboostSettings();
-    final loudnorm = e.loudnorm ?? const LoudnormSettings();
+  static Map<String, Object?> encode(List<AudioEffect> fx) {
+    // Encode the defaults for modules not in the chain, so presets stay
+    // shape-stable.
+    final superequalizer = fx.stage<SuperequalizerEffect>() ??
+        const SuperequalizerEffect(enabled: false);
+    final acompressor = fx.stage<AcompressorEffect>() ??
+        const AcompressorEffect(enabled: false);
+    final bass = fx.stage<BassEffect>() ?? const BassEffect(enabled: false);
+    final treble =
+        fx.stage<TrebleEffect>() ?? const TrebleEffect(enabled: false);
+    final crossfeed =
+        fx.stage<CrossfeedEffect>() ?? const CrossfeedEffect(enabled: false);
+    final crystalizer = fx.stage<CrystalizerEffect>() ??
+        const CrystalizerEffect(enabled: false);
+    final extrastereo = fx.stage<ExtrastereoEffect>() ??
+        const ExtrastereoEffect(enabled: false);
+    final asubboost =
+        fx.stage<AsubboostEffect>() ?? const AsubboostEffect(enabled: false);
+    final loudnorm =
+        fx.stage<LoudnormEffect>() ?? const LoudnormEffect(enabled: false);
     return {
       'eq': {
         'enabled': superequalizer.enabled,
@@ -84,7 +94,7 @@ class EffectsCodec {
     };
   }
 
-  static AudioEffects decode(Map<String, Object?> json) {
+  static List<AudioEffect> decode(Map<String, Object?> json) {
     final eq = _m(json['eq']);
     final comp = _m(json['comp']);
     final bass = _m(json['bass']);
@@ -100,12 +110,12 @@ class EffectsCodec {
       if (v is num) eqParams[k] = v.toDouble();
     });
 
-    return AudioEffects(
-      superequalizer: SuperequalizerSettings(
+    return [
+      SuperequalizerEffect(
         enabled: _b(eq['enabled'], false),
         params: eqParams,
       ),
-      acompressor: AcompressorSettings(
+      AcompressorEffect(
         enabled: _b(comp['enabled'], false),
         threshold: _d(comp['threshold'], 0.125),
         ratio: _d(comp['ratio'], 2),
@@ -114,30 +124,30 @@ class EffectsCodec {
         makeup: _d(comp['makeup'], 1),
         knee: _d(comp['knee'], 2.82843),
       ),
-      bass: BassSettings(
+      BassEffect(
         enabled: _b(bass['enabled'], false),
         gain: _d(bass['gain'], 0),
         frequency: _d(bass['frequency'], 100),
       ),
-      treble: TrebleSettings(
+      TrebleEffect(
         enabled: _b(treble['enabled'], false),
         gain: _d(treble['gain'], 0),
         frequency: _d(treble['frequency'], 3000),
       ),
-      crossfeed: CrossfeedSettings(
+      CrossfeedEffect(
         enabled: _b(crossfeed['enabled'], false),
         strength: _d(crossfeed['strength'], 0.2),
         range: _d(crossfeed['range'], 0.5),
       ),
-      crystalizer: CrystalizerSettings(
+      CrystalizerEffect(
         enabled: _b(crystalizer['enabled'], false),
         i: _d(crystalizer['i'], 2),
       ),
-      extrastereo: ExtrastereoSettings(
+      ExtrastereoEffect(
         enabled: _b(stereo['enabled'], false),
         m: _d(stereo['m'], 2.5),
       ),
-      asubboost: AsubboostSettings(
+      AsubboostEffect(
         enabled: _b(subboost['enabled'], false),
         boost: _d(subboost['boost'], 2),
         cutoff: _d(subboost['cutoff'], 100),
@@ -145,13 +155,13 @@ class EffectsCodec {
         wet: _d(subboost['wet'], 1),
         feedback: _d(subboost['feedback'], 0.9),
       ),
-      loudnorm: LoudnormSettings(
+      LoudnormEffect(
         enabled: _b(loudnorm['enabled'], false),
         i: _d(loudnorm['i'], -24),
         lra: _d(loudnorm['lra'], 7),
         tp: _d(loudnorm['tp'], -2),
         linear: _b(loudnorm['linear'], true),
       ),
-    );
+    ];
   }
 }

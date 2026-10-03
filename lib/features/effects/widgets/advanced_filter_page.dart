@@ -11,6 +11,7 @@ import '../../../ui/tokens.dart';
 import '../../../ui/widgets/back_bar.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
+import '../effects_chain.dart';
 
 /// The dedicated editor for one **advanced** (required-param) filter —
 /// `chorus`, `pan`, `channelmap`, `aeval`, `arnndn`. These can't be safely
@@ -43,22 +44,22 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
   bool _valid(Map<String, String> values) =>
       _strParams.every((p) => (values[p.name] ?? '').trim().isNotEmpty);
 
-  Map<String, String> _merged(AudioEffects fx) => {
-        for (final p in _strParams) p.name: p.get(fx),
+  Map<String, String> _merged(List<AudioEffect> fx) => {
+        for (final p in _strParams) p.name: p.get(_spec.stageIn(fx)),
         ..._pending,
       };
 
-  void _apply(AudioEffects fx,
+  void _apply(List<AudioEffect> fx,
       {required bool enabled, Map<String, String>? values}) {
     final v = values ?? _merged(fx);
-    _player.updateAudioEffects((e) {
-      var next = e;
-      for (final p in _strParams) {
-        final val = v[p.name];
-        if (val != null) next = p.set(next, val);
-      }
-      return _spec.setEnabled(next, enabled);
-    });
+    _player.updateAudioEffects((chain) => _spec.edit(chain, (e) {
+          var next = e;
+          for (final p in _strParams) {
+            final val = v[p.name];
+            if (val != null) next = p.set(next, val);
+          }
+          return _spec.setEnabled(next, enabled);
+        }));
   }
 
   /// Copies a bundled asset (e.g. `assets/models/general.rnnn`) to a stable
@@ -76,7 +77,7 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
     return file.path;
   }
 
-  Future<void> _applyPreset(AudioEffects fx, FilterPreset preset) async {
+  Future<void> _applyPreset(List<AudioEffect> fx, FilterPreset preset) async {
     var values = preset.values;
     final fp = _spec.fileParam;
     // A file-backed preset points at a bundled asset — materialize it first.
@@ -90,7 +91,7 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
     _apply(fx, enabled: true, values: values);
   }
 
-  Future<void> _pickFile(AudioEffects fx) async {
+  Future<void> _pickFile(List<AudioEffect> fx) async {
     final fp = _spec.fileParam;
     if (fp == null) return;
     final file = await openFile();
@@ -111,7 +112,7 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
               onBack: () => Navigator.of(context).maybePop(),
             ),
             Expanded(
-              child: StreamBuilder<AudioEffects>(
+              child: StreamBuilder<List<AudioEffect>>(
                 stream: _player.stream.audioEffects,
                 initialData: _player.state.audioEffects,
                 builder: (context, snap) => _body(snap.data!),
@@ -123,7 +124,7 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
     );
   }
 
-  Widget _body(AudioEffects fx) {
+  Widget _body(List<AudioEffect> fx) {
     final enabled = _spec.isEnabled(fx);
     final canEnable = _valid(_merged(fx));
 
@@ -191,7 +192,7 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
                 for (final p in _strParams)
                   TextRow(
                     label: p.name,
-                    value: _pending[p.name] ?? p.get(fx),
+                    value: _pending[p.name] ?? p.get(_spec.stageIn(fx)),
                     hint: _spec.presets.isNotEmpty
                         ? 'e.g. ${_spec.presets.first.values[p.name] ?? ''}'
                         : null,
@@ -247,28 +248,29 @@ class _AdvancedFilterPageState extends State<AdvancedFilterPage> {
     );
   }
 
-  String _currentFileName(AudioEffects fx) {
+  String _currentFileName(List<AudioEffect> fx) {
     final fp = _spec.fileParam;
     if (fp == null) return '';
     final p = _strParams.firstWhere((p) => p.name == fp);
-    final cur = p.get(fx);
+    final cur = p.get(_spec.stageIn(fx));
     return cur.isEmpty ? 'No file selected' : cur.split('/').last;
   }
 
   /// Whether [preset] is the active selection. For file-backed presets the
   /// live value is a materialized temp path, so compare basenames.
-  bool _presetActive(AudioEffects fx, FilterPreset preset, bool enabled) {
+  bool _presetActive(List<AudioEffect> fx, FilterPreset preset, bool enabled) {
     if (!enabled) return false;
     if (_spec.fileBacked) {
       final fp = _spec.fileParam;
       if (fp == null) return false;
-      final cur = _strParams.firstWhere((p) => p.name == fp).get(fx);
+      final cur =
+          _strParams.firstWhere((p) => p.name == fp).get(_spec.stageIn(fx));
       final want = preset.values[fp] ?? '';
       return cur.isNotEmpty && cur.split('/').last == want.split('/').last;
     }
     return preset.values.entries.every((e) {
       final p = _strParams.where((p) => p.name == e.key);
-      return p.isNotEmpty && p.first.get(fx) == e.value;
+      return p.isNotEmpty && p.first.get(_spec.stageIn(fx)) == e.value;
     });
   }
 }

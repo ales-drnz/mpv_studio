@@ -948,7 +948,7 @@ class _VisualizerGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<SpectrumSettings>(
       stream: player.stream.spectrum,
-      initialData: player.spectrumSettings,
+      initialData: player.state.spectrum,
       builder: (context, snap) {
         final spec = snap.data ?? const SpectrumSettings();
         return SettingsGroup(

@@ -57,12 +57,12 @@ class _StreamingGroupState extends State<StreamingGroup> {
                 onChanged: player.setPrefetchPlaylist,
               ),
             ),
-            StreamBuilder<MpvPrefetchState>(
+            StreamBuilder<PrefetchState>(
               stream: player.stream.prefetchState,
-              initialData: MpvPrefetchState.idle,
+              initialData: PrefetchState.idle,
               builder: (context, snap) => InfoRow(
                 label: 'Prefetch state',
-                value: (snap.data ?? MpvPrefetchState.idle).name,
+                value: (snap.data ?? PrefetchState.idle).name,
               ),
             ),
             StreamBuilder<Duration>(

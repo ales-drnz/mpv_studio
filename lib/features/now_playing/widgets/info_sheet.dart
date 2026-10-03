@@ -168,7 +168,7 @@ class _InfoSheet extends StatelessWidget {
 
   Widget _loudness(LoudnessScan? initialScan) {
     return Live<LoudnessScan?>(
-      stream: player.stream.loudness,
+      stream: player.stream.loudnessScan,
       initial: initialScan,
       builder: (context, scan) {
         // Always render the section so the sheet height is stable: it used to

@@ -53,7 +53,7 @@ class _CompressorCurveState extends State<CompressorCurve>
   @override
   void onSubscribe() {
     final player = PlayerScope.of(context);
-    listen(player.stream.tap(AudioEffect.acompressor, side: TapSide.pre),
+    listen(player.stream.tap(AudioFilter.acompressor, side: TapSide.pre),
         (pcm) {
       if (!mounted) return;
       _inPeak = _smoothPeak(pcm, _inPeak);
@@ -61,7 +61,7 @@ class _CompressorCurveState extends State<CompressorCurve>
       _inDb.value = _inPeak;
       _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
     });
-    listen(player.stream.tap(AudioEffect.acompressor, side: TapSide.post),
+    listen(player.stream.tap(AudioFilter.acompressor, side: TapSide.post),
         (pcm) {
       if (!mounted) return;
       _outRms = _smoothRms(pcm, _outRms);

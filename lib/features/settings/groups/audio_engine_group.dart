@@ -47,7 +47,7 @@ class _AudioEngineGroupState extends State<AudioEngineGroup> {
     // write itself — the listing has already arrived, so swallow it.
     try {
       await player.setRawProperty('ao', 'help');
-    } on MpvException {
+    } on MpvCommandException {
       // Expected.
     }
     await Future<void>.delayed(const Duration(milliseconds: 300));

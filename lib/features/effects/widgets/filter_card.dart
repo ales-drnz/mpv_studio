@@ -6,56 +6,66 @@ import '../../../studio/player_scope.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/module_card.dart';
+import '../effects_chain.dart';
 
 /// Renders one [ParamSpec] as the app control that fits its type — the single
 /// place that maps a logical param to a widget (slider / dropdown / switch /
-/// text). Every value flows through the spec's typed get/set closures over the
-/// [AudioEffects] bundle, so this is filter-agnostic.
-Widget buildParamControl(ParamSpec p, AudioEffects fx, Player player) {
+/// text). Every value flows through the spec's typed get/set closures over
+/// [desc]'s stage of the chain, so this is filter-agnostic.
+Widget buildParamControl(
+  FilterDescriptor desc,
+  ParamSpec p,
+  List<AudioEffect> fx,
+  Player player,
+) {
+  final stage = desc.stageIn(fx);
+  void update(AudioEffect Function(AudioEffect stage) change) =>
+      player.updateAudioEffects((chain) => desc.edit(chain, change));
   switch (p) {
     case DoubleParam d:
       return SliderRow(
         label: d.name,
-        value: d.get(fx).clamp(d.min, d.max),
+        value: d.get(stage).clamp(d.min, d.max),
         min: d.min,
         max: d.max,
         resetTo: d.def,
         format: (v) => v.toStringAsFixed(2),
-        onChanged: (v) => player.updateAudioEffects((e) => d.set(e, v)),
+        onChanged: (v) => update((e) => d.set(e, v)),
       );
     case IntParam d:
       return SliderRow(
         label: d.name,
-        value: d.get(fx).toDouble().clamp(d.min.toDouble(), d.max.toDouble()),
+        value:
+            d.get(stage).toDouble().clamp(d.min.toDouble(), d.max.toDouble()),
         min: d.min.toDouble(),
         max: d.max.toDouble(),
         resetTo: d.def.toDouble(),
         format: (v) => v.toStringAsFixed(0),
-        onChanged: (v) => player.updateAudioEffects((e) => d.set(e, v.round())),
+        onChanged: (v) => update((e) => d.set(e, v.round())),
       );
     case BoolParam b:
       return SwitchRow(
         label: b.name,
-        value: b.get(fx),
-        onChanged: (v) => player.updateAudioEffects((e) => b.set(e, v)),
+        value: b.get(stage),
+        onChanged: (v) => update((e) => b.set(e, v)),
       );
     case EnumParam en:
       return DropdownRow<Object>(
         label: en.name,
-        value: en.get(fx),
+        value: en.get(stage),
         items: [
           for (final o in en.options)
             DropdownMenuItem<Object>(value: o.value, child: Text(o.label)),
         ],
         onChanged: (v) {
-          if (v != null) player.updateAudioEffects((e) => en.set(e, v));
+          if (v != null) update((e) => en.set(e, v));
         },
       );
     case StringParam s:
       return TextRow(
         label: s.name,
-        value: s.get(fx),
-        onChanged: (v) => player.updateAudioEffects((e) => s.set(e, v)),
+        value: s.get(stage),
+        onChanged: (v) => update((e) => s.set(e, v)),
       );
   }
 }
@@ -70,7 +80,7 @@ class FilterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = PlayerScope.of(context);
-    return StreamBuilder<AudioEffects>(
+    return StreamBuilder<List<AudioEffect>>(
       stream: player.stream.audioEffects.distinct(),
       initialData: player.state.audioEffects,
       builder: (context, snap) {
@@ -80,24 +90,25 @@ class FilterCard extends StatelessWidget {
           subtitle: d.wire,
           icon: d.icon,
           enabled: d.isEnabled(fx),
-          onEnabledChanged: (v) =>
-              player.updateAudioEffects((e) => d.setEnabled(e, v)),
+          onEnabledChanged: (v) => player.updateAudioEffects(
+              (fx) => d.edit(fx, (e) => d.setEnabled(e, v))),
           onReset: d.params.isEmpty
               ? null
-              : () => player.updateAudioEffects((e) {
+              : () => player.updateAudioEffects((fx) => d.edit(fx, (e) {
                     var next = e;
                     for (final p in d.params) {
                       if (p is DoubleParam) next = p.set(next, p.def);
                       if (p is IntParam) next = p.set(next, p.def);
                     }
                     return next;
-                  }),
+                  })),
           child: d.params.isEmpty
               ? const Text('No adjustable parameters.', style: Tokens.caption)
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final p in d.params) buildParamControl(p, fx, player),
+                    for (final p in d.params)
+                      buildParamControl(d, p, fx, player),
                   ],
                 ),
         );
@@ -135,10 +146,10 @@ class EnableAllCard extends StatelessWidget {
               customBorder: Tokens.squircle(Tokens.rMd),
               onTap: () {
                 final on = !allOn;
-                player.updateAudioEffects((e) {
-                  var next = e;
+                player.updateAudioEffects((fx) {
+                  var next = fx;
                   for (final d in filters) {
-                    next = d.setEnabled(next, on);
+                    next = d.edit(next, (e) => d.setEnabled(e, on));
                   }
                   return next;
                 });

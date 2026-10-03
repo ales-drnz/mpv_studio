@@ -13,6 +13,7 @@ import '../../ui/widgets/section_body.dart';
 import '../../ui/widgets/section_header.dart';
 import '../../ui/widgets/section_switcher.dart';
 import '../../generated/filter_catalog.dart';
+import 'effects_chain.dart';
 import 'widgets/advanced_filter_page.dart';
 import 'widgets/equalizer.dart';
 import 'widgets/filter_card.dart';
@@ -30,7 +31,7 @@ import 'widgets/loudness_gauge.dart';
 /// catalog stays a plain **list** below, so the two tiers read as clearly
 /// different things.
 ///
-/// The bundle is the single writer of mpv's `af` chain — changes push
+/// The page is the single writer of mpv's `af` chain — changes push
 /// atomically via `setAudioEffects` and mirror into [AppSettings].
 /// Slider drags mutate a local draft for smooth motion and commit on
 /// release; toggles and resets commit immediately.
@@ -44,12 +45,12 @@ class EffectsPage extends StatefulWidget {
 class _EffectsPageState extends State<EffectsPage>
     with StreamListenerState<EffectsPage> {
   late final Player _player;
-  late AudioEffects _fx;
+  late List<AudioEffect> _fx;
   bool _editing = false;
 
   /// Mirrors [_fx] so a pushed featured-editor route can rebuild on every edit
   /// (a route can't observe this State's `setState` directly).
-  late final ValueNotifier<AudioEffects> _fxVN;
+  late final ValueNotifier<List<AudioEffect>> _fxVN;
 
   @override
   void onSubscribe() {
@@ -73,7 +74,7 @@ class _EffectsPageState extends State<EffectsPage>
   }
 
   /// Updates the local draft only (no engine write) — used during drags.
-  void _setLocal(AudioEffects next) {
+  void _setLocal(List<AudioEffect> next) {
     setState(() {
       _fx = next;
       _editing = true;
@@ -88,8 +89,8 @@ class _EffectsPageState extends State<EffectsPage>
     _player.setAudioEffects(_fx);
   }
 
-  /// Sets a new bundle and commits immediately — toggles, resets.
-  void _commitNow(AudioEffects next) {
+  /// Sets a new chain and commits immediately — toggles, resets.
+  void _commitNow(List<AudioEffect> next) {
     setState(() {
       _fx = next;
       _editing = false;
@@ -103,7 +104,7 @@ class _EffectsPageState extends State<EffectsPage>
     double value,
     double min,
     double max,
-    AudioEffects Function(double v) apply, {
+    List<AudioEffect> Function(double v) apply, {
     String Function(double v)? format,
   }) =>
       SliderRowSpec(
@@ -124,17 +125,25 @@ class _EffectsPageState extends State<EffectsPage>
   // and the detail editor (graphic, controls, toggle, reset) need.
 
   List<_Featured> _featured() {
-    // 0.4.0: bundle slots are nullable ("never configured") — seed each
-    // with its defaults so the cards always have concrete values to show.
-    final eq = _fx.superequalizer ?? const SuperequalizerSettings();
-    final comp = _fx.acompressor ?? const AcompressorSettings();
-    final bass = _fx.bass ?? const BassSettings();
-    final treble = _fx.treble ?? const TrebleSettings();
-    final cf = _fx.crossfeed ?? const CrossfeedSettings();
-    final cr = _fx.crystalizer ?? const CrystalizerSettings();
-    final st = _fx.extrastereo ?? const ExtrastereoSettings();
-    final sb = _fx.asubboost ?? const AsubboostSettings();
-    final ln = _fx.loudnorm ?? const LoudnormSettings();
+    // A module not in the chain yet shows its defaults, bypassed, so the
+    // cards always have concrete values to show.
+    final eq =
+        _fx.stage<SuperequalizerEffect>() ?? const SuperequalizerEffect(enabled: false);
+    final comp =
+        _fx.stage<AcompressorEffect>() ?? const AcompressorEffect(enabled: false);
+    final bass = _fx.stage<BassEffect>() ?? const BassEffect(enabled: false);
+    final treble =
+        _fx.stage<TrebleEffect>() ?? const TrebleEffect(enabled: false);
+    final cf =
+        _fx.stage<CrossfeedEffect>() ?? const CrossfeedEffect(enabled: false);
+    final cr =
+        _fx.stage<CrystalizerEffect>() ?? const CrystalizerEffect(enabled: false);
+    final st =
+        _fx.stage<ExtrastereoEffect>() ?? const ExtrastereoEffect(enabled: false);
+    final sb =
+        _fx.stage<AsubboostEffect>() ?? const AsubboostEffect(enabled: false);
+    final ln =
+        _fx.stage<LoudnormEffect>() ?? const LoudnormEffect(enabled: false);
 
     return [
       // ---- 18-band graphic EQ -----------------------------------------
@@ -144,11 +153,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.equalizer_rounded,
         enabled: eq.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(superequalizer: eq.copyWith(enabled: v))),
-        onReset: () => _commitNow(_fx.copyWith(
-          superequalizer:
-              SuperequalizerSettings(enabled: eq.enabled, params: const {}),
-        )),
+            _commitNow(_fx.put(eq.copyWith(enabled: v))),
+        onReset: () => _commitNow(_fx.put(
+            SuperequalizerEffect(enabled: eq.enabled, params: const {}))),
         graphic: Equalizer(
           bandsDb: {
             for (final b in kEqBands)
@@ -162,7 +169,7 @@ class _EffectsPageState extends State<EffectsPage>
             } else {
               params[key] = eqDbToLinear(db);
             }
-            _setLocal(_fx.copyWith(superequalizer: eq.copyWith(params: params)));
+            _setLocal(_fx.put(eq.copyWith(params: params)));
           },
           onChangeEnd: _commit,
         ),
@@ -176,9 +183,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.compress_rounded,
         enabled: comp.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(acompressor: comp.copyWith(enabled: v))),
+            _commitNow(_fx.put(comp.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(acompressor: AcompressorSettings(enabled: comp.enabled))),
+            _fx.put(AcompressorEffect(enabled: comp.enabled))),
         graphic: CompressorCurve(
           threshold: comp.threshold,
           ratio: comp.ratio,
@@ -192,27 +199,25 @@ class _EffectsPageState extends State<EffectsPage>
               eqLinearToDb(comp.threshold),
               -60,
               0,
-              (v) => _fx.copyWith(
-                  acompressor: comp.copyWith(
+              (v) => _fx.put(comp.copyWith(
                       threshold: eqDbToLinear(v).clamp(0.000977, 1.0))),
               format: (v) => '${v.round()} dB'),
           _spec('Ratio', comp.ratio, 1, 20,
-              (v) => _fx.copyWith(acompressor: comp.copyWith(ratio: v)),
+              (v) => _fx.put(comp.copyWith(ratio: v)),
               format: (v) => '${v.toStringAsFixed(1)}:1'),
           _spec('Attack', comp.attack, 1, 200,
-              (v) => _fx.copyWith(acompressor: comp.copyWith(attack: v)),
+              (v) => _fx.put(comp.copyWith(attack: v)),
               format: (v) => '${v.round()} ms'),
           _spec('Release', comp.release, 20, 2000,
-              (v) => _fx.copyWith(acompressor: comp.copyWith(release: v)),
+              (v) => _fx.put(comp.copyWith(release: v)),
               format: (v) => '${v.round()} ms'),
           _spec(
               'Make-up gain',
               eqLinearToDb(comp.makeup),
               0,
               24,
-              (v) => _fx.copyWith(
-                  acompressor:
-                      comp.copyWith(makeup: eqDbToLinear(v).clamp(1.0, 64.0))),
+              (v) => _fx.put(
+                  comp.copyWith(makeup: eqDbToLinear(v).clamp(1.0, 64.0))),
               format: (v) => '+${v.round()} dB'),
         ],
       ),
@@ -224,9 +229,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.graphic_eq_rounded,
         enabled: bass.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(bass: bass.copyWith(enabled: v))),
+            _commitNow(_fx.put(bass.copyWith(enabled: v))),
         onReset: () =>
-            _commitNow(_fx.copyWith(bass: BassSettings(enabled: bass.enabled))),
+            _commitNow(_fx.put(BassEffect(enabled: bass.enabled))),
         graphic: ResponseCurve(
           response: BiquadResponse.lowShelf(bass.frequency, bass.gain),
           markerHz: bass.frequency,
@@ -234,10 +239,10 @@ class _EffectsPageState extends State<EffectsPage>
         ),
         controls: [
           _spec('Gain', bass.gain, -24, 24,
-              (v) => _fx.copyWith(bass: bass.copyWith(gain: v)),
+              (v) => _fx.put(bass.copyWith(gain: v)),
               format: (v) => '${v.toStringAsFixed(1)} dB'),
           _spec('Frequency', bass.frequency, 20, 500,
-              (v) => _fx.copyWith(bass: bass.copyWith(frequency: v)),
+              (v) => _fx.put(bass.copyWith(frequency: v)),
               format: (v) => '${v.round()} Hz'),
         ],
       ),
@@ -249,9 +254,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.graphic_eq_rounded,
         enabled: treble.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(treble: treble.copyWith(enabled: v))),
+            _commitNow(_fx.put(treble.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(treble: TrebleSettings(enabled: treble.enabled))),
+            _fx.put(TrebleEffect(enabled: treble.enabled))),
         graphic: ResponseCurve(
           response: BiquadResponse.highShelf(treble.frequency, treble.gain),
           markerHz: treble.frequency,
@@ -259,10 +264,10 @@ class _EffectsPageState extends State<EffectsPage>
         ),
         controls: [
           _spec('Gain', treble.gain, -24, 24,
-              (v) => _fx.copyWith(treble: treble.copyWith(gain: v)),
+              (v) => _fx.put(treble.copyWith(gain: v)),
               format: (v) => '${v.toStringAsFixed(1)} dB'),
           _spec('Frequency', treble.frequency, 1000, 16000,
-              (v) => _fx.copyWith(treble: treble.copyWith(frequency: v)),
+              (v) => _fx.put(treble.copyWith(frequency: v)),
               format: (v) => '${(v / 1000).toStringAsFixed(1)}k Hz'),
         ],
       ),
@@ -274,9 +279,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.surround_sound_rounded,
         enabled: sb.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(asubboost: sb.copyWith(enabled: v))),
+            _commitNow(_fx.put(sb.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(asubboost: AsubboostSettings(enabled: sb.enabled))),
+            _fx.put(AsubboostEffect(enabled: sb.enabled))),
         graphic: ResponseCurve(
           response: BiquadResponse.lowShelf(
               sb.cutoff, amplitudeToDb(sb.boost)),
@@ -285,16 +290,16 @@ class _EffectsPageState extends State<EffectsPage>
         ),
         controls: [
           _spec('Boost', sb.boost, 1, 12,
-              (v) => _fx.copyWith(asubboost: sb.copyWith(boost: v)),
+              (v) => _fx.put(sb.copyWith(boost: v)),
               format: (v) => v.toStringAsFixed(1)),
           _spec('Cutoff', sb.cutoff, 50, 900,
-              (v) => _fx.copyWith(asubboost: sb.copyWith(cutoff: v)),
+              (v) => _fx.put(sb.copyWith(cutoff: v)),
               format: (v) => '${v.round()} Hz'),
           _spec('Wet', sb.wet, 0, 1,
-              (v) => _fx.copyWith(asubboost: sb.copyWith(wet: v)),
+              (v) => _fx.put(sb.copyWith(wet: v)),
               format: _pct),
           _spec('Dry', sb.dry, 0, 1,
-              (v) => _fx.copyWith(asubboost: sb.copyWith(dry: v)),
+              (v) => _fx.put(sb.copyWith(dry: v)),
               format: _pct),
         ],
       ),
@@ -306,13 +311,13 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.panorama_horizontal_rounded,
         enabled: st.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(extrastereo: st.copyWith(enabled: v))),
+            _commitNow(_fx.put(st.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(extrastereo: ExtrastereoSettings(enabled: st.enabled))),
+            _fx.put(ExtrastereoEffect(enabled: st.enabled))),
         graphic: StereoScope(enabled: st.enabled),
         controls: [
           _spec('Amount', st.m, 0, 8,
-              (v) => _fx.copyWith(extrastereo: st.copyWith(m: v)),
+              (v) => _fx.put(st.copyWith(m: v)),
               format: (v) => v.toStringAsFixed(1)),
         ],
       ),
@@ -324,9 +329,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.headphones_rounded,
         enabled: cf.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(crossfeed: cf.copyWith(enabled: v))),
+            _commitNow(_fx.put(cf.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(crossfeed: CrossfeedSettings(enabled: cf.enabled))),
+            _fx.put(CrossfeedEffect(enabled: cf.enabled))),
         graphic: CrossfeedDiagram(
           strength: cf.strength,
           range: cf.range,
@@ -334,10 +339,10 @@ class _EffectsPageState extends State<EffectsPage>
         ),
         controls: [
           _spec('Strength', cf.strength, 0, 1,
-              (v) => _fx.copyWith(crossfeed: cf.copyWith(strength: v)),
+              (v) => _fx.put(cf.copyWith(strength: v)),
               format: _pct),
           _spec('Range', cf.range, 0, 1,
-              (v) => _fx.copyWith(crossfeed: cf.copyWith(range: v)),
+              (v) => _fx.put(cf.copyWith(range: v)),
               format: _pct),
         ],
       ),
@@ -349,13 +354,13 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.auto_awesome_rounded,
         enabled: cr.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(crystalizer: cr.copyWith(enabled: v))),
+            _commitNow(_fx.put(cr.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(crystalizer: CrystalizerSettings(enabled: cr.enabled))),
+            _fx.put(CrystalizerEffect(enabled: cr.enabled))),
         graphic: CrystalizerWaveform(intensity: cr.i, enabled: cr.enabled),
         controls: [
           _spec('Intensity', cr.i, -10, 10,
-              (v) => _fx.copyWith(crystalizer: cr.copyWith(i: v)),
+              (v) => _fx.put(cr.copyWith(i: v)),
               format: (v) => v.toStringAsFixed(1)),
         ],
       ),
@@ -367,9 +372,9 @@ class _EffectsPageState extends State<EffectsPage>
         icon: Icons.volume_up_rounded,
         enabled: ln.enabled,
         onEnabled: (v) =>
-            _commitNow(_fx.copyWith(loudnorm: ln.copyWith(enabled: v))),
+            _commitNow(_fx.put(ln.copyWith(enabled: v))),
         onReset: () => _commitNow(
-            _fx.copyWith(loudnorm: LoudnormSettings(enabled: ln.enabled))),
+            _fx.put(LoudnormEffect(enabled: ln.enabled))),
         graphic: LoudnessGauge(
           target: ln.i,
           range: ln.lra,
@@ -378,13 +383,13 @@ class _EffectsPageState extends State<EffectsPage>
         ),
         controls: [
           _spec('Target', ln.i, -70, -5,
-              (v) => _fx.copyWith(loudnorm: ln.copyWith(i: v)),
+              (v) => _fx.put(ln.copyWith(i: v)),
               format: (v) => '${v.round()} LUFS'),
           _spec('Range', ln.lra, 1, 50,
-              (v) => _fx.copyWith(loudnorm: ln.copyWith(lra: v)),
+              (v) => _fx.put(ln.copyWith(lra: v)),
               format: (v) => '${v.round()} LU'),
           _spec('True peak', ln.tp, -9, 0,
-              (v) => _fx.copyWith(loudnorm: ln.copyWith(tp: v)),
+              (v) => _fx.put(ln.copyWith(tp: v)),
               format: (v) => '${v.toStringAsFixed(1)} dB'),
         ],
       ),

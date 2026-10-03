@@ -55,7 +55,7 @@ class LoudnessNormalizer extends ChangeNotifier {
   /// measurement is always available without re-decoding.
   void restore() {
     _enabled = _settings.loudnessNormalization;
-    _sub = _player.stream.loudness.listen(_onScan);
+    _sub = _player.stream.loudnessScan.listen(_onScan);
   }
 
   /// Turns the gain on/off and records the choice. The measurement keeps

@@ -261,8 +261,8 @@ class AppSettings {
     return e is Map ? e.cast<String, Object?>() : const {};
   }
 
-  /// The persisted DSP rack, decoded into an [AudioEffects] bundle.
-  AudioEffects get effects => EffectsCodec.decode(_effectsBlob);
+  /// The persisted DSP rack, decoded into the stages of an effects chain.
+  List<AudioEffect> get effects => EffectsCodec.decode(_effectsBlob);
 
   /// Exclusive audio output has no observable stream, so the Settings
   /// toggle records it explicitly here (and calls the player setter).
@@ -308,7 +308,7 @@ class AppSettings {
     await p.setNetworkTimeout(Duration(seconds: networkTimeoutSecs));
     await p.setTlsVerify(tlsVerify);
     await p.setCoverArtAuto(coverArtAuto);
-    await p.setSpectrum(spectrumSettings);
+    p.setSpectrum(spectrumSettings);
   }
 
   /// Subscribes to the player's streams and snapshots every relevant
