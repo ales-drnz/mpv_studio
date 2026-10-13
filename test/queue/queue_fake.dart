@@ -6,7 +6,8 @@ import 'package:mpv_studio/features/queue/queue_details.dart';
 import '../support/fake_player.dart';
 
 /// A [FakePlayer] whose queue commands act on its playlist, with mpv's
-/// `playlist-move` meaning (the entry lands before the target).
+/// `playlist-move` meaning (the entry lands before the target), and which
+/// records the raw commands, hooks and log level the Console uses.
 class QueueFakePlayer extends FakePlayer {
   QueueFakePlayer([super.initial]);
 
@@ -169,6 +170,7 @@ class QueueFakePlayer extends FakePlayer {
   }
 
   final hooks = StreamController<MpvHookEvent>.broadcast(sync: true);
+  final log = StreamController<MpvLogEntry>.broadcast(sync: true);
   final List<Hook> registeredHooks = [];
   final List<int> continuedHooks = [];
 
@@ -206,4 +208,8 @@ class QueueFakeStream extends FakePlayerStream {
   Stream<void> get seekCompleted => _q.loaded.stream;
   @override
   Stream<MpvHookEvent> get hook => _q.hooks.stream;
+  @override
+  Stream<MpvLogEntry> get log => _q.log.stream;
+  @override
+  Stream<MpvLogEntry> get internalLog => const Stream.empty();
 }

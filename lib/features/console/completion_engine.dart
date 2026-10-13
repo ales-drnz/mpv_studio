@@ -1,8 +1,10 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import 'command_catalog.dart';
+import 'console_runner.dart';
+import 'console_tokenizer.dart';
 
-/// What a suggestion represents — drives the popup's per-row accent.
+/// What a suggestion represents, which sets the popup's per-row accent.
 enum SuggestionKind { command, property, value }
 
 /// One row in the autocomplete popup.
@@ -13,12 +15,12 @@ class Suggestion {
   /// Text that replaces the current token when accepted.
   final String insertText;
 
-  /// Right-hand detail — for a command, its argument signature (the
+  /// Right-hand detail: for a command, its argument signature (the
   /// parameters that follow once you start typing it); for a property/value,
   /// a short type tag.
   final String? detail;
 
-  /// Sub-line shown under [label] — a command's one-line description. Null
+  /// Sub-line shown under [label]: a command's one-line description. Null
   /// for properties/values, which have no doc.
   final String? description;
 
@@ -59,7 +61,7 @@ class CompletionResult {
   bool get isEmpty => suggestions.isEmpty;
 }
 
-/// Computes console autocompletions from mpv's own model — exactly the
+/// Computes console autocompletions from mpv's own model, exactly the
 /// sources mpv's built-in console uses:
 ///
 /// * **commands** come from the embedded [kMpvCommands] catalog (mpv's
@@ -77,26 +79,27 @@ class CompletionResult {
 class CompletionEngine {
   CompletionEngine(this.player);
 
-  final Player player;
+  final PlayerApi player;
 
   List<String> _properties = const [];
   List<String> _options = const [];
   final Map<String, List<String>> _choices = {};
   bool _warmedUp = false;
 
-  /// `get` is a console-REPL verb (read a property), not an mpv command,
-  /// but it completes a property just like `set`/`cycle` do.
-  static const _virtualGet = 'get';
-
-  /// Commands whose first argument is a property/option name.
+  /// Commands whose first argument is a property or option name. `get`
+  /// and `getnode` are Console verbs that read one.
   static const _propertyArgCommands = {
     'set',
     'add',
     'cycle',
     'multiply',
     'del',
-    _virtualGet,
+    'get',
+    'getnode',
   };
+
+  /// Console verbs that read a property, so options are left out.
+  static const _readVerbs = {'get', 'getnode'};
 
   /// Commands whose value token (after the property) has enum choices.
   static const _valueArgCommands = {'set', 'add', 'cycle'};
@@ -123,13 +126,20 @@ class CompletionEngine {
     }
   }
 
-  /// The command being typed, for the input bar's inline signature hint —
+  /// The command being typed, for the input bar's inline signature hint:
   /// null until a full command word followed by a space is present.
   MpvCommand? activeCommand(String input) {
-    final trimmed = input.trimLeft();
-    final firstSpace = trimmed.indexOf(' ');
-    if (firstSpace < 0) return null; // still typing the command itself
-    final name = trimmed.substring(0, firstSpace);
+    final tokens = scanConsoleLine(input, lenient: true);
+    var at = 0;
+    while (at < tokens.length && kCommandPrefixes.contains(tokens[at].value)) {
+      at++;
+    }
+    if (at >= tokens.length) return null;
+    // Still typing the command itself.
+    if (tokens[at].end >= input.length) return null;
+    final name = tokens[at].value;
+    final verb = kConsoleVerbs[name];
+    if (verb != null) return MpvCommand(name, verb.$1, verb.$2);
     for (final c in kMpvCommands) {
       if (c.name == name) return c;
     }
@@ -138,26 +148,44 @@ class CompletionEngine {
 
   Future<CompletionResult> compute(String input, int cursor) async {
     final at = cursor.clamp(0, input.length);
-    final (start, end) = _tokenRange(input, at);
+    final tokens = scanConsoleLine(input, lenient: true);
+    // The token the cursor is in or touches, else an empty one at it.
+    var start = at;
+    var end = at;
+    final prior = <String>[];
+    for (final t in tokens) {
+      if (t.end < at || (t.end == at && t.start == at)) {
+        prior.add(t.value);
+      } else if (t.start <= at && at <= t.end) {
+        start = t.start;
+        end = t.end;
+        break;
+      } else {
+        break;
+      }
+    }
     final tokenSoFar = input.substring(start, at);
 
-    // Which token position is the cursor in? Count whitespace-separated
-    // words strictly before the current token.
-    final before = input.substring(0, start);
-    final prior = before.trim().isEmpty
-        ? const <String>[]
-        : before.trim().split(RegExp(r'\s+'));
-    final index = prior.length;
+    // Prefixes such as no-osd come before the command.
+    var skip = 0;
+    while (skip < prior.length && kCommandPrefixes.contains(prior[skip])) {
+      skip++;
+    }
+    final words = prior.sublist(skip);
+    final index = words.length;
 
     List<Suggestion> out;
     if (index == 0) {
-      out = _commands(tokenSoFar);
+      out = _commands(tokenSoFar, withVerbs: skip == 0);
     } else {
-      final cmd = prior.first;
+      final cmd = words.first;
       if (_propertyArgCommands.contains(cmd) && index == 1) {
-        out = _propsAndOptions(tokenSoFar, includeOptions: cmd != _virtualGet);
+        out = _propsAndOptions(
+          tokenSoFar,
+          includeOptions: !_readVerbs.contains(cmd),
+        );
       } else if (_valueArgCommands.contains(cmd) && index == 2) {
-        out = await _values(prior[1], tokenSoFar);
+        out = await _values(words[1], tokenSoFar);
       } else {
         out = const [];
       }
@@ -173,21 +201,35 @@ class CompletionEngine {
 
   // ── Sources ────────────────────────────────────────────────────────
 
-  List<Suggestion> _commands(String prefix) {
+  List<Suggestion> _commands(String prefix, {required bool withVerbs}) {
     final items = [
-      const Suggestion(
-        label: _virtualGet,
-        insertText: _virtualGet,
-        detail: '<property>',
-        description: 'Read a property value',
-        kind: SuggestionKind.command,
-      ),
+      if (withVerbs)
+        for (final MapEntry(key: name, value: (signature, doc))
+            in kConsoleVerbs.entries)
+          Suggestion(
+            label: name,
+            insertText: name,
+            detail: signature.isEmpty ? null : signature,
+            description: doc,
+            kind: SuggestionKind.command,
+          ),
       for (final c in kMpvCommands)
         Suggestion(
           label: c.name,
           insertText: c.name,
           detail: c.signature.isEmpty ? null : c.signature,
           description: c.doc.isEmpty ? null : c.doc,
+          kind: SuggestionKind.command,
+        ),
+      // Prefixes rank after the commands they share letters with.
+      for (final p in kCommandPrefixes)
+        Suggestion(
+          label: p,
+          insertText: p,
+          detail: 'prefix',
+          description: p == 'expand-properties'
+              ? r'Expand ${property} references in the arguments'
+              : 'Command prefix',
           kind: SuggestionKind.command,
         ),
     ];
@@ -265,7 +307,7 @@ class CompletionEngine {
 
   /// Prefix matches first (then substring), case-insensitive, capped so the
   /// popup stays snappy. The cap is generous enough to show the entire
-  /// command set (≈86) when the prefix is empty — the popup scrolls.
+  /// command set (≈86) when the prefix is empty, the popup scrolls.
   static List<Suggestion> _rank(List<Suggestion> items, String prefix) {
     const limit = 300;
     if (prefix.isEmpty) return items.take(limit).toList();
@@ -281,19 +323,5 @@ class CompletionEngine {
       }
     }
     return [...starts, ...contains].take(limit).toList();
-  }
-
-  /// The `[start, end)` range of the whitespace-delimited token the cursor
-  /// sits in — the region accepting a completion replaces.
-  static (int, int) _tokenRange(String input, int cursor) {
-    var start = cursor;
-    while (start > 0 && input[start - 1] != ' ') {
-      start--;
-    }
-    var end = cursor;
-    while (end < input.length && input[end] != ' ') {
-      end++;
-    }
-    return (start, end);
   }
 }
