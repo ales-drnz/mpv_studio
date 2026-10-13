@@ -5,11 +5,11 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
 import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
 import '../widgets/reference_list.dart';
-import '../widgets/stream_form.dart';
 import '../widgets/stream_row.dart';
 import '../widgets/stream_states.dart';
 import '../widgets/stream_tab_scope.dart';
@@ -258,21 +258,24 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: AppTextField(
                   controller: _search,
                   onChanged: _onSearch,
                   textInputAction: TextInputAction.search,
-                  style: streamFieldStyle,
-                  decoration: streamFieldDecoration(
-                    context,
-                    hint: _view == LibraryView.songs
-                        ? 'Search songs'
-                        : 'Search albums',
-                    icon: Icons.search_rounded,
+                  semanticLabel: _view == LibraryView.songs
+                      ? 'Search songs'
+                      : 'Search albums',
+                  hint: _view == LibraryView.songs
+                      ? 'Search songs'
+                      : 'Search albums',
+                  leading: Icon(
+                    Icons.search_rounded,
+                    size: 20,
+                    color: Tokens.fgDim,
                   ),
                 ),
               ),
-              const SizedBox(width: Tokens.s4),
+              const SizedBox(width: Tokens.s8),
               RowButton(
                 icon: Icons.logout_rounded,
                 tooltip: 'Sign out of ${_server.name}',
@@ -280,39 +283,32 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
               ),
             ],
           ),
-          const SizedBox(height: Tokens.s8),
+          const SizedBox(height: Tokens.s12),
           Wrap(
             spacing: Tokens.s8,
             runSpacing: Tokens.s8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              for (final v in LibraryView.values)
-                ChoiceChip(
-                  label: Text(v.label),
-                  selected: _view == v,
-                  showCheckmark: false,
-                  selectedColor: Tokens.accentWash,
-                  backgroundColor: Tokens.surface2,
-                  side: BorderSide(
-                    color: _view == v ? Tokens.accent : Tokens.line2,
-                  ),
-                  labelStyle: Tokens.label.copyWith(
-                    color: _view == v ? Tokens.accent : Tokens.fg,
-                  ),
-                  onSelected: (_) => setState(() => _view = v),
-                ),
-              TextButton.icon(
+              SegmentedControl<LibraryView>(
+                expand: false,
+                options: [
+                  for (final v in LibraryView.values) SegmentOption(v, v.label),
+                ],
+                selected: _view,
+                onSelect: (v) => setState(() => _view = v),
+              ),
+              OutlinedButton.icon(
                 onPressed: () => showStreamOptions(
                   context,
                   server: _server,
                   options: _options,
                   onChanged: (o) => setState(() => _options = o),
                 ),
-                icon: const Icon(Icons.tune_rounded, size: 18),
+                icon: const Icon(Icons.tune_rounded, size: 20),
                 label: Text(describeStreamOptions(_options)),
-                style: TextButton.styleFrom(
-                  foregroundColor: Tokens.fgDim,
-                  minimumSize: Size(0, context.layout.minTap),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: Size(0, controlHeightOf(context)),
+                  padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
                 ),
               ),
             ],

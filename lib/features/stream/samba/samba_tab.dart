@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
 import '../../../studio/studio_log.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
 import '../source_failure.dart';
 import '../stream_actions.dart';
 import '../widgets/reference_list.dart';
@@ -263,6 +264,7 @@ class _SambaTabState extends State<SambaTab> {
     valueListenable: _store.keychainUnavailable,
     builder: (context, _, _) => SignInCard(
       formKey: _form,
+      icon: Icons.folder_shared_rounded,
       title: 'Connect to Samba',
       subtitle:
           'The host, the share and, unless it is open to guests, your '
@@ -299,9 +301,12 @@ class _SambaTabState extends State<SambaTab> {
           obscure: true,
         ),
         if (_store.keychainUnavailable.value)
-          Text(
-            'Password not saved: no system keychain.',
-            style: Tokens.label.copyWith(color: Tokens.amber),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+            child: Text(
+              'Password not saved: no system keychain.',
+              style: Tokens.label.copyWith(color: Tokens.amber),
+            ),
           ),
         StreamTextField(
           controller: _domain,
@@ -317,7 +322,7 @@ class _SambaTabState extends State<SambaTab> {
   Widget _pathBar() {
     final share = _login?.share ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
+      padding: const EdgeInsets.only(top: Tokens.s8, bottom: Tokens.s12),
       child: Row(
         children: [
           RowButton(
@@ -325,15 +330,36 @@ class _SambaTabState extends State<SambaTab> {
             tooltip: 'Up one folder',
             onPressed: _path.isEmpty ? null : _up,
           ),
-          const SizedBox(width: Tokens.s4),
+          const SizedBox(width: Tokens.s8),
           Expanded(
-            child: Text(
-              _path.isEmpty ? share : '$share/$_path',
-              style: Tokens.body.copyWith(fontFamily: Tokens.mono),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Container(
+              height: controlHeightOf(context),
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+              decoration: ShapeDecoration(
+                color: Tokens.surface3,
+                shape: Tokens.pill,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.folder_open_rounded,
+                    size: 20,
+                    color: Tokens.fgDim,
+                  ),
+                  const SizedBox(width: Tokens.s8),
+                  Expanded(
+                    child: Text(
+                      _path.isEmpty ? share : '$share/$_path',
+                      style: Tokens.body.copyWith(fontFamily: Tokens.mono),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(width: Tokens.s8),
           RowButton(
             icon: Icons.logout_rounded,
             tooltip: 'Disconnect from the share',
@@ -392,8 +418,8 @@ class _SambaTabState extends State<SambaTab> {
                         padding: const EdgeInsets.only(right: Tokens.s8),
                         child: Icon(
                           Icons.chevron_right_rounded,
-                          size: 20,
-                          color: Tokens.fgFaint,
+                          size: 24,
+                          color: Tokens.fgDim,
                         ),
                       ),
                     ],
@@ -413,7 +439,13 @@ class _SambaTabState extends State<SambaTab> {
                 );
               },
             ),
-            if (_listing) const LinearProgressIndicator(minHeight: 2),
+            if (_listing)
+              LinearProgressIndicator(
+                minHeight: 4,
+                borderRadius: BorderRadius.circular(2),
+                color: Tokens.accent,
+                backgroundColor: Colors.transparent,
+              ),
           ],
         );
       },

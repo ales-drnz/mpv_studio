@@ -10,6 +10,8 @@ import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
 import 'package:mpv_studio/features/stream/signed_url_resolver.dart';
 import 'package:mpv_studio/features/stream/stream_page.dart';
+import 'package:mpv_studio/features/stream/widgets/stream_form.dart';
+import 'package:mpv_studio/ui/widgets/controls.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/layout_harness.dart';
@@ -196,11 +198,11 @@ void main() {
       final player = await pumpLab(tester);
       await openOptions(tester);
       await tester.enterText(
-        find.widgetWithText(TextField, 'User agent'),
+        find.widgetWithText(SettingTile, 'User agent'),
         'StudioTest/1.0',
       );
       await tester.tap(find.text('Add header'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'X-Token');
       await tester.enterText(find.widgetWithText(TextField, 'Value'), 'abc123');
       await tester.tap(find.text('8 MiB'));
@@ -226,7 +228,7 @@ void main() {
       final player = await pumpLab(tester);
       await openOptions(tester);
       await tester.tap(find.text('Add header'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Accept');
       await tester.enterText(find.widgetWithText(TextField, 'Value'), 'a, b');
       await tester.pump();
@@ -259,7 +261,7 @@ void main() {
       await openOptions(tester);
       expect(find.text('Default (Settings, Network)'), findsOneWidget);
       await tester.enterText(
-        find.widgetWithText(TextField, 'User agent'),
+        find.widgetWithText(SettingTile, 'User agent'),
         'Mozilla/5.0 (KHTML, like Gecko)',
       );
       await tester.enterText(
@@ -305,15 +307,15 @@ void main() {
 
     Future<void> fill(WidgetTester tester) async {
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Server address'),
+        find.widgetWithText(StreamTextField, 'Server address'),
         '192.168.1.10',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Username'),
+        find.widgetWithText(StreamTextField, 'Username'),
         'alex',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Password'),
+        find.widgetWithText(StreamTextField, 'Password'),
         'secret',
       );
     }
@@ -542,11 +544,11 @@ void main() {
       expect(find.text('The host is required.'), findsOneWidget);
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Host'),
+        find.widgetWithText(StreamTextField, 'Host'),
         'nas.local',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Share'),
+        find.widgetWithText(StreamTextField, 'Share'),
         'Music',
       );
       await tester.tap(find.text('Connect'));

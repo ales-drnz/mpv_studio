@@ -64,12 +64,13 @@ class StreamTabBody extends StatelessWidget {
 
 /// The rows of [categories], each under its header, with the row that
 /// started the current track lit up. [mediaFor] turns an item into the
-/// entry to play (defaults to [streamMedia]).
+/// entry to play (defaults to [streamMedia]); [icon] is the rows' glyph.
 List<Widget> referenceRows({
   required List<StreamCategory> categories,
   required StreamActions actions,
   required String origin,
   Media Function(StreamItem item)? mediaFor,
+  IconData icon = Icons.podcasts_rounded,
 }) {
   final toMedia = mediaFor ?? streamMedia;
   return [
@@ -80,9 +81,10 @@ List<Widget> referenceRows({
           item: item,
           media: toMedia(item),
           actions: actions,
+          icon: icon,
           current: toMedia(item).uri == origin,
         ),
-      const SizedBox(height: Tokens.s12),
+      const SizedBox(height: Tokens.s16),
     ],
   ];
 }
@@ -92,12 +94,14 @@ class _ReferenceRow extends StatelessWidget {
     required this.item,
     required this.media,
     required this.actions,
+    required this.icon,
     required this.current,
   });
 
   final StreamItem item;
   final Media media;
   final StreamActions actions;
+  final IconData icon;
   final bool current;
 
   @override
@@ -106,6 +110,7 @@ class _ReferenceRow extends StatelessWidget {
       title: item.label,
       subtitle: item.url,
       monoSubtitle: true,
+      icon: icon,
       current: current,
       onTap: () => actions.play(media),
       menu: () => [for (final a in RowAction.queueActions) a.item],
@@ -116,12 +121,13 @@ class _ReferenceRow extends StatelessWidget {
           tooltip: 'Add to queue',
           onPressed: () => actions.enqueue([media]),
         ),
-        RowButton(
-          icon: Icons.play_arrow_rounded,
-          tooltip: 'Play',
-          accent: true,
-          onPressed: () => actions.play(media),
-        ),
+        // A tap on the row plays; a phone keeps its width for the title.
+        if (!context.layout.isCompact)
+          RowButton(
+            icon: Icons.play_arrow_rounded,
+            tooltip: 'Play',
+            onPressed: () => actions.play(media),
+          ),
       ],
     );
   }

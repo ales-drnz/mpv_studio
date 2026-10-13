@@ -7,6 +7,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/round_icon_button.dart';
 import '../../util/reactive.dart';
 import 'completion_engine.dart';
 import 'console_log.dart';
@@ -166,11 +167,10 @@ class _ConsoleViewState extends State<ConsoleView>
     ScaffoldMessenger.maybeOf(context)
       ?..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text('Log copied', style: TextStyle(color: Tokens.fg)),
-          backgroundColor: Tokens.surface3,
+        const SnackBar(
+          content: Text('Log copied'),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
   }
@@ -343,10 +343,6 @@ class _ConsoleViewState extends State<ConsoleView>
   @override
   Widget build(BuildContext context) {
     final layout = context.layout;
-    final tap = BoxConstraints.tightFor(
-      width: layout.minTap,
-      height: layout.minTap,
-    );
     final visible = _lines.where(_visible).toList(growable: false);
     return CallbackShortcuts(
       bindings: {
@@ -357,34 +353,29 @@ class _ConsoleViewState extends State<ConsoleView>
         scrollable: false,
         maxWidth: Breakpoints.wide,
         actions: [
-          IconButton(
-            onPressed: () => setState(() => _autoscroll = !_autoscroll),
-            isSelected: _autoscroll,
+          RoundIconButton(
+            onTap: () => setState(() => _autoscroll = !_autoscroll),
+            active: _autoscroll,
+            toggled: _autoscroll,
+            label: 'Follow new lines',
             tooltip: _autoscroll ? 'Stop following' : 'Follow new lines',
-            icon: const Icon(Icons.vertical_align_bottom_rounded),
-            color: _autoscroll ? Tokens.accent : Tokens.fgDim,
-            constraints: tap,
+            icon: Icons.vertical_align_bottom_rounded,
           ),
-          IconButton(
-            onPressed: _copyAll,
+          RoundIconButton(
+            onTap: _copyAll,
             tooltip: 'Copy the log',
-            icon: const Icon(Icons.copy_rounded, size: 20),
-            color: Tokens.fgDim,
-            constraints: tap,
+            icon: Icons.copy_rounded,
+            size: 20,
           ),
-          IconButton(
-            onPressed: _clear,
+          RoundIconButton(
+            onTap: _clear,
             tooltip: 'Clear the log',
-            icon: const Icon(Icons.delete_outline_rounded),
-            color: Tokens.fgDim,
-            constraints: tap,
+            icon: Icons.delete_outline_rounded,
           ),
-          IconButton(
-            onPressed: _showHelp,
+          RoundIconButton(
+            onTap: _showHelp,
             tooltip: 'Console help',
-            icon: const Icon(Icons.help_outline_rounded),
-            color: Tokens.fgDim,
-            constraints: tap,
+            icon: Icons.help_outline_rounded,
           ),
         ],
         bottom: ConsoleFilterBar(
@@ -453,16 +444,16 @@ class _ConsoleViewState extends State<ConsoleView>
               if (showHint)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
+                    Tokens.s16,
                     Tokens.s8,
-                    Tokens.s4,
-                    Tokens.s8,
+                    Tokens.s16,
                     0,
                   ),
                   child: Text(
                     '${activeCmd.name}  ${activeCmd.signature}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Tokens.caption.copyWith(fontFamily: Tokens.mono),
+                    style: Tokens.numeric,
                   ),
                 ),
               Padding(
