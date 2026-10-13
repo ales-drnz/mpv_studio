@@ -161,10 +161,10 @@ class ChapterScrubber extends StatelessWidget {
           // nearest later one. The dot stays on the bar; its wider hit box
           // may stick out of the edges (the Stack does not clip).
           for (var i = 0; i < chapters.length; i++) {
-            final cx = (fracOf(chapters[i].time) * w).clamp(
-              _dot / 2,
-              w - _dot / 2,
-            );
+            // On the bar, or in its middle when it is narrower than a dot.
+            final cx = w < _dot
+                ? w / 2
+                : (fracOf(chapters[i].time) * w).clamp(_dot / 2, w - _dot / 2);
             final passed = position >= chapters[i].time;
             final name = '${_titleOf(i)}, ${formatDuration(chapters[i].time)}';
             children.add(

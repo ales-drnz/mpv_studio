@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -148,7 +150,7 @@ class WaveformViewport {
   /// in view, such as the playhead), else around the view's centre.
   WaveformViewport zoomBy(double factor, {Duration? around}) {
     final clamped = (_window * factor)
-        .clamp(minWindow, timelineSecs)
+        .clamp(math.min(minWindow, timelineSecs), timelineSecs)
         .toDouble();
     // All of a track in view: fit it, so the view follows its length.
     final window = !live && clamped >= timelineSecs ? double.infinity : clamped;

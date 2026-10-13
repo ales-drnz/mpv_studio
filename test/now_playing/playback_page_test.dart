@@ -323,6 +323,51 @@ void main() {
     }
   });
 
+  group('low and tiny windows', () {
+    for (final size in const [
+      Size(1024, 500),
+      Size(1000, 520),
+      Size(824, 560),
+    ]) {
+      testWidgets('the stage with a failure banner fits ${size.width.round()}x'
+          '${size.height.round()}', (tester) async {
+        final player = playingTrack();
+        final failed = ValueNotifier<Set<Media>>({
+          player.state.playlist.items.first,
+        });
+        addTearDown(failed.dispose);
+        await _pumpPage(tester, player, size: size, failed: failed);
+        expectNoOverflow(tester);
+        expect(find.text('Retry'), findsOneWidget);
+      });
+    }
+
+    for (final size in const [
+      Size(330, 270),
+      Size(200, 200),
+      Size(1300, 300),
+    ]) {
+      testWidgets('nothing throws at ${size.width.round()}x'
+          '${size.height.round()}', (tester) async {
+        await _pumpPage(tester, playingTrack(), size: size);
+        // A window this small may clip, but never throws.
+        final error = tester.takeException();
+        expect(error, anyOf(isNull, isA<FlutterError>()));
+        expect(error is ArgumentError, isFalse);
+      });
+    }
+
+    testWidgets('phone landscape has one info button', (tester) async {
+      await pumpPlayback(tester, playingTrack(), size: studioSize('780x360'));
+      expect(find.byTooltip('Track and playback info'), findsOneWidget);
+    });
+
+    testWidgets('a desktop window has one info button', (tester) async {
+      await _pumpPage(tester, playingTrack());
+      expect(find.byTooltip('Track and playback info'), findsOneWidget);
+    });
+  });
+
   group('large text on a small phone', () {
     for (final empty in [false, true]) {
       testWidgets(empty ? 'empty' : 'playing', (tester) async {

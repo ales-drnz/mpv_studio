@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -14,9 +15,9 @@ import '../../util/media_import.dart';
 import '../../util/reactive.dart';
 import 'playback_scope.dart';
 import 'track_identity.dart';
+import 'transport_actions.dart';
 import 'widgets/cover_art.dart';
 import 'widgets/double_tap_seek.dart';
-import 'widgets/info_sheet.dart';
 import 'widgets/playback_states.dart';
 import 'widgets/position_bar.dart';
 import 'widgets/spectrum_curve.dart';
@@ -127,7 +128,14 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final open = widget.onOpenFiles;
     if (open != null) return open();
     final scope = PlaybackScope.of(context);
-    final paths = await pickAudioFiles();
+    final notify = feedbackFor(context);
+    final List<String> paths;
+    try {
+      paths = await pickAudioFiles();
+    } on PlatformException catch (e) {
+      notify('Could not open the file picker: ${e.message ?? e.code}');
+      return;
+    }
     if (paths.isEmpty) return;
     await scope.guard(
       () => scope.player.openAll([
@@ -167,20 +175,13 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
           builder: (context, c) {
             final shape = _shapeFor(c.biggest);
             // Phones keep the height for the player: the tab bar already
-            // says where they are, and the transport has the info button.
+            // says where they are. The info button lives in the transport
+            // on every shape, so the header has no actions.
             final header =
                 shape != _Shape.side &&
                 !WidthClass.of(c.maxWidth).below(WidthClass.medium);
             return PageFrame(
               title: header ? 'Playback' : null,
-              actions: [
-                if (header)
-                  IconButton(
-                    tooltip: 'Track and playback info',
-                    onPressed: () => showInfoSheet(context),
-                    icon: Icon(Icons.info_outline_rounded, color: Tokens.fgDim),
-                  ),
-              ],
               scrollable: false,
               maxWidth: switch (shape) {
                 _Shape.column => Breakpoints.medium,
@@ -242,12 +243,39 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
           child: ResizeHandle(
             axis: Axis.horizontal,
             hitThickness: grip,
+            // From the current height: several drag events can arrive
+            // before the next build.
             onDelta: (dy) => setState(
-              () => _meterHeight = (height + dy).clamp(min, top).toDouble(),
+              () => _meterHeight = ((_meterHeight ?? height) + dy)
+                  .clamp(min, top)
+                  .toDouble(),
             ),
           ),
         ),
         Expanded(child: below),
+      ],
+    );
+  }
+
+  /// [above] at its own height, then [fill] taking what is left, at
+  /// least a strip of it: the whole scrolls when [above] does not fit (a
+  /// failure banner or a chapter line on a low window).
+  Widget _fillBelow(List<Widget> above, Widget fill) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: above,
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: fill,
+          ),
+        ),
       ],
     );
   }
@@ -259,7 +287,9 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       builder: (context, c) {
         final h = c.maxHeight;
         final cover = math.min(c.maxWidth * 0.62, h * 0.27).clamp(120.0, 320.0);
-        final meter = (_meterHeight ?? h * 0.16).clamp(96.0, h * 0.4);
+        final meter = (_meterHeight ?? h * 0.16)
+            .clamp(96.0, math.max(96.0, h * 0.4))
+            .toDouble();
         return CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -323,12 +353,6 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                         const Expanded(
                           child: TrackInfo(centered: false, compact: true),
                         ),
-                        TransportButton(
-                          icon: Icons.info_outline_rounded,
-                          size: 20,
-                          tooltip: 'Track and playback info',
-                          onTap: () => showInfoSheet(context),
-                        ),
                       ],
                     ),
                     const SizedBox(height: Tokens.s8),
@@ -369,43 +393,39 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
           initial: h * 0.28,
           min: 96,
           max: h - rowH - 160,
-          below: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const PositionBar(),
-              const ChapterBar(),
-              const FailedTrackBanner(),
-              const SizedBox(height: Tokens.s8),
-              SizedBox(
-                height: rowH,
-                child: Row(
-                  children: [
-                    _cover(cover),
-                    const SizedBox(width: Tokens.s24),
-                    const Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TrackInfo(),
-                          SizedBox(height: Tokens.s12),
-                          TransportControls(),
-                        ],
-                      ),
+          below: _fillBelow([
+            const PositionBar(),
+            const ChapterBar(),
+            const FailedTrackBanner(),
+            const SizedBox(height: Tokens.s8),
+            SizedBox(
+              height: rowH,
+              child: Row(
+                children: [
+                  _cover(cover),
+                  const SizedBox(width: Tokens.s24),
+                  const Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TrackInfo(),
+                        SizedBox(height: Tokens.s12),
+                        TransportControls(),
+                      ],
                     ),
-                    const SizedBox(width: Tokens.s24),
-                    SizedBox(
-                      width: tap,
-                      child: const VolumeControl(axis: Axis.vertical),
-                    ),
-                    const SizedBox(width: Tokens.s12),
-                    const VuMeter(axis: Axis.vertical),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: Tokens.s24),
+                  SizedBox(
+                    width: tap,
+                    child: const VolumeControl(axis: Axis.vertical),
+                  ),
+                  const SizedBox(width: Tokens.s12),
+                  const VuMeter(axis: Axis.vertical),
+                ],
               ),
-              const SizedBox(height: Tokens.s12),
-              const Expanded(child: SpectrumCurve()),
-            ],
-          ),
+            ),
+            const SizedBox(height: Tokens.s12),
+          ], const SpectrumCurve()),
         );
       },
     );
@@ -452,15 +472,11 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                       initial: h * 0.5,
                       min: 140,
                       max: h - 220,
-                      below: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          PositionBar(),
-                          ChapterBar(),
-                          SizedBox(height: Tokens.s12),
-                          Expanded(child: SpectrumCurve()),
-                        ],
-                      ),
+                      below: _fillBelow(const [
+                        PositionBar(),
+                        ChapterBar(),
+                        SizedBox(height: Tokens.s12),
+                      ], const SpectrumCurve()),
                     ),
                   ),
                 ],
