@@ -4,6 +4,7 @@ import 'package:dart_jellyfin/dart_jellyfin.dart';
 import 'package:dart_plex/dart_plex.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show SourceResolveRequest;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -647,6 +648,7 @@ class PlexServer implements MediaServer {
     );
     _musicSectionId = music.id;
     _client = client;
+    _transcodes?.dispose();
     _transcodes = PlexTranscodeSessionManager(client);
     final p = await SharedPreferences.getInstance();
     await p.setString(_kBase, base);
@@ -666,13 +668,14 @@ class PlexServer implements MediaServer {
     client.connect(base, accessToken: token);
     _musicSectionId = section;
     _client = client;
+    _transcodes?.dispose();
     _transcodes = PlexTranscodeSessionManager(client);
     return true;
   }
 
   @override
   Future<void> logout() async {
-    _transcodes?.clear();
+    _transcodes?.dispose();
     _transcodes = null;
     _client = null;
     _musicSectionId = null;
@@ -680,6 +683,19 @@ class PlexServer implements MediaServer {
     await p.remove(_kBase);
     await p.remove(_kToken);
     await p.remove(_kSection);
+  }
+
+  /// The player's source resolver for Plex entries: turns a
+  /// `plex-transcode://` marker into the URL to open, right before mpv opens
+  /// it, and renews the transcode session when that open fails. Returns null
+  /// for every other entry, and when no account is connected.
+  Future<String?> resolveSource(SourceResolveRequest request) async =>
+      _transcodes?.resolveSource(request);
+
+  /// Stops the transcode heartbeat. Called on app shutdown.
+  void dispose() {
+    _transcodes?.dispose();
+    _transcodes = null;
   }
 
   @override
@@ -759,9 +775,9 @@ class PlexServer implements MediaServer {
     final t = effectiveTransport(transport, codec, protocol: protocol);
     final wireProtocol = protocol == StreamProtocol.dash ? 'dash' : 'hls';
     // BOTH modes hand mpv a `plex-transcode://{session}` marker that the
-    // global on_load hook resolves just before playback. Plex's universal
+    // player's source resolver resolves just before playback. Plex's universal
     // `start.*` URL isn't openable by mpv, so:
-    //   • direct   → the hook resolves to the original media Part URL;
+    //   • direct   → the resolver returns to the original media Part URL;
     //   • transcode→ /decision spins up a session → real start.mpd/m3u8 (and
     //     on a non-playable decision, falls back to the same Part URL).
     // [directUrl] is only the last-resort fallback if the Part can't be found.

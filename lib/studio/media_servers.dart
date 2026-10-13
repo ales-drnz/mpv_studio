@@ -12,8 +12,12 @@ import '../features/stream/playback_reporter.dart';
 /// playback reporting and favourite state survive navigating away from that
 /// page. Returns the connected servers + the [FavoritesController] for the
 /// running [MpvStudio].
-Future<({Map<ServerKind, MediaServer> servers, FavoritesController favorites})>
-    connectMediaServers(Player player) async {
+Future<
+    ({
+      Map<ServerKind, MediaServer> servers,
+      FavoritesController favorites,
+      void Function() dispose,
+    })> connectMediaServers(Player player) async {
   // Resolve the real device name (for Now Playing) and the stable per-install
   // device id (so Jellyfin doesn't invalidate the saved session) before the
   // servers build their credentials.
@@ -30,6 +34,10 @@ Future<({Map<ServerKind, MediaServer> servers, FavoritesController favorites})>
   };
   await Future.wait([jellyfin.tryRestore(), plex.tryRestore()]);
 
+  // Plex hands mpv `plex-transcode://` marker URLs; the source resolver turns
+  // each one into the real URL right before it opens.
+  await player.setSourceResolver(plex.resolveSource);
+
   final favorites = FavoritesController(servers);
 
   // Report playback (start / progress / stop) of server tracks back to their
@@ -37,5 +45,5 @@ Future<({Map<ServerKind, MediaServer> servers, FavoritesController favorites})>
   // whole session.
   PlaybackReporter(player, servers, favorites).start();
 
-  return (servers: servers, favorites: favorites);
+  return (servers: servers, favorites: favorites, dispose: plex.dispose);
 }

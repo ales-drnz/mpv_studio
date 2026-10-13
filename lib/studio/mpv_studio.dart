@@ -3,7 +3,6 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../features/console/console_log.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
-import '../features/stream/plex_transcode_session_manager.dart';
 import 'app_settings.dart';
 import 'audio_engine.dart';
 import 'loudness_normalizer.dart';
@@ -48,20 +47,21 @@ class MpvStudio {
     required this.favorites,
     required this.consoleLog,
     required this.normalizer,
-  });
+    required void Function() disposeServers,
+  }) : _disposeServers = disposeServers;
+
+  /// Stops the media servers' background work (the Plex heartbeat).
+  final void Function() _disposeServers;
 
   /// Powers the app on. Restores persisted settings, starts the audio engine
-  /// (with the OS media session and DSP rack), wires Plex's transcode hook,
-  /// and connects the media servers + playback reporting. Everything is ready
+  /// (with the OS media session and DSP rack), and connects the media servers
+  /// with playback reporting and Plex's source resolver. Everything is ready
   /// by the time this returns, so the first frame renders live state.
   static Future<MpvStudio> launch() async {
     // Persisted settings, restored before the first frame.
     final settings = await AppSettings.load();
 
     final engine = await startAudioEngine(settings);
-
-    // Plex hands mpv marker URLs that must be resolved in an on_load hook.
-    await wirePlexTranscodeHook(engine.player);
 
     final media = await connectMediaServers(engine.player);
 
@@ -76,6 +76,7 @@ class MpvStudio {
       favorites: media.favorites,
       consoleLog: engine.consoleLog,
       normalizer: normalizer,
+      disposeServers: media.dispose,
     );
   }
 
@@ -83,6 +84,7 @@ class MpvStudio {
   /// log buffer, then tears down the audio engine last.
   Future<void> shutdown() async {
     normalizer.dispose();
+    _disposeServers();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();
