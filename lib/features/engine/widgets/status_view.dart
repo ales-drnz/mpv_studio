@@ -178,7 +178,7 @@ class _Fact extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Spy(label: on ? 'yes' : 'no', on: on, color: color),
-            const SizedBox(height: Tokens.s2),
+            const SizedBox(height: Tokens.s4),
             Text(
               title,
               style: Tokens.label,
@@ -213,7 +213,7 @@ class _Path extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: Tokens.caption),
-          const SizedBox(height: Tokens.s2),
+          const SizedBox(height: Tokens.s4),
           Text(
             value,
             maxLines: 1,

@@ -69,7 +69,7 @@ class OutputView extends StatelessWidget {
                   children: [
                     input,
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: Tokens.s6),
+                      padding: EdgeInsets.symmetric(vertical: Tokens.s8),
                       child: Icon(
                         Icons.arrow_downward_rounded,
                         size: 16,
@@ -112,15 +112,21 @@ class _ParamsColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = EngineFormat.params(params);
     return Container(
-      padding: const EdgeInsets.all(Tokens.s12),
+      padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.shape(Tokens.rSm),
+        color: Tokens.surface3,
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Tokens.caption),
+          Text(
+            title,
+            style: Tokens.label.copyWith(
+              color: Tokens.fg,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: Tokens.s8),
           _line('codec', p.codec),
           _line('format', p.format),
@@ -132,7 +138,7 @@ class _ParamsColumn extends StatelessWidget {
   }
 
   static Widget _line(String k, String v) => Padding(
-    padding: const EdgeInsets.only(bottom: Tokens.s2),
+    padding: const EdgeInsets.only(bottom: Tokens.s4),
     child: Row(
       children: [
         SizedBox(

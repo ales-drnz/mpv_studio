@@ -62,8 +62,8 @@ class PrefetchView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Wrap(
-            spacing: Tokens.s6,
-            runSpacing: Tokens.s6,
+            spacing: Tokens.s8,
+            runSpacing: Tokens.s8,
             children: [
               for (final p in PrefetchState.values)
                 StatePill(p.mpvValue, color: colorOf(p), strong: p == current),
@@ -96,7 +96,7 @@ class PrefetchView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: Tokens.s6),
+          const SizedBox(height: Tokens.s8),
           ThinBar(
             fraction: target.inMicroseconds == 0
                 ? 0
@@ -136,7 +136,7 @@ class PrefetchTimelinePainter extends CustomPainter {
     );
     canvas.save();
     canvas.clipRRect(track);
-    canvas.drawRect(track.outerRect, Paint()..color = Tokens.surface2);
+    canvas.drawRect(track.outerRect, Paint()..color = Tokens.surface3);
 
     for (var i = 0; i < marks.length; i++) {
       final m = marks[i];

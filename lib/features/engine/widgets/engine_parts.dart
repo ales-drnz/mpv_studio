@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
 
-/// One panel of the Engine view: a caption title with an optional trailing
-/// readout over a flat rounded card.
+/// One panel of the Engine view: a heading with an optional trailing state
+/// pill over a tonal card.
 class EngineCard extends StatelessWidget {
   final String title;
   final String? caption;
@@ -21,15 +21,10 @@ class EngineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        Tokens.s16,
-        Tokens.s12,
-        Tokens.s16,
-        Tokens.s16,
-      ),
+      padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.shape(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,23 +32,19 @@ class EngineCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  title.toUpperCase(),
-                  style: Tokens.caption.copyWith(
-                    color: Tokens.fgDim,
-                    letterSpacing: 0.6,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Semantics(
+                  header: true,
+                  child: Text(title, style: Tokens.heading),
                 ),
               ),
               ?trailing,
             ],
           ),
           if (caption != null) ...[
-            const SizedBox(height: Tokens.s2),
-            Text(caption!, style: Tokens.caption),
+            const SizedBox(height: Tokens.s4),
+            Text(caption!, style: Tokens.label),
           ],
-          const SizedBox(height: Tokens.s12),
+          const SizedBox(height: Tokens.s16),
           child,
         ],
       ),
@@ -83,13 +74,12 @@ class Spy extends StatelessWidget {
             duration: const Duration(milliseconds: 160),
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: on ? lit : Tokens.surface3,
-              border: Border.all(color: on ? lit : Tokens.line2),
+            decoration: ShapeDecoration(
+              shape: const CircleBorder(),
+              color: on ? lit : Tokens.surface4,
             ),
           ),
-          const SizedBox(width: Tokens.s6),
+          const SizedBox(width: Tokens.s8),
           Text(
             label,
             style: Tokens.numeric.copyWith(
@@ -102,7 +92,8 @@ class Spy extends StatelessWidget {
   }
 }
 
-/// A filled rounded chip naming a state, tinted by [color].
+/// A pill naming a state: [color] at 16% with the colour as text, or a
+/// quiet tonal pill when not [strong].
 class StatePill extends StatelessWidget {
   final String text;
   final Color color;
@@ -118,10 +109,13 @@ class StatePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Tokens.s12,
+        vertical: Tokens.s4,
+      ),
       decoration: ShapeDecoration(
-        color: color.withValues(alpha: strong ? 0.18 : 0.08),
-        shape: Tokens.shape(Tokens.rSm),
+        color: strong ? color.withValues(alpha: 0.16) : Tokens.surface3,
+        shape: Tokens.pill,
       ),
       child: Text(
         text,
@@ -149,14 +143,14 @@ class Readout extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(label, style: Tokens.caption),
-        const SizedBox(height: Tokens.s2),
+        const SizedBox(height: Tokens.s4),
         Text(
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Tokens.numeric.copyWith(
             color: color ?? Tokens.fg,
-            fontSize: 12.5,
+            fontSize: 13,
           ),
         ),
       ],
@@ -197,8 +191,8 @@ class ReadoutGrid extends StatelessWidget {
   }
 }
 
-/// A thin rounded progress track, filled to [fraction] in [color] (the
-/// accent by default).
+/// A thin pill progress track, filled to [fraction] in [color] (the
+/// accent by default) over the inactive track tone.
 class ThinBar extends StatelessWidget {
   final double fraction;
   final Color? color;
@@ -213,14 +207,14 @@ class ThinBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(height / 2),
+    return ClipPath(
+      clipper: const ShapeBorderClipper(shape: StadiumBorder()),
       child: SizedBox(
         height: height,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            ColoredBox(color: Tokens.surface3),
+            ColoredBox(color: Tokens.surface4),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: fraction.clamp(0.0, 1.0),
