@@ -1,34 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../layout/layout_scope.dart';
 import '../tokens.dart';
 import 'controls.dart';
 import 'section_header.dart';
-
-/// Standard scrollable body for a section: a column with the window
-/// class's page padding (`context.layout.pagePadding`) unless [padding] is
-/// given. It fills the full stage width; pages that want a readable width
-/// cap use `PageFrame` instead.
-class SectionBody extends StatelessWidget {
-  final List<Widget> children;
-  final EdgeInsetsGeometry? padding;
-  final CrossAxisAlignment crossAxisAlignment;
-
-  const SectionBody({
-    super.key,
-    required this.children,
-    this.padding,
-    this.crossAxisAlignment = CrossAxisAlignment.stretch,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: padding ?? context.layout.pagePadding,
-      child: Column(crossAxisAlignment: crossAxisAlignment, children: children),
-    );
-  }
-}
 
 /// A labelled group of settings rows inside a single flat card. The
 /// label sits above the card in caption type; rows sit flush, separated
