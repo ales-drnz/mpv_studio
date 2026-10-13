@@ -76,7 +76,11 @@ class HttpOptions {
       if (n != null) return '$name: $n';
     }
     final ua = headerValueProblem(userAgent);
-    return ua == null ? null : 'User agent: $ua';
+    if (ua == null) return null;
+    // A browser user agent has commas ("KHTML, like Gecko"); the global one
+    // is set as a raw property, which takes them.
+    return 'User agent: $ua A user agent with commas goes in Settings, '
+        'Network.';
   }
 
   /// [url] as a [Media] with these options and [extras].

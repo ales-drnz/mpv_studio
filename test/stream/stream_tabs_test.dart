@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/http_options.dart';
+import 'package:mpv_studio/features/stream/lab_tab.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
@@ -239,6 +240,39 @@ void main() {
       await tester.pump();
       expect(player.loaded, isEmpty);
       expect(find.text('Accept: commas are not allowed.'), findsOneWidget);
+    });
+
+    testWidgets('a browser user agent is sent to Settings, Network', (
+      tester,
+    ) async {
+      final player = StreamPlayer();
+      await pumpAt(
+        tester,
+        Scaffold(
+          body: LabTab(
+            actions: actionsFor(player),
+            hasGlobalUserAgent: () => true,
+          ),
+        ),
+        '1440x900',
+      );
+      await openOptions(tester);
+      expect(find.text('Default (Settings, Network)'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'User agent'),
+        'Mozilla/5.0 (KHTML, like Gecko)',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Paste a URL'),
+        'http://localhost:8000/a.flac',
+      );
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(player.loaded, isEmpty);
+      expect(
+        find.textContaining('A user agent with commas goes in Settings'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a bare URL plays with no options', (tester) async {

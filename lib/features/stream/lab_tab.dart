@@ -13,9 +13,18 @@ import 'widgets/reference_list.dart';
 /// reference streams. No chunking by default: these are fast, trusted
 /// servers where one open-ended request buffers fastest.
 class LabTab extends StatelessWidget {
-  const LabTab({super.key, required this.actions});
+  const LabTab({
+    super.key,
+    required this.actions,
+    this.hasGlobalUserAgent = _none,
+  });
 
   final StreamActions actions;
+
+  /// Whether Settings, Network sets a user agent for every stream.
+  final bool Function() hasGlobalUserAgent;
+
+  static bool _none() => false;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +32,7 @@ class LabTab extends StatelessWidget {
       player: actions.player,
       builder: (context, pl) => StreamTabBody(
         children: [
-          UrlEntry(actions: actions),
+          UrlEntry(actions: actions, hasGlobalUserAgent: hasGlobalUserAgent),
           const SizedBox(height: Tokens.s16),
           ...referenceRows(
             categories: labStreams,
@@ -40,9 +49,16 @@ class LabTab extends StatelessWidget {
 /// options and, open, their panel. Plays the URL as a [Media] carrying the
 /// options, and remembers them for the session ([HttpOptions.lastUsed]).
 class UrlEntry extends StatefulWidget {
-  const UrlEntry({super.key, required this.actions});
+  const UrlEntry({
+    super.key,
+    required this.actions,
+    this.hasGlobalUserAgent = LabTab._none,
+  });
 
   final StreamActions actions;
+
+  /// Whether Settings, Network sets a user agent for every stream.
+  final bool Function() hasGlobalUserAgent;
 
   @override
   State<UrlEntry> createState() => _UrlEntryState();
@@ -111,6 +127,7 @@ class _UrlEntryState extends State<UrlEntry> {
                   padding: const EdgeInsets.only(top: Tokens.s8),
                   child: HttpOptionsPanel(
                     initial: _options,
+                    globalUserAgent: widget.hasGlobalUserAgent(),
                     onChanged: (o) => setState(() {
                       _options = o;
                       if (_problem != null) _problem = o.problem;

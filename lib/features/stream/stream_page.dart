@@ -56,6 +56,7 @@ class StreamPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final issues = PlayerScope.issuesOf(context);
+    final settings = PlayerScope.settingsOf(context);
     return StreamView(
       actions: StreamActions(
         player: PlayerScope.of(context),
@@ -67,6 +68,7 @@ class StreamPage extends StatelessWidget {
       plex: PlayerScope.serverOf(context, ServerKind.plex),
       favorites: PlayerScope.favoritesOf(context),
       resolver: SignedUrlResolver.shared,
+      hasGlobalUserAgent: () => settings.userAgent.isNotEmpty,
       initialTab: initialTab ?? StreamTab.lab,
       tabRequest: initialTab == null ? null : tabRequest,
     );
@@ -84,6 +86,7 @@ class StreamView extends StatefulWidget {
     required this.plex,
     required this.favorites,
     required this.resolver,
+    this.hasGlobalUserAgent = _noGlobalUserAgent,
     this.initialTab = StreamTab.lab,
     this.tabRequest,
     this.samba,
@@ -94,6 +97,12 @@ class StreamView extends StatefulWidget {
   final MediaServer plex;
   final FavoritesController favorites;
   final SignedUrlResolver resolver;
+
+  /// Whether Settings, Network sets a user agent for every stream (the Lab
+  /// options say so in their hint).
+  final bool Function() hasGlobalUserAgent;
+
+  static bool _noGlobalUserAgent() => false;
   final StreamTab initialTab;
 
   /// The navigation that asked for [initialTab]. The page stays alive, so
@@ -145,7 +154,10 @@ class _StreamViewState extends State<StreamView>
   }
 
   Widget _body(StreamTab tab) => switch (tab) {
-    StreamTab.lab => LabTab(actions: widget.actions),
+    StreamTab.lab => LabTab(
+      actions: widget.actions,
+      hasGlobalUserAgent: widget.hasGlobalUserAgent,
+    ),
     StreamTab.chapters => ChaptersTab(actions: widget.actions),
     StreamTab.resolver => ResolverTab(
       actions: widget.actions,
