@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/effects/rack_controller.dart';
+import '../features/now_playing/track_identity.dart';
+import '../features/now_playing/transport_actions.dart';
+import '../features/now_playing/widgets/cover_art.dart';
+import '../features/now_playing/widgets/transport_controls.dart';
 import '../studio/playback_issues.dart';
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
@@ -9,16 +13,19 @@ import '../util/duration_format.dart';
 import '../util/reactive.dart';
 
 /// The persistent mini-player shown on every section but Playback: cover,
-/// title and artist, play and pause bound to `playWhenReady`, next, a thin
-/// seekable progress bar, a loading and buffering indicator from
-/// `playbackState`, and the FX bypass toggle of the effects [rack].
+/// title and artist, play and pause bound to `playWhenReady`, previous and
+/// next, a thin seekable progress bar, a ring while the track loads,
+/// buffers or seeks, and the FX bypass toggle of the effects [rack].
 ///
 /// [variant] fits it to the shell: a full [MiniPlayerVariant.bar] under
 /// the sidebar or the rail, a trimmed [MiniPlayerVariant.compact] bar above
 /// the phone tab bar, or a vertical [MiniPlayerVariant.rail] stack at the
-/// foot of the navigation rail on low windows. [onOpen] (tapping the cover
-/// or the title) goes to Playback. The player calls run through [guard].
-/// The shell owns the safe-area insets around it.
+/// foot of the navigation rail on low windows. Tapping the cover or the
+/// title calls [onOpen] (Playback). On touch, a swipe left or right on
+/// them goes to the next or previous track and a swipe up opens Playback;
+/// with a pointer they light up on hover and a right-click opens a menu.
+/// Next and previous say so at either end of the queue. The player calls
+/// run through [guard]; the shell owns the safe-area insets around it.
 class MiniPlayer extends StatelessWidget {
   final PlayerApi player;
   final RackController? rack;
@@ -35,13 +42,95 @@ class MiniPlayer extends StatelessWidget {
     this.guard = unguarded,
   });
 
+  /// The swipe speed, in logical pixels per second, that counts as a
+  /// swipe rather than a slow drag.
+  static const double _swipeVelocity = 300;
+
+  void _skip(BuildContext context, {required bool forward}) =>
+      skipTrack(player, guard, forward: forward, notify: feedbackFor(context));
+
+  Future<void> _menu(BuildContext context, Offset position) async {
+    final s = player.state;
+    final picked = await showStudioMenu<_MiniAction>(
+      context,
+      position: position,
+      title: 'Playback',
+      items: [
+        if (onOpen != null)
+          const StudioMenuItem(
+            value: _MiniAction.open,
+            label: 'Open Playback',
+            icon: Icons.open_in_full_rounded,
+          ),
+        StudioMenuItem(
+          value: _MiniAction.playPause,
+          label: s.playWhenReady ? 'Pause' : 'Play',
+          icon: s.playWhenReady
+              ? Icons.pause_rounded
+              : Icons.play_arrow_rounded,
+        ),
+        const StudioMenuItem(
+          value: _MiniAction.previous,
+          label: 'Previous track',
+          icon: Icons.skip_previous_rounded,
+        ),
+        const StudioMenuItem(
+          value: _MiniAction.next,
+          label: 'Next track',
+          icon: Icons.skip_next_rounded,
+        ),
+        StudioMenuItem(
+          value: _MiniAction.mute,
+          label: s.mute ? 'Unmute' : 'Mute',
+          icon: s.mute ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+        ),
+        const StudioMenuItem(
+          value: _MiniAction.stop,
+          label: 'Stop',
+          icon: Icons.stop_rounded,
+        ),
+      ],
+    );
+    if (!context.mounted) return;
+    switch (picked) {
+      case null:
+        return;
+      case _MiniAction.open:
+        onOpen?.call();
+      case _MiniAction.playPause:
+        await togglePlay(player, guard);
+      case _MiniAction.previous:
+        _skip(context, forward: false);
+      case _MiniAction.next:
+        _skip(context, forward: true);
+      case _MiniAction.mute:
+        await guard(() => player.setMute(!s.mute));
+      case _MiniAction.stop:
+        await guard(player.stop);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (variant == MiniPlayerVariant.rail) {
-      return _RailMini(player: player, guard: guard);
+      return _RailMini(
+        player: player,
+        guard: guard,
+        onNext: () => _skip(context, forward: true),
+      );
     }
     final compact = variant == MiniPlayerVariant.compact;
+    final touch = context.layout.isTouch;
     final cover = compact ? 40.0 : 44.0;
+    final info = Row(
+      children: [
+        ExcludeSemantics(
+          child: CoverArtView(player: player, size: cover, radius: Tokens.rSm),
+        ),
+        const SizedBox(width: Tokens.s12),
+        Expanded(child: _MiniTitle(player: player)),
+      ],
+    );
     return Material(
       color: Tokens.surface,
       child: Container(
@@ -63,20 +152,42 @@ class MiniPlayer extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Semantics(
-                      button: onOpen != null,
-                      hint: onOpen != null ? 'Open Playback' : null,
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: InkWell(
-                          onTap: onOpen,
-                          customBorder: Tokens.squircle(Tokens.rSm),
-                          child: Row(
-                            children: [
-                              _MiniCover(player: player, size: cover),
-                              const SizedBox(width: Tokens.s12),
-                              Expanded(child: _MiniTitle(player: player)),
-                            ],
+                    child: GestureDetector(
+                      key: const ValueKey('mini-info'),
+                      onSecondaryTapUp: (d) => _menu(context, d.globalPosition),
+                      onLongPressStart: (d) => _menu(context, d.globalPosition),
+                      onHorizontalDragEnd: touch
+                          ? (d) {
+                              final v = d.primaryVelocity ?? 0;
+                              if (v.abs() < _swipeVelocity) return;
+                              _skip(context, forward: v < 0);
+                            }
+                          : null,
+                      onVerticalDragEnd: touch && onOpen != null
+                          ? (d) {
+                              if ((d.primaryVelocity ?? 0) < -_swipeVelocity) {
+                                onOpen!();
+                              }
+                            }
+                          : null,
+                      child: Semantics(
+                        button: onOpen != null,
+                        hint: onOpen != null ? 'Open Playback' : null,
+                        onTap: onOpen,
+                        child: _OpenTooltip(
+                          enabled: onOpen != null,
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              onTap: onOpen,
+                              customBorder: Tokens.squircle(Tokens.rSm),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: context.layout.minTap,
+                                ),
+                                child: info,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -87,11 +198,17 @@ class MiniPlayer extends StatelessWidget {
                     FxBypassToggle(rack: rack!, compact: compact),
                     SizedBox(width: compact ? Tokens.s2 : Tokens.s8),
                   ],
+                  if (!compact)
+                    TransportButton(
+                      icon: Icons.skip_previous_rounded,
+                      tooltip: 'Previous',
+                      onTap: () => _skip(context, forward: false),
+                    ),
                   _PlayPause(player: player, guard: guard),
-                  _MiniGlyph(
+                  TransportButton(
                     icon: Icons.skip_next_rounded,
                     tooltip: 'Next',
-                    onTap: () => guard(player.next),
+                    onTap: () => _skip(context, forward: true),
                   ),
                 ],
               ),
@@ -103,12 +220,32 @@ class MiniPlayer extends StatelessWidget {
   }
 }
 
+enum _MiniAction { open, playPause, previous, next, mute, stop }
+
+/// "Open Playback" on hover, when the title opens it.
+class _OpenTooltip extends StatelessWidget {
+  const _OpenTooltip({required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => enabled
+      ? Tooltip(
+          message: 'Open Playback',
+          waitDuration: const Duration(milliseconds: 600),
+          child: child,
+        )
+      : child;
+}
+
 /// The shapes of the [MiniPlayer].
 enum MiniPlayerVariant {
-  /// A full-width bar: cover, title, FX toggle, play and next.
+  /// A full-width bar: cover, title, FX toggle, previous, play and next.
   bar,
 
-  /// The bar trimmed for a phone: smaller cover, icon-only FX toggle.
+  /// The bar trimmed for a phone: smaller cover, icon-only FX toggle, no
+  /// previous button (swipe right on the title instead).
   compact,
 
   /// A narrow vertical stack for the navigation rail: play and pause ringed
@@ -117,11 +254,16 @@ enum MiniPlayerVariant {
 }
 
 /// The rail mini-player: play and pause inside a ring that shows the
-/// progress (or spins while loading), then next.
+/// progress (or spins while waiting), then next.
 class _RailMini extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
-  const _RailMini({required this.player, required this.guard});
+  final VoidCallback onNext;
+  const _RailMini({
+    required this.player,
+    required this.guard,
+    required this.onNext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -143,10 +285,10 @@ class _RailMini extends StatelessWidget {
             },
           ),
         ),
-        _MiniGlyph(
+        TransportButton(
           icon: Icons.skip_next_rounded,
           tooltip: 'Next',
-          onTap: () => guard(player.next),
+          onTap: onNext,
         ),
       ],
     );
@@ -221,7 +363,7 @@ class MiniProgressBar extends StatelessWidget {
                 : null,
             child: Tooltip(
               message: seekable
-                  ? '${formatDuration(position)} / ${formatDuration(duration)}'
+                  ? '${formatDuration(position)} of ${formatDuration(duration)}'
                   : 'Nothing to seek',
               waitDuration: const Duration(milliseconds: 600),
               child: LayoutBuilder(
@@ -267,122 +409,39 @@ class MiniProgressBar extends StatelessWidget {
   }
 }
 
-class _MiniCover extends StatelessWidget {
-  final PlayerApi player;
-  final double size;
-  const _MiniCover({required this.player, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholder = ColoredBox(
-      color: Tokens.surface2,
-      child: Center(
-        child: Icon(Icons.music_note_rounded, size: 20, color: Tokens.fgFaint),
-      ),
-    );
-    return ExcludeSemantics(
-      child: SizedBox.square(
-        dimension: size,
-        child: ClipPath(
-          clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rSm)),
-          child: Live<Playlist>(
-            stream: player.stream.playlist,
-            initial: player.state.playlist,
-            builder: (context, pl) => Live<CoverArt?>(
-              stream: player.stream.coverArt,
-              initial: player.state.coverArt,
-              builder: (context, art) {
-                if (art != null) {
-                  return Image.memory(
-                    art.bytes,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => placeholder,
-                  );
-                }
-                final url = nowPlayingExtra(pl, 'art');
-                if (url != null) {
-                  return Image.network(
-                    url,
-                    fit: BoxFit.cover,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, _, _) => placeholder,
-                  );
-                }
-                return placeholder;
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A non-empty string [key] from the current queue item's extras.
-String? nowPlayingExtra(Playlist pl, String key) {
-  if (pl.index < 0 || pl.index >= pl.items.length) return null;
-  final v = pl.items[pl.index].extras?[key];
-  return (v is String && v.isNotEmpty) ? v : null;
-}
-
-String? _tag(Map<String, String> m, String key) {
-  for (final e in m.entries) {
-    if (e.key.toLowerCase() == key) return e.value;
-  }
-  return null;
-}
-
 class _MiniTitle extends StatelessWidget {
   final PlayerApi player;
   const _MiniTitle({required this.player});
 
   @override
   Widget build(BuildContext context) {
-    return Live<Playlist>(
-      stream: player.stream.playlist,
-      initial: player.state.playlist,
-      builder: (context, pl) => Live<Map<String, String>>(
-        stream: player.stream.metadata,
-        initial: player.state.metadata,
-        builder: (context, meta) => Live<String>(
-          stream: player.stream.mediaTitle,
-          initial: player.state.mediaTitle,
-          builder: (context, mediaTitle) {
-            final title =
-                _tag(meta, 'title') ??
-                nowPlayingExtra(pl, 'title') ??
-                (mediaTitle.isNotEmpty ? mediaTitle : 'Nothing playing');
-            final artist =
-                _tag(meta, 'artist') ?? nowPlayingExtra(pl, 'artist');
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Tokens.body.copyWith(fontWeight: FontWeight.w600),
-                ),
-                if (artist != null)
-                  Text(
-                    artist,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Tokens.label,
-                  ),
-              ],
-            );
-          },
-        ),
+    return LiveTrackIdentity(
+      player: player,
+      builder: (context, id) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            id.displayTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Tokens.body.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (id.artist case final artist?)
+            Text(
+              artist,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Tokens.label,
+            ),
+        ],
       ),
     );
   }
 }
 
-/// Play and pause, bound to `playWhenReady`, ringed by a spinner while
-/// `playbackState` is loading or buffering.
+/// Play and pause, bound to `playWhenReady`, ringed by a spinner while the
+/// track loads, buffers or seeks.
 class _PlayPause extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
@@ -393,42 +452,34 @@ class _PlayPause extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Live<MpvPlaybackState>(
-      stream: player.stream.playbackState,
-      initial: MpvPlaybackState.idle,
-      builder: (context, phase) => Live<bool>(
+    return PlaybackBusy(
+      player: player,
+      builder: (context, wait) => Live<bool>(
         stream: player.stream.playWhenReady,
         initial: player.state.playWhenReady,
         builder: (context, wants) {
-          final waiting =
-              phase == MpvPlaybackState.loading ||
-              phase == MpvPlaybackState.buffering;
-          final stateLabel = switch (phase) {
-            MpvPlaybackState.loading => 'Loading',
-            MpvPlaybackState.buffering => 'Buffering',
-            _ => null,
-          };
           final action = wants ? 'Pause' : 'Play';
           final dimension = context.layout.isTouch ? 48.0 : 44.0;
+          void onTap() => guard(wants ? player.pause : player.play);
           return Semantics(
             button: true,
             label: action,
-            value: stateLabel,
+            value: wait?.label,
             excludeSemantics: true,
-            onTap: () => guard(wants ? player.pause : player.play),
+            onTap: onTap,
             child: Tooltip(
-              message: stateLabel == null ? action : '$action ($stateLabel)',
+              message: wait == null ? action : '$action (${wait.label})',
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  onTap: () => guard(wants ? player.pause : player.play),
+                  onTap: onTap,
                   customBorder: const CircleBorder(),
                   child: SizedBox.square(
                     dimension: dimension,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        if (waiting)
+                        if (wait != null)
                           SizedBox.square(
                             key: const ValueKey('mini-waiting'),
                             dimension: dimension - 2,
@@ -471,47 +522,6 @@ class _PlayPause extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _MiniGlyph extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  const _MiniGlyph({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: tooltip,
-      excludeSemantics: true,
-      onTap: onTap,
-      child: Tooltip(
-        message: tooltip,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const CircleBorder(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: context.layout.minTap,
-                minHeight: context.layout.minTap,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(Tokens.s8),
-                child: Icon(icon, size: 24, color: Tokens.fg),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
