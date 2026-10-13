@@ -25,7 +25,7 @@ void main() {
     final node = tester.getSemantics(
       find.bySemanticsLabel('18-band equalizer curve'),
     );
-    expect(node.value, '65 Hz +3.0 dB, 1k Hz -2.0 dB');
+    expect(node.value, '65 Hz +3.0 dB, 1 kHz -2.0 dB');
     handle.dispose();
   });
 
