@@ -112,7 +112,22 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     actions: widget.actions,
     favorites: widget.favorites,
     options: _options,
+    onFailure: _onPlaybackFailure,
   );
+
+  /// A queue entry the server could not build: an expired session goes
+  /// back to the sign-in form, anything else is said in a snackbar.
+  void _onPlaybackFailure(Object error) {
+    if (!mounted) return;
+    final kind = _server.classify(error);
+    if (kind == FailureKind.auth) {
+      widget.onSessionExpired();
+      return;
+    }
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(SnackBar(content: Text(describeFailure(kind, error))));
+  }
 
   /// The page key is the start offset, the count of items already loaded;
   /// null once the server's total is reached.

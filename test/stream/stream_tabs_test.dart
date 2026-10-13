@@ -326,6 +326,24 @@ void main() {
       expect(first.uri, 'https://jellyfin.test/t1?mode=transcode');
     });
 
+    testWidgets('a song that cannot be built returns to the sign-in form', (
+      tester,
+    ) async {
+      final player = StreamPlayer();
+      final server = FakeServer(connected: true, tracks: [_track1])
+        ..streamError = const NotConnectedException('Jellyfin');
+      await pumpAt(
+        tester,
+        streamView(player: player, jellyfin: server, tab: StreamTab.jellyfin),
+        '1440x900',
+      );
+      await tester.tap(find.text('First light'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(player.loaded, isEmpty);
+      expect(find.text('Connect to Jellyfin'), findsOneWidget);
+    });
+
     testWidgets('a network failure offers a retry', (tester) async {
       final server = FakeServer(
         connected: true,

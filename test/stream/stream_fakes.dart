@@ -192,8 +192,14 @@ class FakeServer extends MediaServer {
       albumTracks[album.id] ?? const [];
 
   @override
-  String streamUrl(ServerTrack track, StreamOptions options) =>
-      'https://${kind.name}.test/${track.id}?mode=${options.mode.name}';
+  String streamUrl(ServerTrack track, StreamOptions options) {
+    final e = streamError;
+    if (e != null) throw e;
+    return 'https://${kind.name}.test/${track.id}?mode=${options.mode.name}';
+  }
+
+  /// Thrown by [streamUrl]; null builds the URL.
+  Object? streamError;
 
   @override
   Future<void> setFavorite(String trackId, bool isFavorite) async =>
