@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/round_icon_button.dart';
+import '../../../ui/widgets/studio_snack.dart';
 
 /// Shown when the current entry came from a playlist file
 /// (`stream.playlistPath`): its name and buttons to the previous and next
@@ -42,11 +43,7 @@ class PlaylistBanner extends StatelessWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final moved = await go();
     if (moved != false || messenger == null) return;
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(none), duration: const Duration(seconds: 3)),
-      );
+    messenger.showStudioSnack(none, duration: const Duration(seconds: 3));
   }
 
   @override

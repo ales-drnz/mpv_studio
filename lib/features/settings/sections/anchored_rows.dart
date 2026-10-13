@@ -4,6 +4,7 @@ import '../../../ui/widgets/controls.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
 import '../settings_scope.dart';
+import '../../../ui/widgets/studio_snack.dart';
 
 // The settings rows bound to a catalog entry: they take its title and
 // description, carry its search anchor, and run every change through the
@@ -141,9 +142,5 @@ Widget anchoredPath(
 
 /// Shows [message] as a short toast, for the result of an action row.
 void showSettingsMessage(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)
-    ?..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
+  showStudioSnack(context, message);
 }

@@ -17,6 +17,7 @@ import 'album_views.dart';
 import 'server_playback.dart';
 import 'stream_options_dialog.dart';
 import 'track_rows.dart';
+import '../../../ui/widgets/studio_snack.dart';
 
 /// What the connected library shows.
 enum LibraryView {
@@ -124,9 +125,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       widget.onSessionExpired();
       return;
     }
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(SnackBar(content: Text(describeFailure(kind, error))));
+    showStudioSnack(context, describeFailure(kind, error), replace: false);
   }
 
   /// The page key is the start offset, the count of items already loaded;
@@ -200,10 +199,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(describeFailure(_server.classify(e), _unwrap(e))),
-        ),
+      showStudioSnack(
+        context,
+        describeFailure(_server.classify(e), _unwrap(e)),
+        replace: false,
       );
     }
   }

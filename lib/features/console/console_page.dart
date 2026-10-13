@@ -16,6 +16,7 @@ import 'hook_monitor.dart';
 import 'suggestion_popup.dart';
 import 'widgets/console_controls.dart';
 import 'widgets/console_log_view.dart';
+import '../../ui/widgets/studio_snack.dart';
 
 /// The engine console of the app's player.
 class ConsolePage extends StatelessWidget {
@@ -164,15 +165,11 @@ class _ConsoleViewState extends State<ConsoleView>
     final text = _lines.where(_visible).map((l) => l.plain).join('\n');
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Log copied'),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
-      );
+    showStudioSnack(
+      context,
+      'Log copied',
+      duration: const Duration(seconds: 2),
+    );
   }
 
   Future<void> _showHelp() => showStudioDialog<void>(

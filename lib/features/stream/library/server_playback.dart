@@ -7,6 +7,7 @@ import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
 import 'track_rows.dart';
+import '../../../ui/widgets/studio_snack.dart';
 
 /// Plays a server's tracks with the picked [StreamOptions]: what the song
 /// list and the album detail call when a row is tapped or its menu used.
@@ -73,13 +74,9 @@ class ServerPlayback {
         for (final t in tracks) {
           final ok = await favorites.setFavorite(server.kind, t.id, value);
           if (!ok) {
-            messenger?.showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${server.name} did not save the favorite for '
-                  '"${t.title}".',
-                ),
-              ),
+            messenger?.showStudioSnack(
+              '${server.name} did not save the favorite for "${t.title}".',
+              replace: false,
             );
           }
         }

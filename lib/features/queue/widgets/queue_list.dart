@@ -10,6 +10,7 @@ import '../../../ui/tokens.dart';
 import '../queue_controller.dart';
 import '../queue_details.dart';
 import 'queue_tile.dart';
+import '../../../ui/widgets/studio_snack.dart';
 
 /// What the row menu offers.
 enum QueueAction {
@@ -258,17 +259,11 @@ class _QueueListState extends State<QueueList> {
       setState(() => _dismissed = null);
       return;
     }
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('Removed "$title"'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () => widget.controller.restore(removed, index),
-          ),
-        ),
-      );
+    messenger?.showStudioSnack(
+      'Removed "$title"',
+      actionLabel: 'Undo',
+      onAction: () => widget.controller.restore(removed, index),
+    );
   }
 
   @override

@@ -21,6 +21,7 @@ import 'widgets/queue_empty.dart';
 import 'widgets/queue_entry_info.dart';
 import 'widgets/queue_header.dart';
 import 'widgets/queue_list.dart';
+import '../../ui/widgets/studio_snack.dart';
 
 /// The live playback queue, a view onto `player.stream.playlist`, for the
 /// app's player.
@@ -134,12 +135,7 @@ class _QueueViewState extends State<QueueView> {
   }
 
   void _toast(String message) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
-      );
+    showStudioSnack(context, message, duration: const Duration(seconds: 3));
   }
 
   Future<void> _copy(Media media) async {
