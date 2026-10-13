@@ -5,6 +5,7 @@ import '../features/console/console_log.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
+import 'fx_bypass.dart';
 import 'loudness_normalizer.dart';
 import 'mpv_studio.dart';
 
@@ -38,6 +39,9 @@ class PlayerScope extends InheritedWidget {
   static LoudnessNormalizer normalizerOf(BuildContext context) =>
       _scope(context).normalizer;
 
+  /// The FX bypass (before and after comparison of the effects chain).
+  static FxBypass fxBypassOf(BuildContext context) => _scope(context).fxBypass;
+
   /// The connected server of the given [kind].
   static MediaServer serverOf(BuildContext context, ServerKind kind) =>
       _scope(context).servers[kind]!;
@@ -51,6 +55,5 @@ class PlayerScope extends InheritedWidget {
       _scope(context).favorites;
 
   @override
-  bool updateShouldNotify(PlayerScope oldWidget) =>
-      oldWidget.studio != studio;
+  bool updateShouldNotify(PlayerScope oldWidget) => oldWidget.studio != studio;
 }

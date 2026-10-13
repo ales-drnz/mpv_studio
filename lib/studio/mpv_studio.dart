@@ -6,6 +6,7 @@ import '../features/stream/media_server.dart';
 import '../features/stream/plex_transcode_session_manager.dart';
 import 'app_settings.dart';
 import 'audio_engine.dart';
+import 'fx_bypass.dart';
 import 'loudness_normalizer.dart';
 import 'media_servers.dart';
 
@@ -41,6 +42,10 @@ class MpvStudio {
   /// scan. The Settings toggle and the Now Playing badge observe this.
   final LoudnessNormalizer normalizer;
 
+  /// Before and after comparison for the effects chain, shared by the
+  /// mini-player toggle and the Effects page.
+  final FxBypass fxBypass;
+
   const MpvStudio._({
     required this.player,
     required this.settings,
@@ -48,6 +53,7 @@ class MpvStudio {
     required this.favorites,
     required this.consoleLog,
     required this.normalizer,
+    required this.fxBypass,
   });
 
   /// Powers the app on. Restores persisted settings, starts the audio engine
@@ -69,6 +75,13 @@ class MpvStudio {
     // subscription itself arms the scan, so an off toggle costs nothing.
     final normalizer = LoudnessNormalizer(engine.player, settings)..restore();
 
+    // The bypass holds persistence while it plays the muted copy, so a quit
+    // mid-comparison keeps the real rack on disk.
+    final fxBypass = FxBypass(
+      engine.player,
+      onHold: (hold, current) => settings.holdEffects(hold, current: current),
+    );
+
     return MpvStudio._(
       player: engine.player,
       settings: settings,
@@ -76,6 +89,7 @@ class MpvStudio {
       favorites: media.favorites,
       consoleLog: engine.consoleLog,
       normalizer: normalizer,
+      fxBypass: fxBypass,
     );
   }
 
@@ -83,6 +97,7 @@ class MpvStudio {
   /// log buffer, then tears down the audio engine last.
   Future<void> shutdown() async {
     normalizer.dispose();
+    fxBypass.dispose();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();

@@ -264,6 +264,18 @@ class AppSettings {
   /// The persisted DSP rack, decoded into the stages of an effects chain.
   List<AudioEffect> get effects => EffectsCodec.decode(_effectsBlob);
 
+  bool _effectsHeld = false;
+
+  /// Pauses the recording of the effects chain, e.g. while the FX bypass
+  /// swaps in a muted copy of the rack. Releasing the hold records
+  /// [current] so a change made during the hold is not lost.
+  void holdEffects(bool hold, {List<AudioEffect>? current}) {
+    _effectsHeld = hold;
+    if (!hold && current != null) {
+      _snap('effects', EffectsCodec.encode(current));
+    }
+  }
+
   /// Exclusive audio output has no observable stream, so the Settings
   /// toggle records it explicitly here (and calls the player setter).
   void recordExclusive(bool value) => _snap('audioExclusive', value);
@@ -361,7 +373,9 @@ class AppSettings {
         _data['specBands'] = v.bandCount;
         _scheduleSave();
       }),
-      s.audioEffects.listen((v) => _snap('effects', EffectsCodec.encode(v))),
+      s.audioEffects.listen((v) {
+        if (!_effectsHeld) _snap('effects', EffectsCodec.encode(v));
+      }),
     ]);
   }
 
