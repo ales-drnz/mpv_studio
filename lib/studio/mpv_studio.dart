@@ -7,6 +7,7 @@ import 'app_settings.dart';
 import 'audio_engine.dart';
 import 'loudness_normalizer.dart';
 import 'media_servers.dart';
+import 'playback_issues.dart';
 
 /// The running MPV Studio: every long-lived service the player app needs,
 /// owned in one place. [launch] turns the app on (settings → audio engine →
@@ -40,6 +41,10 @@ class MpvStudio {
   /// scan. The Settings toggle and the Now Playing badge observe this.
   final LoudnessNormalizer normalizer;
 
+  /// Engine errors made readable: toasts, the Console badge and the failed
+  /// queue entries.
+  final PlaybackIssues issues;
+
   const MpvStudio._({
     required this.player,
     required this.settings,
@@ -47,6 +52,7 @@ class MpvStudio {
     required this.favorites,
     required this.consoleLog,
     required this.normalizer,
+    required this.issues,
     required void Function() disposeServers,
   }) : _disposeServers = disposeServers;
 
@@ -63,6 +69,9 @@ class MpvStudio {
 
     final engine = await startAudioEngine(settings);
 
+    // Subscribed before anything loads, so no failure goes unseen.
+    final issues = PlaybackIssues.of(engine.player);
+
     final media = await connectMediaServers(engine.player);
 
     // Volume normalization rides the engine's offline loudness scan; the
@@ -76,6 +85,7 @@ class MpvStudio {
       favorites: media.favorites,
       consoleLog: engine.consoleLog,
       normalizer: normalizer,
+      issues: issues,
       disposeServers: media.dispose,
     );
   }
@@ -85,6 +95,7 @@ class MpvStudio {
   Future<void> shutdown() async {
     normalizer.dispose();
     _disposeServers();
+    issues.dispose();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();

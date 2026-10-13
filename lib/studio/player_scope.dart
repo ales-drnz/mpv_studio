@@ -7,6 +7,7 @@ import '../features/stream/media_server.dart';
 import 'app_settings.dart';
 import 'loudness_normalizer.dart';
 import 'mpv_studio.dart';
+import 'playback_issues.dart';
 
 /// Exposes the running [MpvStudio] — the single [Player] and the app's
 /// services — to the whole widget tree. MPV Studio is a single-player app, so
@@ -45,6 +46,10 @@ class PlayerScope extends InheritedWidget {
   /// The always-on engine-log buffer.
   static ConsoleLog consoleLogOf(BuildContext context) =>
       _scope(context).consoleLog;
+
+  /// Engine errors made readable (toasts, Console badge, failed entries).
+  static PlaybackIssues issuesOf(BuildContext context) =>
+      _scope(context).issues;
 
   /// The shared favourites store.
   static FavoritesController favoritesOf(BuildContext context) =>
