@@ -253,36 +253,65 @@ class PlexServer extends MediaServer {
     );
   }
 
+  /// What [streamUrl] registers for [track], as the named arguments of
+  /// [PlexTranscodeSessionManager.register].
+  static ({
+    String codec,
+    int bitrateKbps,
+    bool transcode,
+    String protocol,
+    String container,
+  })
+  _session(StreamOptions options) => (
+    codec: options.codec.value,
+    bitrateKbps: options.bitrateKbps,
+    transcode: options.transcodes,
+    protocol: options.protocol == StreamProtocol.dash ? 'dash' : 'hls',
+    container: options.effectiveTransport == StreamTransport.mpegts
+        ? 'mpegts'
+        : 'mp4',
+  );
+
+  // BOTH modes hand mpv a `plex-transcode://{session}` marker that the
+  // player's source resolver resolves just before playback. Plex's
+  // universal `start.*` URL is not openable by mpv, so direct play resolves
+  // to the original media Part URL, and a transcode runs /decision to start
+  // a session and get the real start.mpd or start.m3u8 (falling back to the
+  // same Part URL on a non-playable decision). Protocol and container are
+  // independent on Plex, except that DASH always rides fMP4 (see
+  // [StreamOptions.effectiveTransport]).
   @override
   String streamUrl(ServerTrack track, StreamOptions options) {
     final transcodes = _transcodes;
     if (transcodes == null) throw NotConnectedException(name);
-    final directUrl = _connected.streaming.universalAudioUrl(
-      ratingKey: track.id,
-      protocol: 'http',
-      directPlay: true,
-      directStream: true,
-    );
-    // BOTH modes hand mpv a `plex-transcode://{session}` marker that the
-    // player's source resolver resolves just before playback. Plex's
-    // universal `start.*` URL is not openable by mpv, so direct play
-    // resolves to the original media Part URL, and a transcode runs
-    // /decision to start a session and get the real start.mpd or
-    // start.m3u8 (falling back to the same Part URL on a non-playable
-    // decision). [directUrl] is only the last resort if the Part cannot be
-    // found. Protocol and container are independent on Plex, except that
-    // DASH always rides fMP4 (see [StreamOptions.effectiveTransport]).
+    final s = _session(options);
     return transcodes.register(
       ratingKey: track.id,
-      codec: options.codec.value,
-      fallbackUrl: directUrl,
-      bitrateKbps: options.bitrateKbps,
-      transcode: options.transcodes,
-      protocol: options.protocol == StreamProtocol.dash ? 'dash' : 'hls',
-      container: options.effectiveTransport == StreamTransport.mpegts
-          ? 'mpegts'
-          : 'mp4',
+      codec: s.codec,
+      bitrateKbps: s.bitrateKbps,
+      transcode: s.transcode,
+      protocol: s.protocol,
+      container: s.container,
     );
+  }
+
+  /// The session [streamUrl] registered, so a later session manager can
+  /// rebuild it (the in-app player restart builds a new [PlexServer] while
+  /// the queue keeps its markers).
+  @override
+  Map<String, Object?> mediaExtras(ServerTrack track, StreamOptions options) {
+    final s = _session(options);
+    return {
+      PlexTranscodeSessionManager.extrasKey:
+          PlexTranscodeSessionManager.sessionExtras(
+            ratingKey: track.id,
+            codec: s.codec,
+            bitrateKbps: s.bitrateKbps,
+            transcode: s.transcode,
+            protocol: s.protocol,
+            container: s.container,
+          ),
+    };
   }
 
   // Plex needs no demuxer override (the inherited null): its DASH and HLS

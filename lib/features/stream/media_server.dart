@@ -260,6 +260,11 @@ abstract class MediaServer {
   String? segmentContainer(StreamOptions options) =>
       options.transcodes ? options.effectiveTransport.label : null;
 
+  /// Extra [Media.extras] the entry for [track] needs to stay playable on
+  /// its own, beyond the tags; none by default.
+  Map<String, Object?> mediaExtras(ServerTrack track, StreamOptions options) =>
+      const {};
+
   /// Per-track libavformat demuxer options, handed to mpv as the file-local
   /// `demuxer-lavf-o` (through `Media.demuxerLavfOptions`) so they scope to
   /// exactly this stream. Null when none are needed, the common case.
