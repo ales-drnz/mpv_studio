@@ -70,17 +70,25 @@ class EmptyPlayback extends StatelessWidget {
                 alignment: WrapAlignment.center,
                 spacing: Tokens.s8,
                 runSpacing: Tokens.s8,
+                // One filled primary: playing the queue when it has
+                // entries, else opening files.
                 children: [
-                  FilledButton.icon(
-                    onPressed: onOpenFiles,
-                    icon: const Icon(Icons.folder_open_rounded),
-                    label: const Text('Open files'),
-                  ),
-                  if (queued)
-                    OutlinedButton.icon(
+                  if (queued) ...[
+                    FilledButton.icon(
                       onPressed: onPlayQueue,
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text('Play the queue'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: onOpenFiles,
+                      icon: const Icon(Icons.folder_open_rounded),
+                      label: const Text('Open files'),
+                    ),
+                  ] else
+                    FilledButton.icon(
+                      onPressed: onOpenFiles,
+                      icon: const Icon(Icons.folder_open_rounded),
+                      label: const Text('Open files'),
                     ),
                   OutlinedButton.icon(
                     onPressed: onOpenStream,

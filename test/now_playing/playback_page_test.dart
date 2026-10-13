@@ -234,6 +234,42 @@ void main() {
       expect(player.calls, ['jump 0']);
     });
 
+    testWidgets('playing the queue is the one primary, files second', (
+      tester,
+    ) async {
+      await _pumpPage(
+        tester,
+        PlaybackFake(
+          const PlayerState(
+            playlist: Playlist([
+              Media('https://example.test/a.flac'),
+            ], index: -1),
+          ),
+        ),
+      );
+      Finder button(String label) => find.ancestor(
+        of: find.text(label),
+        matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+      );
+      expect(tester.widget(button('Play the queue')), isA<FilledButton>());
+      expect(tester.widget(button('Open files')), isA<OutlinedButton>());
+      expect(find.byType(FilledButton), findsOneWidget);
+    });
+
+    testWidgets('an empty queue makes opening files the primary', (
+      tester,
+    ) async {
+      await _pumpPage(tester, PlaybackFake(const PlayerState()));
+      expect(find.text('Play the queue'), findsNothing);
+      expect(
+        find.ancestor(
+          of: find.text('Open files'),
+          matching: find.byType(FilledButton),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('a failed current track shows Retry and Next', (tester) async {
       final player = playingTrack();
       final failed = ValueNotifier<Set<Media>>({
