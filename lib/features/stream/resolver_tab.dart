@@ -83,6 +83,11 @@ class ResolverTab extends StatelessWidget {
   }
 }
 
+/// [url] with any `user:password@` taken out of its authorities, so the
+/// log never shows credentials typed into a URL.
+String withoutCredentials(String url) =>
+    url.replaceAll(RegExp(r'://[^/@\s]*@'), '://');
+
 /// Why [url] cannot be signed, or null when it can: the resolver only
 /// handles full http and https URLs.
 String? signableUrlProblem(String url) {
@@ -292,14 +297,16 @@ class ResolverLogTile extends StatelessWidget {
           ),
           const SizedBox(height: Tokens.s6),
           Text(
-            'uri  ${entry.uri}',
+            'uri  ${withoutCredentials(entry.uri)}',
             style: mono,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
-            entry.returned == null ? 'kept as is' : 'gave ${entry.returned}',
+            entry.returned == null
+                ? 'kept as is'
+                : 'gave ${withoutCredentials(entry.returned!)}',
             style: mono.copyWith(color: Tokens.fg),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
