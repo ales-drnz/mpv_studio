@@ -18,6 +18,8 @@ class TransportControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = PlayerScope.of(context);
+    // A seek with nothing loaded, or a stale queue index, throws: show it.
+    final guard = PlayerScope.issuesOf(context).guard;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -41,16 +43,16 @@ class TransportControls extends StatelessWidget {
                 _Glyph(
                   icon: Icons.skip_previous_rounded,
                   size: 28,
-                  onTap: player.previous,
+                  onTap: () => guard(player.previous),
                   // Long-press forces past the first entry (stops playback).
-                  onLongPress: () => player.previous(force: true),
+                  onLongPress: () => guard(() => player.previous(force: true)),
                   tooltip: 'Previous (long-press to force)',
                 ),
                 const SizedBox(width: Tokens.s16),
                 _Glyph(
                   icon: Icons.replay_10_rounded,
                   size: 26,
-                  onTap: () => player.seek(-_skip, relative: true),
+                  onTap: () => guard(() => player.seek(-_skip, relative: true)),
                   tooltip: 'Back 10s',
                 ),
                 const SizedBox(width: Tokens.s16),
@@ -59,23 +61,24 @@ class TransportControls extends StatelessWidget {
                   initial: player.state.playWhenReady,
                   builder: (context, playing) => _PlayButton(
                     playing: playing,
-                    onTap: () => playing ? player.pause() : player.play(),
+                    onTap: () =>
+                        guard(() => playing ? player.pause() : player.play()),
                   ),
                 ),
                 const SizedBox(width: Tokens.s16),
                 _Glyph(
                   icon: Icons.forward_10_rounded,
                   size: 26,
-                  onTap: () => player.seek(_skip, relative: true),
+                  onTap: () => guard(() => player.seek(_skip, relative: true)),
                   tooltip: 'Forward 10s',
                 ),
                 const SizedBox(width: Tokens.s16),
                 _Glyph(
                   icon: Icons.skip_next_rounded,
                   size: 28,
-                  onTap: player.next,
+                  onTap: () => guard(player.next),
                   // Long-press forces past the last entry (stops playback).
-                  onLongPress: () => player.next(force: true),
+                  onLongPress: () => guard(() => player.next(force: true)),
                   tooltip: 'Next (long-press to force)',
                 ),
               ],
@@ -103,7 +106,7 @@ class TransportControls extends StatelessWidget {
               _Glyph(
                 icon: Icons.stop_rounded,
                 size: 20,
-                onTap: player.stop,
+                onTap: () => guard(player.stop),
                 tooltip: 'Stop',
               ),
               const SizedBox(width: Tokens.s24),

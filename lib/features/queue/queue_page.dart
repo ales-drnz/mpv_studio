@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/tokens.dart';
 import '../../util/media_import.dart';
@@ -23,26 +24,34 @@ class _QueuePageState extends State<QueuePage> {
   // Not `final`: didChangeDependencies can fire more than once (inherited
   // deps changing, hot reload), and re-assigning a `late final` throws.
   late Player _player;
+  late PlaybackIssues _issues;
   bool _dragging = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _player = PlayerScope.of(context);
+    _issues = PlayerScope.issuesOf(context);
   }
+
+  /// Runs a queue [call], showing what it throws (a stale index, a source
+  /// that cannot be read) as a toast.
+  Future<void> _guard<T>(Future<T> Function() call) => _issues.guard<T>(call);
 
   Future<void> _enqueue(List<String> paths) async {
     final medias = [
       for (final p in paths) Media(p, extras: {'title': baseNameNoExt(p)}),
     ];
     if (medias.isEmpty) return;
-    if (_player.state.playlist.items.isEmpty) {
-      await _player.openAll(medias, play: true);
-    } else {
-      for (final m in medias) {
-        await _player.add(m);
+    await _guard(() async {
+      if (_player.state.playlist.items.isEmpty) {
+        await _player.openAll(medias, play: true);
+      } else {
+        for (final m in medias) {
+          await _player.add(m);
+        }
       }
-    }
+    });
   }
 
   Future<void> _addFiles() async => _enqueue(await pickAudioFiles());
@@ -61,7 +70,7 @@ class _QueuePageState extends State<QueuePage> {
     );
     final file = await openFile(acceptedTypeGroups: const [group]);
     if (file == null) return;
-    await _player.openPlaylistFile(Media(file.path), play: true);
+    await _guard(() => _player.openPlaylistFile(Media(file.path), play: true));
   }
 
   /// Swap a queue entry for a freshly picked file. `replace` is gapless
@@ -70,7 +79,9 @@ class _QueuePageState extends State<QueuePage> {
     final paths = await pickAudioFiles();
     if (paths.isEmpty) return;
     final p = paths.first;
-    await _player.replace(index, Media(p, extras: {'title': baseNameNoExt(p)}));
+    await _guard(
+      () => _player.replace(index, Media(p, extras: {'title': baseNameNoExt(p)})),
+    );
   }
 
   @override
@@ -91,7 +102,7 @@ class _QueuePageState extends State<QueuePage> {
               onAddFiles: _addFiles,
               onAddFolder: _addFolder,
               onLoadPlaylist: _loadPlaylist,
-              onClear: _player.clearPlaylist,
+              onClear: () => _guard(_player.clearPlaylist),
             ),
             // Source-playlist banner (.m3u/.pls the current entry was expanded
             // from) with cross-playlist navigation, shown only when loaded via
@@ -103,8 +114,8 @@ class _QueuePageState extends State<QueuePage> {
                 if (path.isEmpty) return const SizedBox.shrink();
                 return _PlaylistBanner(
                   path: path,
-                  onPrevPlaylist: _player.previousPlaylist,
-                  onNextPlaylist: _player.nextPlaylist,
+                  onPrevPlaylist: () => _guard(_player.previousPlaylist),
+                  onNextPlaylist: () => _guard(_player.nextPlaylist),
                 );
               },
             ),
@@ -134,7 +145,7 @@ class _QueuePageState extends State<QueuePage> {
                     // item removed at oldIndex.
                     onReorderItem: (oldIndex, newIndex) {
                       if (newIndex != oldIndex) {
-                        _player.move(oldIndex, newIndex);
+                        _guard(() => _player.move(oldIndex, newIndex));
                       }
                     },
                     itemBuilder: (context, i) {
@@ -145,9 +156,9 @@ class _QueuePageState extends State<QueuePage> {
                         title: _titleOf(item),
                         source: _sourceOf(item),
                         current: i == playlist.index,
-                        onTap: () => _player.jump(i),
+                        onTap: () => _guard(() => _player.jump(i)),
                         onReplace: () => _replace(i),
-                        onRemove: () => _player.remove(i),
+                        onRemove: () => _guard(() => _player.remove(i)),
                       );
                     },
                   );

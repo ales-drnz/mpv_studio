@@ -278,7 +278,8 @@ class _WaveformMeterState extends State<WaveformMeter>
     });
     // Sample-accurate landing — this is a precise waveform editor, exactly
     // where exact (vs keyframe) seeking matters.
-    _player.seek(target, exact: true);
+    PlayerScope.issuesOf(context)
+        .guard(() => _player.seek(target, exact: true));
   }
 
   void _seekToX(double localX, double width) =>
@@ -316,19 +317,23 @@ class _WaveformMeterState extends State<WaveformMeter>
     final choice = await Navigator.of(context, rootNavigator: true)
         .push<String>(_InstantMenuRoute(position: globalPos, entries: entries));
     if (!mounted) return;
-    switch (choice) {
-      case 'a':
-        _player.setAbLoopA(time);
-      case 'b':
-        _player.setAbLoopB(time);
-      case 'clear':
-        _player.setAbLoopA(null);
-        _player.setAbLoopB(null);
-      case 'prevch':
-        _player.setChapter(cur - 1);
-      case 'nextch':
-        _player.setChapter(cur + 1);
-    }
+    // The chapter list can change while the menu is open, and a setter
+    // throws on a stale index: show it instead of losing it.
+    await PlayerScope.issuesOf(context).guard(() async {
+      switch (choice) {
+        case 'a':
+          await _player.setAbLoopA(time);
+        case 'b':
+          await _player.setAbLoopB(time);
+        case 'clear':
+          await _player.setAbLoopA(null);
+          await _player.setAbLoopB(null);
+        case 'prevch':
+          await _player.setChapter(cur - 1);
+        case 'nextch':
+          await _player.setChapter(cur + 1);
+      }
+    });
   }
 
   void _setViewStart(double v) {

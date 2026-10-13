@@ -198,7 +198,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     });
   }
 
-  void _play(int index) {
+  Future<void> _play(int index) async {
     final items = _paging.value.items ?? const <ServerTrack>[];
     if (index < 0 || index >= items.length) return;
     final favorites = PlayerScope.favoritesOf(context);
@@ -245,7 +245,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
           },
         ),
     ];
-    _player?.openAll(medias, play: true, index: 0);
+    final player = _player;
+    if (player == null) return;
+    await PlayerScope.issuesOf(context)
+        .guard(() => player.openAll(medias, play: true, index: 0));
   }
 
   // ── Transcode option dropdowns (shown only in transcode mode) ────────

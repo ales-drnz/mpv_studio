@@ -2,6 +2,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../studio/player_scope.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
@@ -18,9 +19,12 @@ class AudioTrackGroup extends StatelessWidget {
       label: 'audio',
       extensions: ['mka', 'mp3', 'm4a', 'aac', 'flac', 'opus', 'ogg', 'wav'],
     );
+    final issues = PlayerScope.issuesOf(context);
     final file = await openFile(acceptedTypeGroups: const [group]);
     if (file == null) return;
-    await player.addAudioTrack(Media(file.path), select: true);
+    await issues.guard(
+      () => player.addAudioTrack(Media(file.path), select: true),
+    );
   }
 
   @override
@@ -72,7 +76,8 @@ class AudioTrackGroup extends StatelessWidget {
                           -2 => Track.off,
                           _ => Track.id(v),
                         };
-                        player.setAudioTrack(mode);
+                        PlayerScope.issuesOf(context)
+                            .guard(() => player.setAudioTrack(mode));
                       },
                     ),
                     InfoRow(
@@ -117,8 +122,9 @@ class AudioTrackGroup extends StatelessWidget {
                         title: 'Remove current external track',
                         description: 'Detach the loaded external audio file',
                         trailing: GestureDetector(
-                          onTap: () =>
-                              player.removeAudioTrack(Track.id(current.id)),
+                          onTap: () => PlayerScope.issuesOf(context).guard(
+                            () => player.removeAudioTrack(Track.id(current.id)),
+                          ),
                           child: const ValueBadge('Remove'),
                         ),
                       ),

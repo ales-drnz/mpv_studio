@@ -719,7 +719,9 @@ class _ReferenceTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = PlayerScope.of(context);
-    void play(String url) => player.open(_media(url), play: true);
+    final issues = PlayerScope.issuesOf(context);
+    Future<void> play(String url) =>
+        issues.guard(() => player.open(_media(url), play: true));
 
     return StreamBuilder<Playlist>(
       stream: player.stream.playlist,
@@ -769,15 +771,16 @@ class _StreamTile extends StatelessWidget {
   Media get _media =>
       Media(item.url, extras: {'title': item.label, 'artist': 'Stream'});
 
-  void _play() => player.open(_media, play: true);
+  Future<void> _play(BuildContext context) => PlayerScope.issuesOf(context)
+      .guard(() => player.open(_media, play: true));
 
-  void _enqueue() {
-    if (player.state.playlist.items.isEmpty) {
-      player.open(_media, play: true);
-    } else {
-      player.add(_media);
-    }
-  }
+  Future<void> _enqueue(BuildContext context) =>
+      PlayerScope.issuesOf(context).guard(() {
+        if (player.state.playlist.items.isEmpty) {
+          return player.open(_media, play: true);
+        }
+        return player.add(_media);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -790,7 +793,7 @@ class _StreamTile extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          onTap: _play,
+          onTap: () => _play(context),
           customBorder: Tokens.squircle(Tokens.rMd),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -831,14 +834,14 @@ class _StreamTile extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: _enqueue,
+                  onPressed: () => _enqueue(context),
                   icon: const Icon(Icons.playlist_add_rounded, size: 18),
                   color: Tokens.fgDim,
                   splashRadius: 18,
                   tooltip: 'Add to queue',
                 ),
                 IconButton(
-                  onPressed: _play,
+                  onPressed: () => _play(context),
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   color: Tokens.accent,
                   splashRadius: 18,
