@@ -229,11 +229,24 @@ class FakeShare implements SambaShare {
   final Map<String, List<SambaEntry>> tree;
   bool disconnected = false;
 
-  @override
-  Future<List<SambaEntry>> list(String path) async => tree[path] ?? const [];
+  /// Thrown by [disconnect]; null closes cleanly.
+  Object? disconnectError;
+
+  /// Listings that wait for their completer, by folder.
+  final Map<String, Completer<void>> gates = {};
 
   @override
-  Future<void> disconnect() async => disconnected = true;
+  Future<List<SambaEntry>> list(String path) async {
+    await gates[path]?.future;
+    return tree[path] ?? const [];
+  }
+
+  @override
+  Future<void> disconnect() async {
+    disconnected = true;
+    final e = disconnectError;
+    if (e != null) throw e;
+  }
 }
 
 /// [StreamActions] on [player], unguarded.

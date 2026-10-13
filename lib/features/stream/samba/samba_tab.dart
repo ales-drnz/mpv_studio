@@ -162,32 +162,44 @@ class _SambaTabState extends State<SambaTab> {
       _entries = null;
       _listError = null;
     });
+    // A dead connection (the usual reason to sign in again) may refuse to
+    // close; the saved login goes either way.
     try {
       await share?.disconnect();
-      await SambaLogin.clear();
     } catch (e) {
       debugPrint('Samba: disconnect failed: $e');
     }
+    try {
+      await SambaLogin.clear();
+    } catch (e) {
+      debugPrint('Samba: saved login not cleared: $e');
+    }
   }
 
-  /// Lists [path] and shows it.
+  /// Counts [_open] calls, so only the latest listing is shown.
+  int _listRequest = 0;
+
+  /// Lists [path] and shows it, unless another folder was opened (or the
+  /// share left) while it loaded.
   Future<void> _open(String path) async {
     final share = _connection;
     if (share == null) return;
+    final request = ++_listRequest;
+    bool stale() => !mounted || request != _listRequest || share != _connection;
     setState(() {
       _listing = true;
       _listError = null;
     });
     try {
       final entries = sortSambaEntries(await share.list(path));
-      if (!mounted) return;
+      if (stale()) return;
       setState(() {
         _path = path;
         _entries = entries;
         _listing = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (stale()) return;
       setState(() {
         _listing = false;
         _listError = e;
