@@ -3,55 +3,16 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
 import '../widgets/reference_list.dart';
 import '../widgets/stream_row.dart';
 import '../widgets/stream_states.dart';
+import 'server_cover.dart';
 import 'server_playback.dart';
 import 'track_rows.dart';
-
-/// Cover art of a server album or track, with a glyph while it loads or
-/// when there is none.
-class CoverArt extends StatelessWidget {
-  const CoverArt({super.key, required this.url, this.size});
-
-  final String? url;
-
-  /// A fixed side; null fills the parent.
-  final double? size;
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholder = ColoredBox(
-      color: Tokens.surface2,
-      child: Center(
-        child: Icon(Icons.album_rounded, size: 32, color: Tokens.fgFaint),
-      ),
-    );
-    final url = this.url;
-    final Widget image = url == null
-        ? placeholder
-        : Image.network(
-            url,
-            fit: BoxFit.cover,
-            gaplessPlayback: true,
-            errorBuilder: (_, _, _) => placeholder,
-            frameBuilder: (_, child, frame, sync) =>
-                frame == null && !sync ? placeholder : child,
-          );
-    return ExcludeSemantics(
-      child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rSm)),
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: AspectRatio(aspectRatio: 1, child: image),
-        ),
-      ),
-    );
-  }
-}
 
 /// The paged album grid: a [ResponsiveGrid] of covers that loads the next
 /// page as its end comes near, with loading, empty and error states.
@@ -114,7 +75,7 @@ class AlbumGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ResponsiveGrid(
-                  minTileWidth: 132,
+                  minTileWidth: 148,
                   children: [
                     for (final a in albums)
                       AlbumCard(
@@ -213,7 +174,7 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = Tokens.shape(Tokens.rMd);
+    final shape = Tokens.shape(Tokens.rLg);
     final sub = [
       album.artist,
       if (album.year != null) '${album.year}',
@@ -235,28 +196,48 @@ class AlbumCard extends StatelessWidget {
             child: Ink(
               padding: const EdgeInsets.all(Tokens.s8),
               decoration: ShapeDecoration(
-                color: selected ? Tokens.accentWash : Tokens.surface,
+                color: selected ? Tokens.accentContainer : Tokens.surface,
                 shape: shape,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CoverArt(url: album.artUrl),
-                  const SizedBox(height: Tokens.s8),
-                  Text(
-                    album.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Tokens.body.copyWith(
-                      color: selected ? Tokens.accent : Tokens.fg,
-                      fontWeight: FontWeight.w600,
+                  // Concentric with the card: its radius less the inset.
+                  ServerCover(url: album.artUrl, radius: Tokens.rMd),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Tokens.s8,
+                      Tokens.s12,
+                      Tokens.s8,
+                      Tokens.s4,
                     ),
-                  ),
-                  Text(
-                    sub.isEmpty ? ' ' : sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          album.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Tokens.body.copyWith(
+                            color: selected
+                                ? Tokens.onAccentContainer
+                                : Tokens.fg,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          sub.isEmpty ? ' ' : sub,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Tokens.label.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: selected
+                                ? Tokens.onAccentContainer
+                                : Tokens.fgDim,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -371,19 +352,22 @@ class _AlbumDetailState extends State<AlbumDetail> {
         tracks.length == 1 ? '1 track' : '${tracks.length} tracks',
     ].where((e) => e.isNotEmpty).join(', ');
     final ready = tracks != null && tracks.isNotEmpty;
+    final compact = context.layout.isCompact;
     return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s12),
+      padding: const EdgeInsets.only(top: Tokens.s4, bottom: Tokens.s16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.onBack != null)
+          if (widget.onBack != null) ...[
             RowButton(
-              icon: Icons.chevron_left_rounded,
+              icon: Icons.arrow_back_rounded,
               tooltip: 'Back to albums',
               onPressed: widget.onBack,
             ),
-          CoverArt(url: a.artUrl, size: context.layout.isCompact ? 72 : 96),
-          const SizedBox(width: Tokens.s12),
+            const SizedBox(width: Tokens.s8),
+          ],
+          ServerCover(url: a.artUrl, size: compact ? 88 : 120),
+          const SizedBox(width: Tokens.s16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,22 +376,28 @@ class _AlbumDetailState extends State<AlbumDetail> {
                   header: true,
                   child: Text(
                     a.title,
-                    style: Tokens.heading,
+                    style: Tokens.heading.copyWith(
+                      fontSize: compact ? 18 : 22,
+                      height: 28 / 22,
+                      fontWeight: FontWeight.w700,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (sub.isNotEmpty)
+                if (sub.isNotEmpty) ...[
+                  const SizedBox(height: Tokens.s4),
                   Text(
                     sub,
-                    style: Tokens.label,
+                    style: Tokens.body.copyWith(color: Tokens.fgDim),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                const SizedBox(height: Tokens.s8),
+                ],
+                const SizedBox(height: Tokens.s12),
                 Wrap(
-                  spacing: Tokens.s4,
-                  runSpacing: Tokens.s4,
+                  spacing: Tokens.s8,
+                  runSpacing: Tokens.s8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     StreamButton(
@@ -415,17 +405,23 @@ class _AlbumDetailState extends State<AlbumDetail> {
                       icon: Icons.play_arrow_rounded,
                       onPressed: ready ? () => p.playFrom(tracks, 0) : null,
                     ),
-                    RowButton(
+                    RoundIconButton(
                       icon: Icons.queue_play_next_rounded,
                       tooltip: 'Play next',
-                      onPressed: ready
+                      tone: RoundTone.tonal,
+                      size: 20,
+                      diameter: controlHeightOf(context),
+                      onTap: ready
                           ? () => p.run(context, RowAction.playNext, tracks)
                           : null,
                     ),
-                    RowButton(
+                    RoundIconButton(
                       icon: Icons.playlist_add_rounded,
                       tooltip: 'Add to queue',
-                      onPressed: ready
+                      tone: RoundTone.tonal,
+                      size: 20,
+                      diameter: controlHeightOf(context),
+                      onTap: ready
                           ? () => p.run(context, RowAction.addToQueue, tracks)
                           : null,
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/custom_url_bar.dart';
 import 'http_options.dart';
@@ -86,6 +87,7 @@ class _UrlEntryState extends State<UrlEntry> {
   @override
   Widget build(BuildContext context) {
     final count = _options.count;
+    final tap = context.layout.minTap;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -97,7 +99,14 @@ class _UrlEntryState extends State<UrlEntry> {
               onPressed: () => setState(() => _open = !_open),
               isSelected: _open,
               tooltip: _open ? 'Hide HTTP options' : 'HTTP options',
-              color: _open || count > 0 ? Tokens.accent : Tokens.fgDim,
+              color: _open ? Tokens.onAccentContainer : Tokens.fgDim,
+              style: IconButton.styleFrom(
+                backgroundColor: _open
+                    ? Tokens.accentContainer
+                    : Colors.transparent,
+              ),
+              constraints: BoxConstraints.tightFor(width: tap, height: tap),
+              padding: EdgeInsets.zero,
               icon: Badge(
                 isLabelVisible: count > 0,
                 label: Text('$count'),
@@ -109,12 +118,19 @@ class _UrlEntryState extends State<UrlEntry> {
           ],
         ),
         if (_problem != null) ...[
-          const SizedBox(height: Tokens.s8),
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              _problem!,
-              style: Tokens.label.copyWith(color: Tokens.red),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Tokens.s16,
+              Tokens.s8,
+              Tokens.s16,
+              0,
+            ),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                _problem!,
+                style: Tokens.label.copyWith(color: Tokens.red),
+              ),
             ),
           ),
         ],
@@ -124,7 +140,7 @@ class _UrlEntryState extends State<UrlEntry> {
           alignment: Alignment.topCenter,
           child: _open
               ? Padding(
-                  padding: const EdgeInsets.only(top: Tokens.s8),
+                  padding: const EdgeInsets.only(top: Tokens.s16),
                   child: HttpOptionsPanel(
                     initial: _options,
                     globalUserAgent: widget.hasGlobalUserAgent(),

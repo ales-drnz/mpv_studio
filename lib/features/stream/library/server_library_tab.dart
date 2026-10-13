@@ -106,6 +106,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     final plex = _server.kind == ServerKind.plex;
     return ServerSignInForm(
       formKey: _form,
+      icon: plex ? Icons.library_music_rounded : Icons.dns_rounded,
       title: 'Connect to ${_server.name}',
       subtitle: plex
           ? 'Your Plex account signs in through plex.tv; the server plays '
@@ -128,6 +129,7 @@ class ServerSignInForm extends StatelessWidget {
   const ServerSignInForm({
     super.key,
     required this.formKey,
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.hostHint,
@@ -141,6 +143,9 @@ class ServerSignInForm extends StatelessWidget {
   });
 
   final GlobalKey<FormState> formKey;
+
+  /// The server's glyph.
+  final IconData icon;
   final String title;
   final String subtitle;
   final String hostHint;
@@ -168,6 +173,7 @@ class ServerSignInForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return SignInCard(
       formKey: formKey,
+      icon: icon,
       title: title,
       subtitle: subtitle,
       busy: busy,

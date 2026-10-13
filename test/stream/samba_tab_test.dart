@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/features/stream/samba/samba_login_store.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
+import 'package:mpv_studio/features/stream/widgets/stream_form.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/layout_harness.dart';
@@ -97,9 +98,9 @@ void main() {
       '360x780',
     );
     expect(find.textContaining('no system keychain'), findsNothing);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Host'), 'nas');
+    await tester.enterText(find.widgetWithText(StreamTextField, 'Host'), 'nas');
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Share'),
+      find.widgetWithText(StreamTextField, 'Share'),
       'Music',
     );
     await failing.save(
