@@ -37,8 +37,12 @@ class QueueFakePlayer extends FakePlayer {
     if (play ?? false) emit((s) => s.copyWith(playWhenReady: true));
   }
 
+  /// When set, [openAll] waits for it, to observe an add in flight.
+  Completer<void>? openGate;
+
   @override
   Future<void> openAll(List<Media> medias, {bool? play, int index = 0}) async {
+    await openGate?.future;
     calls.add('openAll ${medias.length} play=$play');
     _set(medias, index);
     if (play ?? false) emit((s) => s.copyWith(playWhenReady: true));
@@ -108,7 +112,9 @@ class QueueFakePlayer extends FakePlayer {
 
   @override
   Future<void> stop() async {
+    // Like mpv's stop: unloads and clears the playlist.
     calls.add('stop');
+    _set(const [], -1);
     emit((s) => s.copyWith(playWhenReady: false));
   }
 
@@ -174,12 +180,28 @@ class QueueFakePlayer extends FakePlayer {
   final List<Hook> registeredHooks = [];
   final List<int> continuedHooks = [];
 
+  /// The timeout of each registered hook.
+  final Map<Hook, Duration?> hookTimeouts = {};
+
+  /// Hooks whose registration throws.
+  final Set<Hook> failingHooks = {};
+
   @override
   Future<void> registerHook(
     Hook hook, {
     int priority = 0,
     Duration? timeout,
-  }) async => registeredHooks.add(hook);
+  }) async {
+    if (failingHooks.contains(hook)) {
+      throw const MpvCommandException(
+        name: 'hook_add',
+        code: -12,
+        message: 'refused',
+      );
+    }
+    registeredHooks.add(hook);
+    hookTimeouts[hook] = timeout;
+  }
 
   @override
   Future<void> continueHook(int id) async => continuedHooks.add(id);

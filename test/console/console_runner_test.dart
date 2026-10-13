@@ -112,15 +112,64 @@ void main() {
       expect(await run('playlist-play-index 1'), [
         'routed: via Player.jump(1)',
       ]);
+      // Player.stop() would clear the queue: these keep it.
       expect(await run('playlist-play-index none'), [
-        'routed: via Player.stop()',
+        'routed: via raw playlist-play-index none, then Player.pause()',
       ]);
+      expect(await run('stop keep-playlist'), [
+        'routed: via raw stop keep-playlist, then Player.pause()',
+      ]);
+      expect(player.items, [_a, _b]);
+      expect(player.state.playWhenReady, isFalse);
+      expect(await run('playlist-remove current'), [
+        'routed: via Player.remove(1)',
+      ]);
+      expect(player.items, [_a]);
       expect(await run('stop'), ['routed: via Player.stop()']);
+      expect(player.items, isEmpty);
       expect(await run('playlist-next-playlist'), [
         'routed: via Player.nextPlaylist()',
         'output: No next playlist',
       ]);
       expect(await run('playlist-play-index 9'), [startsWith('error:')]);
+    });
+  });
+
+  group('mpv placement and play rules', () {
+    test('options with append-play do not unpause a loaded queue', () async {
+      player.emit((s) => s.copyWith(playlist: const Playlist([_a], index: 0)));
+      expect(await run('loadfile /b.flac append-play -1 start=5'), [
+        'routed: via raw loadfile (with options)',
+      ]);
+      expect(player.calls, isNot(contains('play')));
+      expect(await run('loadfile /b.flac replace -1 start=5'), [
+        'routed: via raw loadfile (with options), then Player.play()',
+      ]);
+    });
+
+    test('insert-next with nothing current appends', () async {
+      player.emit(
+        (s) => s.copyWith(playlist: const Playlist([_a, _b], index: -1)),
+      );
+      expect(await run('loadfile /c.flac insert-next'), [
+        'routed: via Player.add()',
+      ]);
+      expect(player.items.last.uri, '/c.flac');
+    });
+
+    test('insert-at with a negative index appends', () async {
+      player.emit(
+        (s) => s.copyWith(playlist: const Playlist([_a, _b], index: 0)),
+      );
+      expect(await run('loadfile /c.flac insert-at -1'), [
+        'routed: via Player.add()',
+      ]);
+      expect(player.items.last.uri, '/c.flac');
+    });
+
+    test('quit is not sent', () async {
+      expect((await run('quit')).single, startsWith('error: quit would'));
+      expect(player.rawCommands, isEmpty);
     });
   });
 
@@ -167,19 +216,35 @@ void main() {
   });
 
   test('hooks on registers every hook and continues each event', () async {
-    final events = <MpvHookEvent>[];
+    final reports = <HookReport>[];
     expect((await run('hooks on')).single, startsWith('output: Reporting'));
     expect(player.registeredHooks, Hook.values);
-    final sub = HookMonitor.of(player).events.listen(events.add);
+    final sub = HookMonitor.of(player).reports.listen(reports.add);
     player.hooks.add(const MpvHookEvent(7, Hook.load));
     await pumpEventQueue();
     expect(player.continuedHooks, [7]);
-    expect(events.single.hook, Hook.load);
+    expect(reports.single.event.hook, Hook.load);
+    expect(reports.single.continued, isTrue);
     await run('hooks off');
     player.hooks.add(const MpvHookEvent(8, Hook.unload));
     await pumpEventQueue();
     expect(player.continuedHooks, [7, 8]);
-    expect(events, hasLength(1));
+    expect(reports, hasLength(1));
     await sub.cancel();
+  });
+
+  test('the resolver hooks keep the resolver timeout', () async {
+    await run('hooks on');
+    // A short timeout on on_load would cut a slow source resolve short.
+    expect(player.hookTimeouts[Hook.load], isNull);
+    expect(player.hookTimeouts[Hook.loadFail], isNull);
+    expect(player.hookTimeouts[Hook.unload], HookMonitor.timeout);
+  });
+
+  test('a hook that fails to register is reported, not claimed', () async {
+    player.failingHooks.add(Hook.preloaded);
+    final out = await run('hooks on');
+    expect(out.first, isNot(contains('on_preloaded')));
+    expect(out.last, 'error: Could not register: on_preloaded');
   });
 }

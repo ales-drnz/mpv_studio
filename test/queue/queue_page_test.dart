@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -199,5 +201,116 @@ void main() {
     await tester.tap(find.byTooltip('Previous playlist'));
     await tester.pumpAndSettle();
     expect(player.calls.last, 'previousPlaylist');
+  });
+
+  group('selection follows the entry', () {
+    testWidgets('through a move made elsewhere', (tester) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(tester, player, details);
+      await tester.tap(find.text('Peace Piece').first);
+      await tester.pump(const Duration(milliseconds: 400));
+      // The Console (or a shuffle) moves it to the end.
+      await player.move(0, 3);
+      await tester.pumpAndSettle();
+      expect(find.text('3 of 3'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(player.calls.last, 'jump 2');
+    });
+
+    testWidgets('through a removal above it', (tester) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(tester, player, details);
+      await tester.tap(find.text('Blue in Green').first);
+      await tester.pump(const Duration(milliseconds: 400));
+      await player.remove(0);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(player.calls.last, 'remove 1');
+      expect(player.items, [webSong]);
+    });
+
+    testWidgets('to the next entry when it is removed', (tester) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(tester, player, details);
+      await tester.tap(find.text('Peace Piece').first);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      // So What is now first and selected.
+      expect(player.calls.last, 'jump 0');
+    });
+  });
+
+  testWidgets('the info sheet follows its entry', (tester) async {
+    final (player, details) = await threeEntries(() => tester.pump());
+    await pumpQueue(
+      tester,
+      player,
+      details,
+      size: const Size(412, 915),
+      input: InputMode.touch,
+    );
+    await tester.longPress(find.text('Blue in Green'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show info'));
+    await tester.pumpAndSettle();
+    expect(find.text('3 of 3'), findsOneWidget);
+    await player.move(2, 0);
+    await tester.pumpAndSettle();
+    expect(find.text('1 of 3'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Play'));
+    await tester.pumpAndSettle();
+    expect(player.calls.last, 'jump 0');
+  });
+
+  testWidgets('rows expose their tap and menu to screen readers', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final (player, details) = await threeEntries(() => tester.pump());
+    await pumpQueue(
+      tester,
+      player,
+      details,
+      size: const Size(412, 915),
+      input: InputMode.touch,
+    );
+    final row = find.bySemanticsLabel(RegExp('^Track 1, Peace Piece'));
+    expect(
+      tester.getSemantics(row),
+      isSemantics(isButton: true, hasTapAction: true, hasLongPressAction: true),
+    );
+    final node = find.semantics.byLabel(RegExp('^Track 1, Peace Piece'));
+    tester.semantics.tap(node);
+    await tester.pumpAndSettle();
+    expect(player.calls.last, 'jump 0');
+    tester.semantics.longPress(node);
+    await tester.pumpAndSettle();
+    expect(find.text('Move to bottom'), findsOneWidget);
+    handle.dispose();
+  });
+
+  testWidgets('the summary shows files being added to an empty queue', (
+    tester,
+  ) async {
+    final (player, details) = emptyQueue();
+    player.openGate = Completer();
+    await pumpQueue(
+      tester,
+      player,
+      details,
+      picked: ['/m/a.flac', '/m/b.flac'],
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Add files').last);
+    await tester.pump();
+    expect(find.text('Adding 2 files'), findsOneWidget);
+    player.openGate!.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Adding 2 files'), findsNothing);
+    expect(find.text('2 tracks'), findsOneWidget);
   });
 }

@@ -27,8 +27,18 @@ void main() {
     expect(t(r'loadfile C:\Music\a.flac'), ['loadfile', r'C:\Music\a.flac']);
   });
 
-  test('quoted and plain parts join', () {
-    expect(t('a"b c"d'), ['ab cd']);
+  test('quotes count only at the start of an argument', () {
+    // mpv reads a"b c" as two arguments.
+    expect(t('a"b c"'), ['a"b', 'c"']);
+  });
+
+  test('custom quotes, comments and escapes', () {
+    expect(t('print-text `!a "b" \\n!`'), ['print-text', 'a "b" \\n']);
+    expect(t('seek 10 # forward'), ['seek', '10']);
+    expect(t('"#x" #'), ['#x']);
+    expect(t(r'"\x41\u00e8"'), ['Aè']);
+    expect(() => t(r'"\q"'), throwsFormatException);
+    expect(scanConsoleLine(r'"\q"', lenient: true).single.value, 'q');
   });
 
   test('an unterminated quote is an error unless lenient', () {
@@ -42,7 +52,16 @@ void main() {
   });
 
   test('quoteConsoleArg round trips', () {
-    for (final v in ['plain', 'a b', 'say "hi"', r'back\slash x', '', "it's"]) {
+    for (final v in [
+      'plain',
+      'a b',
+      'say "hi"',
+      r'back\slash x',
+      '',
+      "it's",
+      '"quoted"',
+      '#hash',
+    ]) {
       expect(t('cmd ${quoteConsoleArg(v)}'), ['cmd', v]);
     }
     expect(quoteConsoleArg('plain'), 'plain');

@@ -154,7 +154,7 @@ class CompletionEngine {
     var end = at;
     final prior = <String>[];
     for (final t in tokens) {
-      if (t.end < at || (t.end == at && t.start == at)) {
+      if (t.end < at) {
         prior.add(t.value);
       } else if (t.start <= at && at <= t.end) {
         start = t.start;
@@ -164,7 +164,10 @@ class CompletionEngine {
         break;
       }
     }
-    final tokenSoFar = input.substring(start, at);
+    // Matched without its quotes and escapes; accepting a suggestion
+    // replaces the whole raw token, quotes included.
+    final typed = scanConsoleLine(input.substring(start, at), lenient: true);
+    final tokenSoFar = typed.isEmpty ? '' : typed.first.value;
 
     // Prefixes such as no-osd come before the command.
     var skip = 0;

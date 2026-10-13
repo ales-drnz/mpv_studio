@@ -67,8 +67,14 @@ class _QueueViewState extends State<QueueView> {
   late QueueController _queue = _controller();
   bool _dragging = false;
 
-  /// The selected entry (pointer layouts), shown in the detail pane.
-  int? _selected;
+  /// The selected entry (pointer layouts), shown in the detail pane. Kept
+  /// by identity, so it follows the entry through moves, removals above
+  /// it and changes made elsewhere (the Console, a shuffle).
+  EntryRef? _selected;
+
+  void _select(List<Media> items, int? index) => setState(
+    () => _selected = index == null ? null : EntryRef(items[index], index),
+  );
 
   /// Width of the list beside the details.
   static const _listWidth = 600.0;
@@ -147,17 +153,37 @@ class _QueueViewState extends State<QueueView> {
   }
 
   Future<void> _showInfo(int index, {required bool split}) async {
+    final items = widget.player.state.playlist.items;
+    if (index >= items.length) return;
     if (split) {
-      setState(() => _selected = index);
+      _select(items, index);
       return;
     }
-    final pl = widget.player.state.playlist;
-    if (index >= pl.items.length) return;
+    // The sheet follows the entry while the queue changes under it.
+    var ref = EntryRef(items[index], index);
     await showStudioSheet<void>(
       context,
       builder: (context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
-        child: _info(pl, index, close: () => Navigator.pop(context)),
+        child: Live<Playlist>(
+          stream: widget.player.stream.playlist,
+          initial: widget.player.state.playlist,
+          builder: (context, pl) {
+            final at = ref.resolve(pl.items);
+            if (at == null) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: Tokens.s24),
+                child: Text(
+                  'This track is no longer in the queue.',
+                  style: Tokens.body,
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+            ref = EntryRef(ref.media, at);
+            return _info(pl, at, close: () => Navigator.pop(context));
+          },
+        ),
       ),
     );
   }
@@ -185,14 +211,17 @@ class _QueueViewState extends State<QueueView> {
       case QueueAction.replace:
         await _queue.replace(index);
       case QueueAction.remove:
+        // Removing the selected entry hands the selection to the entry
+        // after it, else the one before.
+        final selectedAt = _selected?.resolve(items);
+        final neighbour = index + 1 < items.length ? index + 1 : index - 1;
         final removed = await _queue.remove(index);
-        if (removed != null && mounted) {
-          setState(() {
-            final s = _selected;
-            if (s != null && s >= items.length - 1) {
-              _selected = items.length > 1 ? items.length - 2 : null;
-            }
-          });
+        if (removed != null && mounted && selectedAt == index) {
+          setState(
+            () => _selected = neighbour < 0
+                ? null
+                : EntryRef(items[neighbour], neighbour),
+          );
         }
     }
   }
@@ -270,9 +299,11 @@ class _QueueViewState extends State<QueueView> {
           initial: player.state.playlist,
           builder: (context, playlist) {
             final items = playlist.items;
-            final selected = _selected != null && _selected! < items.length
-                ? _selected
-                : null;
+            final selected = _selected?.resolve(items);
+            // Remember where the entry is now, for the next change.
+            if (selected != null) {
+              _selected = EntryRef(items[selected], selected);
+            }
             // The detail pane follows the selection, else the current entry.
             final shown =
                 selected ?? (playlist.index >= 0 ? playlist.index : null);
@@ -302,8 +333,7 @@ class _QueueViewState extends State<QueueView> {
                   body: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (items.isNotEmpty || _queue.adding.value > 0)
-                        _summary(playlist),
+                      _summary(playlist),
                       Live<String>(
                         stream: player.stream.playlistPath,
                         initial: player.state.playlistPath,
@@ -364,6 +394,9 @@ class _QueueViewState extends State<QueueView> {
   Widget _summary(Playlist playlist) => ListenableBuilder(
     listenable: Listenable.merge([widget.details.details, _queue.adding]),
     builder: (context, _) {
+      if (playlist.items.isEmpty && _queue.adding.value == 0) {
+        return const SizedBox.shrink();
+      }
       var known = Duration.zero;
       var unknown = 0;
       for (final m in playlist.items) {
@@ -395,7 +428,7 @@ class _QueueViewState extends State<QueueView> {
           outcomes: widget.details.outcomes.value,
           controller: _queue,
           selected: selected,
-          onSelect: (i) => setState(() => _selected = i),
+          onSelect: (i) => _select(playlist.items, i),
           onAction: (action, i) => _onAction(action, i, split: split),
         ),
       );
@@ -415,4 +448,26 @@ class _DetailPlaceholder extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A queue entry known by identity, with the index it was last seen at to
+/// tell duplicates apart.
+@immutable
+class EntryRef {
+  const EntryRef(this.media, this.index);
+
+  final Media media;
+  final int index;
+
+  /// Where the entry is in [items] now: at [index] when it is still there,
+  /// else its occurrence nearest to [index]; null once it left the queue.
+  int? resolve(List<Media> items) {
+    if (index < items.length && items[index] == media) return index;
+    int? best;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] != media) continue;
+      if (best == null || (i - index).abs() < (best - index).abs()) best = i;
+    }
+    return best;
+  }
 }

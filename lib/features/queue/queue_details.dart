@@ -127,6 +127,10 @@ typedef LoadedSnapshot = ({
 /// time mpv reports that a track ended or was skipped, the queue may
 /// already point at the next one. A failure to open belongs to the
 /// current entry, which never loaded.
+///
+/// Entries are known by value: the library's playlist carries no entry
+/// ids, so two copies of the same media share their tags (which is right)
+/// and their last outcome (a copy that never played shows the other's).
 class QueueDetails {
   QueueDetails({
     required Stream<Playlist> playlist,
