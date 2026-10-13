@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
@@ -50,6 +51,10 @@ class PlayerScope extends InheritedWidget {
   /// Engine errors made readable (toasts, Console badge, failed entries).
   static PlaybackIssues issuesOf(BuildContext context) =>
       _scope(context).issues;
+
+  /// What the engine read from the queue entries that have played.
+  static QueueDetails queueDetailsOf(BuildContext context) =>
+      _scope(context).queueDetails;
 
   /// The shared favourites store.
   static FavoritesController favoritesOf(BuildContext context) =>

@@ -9,6 +9,7 @@ import '../../ui/widgets/chapter_scrubber.dart';
 import '../../ui/widgets/custom_url_bar.dart';
 import '../../ui/widgets/section_body.dart';
 import '../../ui/widgets/section_header.dart';
+import '../../util/media_labels.dart';
 import 'media_server.dart';
 import 'samba_browser_tab.dart';
 import 'server_library_tab.dart';
@@ -524,7 +525,7 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
     if (pl.items.isEmpty || pl.index < 0 || pl.index >= pl.items.length) {
       return '';
     }
-    return (pl.items[pl.index].extras?['title'] as String?) ?? '';
+    return titleOf(pl.items[pl.index]);
   }
 
   @override
@@ -713,8 +714,9 @@ class _ReferenceTab extends StatelessWidget {
     this.nowPlayingChapters = false,
   });
 
-  static Media _media(String url) =>
-      Media(url, extras: {'title': url, 'artist': 'Stream'});
+  // No title: the queue names a bare URL after its last path segment, and
+  // the tags replace that once the stream loads.
+  static Media _media(String url) => Media(url, extras: {'artist': 'Stream'});
 
   @override
   Widget build(BuildContext context) {

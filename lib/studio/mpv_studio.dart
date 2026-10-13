@@ -1,6 +1,7 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
@@ -45,6 +46,10 @@ class MpvStudio {
   /// queue entries.
   final PlaybackIssues issues;
 
+  /// Titles, artists and lengths the engine read from the queue entries
+  /// that have played.
+  final QueueDetails queueDetails;
+
   const MpvStudio._({
     required this.player,
     required this.settings,
@@ -53,6 +58,7 @@ class MpvStudio {
     required this.consoleLog,
     required this.normalizer,
     required this.issues,
+    required this.queueDetails,
     required void Function() disposeServers,
   }) : _disposeServers = disposeServers;
 
@@ -71,6 +77,7 @@ class MpvStudio {
 
     // Subscribed before anything loads, so no failure goes unseen.
     final issues = PlaybackIssues.of(engine.player);
+    final queueDetails = QueueDetails.of(engine.player);
 
     final media = await connectMediaServers(engine.player);
 
@@ -86,6 +93,7 @@ class MpvStudio {
       consoleLog: engine.consoleLog,
       normalizer: normalizer,
       issues: issues,
+      queueDetails: queueDetails,
       disposeServers: media.dispose,
     );
   }
@@ -96,6 +104,7 @@ class MpvStudio {
     normalizer.dispose();
     _disposeServers();
     issues.dispose();
+    queueDetails.dispose();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();

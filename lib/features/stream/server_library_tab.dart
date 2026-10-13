@@ -234,6 +234,8 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
             'title': t.title,
             'artist': t.artist,
             'album': t.album,
+            if (t.duration > Duration.zero)
+              'durationMs': t.duration.inMilliseconds,
             if (t.artUrl != null) 'art': t.artUrl,
             'segment': ?segment,
             // Lets the app-level PlaybackReporter report this track back to
