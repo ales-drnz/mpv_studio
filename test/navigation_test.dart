@@ -89,7 +89,7 @@ void main() {
       expect(find.text('page engine'), findsOneWidget);
       expect(find.text('Engine'), findsNothing, reason: 'sheet closed');
       // The More tab now shows the Engine icon.
-      expect(find.byIcon(Section.engine.icon), findsOneWidget);
+      expect(find.byIcon(Section.engine.activeIcon), findsOneWidget);
     });
 
     testWidgets('a tab switches section', (tester) async {

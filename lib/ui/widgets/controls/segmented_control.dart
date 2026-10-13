@@ -15,7 +15,7 @@ class SegmentOption<T> {
   const SegmentOption(this.value, this.label, {this.tooltip});
 }
 
-/// A flat squircle pill of mutually-exclusive options. Used for short enum
+/// A flat pill of mutually-exclusive options. Used for short enum
 /// picks (loop, gapless, cache mode, normalization, FFT window).
 ///
 /// By default the segments share the width equally ([expand] `true`); set
@@ -53,11 +53,8 @@ class SegmentedControl<T> extends StatelessWidget {
       opacity: enabled ? 1 : 0.5,
       child: Container(
         height: controlHeightOf(context),
-        decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
-        ),
-        padding: const EdgeInsets.all(3),
+        decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
+        padding: const EdgeInsets.all(Tokens.s4),
         child: Row(
           mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
           children: [
@@ -100,22 +97,22 @@ class _Segment extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rSm - 2),
+          customBorder: Tokens.pill,
           child: Container(
             alignment: Alignment.center,
             padding: EdgeInsets.symmetric(
-              horizontal: hugContent ? Tokens.s8 : Tokens.s2,
+              horizontal: hugContent ? Tokens.s12 : Tokens.s4,
             ),
             decoration: ShapeDecoration(
               color: active ? Tokens.accent : Colors.transparent,
-              shape: Tokens.squircle(Tokens.rSm - 2),
+              shape: Tokens.pill,
             ),
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
+              style: Tokens.label.copyWith(
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: active ? Tokens.onAccent : Tokens.fgDim,
               ),

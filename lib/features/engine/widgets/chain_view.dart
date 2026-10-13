@@ -72,22 +72,30 @@ class _Stage extends StatelessWidget {
       message: wire,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: Tokens.s8,
-          vertical: Tokens.s6,
+          horizontal: Tokens.s12,
+          vertical: Tokens.s8,
         ),
         decoration: ShapeDecoration(
-          color: Tokens.accentWash,
-          shape: Tokens.squircle(Tokens.rSm),
+          color: Tokens.accentContainer,
+          shape: Tokens.pill,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '$index',
-              style: Tokens.numeric.copyWith(color: Tokens.accent),
+              style: Tokens.numeric.copyWith(
+                color: Tokens.onAccentContainer.withValues(alpha: 0.7),
+              ),
             ),
-            const SizedBox(width: Tokens.s6),
-            Text(title, style: Tokens.body.copyWith(fontSize: 12.5)),
+            const SizedBox(width: Tokens.s8),
+            Text(
+              title,
+              style: Tokens.label.copyWith(
+                color: Tokens.onAccentContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -102,13 +110,10 @@ class _End extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(
-      horizontal: Tokens.s8,
-      vertical: Tokens.s6,
+      horizontal: Tokens.s12,
+      vertical: Tokens.s8,
     ),
-    decoration: ShapeDecoration(
-      color: Tokens.surface2,
-      shape: Tokens.squircle(Tokens.rSm),
-    ),
+    decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
     child: Text(label, style: Tokens.numeric),
   );
 }

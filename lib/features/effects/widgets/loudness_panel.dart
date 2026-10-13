@@ -86,10 +86,16 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
   Widget build(BuildContext context) {
     final l = _last;
     return Container(
-      padding: const EdgeInsets.all(Tokens.s16),
+      // The switch row brings its own 16 above and below.
+      padding: const EdgeInsets.fromLTRB(
+        Tokens.s16,
+        Tokens.s4,
+        Tokens.s16,
+        Tokens.s24,
+      ),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -206,15 +212,21 @@ class _Column extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title.toUpperCase(), style: Tokens.caption),
+        Text(
+          title,
+          style: Tokens.label.copyWith(
+            color: Tokens.fg,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: Tokens.s4),
         for (final (k, v) in rows)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
             child: Row(
               children: [
                 Expanded(child: Text(k, style: Tokens.label)),
-                Text(v, style: Tokens.numeric),
+                Text(v, style: Tokens.numeric.copyWith(color: Tokens.fg)),
               ],
             ),
           ),

@@ -14,7 +14,7 @@ class CoverArtView extends StatelessWidget {
     super.key,
     required this.player,
     required this.size,
-    this.radius = Tokens.rLg,
+    this.radius = Tokens.rXl,
   });
 
   final PlayerApi player;
@@ -23,8 +23,10 @@ class CoverArtView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The tonal step: it reads on the stage, on cards and on the chrome in
+    // both themes (the field tone is lighter than the light stage).
     final placeholder = ColoredBox(
-      color: Tokens.surface2,
+      color: Tokens.tonal,
       child: Center(
         child: Icon(
           Icons.music_note_rounded,
@@ -36,7 +38,7 @@ class CoverArtView extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.squircle(radius)),
+        clipper: ShapeBorderClipper(shape: Tokens.shape(radius)),
         child: Live<Playlist>(
           stream: player.stream.playlist,
           initial: player.state.playlist,

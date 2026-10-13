@@ -54,22 +54,26 @@ class SettingTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Tokens.body.copyWith(
+                  fontWeight: FontWeight.w500,
                   color: enabled ? Tokens.fg : Tokens.fgFaint,
                 ),
               ),
               if (description != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: Tokens.s4),
                 Text(
                   description!,
                   // Dim rather than faint: it stays legible on the light
                   // palette.
-                  style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                  style: Tokens.label.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: Tokens.fgDim,
+                  ),
                 ),
               ],
             ],
           ),
         ),
-        if (trailing != null) ...[const SizedBox(width: Tokens.s12), trailing!],
+        if (trailing != null) ...[const SizedBox(width: Tokens.s16), trailing!],
       ],
     );
 
@@ -79,7 +83,7 @@ class SettingTile extends StatelessWidget {
         header,
         if (below != null)
           Padding(
-            padding: const EdgeInsets.only(top: Tokens.s12),
+            padding: const EdgeInsets.only(top: Tokens.s8),
             child: below,
           ),
       ],
@@ -88,7 +92,7 @@ class SettingTile extends StatelessWidget {
     final padded = ConstrainedBox(
       constraints: BoxConstraints(minHeight: context.layout.minTap),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: Tokens.s12),
+        padding: const EdgeInsets.symmetric(vertical: Tokens.s16),
         child: Align(alignment: Alignment.centerLeft, child: content),
       ),
     );
@@ -100,7 +104,7 @@ class SettingTile extends StatelessWidget {
       enabled: enabled,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        customBorder: Tokens.squircle(Tokens.rSm),
+        customBorder: Tokens.shape(Tokens.rMd),
         child: padded,
       ),
     );

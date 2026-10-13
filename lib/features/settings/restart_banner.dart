@@ -29,8 +29,8 @@ class RestartBanner extends StatelessWidget {
             liveRegion: true,
             container: true,
             child: Material(
-              color: Tokens.accentWash,
-              shape: Tokens.squircle(Tokens.rMd),
+              color: Tokens.amber.withValues(alpha: 0.16),
+              shape: Tokens.shape(Tokens.rMd),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   Tokens.s16,
@@ -50,7 +50,7 @@ class RestartBanner extends StatelessWidget {
                         Icon(
                           Icons.restart_alt_rounded,
                           size: 20,
-                          color: Tokens.accent,
+                          color: Tokens.amber,
                         ),
                         const SizedBox(width: Tokens.s12),
                         Flexible(
@@ -61,7 +61,7 @@ class RestartBanner extends StatelessWidget {
                         ),
                       ],
                     ),
-                    FilledButton(
+                    TextButton(
                       onPressed: restart,
                       child: const Text('Restart player'),
                     ),

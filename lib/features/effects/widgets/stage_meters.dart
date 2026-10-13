@@ -128,8 +128,8 @@ class _StageMetersState extends State<StageMeters> {
       child: Container(
         height: context.layout.isShort ? 52 : 72,
         decoration: ShapeDecoration(
-          color: Tokens.bg,
-          shape: Tokens.squircle(Tokens.rSm),
+          color: Tokens.surface3,
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: widget.active
             ? RepaintBoundary(

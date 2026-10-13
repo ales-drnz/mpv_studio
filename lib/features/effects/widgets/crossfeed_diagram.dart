@@ -7,7 +7,7 @@ import 'graphic_height.dart';
 /// A schematic of headphone crossfeed: two channel sources feeding a
 /// listener, with the straight same-ear paths always on and the crossed
 /// paths (the bleed that makes headphones sound like speakers) fading in
-/// as the strength rises. It's a diagram, not a meter — it shows what the
+/// as the strength rises. It's a diagram, not a meter: it shows what the
 /// control does to the routing at a glance.
 class CrossfeedDiagram extends StatelessWidget {
   final double strength; // 0..1
@@ -82,7 +82,7 @@ class _CrossfeedPainter extends CustomPainter {
       canvas.drawCircle(ear, 3, Paint()..color = Tokens.fgDim);
     }
 
-    // Direct same-ear paths — always full.
+    // Direct same-ear paths: always full.
     final direct = Paint()
       ..color = accent
       ..style = PaintingStyle.stroke
@@ -91,7 +91,7 @@ class _CrossfeedPainter extends CustomPainter {
     canvas.drawLine(lSrc, lEar, direct);
     canvas.drawLine(rSrc, rEar, direct);
 
-    // Crossed paths — arc over (L→right ear) and under (R→left ear),
+    // Crossed paths: arc over (L→right ear) and under (R→left ear),
     // their presence scaling with strength.
     final crossPaint = Paint()
       ..color = accent.withValues(
@@ -114,16 +114,16 @@ class _CrossfeedPainter extends CustomPainter {
     void node(Offset at, String label) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromCenter(center: at, width: 22, height: 16),
-          const Radius.circular(4),
+          Rect.fromCenter(center: at, width: 24, height: 24),
+          const Radius.circular(12),
         ),
-        Paint()..color = Tokens.surface2,
+        Paint()..color = Tokens.surface3,
       );
       paintChartLabel(
         canvas,
         label,
-        at.translate(0, -5),
-        accent,
+        at,
+        enabled ? Tokens.fg : Tokens.fgFaint,
         fontSize: 9.5,
         center: true,
         middle: true,

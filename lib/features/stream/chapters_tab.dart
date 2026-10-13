@@ -36,6 +36,7 @@ class ChaptersTab extends StatelessWidget {
             categories: chapterStreams,
             actions: actions,
             origin: playingOrigin(pl),
+            icon: Icons.bookmarks_rounded,
           ),
         ],
       ),
@@ -117,25 +118,25 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
       return const SizedBox.shrink();
     }
     return Container(
-      margin: const EdgeInsets.only(top: Tokens.s12),
-      padding: const EdgeInsets.all(Tokens.s12),
+      margin: const EdgeInsets.only(top: Tokens.s16),
+      padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.music_note_rounded, size: 16, color: Tokens.accent),
+              Icon(Icons.graphic_eq_rounded, size: 20, color: Tokens.fgDim),
               const SizedBox(width: Tokens.s8),
               Expanded(
                 child: Text(
                   _title.isEmpty ? 'Now playing' : _title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Tokens.body,
+                  style: Tokens.heading,
                 ),
               ),
             ],

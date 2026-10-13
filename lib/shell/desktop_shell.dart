@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
-import '../ui/widgets/resize_handle.dart';
-import 'section_badge.dart';
+import 'nav_parts.dart';
 import 'shell_tools.dart';
 import 'sections.dart';
 
-/// The sidebar chrome (expanded windows and up): a resizable text sidebar
-/// on the left and the section body filling the stage. Flat throughout,
-/// hierarchy via surface colour, not shadow. [miniPlayer], when given,
-/// runs along the bottom under both. The safe area is applied here; the
+/// The sidebar chrome (expanded windows and up): a tonal sidebar on the
+/// left, the section body in a rounded [StagePanel] beside it, and the
+/// [miniPlayer], when given, along the bottom under both. There is no
+/// drag handle: the sidebar has two widths, full (labels, grouped under
+/// "Listen" and "Tools") and collapsed (icons in pill indicators), toggled
+/// by the round button at its foot, beside the theme and shortcut tools. The safe area is applied here; the
 /// soft keyboard lifts the whole shell.
 class DesktopShell extends StatefulWidget {
   final Section section;
@@ -26,78 +26,59 @@ class DesktopShell extends StatefulWidget {
     this.miniPlayer,
   });
 
+  /// The sidebar width when open and when collapsed.
+  static const double openWidth = 224;
+  static const double collapsedWidth = 88;
+
   @override
   State<DesktopShell> createState() => _DesktopShellState();
 }
 
 class _DesktopShellState extends State<DesktopShell> {
-  double _sidebarWidth = 200;
+  bool _collapsed = false;
 
   @override
   Widget build(BuildContext context) {
-    final section = widget.section;
-    final onSelect = widget.onSelect;
-    final body = widget.body;
-    // Panels touch flush; the resize line is overlaid exactly on the
-    // seam so there are no gap pixels between sidebar and stage.
-    final panels = Stack(
+    final mini = widget.miniPlayer;
+    final panels = Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            _Sidebar(
-              section: section,
-              onSelect: onSelect,
-              width: _sidebarWidth,
-              safeBottom: widget.miniPlayer == null,
-            ),
-            Expanded(
-              // Clip the stage to its own bounds: a full-bleed meter's
-              // CustomPaint paints unclipped by default, so without this a
-              // painter drawing past its left edge (e.g. during a resize
-              // frame) would bleed over the sidebar.
-              child: withoutLeftInset(
-                SafeArea(
-                  bottom: widget.miniPlayer == null,
-                  child: ClipRect(
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: body,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        _Sidebar(
+          section: widget.section,
+          onSelect: widget.onSelect,
+          collapsed: _collapsed,
+          onToggle: () => setState(() => _collapsed = !_collapsed),
+          safeBottom: mini == null,
         ),
-        Positioned(
-          left: _sidebarWidth - 4.5,
-          top: 0,
-          bottom: 0,
-          width: 9,
-          child: ResizeHandle(
-            axis: Axis.vertical,
-            onDelta: (dx) => setState(
-              () => _sidebarWidth = (_sidebarWidth + dx).clamp(168.0, 340.0),
+        // The sidebar covers the left inset, so the stage must not see
+        // it; the panel clips the stage, so a full-bleed painter never
+        // bleeds over the sidebar.
+        Expanded(
+          child: withoutLeftInset(
+            SafeArea(
+              bottom: mini == null,
+              child: StagePanel(child: widget.body),
             ),
           ),
         ),
       ],
     );
-    final mini = widget.miniPlayer;
-    return liftAboveKeyboard(
-      context,
-      mini == null
-          ? panels
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: panels),
-                ColoredBox(
-                  color: Tokens.surface,
-                  child: SafeArea(top: false, child: mini),
-                ),
-              ],
-            ),
+    // The chrome is the tonal container; the stage panel and the cards
+    // in it sit one and two steps away from it.
+    return ColoredBox(
+      color: Tokens.surface2,
+      child: liftAboveKeyboard(
+        context,
+        mini == null
+            ? panels
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: panels),
+                  SafeArea(top: false, child: mini),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -105,85 +86,99 @@ class _DesktopShellState extends State<DesktopShell> {
 class _Sidebar extends StatelessWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
-  final double width;
+  final bool collapsed;
+  final VoidCallback onToggle;
   final bool safeBottom;
 
   const _Sidebar({
     required this.section,
     required this.onSelect,
-    required this.width,
+    required this.collapsed,
+    required this.onToggle,
     required this.safeBottom,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      color: Tokens.surface,
+    final layout = collapsed ? NavItemLayout.iconOnly : NavItemLayout.inline;
+    Widget item(Section s) => Padding(
+      padding: const EdgeInsets.only(bottom: Tokens.s4),
+      child: SectionDestination(
+        section: s,
+        active: s == section,
+        onTap: () => onSelect(s),
+        layout: layout,
+        short: false,
+      ),
+    );
+    final toggle = ShellToolButton(
+      icon: collapsed
+          ? Icons.keyboard_double_arrow_right_rounded
+          : Icons.keyboard_double_arrow_left_rounded,
+      label: collapsed ? 'Expand the sidebar' : 'Collapse the sidebar',
+      onTap: onToggle,
+      expanded: false,
+    );
+    final header = collapsed
+        ? const Center(child: StudioMark(size: 40))
+        : Row(
+            children: [
+              const StudioMark(size: 40),
+              const SizedBox(width: Tokens.s12),
+              Expanded(
+                child: Text(
+                  'MPV Studio',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Tokens.heading.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+            ],
+          );
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+      width: collapsed ? DesktopShell.collapsedWidth : DesktopShell.openWidth,
       child: SafeArea(
         right: false,
         bottom: safeBottom,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Tokens.s12,
-            Tokens.s20,
-            Tokens.s12,
-            Tokens.s12,
-          ),
+          // Symmetric: 16 on every side of the sidebar column.
+          padding: const EdgeInsets.all(Tokens.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(
-                  Tokens.s12,
-                  0,
-                  Tokens.s12,
-                  Tokens.s20,
+                padding: EdgeInsets.only(
+                  left: collapsed ? 0 : Tokens.s4,
+                  bottom: Tokens.s8,
                 ),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'MPV ',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Tokens.fg,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'Studio',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Tokens.accent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child: header,
               ),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final s in Section.values) ...[
-                        // A gap sets the tools (Engine, Settings, Console)
-                        // apart from the listening sections.
-                        if (s == Section.more.first)
-                          const SizedBox(height: Tokens.s16),
-                        _NavItem(
-                          section: s,
-                          active: s == section,
-                          onTap: () => onSelect(s),
-                        ),
-                      ],
+                      if (collapsed)
+                        const SizedBox(height: Tokens.s8)
+                      else
+                        const NavGroupLabel('Listen'),
+                      for (final s in Section.tabs) item(s),
+                      if (collapsed)
+                        const NavGroupGap()
+                      else
+                        const NavGroupLabel('Tools'),
+                      for (final s in Section.more) item(s),
                     ],
                   ),
                 ),
               ),
-              ...shellTools(context),
+              _ToolRow(collapsed: collapsed, toggle: toggle),
             ],
           ),
         ),
@@ -192,75 +187,33 @@ class _Sidebar extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  final Section section;
-  final bool active;
-  final VoidCallback onTap;
+/// The sidebar toggle, the theme switch and the shortcut list as round
+/// tonal buttons at the foot of the sidebar: a row when open, a column
+/// when collapsed.
+class _ToolRow extends StatelessWidget {
+  const _ToolRow({required this.collapsed, required this.toggle});
 
-  const _NavItem({
-    required this.section,
-    required this.active,
-    required this.onTap,
-  });
+  final bool collapsed;
+  final Widget toggle;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Semantics(
-        selected: active,
-        button: true,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: Tokens.squircle(Tokens.rSm),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOut,
-              constraints: BoxConstraints(minHeight: context.layout.minTap),
-              alignment: Alignment.centerLeft,
-              decoration: ShapeDecoration(
-                color: active ? Tokens.accent : Colors.transparent,
-                shape: Tokens.squircle(Tokens.rSm),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Tokens.s12,
-                  vertical: 10,
+    final tools = [toggle, ...shellTools(context, expanded: false)];
+    return collapsed
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final t in tools)
+                Padding(
+                  padding: const EdgeInsets.only(top: Tokens.s8),
+                  child: t,
                 ),
-                child: Row(
-                  children: [
-                    SectionBadge(
-                      section: section,
-                      child: Icon(
-                        section.icon,
-                        size: 18,
-                        color: active ? Tokens.onAccent : Tokens.fgDim,
-                      ),
-                    ),
-                    const SizedBox(width: Tokens.s12),
-                    Flexible(
-                      child: Text(
-                        section.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: active
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: active ? Tokens.onAccent : Tokens.fgDim,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+            ],
+          )
+        : Row(
+            children: [
+              for (final t in tools) ...[t, const SizedBox(width: Tokens.s8)],
+            ],
+          );
   }
 }

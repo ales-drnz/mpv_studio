@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../shell/nav_parts.dart';
 import '../../shell/sections.dart';
 import '../../studio/app_settings.dart';
 import '../../studio/playback_issues.dart';
@@ -168,19 +169,26 @@ class OnboardingView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Center(child: StudioMark(size: layout.isShort ? 64 : 96)),
+        const SizedBox(height: Tokens.s24),
         Semantics(
           header: true,
-          child: Text('Welcome to MPV Studio', style: Tokens.title),
+          child: Text(
+            'Welcome to MPV Studio',
+            style: layout.isCompact ? Tokens.title : Tokens.display,
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: Tokens.s8),
         Text(
           'A player and a lab for the mpv engine. Pick a way to start; '
           'Settings can open this screen again.',
           style: Tokens.body.copyWith(color: Tokens.fgDim),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: Tokens.s20),
+        const SizedBox(height: Tokens.s32),
         _Choice(
-          icon: Icons.library_music_outlined,
+          icon: Icons.library_music_rounded,
           title: 'Open audio files',
           description: 'Pick files on this device to fill the queue.',
           autofocus: true,
@@ -188,14 +196,14 @@ class OnboardingView extends StatelessWidget {
         ),
         const SizedBox(height: Tokens.s12),
         _Choice(
-          icon: Icons.radio_outlined,
+          icon: Icons.radio_rounded,
           title: 'Try a demo stream',
           description: 'Play a public internet radio stream right away.',
           onTap: () => unawaited(_playDemo(context)),
         ),
         const SizedBox(height: Tokens.s12),
         _Choice(
-          icon: Icons.dns_outlined,
+          icon: Icons.dns_rounded,
           title: 'Connect a server',
           description: 'Browse a Jellyfin, Plex or Samba music library.',
           onTap: () => _finish(context, ServerChoice.jellyfin.location),
@@ -206,26 +214,15 @@ class OnboardingView extends StatelessWidget {
               for (final s in ServerChoice.values)
                 OutlinedButton(
                   onPressed: () => _finish(context, s.location),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: Size(layout.minTap, layout.minTap),
-                    foregroundColor: Tokens.fg,
-                    side: BorderSide(color: Tokens.line2),
-                    shape: Tokens.squircle(Tokens.rSm) as OutlinedBorder,
-                  ),
                   child: Text(s.label),
                 ),
             ],
           ),
         ),
-        const SizedBox(height: Tokens.s20),
-        Align(
-          alignment: Alignment.centerRight,
+        const SizedBox(height: Tokens.s24),
+        Center(
           child: TextButton(
             onPressed: () => _finish(context),
-            style: TextButton.styleFrom(
-              minimumSize: Size(layout.minTap, layout.minTap),
-              foregroundColor: Tokens.fgDim,
-            ),
             child: const Text('Skip'),
           ),
         ),
@@ -239,10 +236,10 @@ class OnboardingView extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: maxWidth),
                 child: Material(
-                  color: Tokens.surface,
-                  shape: Tokens.squircle(Tokens.rLg),
+                  color: Tokens.surface2,
+                  shape: Tokens.shape(Tokens.rXl),
                   child: Padding(
-                    padding: const EdgeInsets.all(Tokens.s24),
+                    padding: const EdgeInsets.all(Tokens.s32),
                     child: content,
                   ),
                 ),
@@ -253,7 +250,9 @@ class OnboardingView extends StatelessWidget {
             color: Tokens.bg,
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: layout.pagePadding.copyWith(top: Tokens.s24),
+                padding: layout.pagePadding.copyWith(
+                  top: layout.isShort ? Tokens.s16 : Tokens.s48,
+                ),
                 child: ReadableWidth(maxWidth: maxWidth, child: content),
               ),
             ),
@@ -300,9 +299,10 @@ class _Choice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shape = Tokens.shape(Tokens.rLg);
     return Material(
-      color: Tokens.surface2,
-      shape: Tokens.squircle(Tokens.rMd),
+      color: Tokens.surface,
+      shape: shape,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -318,22 +318,35 @@ class _Choice extends StatelessWidget {
                   padding: const EdgeInsets.all(Tokens.s16),
                   child: Row(
                     children: [
-                      Icon(icon, size: 26, color: Tokens.accent),
+                      ExcludeSemantics(
+                        child: Container(
+                          width: _lead,
+                          height: _lead,
+                          decoration: ShapeDecoration(
+                            color: Tokens.surface3,
+                            shape: const CircleBorder(),
+                          ),
+                          child: Icon(icon, size: 24, color: Tokens.fg),
+                        ),
+                      ),
                       const SizedBox(width: Tokens.s16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(title, style: Tokens.heading),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: Tokens.s4),
                             Text(
                               description,
-                              style: Tokens.label.copyWith(color: Tokens.fgDim),
+                              style: Tokens.label.copyWith(
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right_rounded, color: Tokens.fgFaint),
+                      const SizedBox(width: Tokens.s8),
+                      Icon(Icons.chevron_right_rounded, color: Tokens.fgDim),
                     ],
                   ),
                 ),
@@ -342,8 +355,11 @@ class _Choice extends StatelessWidget {
           ),
           if (footer != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.s16 + 26 + Tokens.s16,
+              // Under the title, or the card's full width on a phone.
+              padding: EdgeInsets.fromLTRB(
+                context.layout.isCompact
+                    ? Tokens.s16
+                    : Tokens.s16 + _lead + Tokens.s16,
                 0,
                 Tokens.s16,
                 Tokens.s16,
@@ -354,4 +370,7 @@ class _Choice extends StatelessWidget {
       ),
     );
   }
+
+  /// The diameter of the glyph circle.
+  static const double _lead = 48;
 }

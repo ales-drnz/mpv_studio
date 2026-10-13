@@ -85,8 +85,9 @@ void main() {
         padding: phoneInsets(const Size(412, 915)),
       );
       final header = tester.getRect(find.byType(PageHeader));
-      // The 24 status bar inset plus the header's own 12 top padding.
-      expect(header.top, 24 + Tokens.s12);
+      // The 24 status bar inset plus the header's own 8 top padding on a
+      // phone.
+      expect(header.top, 24 + Tokens.s8);
     });
   });
 
@@ -257,11 +258,11 @@ void main() {
       expect(Palette.active, Palette.dark);
       final darkBg = Tokens.bg;
 
-      await tester.tap(find.text('Theme: Dark'));
+      await tester.tap(find.byTooltip('Theme: Dark'));
       await tester.pumpAndSettle();
       expect(shell.theme.mode, ThemeMode.light);
       expect(Palette.active, Palette.light);
-      expect(find.text('Theme: Light'), findsOneWidget);
+      expect(find.byTooltip('Theme: Light'), findsOneWidget);
       expect(find.text('page queue'), findsOneWidget);
       expect(find.text('kept'), findsOneWidget);
       // The root Scaffold was rebuilt with the light background.
@@ -269,7 +270,7 @@ void main() {
       expect(scaffold.backgroundColor, Palette.light.bg);
       expect(scaffold.backgroundColor, isNot(darkBg));
 
-      await tester.tap(find.text('Theme: Light'));
+      await tester.tap(find.byTooltip('Theme: Light'));
       await tester.pumpAndSettle();
       expect(shell.theme.mode, ThemeMode.system);
     });
@@ -296,7 +297,7 @@ void main() {
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Keyboard shortcuts'));
+    await tester.tap(find.byTooltip('Keyboard shortcuts'));
     await tester.pumpAndSettle();
     expect(find.text('Play or pause'), findsOneWidget);
     await tester.tap(find.text('Close'));

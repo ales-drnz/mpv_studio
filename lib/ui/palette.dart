@@ -19,6 +19,7 @@ class Palette {
     required this.surface,
     required this.surface2,
     required this.surface3,
+    required this.surface4,
     required this.line,
     required this.line2,
     required this.fg,
@@ -28,6 +29,10 @@ class Palette {
     required this.accentDim,
     required this.onAccent,
     required this.accentWash,
+    required this.accentContainer,
+    required this.onAccentContainer,
+    required this.tonal,
+    required this.onTonal,
     required this.green,
     required this.amber,
     required this.red,
@@ -36,26 +41,30 @@ class Palette {
   /// Whether this is a dark or a light colour set.
   final Brightness brightness;
 
-  // ---- Surfaces, layered by lightness -------------------------------
+  // ---- Tonal surfaces (Material 3 surface containers) ---------------
 
-  /// The page background.
+  /// The page background: the stage the sections are drawn on.
   final Color bg;
 
-  /// Cards, sidebar, bars.
+  /// Cards and list rows on the page.
   final Color surface;
 
-  /// Inset fields and controls on a [surface].
+  /// The shell chrome (sidebar, rail, bars), sheets and dialogs.
   final Color surface2;
 
-  /// Raised bits: tooltips, toasts, thumbs.
+  /// Fields, segmented tracks, tonal circles, placeholders.
   final Color surface3;
 
-  // ---- Hairlines (flat borders, never shadows) ----------------------
+  /// The highest tone: inactive slider and switch tracks, the phone
+  /// mini-player card's cover.
+  final Color surface4;
+
+  // ---- Hairlines (only inside data views: rulers, grids) ------------
 
   /// The faint divider.
   final Color line;
 
-  /// The stronger divider, inactive tracks and outlines.
+  /// The stronger divider.
   final Color line2;
 
   // ---- Text ---------------------------------------------------------
@@ -69,12 +78,14 @@ class Palette {
   /// Captions, hints and disabled content.
   final Color fgFaint;
 
-  // ---- Accent (the one blue) ----------------------------------------
+  // ---- Accent (white in dark, graphite in light) --------------------
 
-  /// The single accent: transport, progress, active state.
+  /// The single accent: the selected destination, the play circle,
+  /// progress, active tracks, switches on, focus.
   final Color accent;
 
-  /// A quieter accent (secondary tracks, buffered ranges).
+  /// The secondary tone (the ring grey): unplayed and buffered ranges,
+  /// secondary marks.
   final Color accentDim;
 
   /// Content drawn on a solid [accent] fill.
@@ -82,6 +93,20 @@ class Palette {
 
   /// A translucent accent for active fills.
   final Color accentWash;
+
+  /// The secondary selection fill (the ring grey): a selected chip, the
+  /// current queue row, the selected stage.
+  final Color accentContainer;
+
+  /// Content drawn on [accentContainer].
+  final Color onAccentContainer;
+
+  /// The low chroma fill of secondary buttons (tonal pills, tile
+  /// buttons, rack toolbar), Material's secondary container.
+  final Color tonal;
+
+  /// Content drawn on [tonal].
+  final Color onTonal;
 
   // ---- Semantic -----------------------------------------------------
 
@@ -97,48 +122,76 @@ class Palette {
   /// Whether this is the [dark] colour set.
   bool get isDark => brightness == Brightness.dark;
 
-  /// The near-black studio look, the default theme.
+  /// The default theme, in the logo's own colours: graphite #24282D (the
+  /// disc) as the stage, darker and lighter steps of its hue (HCT 250,
+  /// chroma 7) for the chrome and the cards, the ring grey #BFBFBF for
+  /// secondary emphasis and white as the one accent.
   static const Palette dark = Palette(
     brightness: Brightness.dark,
-    bg: Color(0xFF0E0F11),
-    surface: Color(0xFF16181B),
-    surface2: Color(0xFF1C1F23),
-    surface3: Color(0xFF24282D),
-    line: Color(0x12FFFFFF), // ~7% white
-    line2: Color(0x1FFFFFFF), // ~12% white
-    fg: Color(0xFFE6E8EA),
-    fgDim: Color(0xFF8A9097),
-    fgFaint: Color(0xFF565C63),
-    accent: Color(0xFF91D8F9),
-    accentDim: Color(0xFF4E8BAA),
-    onAccent: Color(0xFF08151C),
-    accentWash: Color(0x2291D8F9), // ~13% for active fills
-    green: Color(0xFF5FD39A),
-    amber: Color(0xFFE9C46A),
-    red: Color(0xFFE55A5A),
+    bg: Color(0xFF24282D), // T16, the logo disc: the stage
+    surface: Color(0xFF31353A), // T22, cards and rows
+    surface2: Color(0xFF181C21), // T10, chrome, sheets, dialogs
+    surface3: Color(0xFF3A3E43), // T26, fields, tonal circles
+    surface4: Color(0xFF484C51), // T32, inactive tracks
+    line: Color(0x14FFFFFF), // ~8% white, inside data views only
+    line2: Color(0x26FFFFFF), // ~15% white
+    fg: Color(0xFFF1F4FA), // T96, 13.5:1 on bg, 11.2:1 on cards
+    fgDim: Color(0xFFBFBFBF), // the ring grey, 8.1:1 on bg, 6.7:1 on cards
+    fgFaint: Color(0xFFA8ABB2), // T70, 6.5:1 on bg, 4.7:1 on fields
+    accent: Color(0xFFFFFFFF), // white: selection, play, progress
+    accentDim: Color(0xFFBFBFBF), // the ring grey: secondary marks
+    onAccent: Color(0xFF24282D), // graphite on white, 14.8:1
+    accentWash: Color(0x1FFFFFFF), // ~12% white: hover
+    accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
+    onAccentContainer: Color(0xFF24282D), // 8.1:1
+    tonal: Color(0xFF43474C), // T30, secondary buttons
+    onTonal: Color(0xFFF1F4FA), // 8.5:1
+    green: Color(0xFF68DCA2), // 8.7:1 on bg
+    amber: Color(0xFFE7C268), // 8.7:1 on bg
+    red: Color(0xFFFF8985), // 6.5:1 on bg, 5.4:1 on cards
   );
 
-  /// The light counterpart: cool grey surfaces, near-black text and a
-  /// deeper blue accent that keeps its contrast on white.
+  /// The mirror of [dark]: white and near-white steps of the same hue,
+  /// graphite #24282D as the accent wherever dark has white, the ring
+  /// grey as the secondary selection. The stage sits a step below the
+  /// white cards so they read clearly.
   static const Palette light = Palette(
     brightness: Brightness.light,
-    bg: Color(0xFFF2F4F6),
-    surface: Color(0xFFFFFFFF),
-    surface2: Color(0xFFEBEEF1),
-    surface3: Color(0xFFDDE1E6),
-    line: Color(0x14000000), // ~8% black
-    line2: Color(0x26000000), // ~15% black
-    fg: Color(0xFF15181C),
-    fgDim: Color(0xFF555D66),
-    fgFaint: Color(0xFF8A929B),
-    accent: Color(0xFF1A78A8),
-    accentDim: Color(0xFF8CC2DE),
-    onAccent: Color(0xFFFFFFFF),
-    accentWash: Color(0x241A78A8), // ~14% for active fills
-    green: Color(0xFF16915A),
-    amber: Color(0xFFB07D0A),
-    red: Color(0xFFCC3535),
+    bg: Color(0xFFEBEEF5), // T94, the stage
+    surface: Color(0xFFFFFFFF), // white cards and rows
+    surface2: Color(0xFFE0E2E9), // T90, chrome, sheets, dialogs
+    surface3: Color(0xFFE5E8EF), // T92, fields, tonal circles
+    surface4: Color(0xFFB6B9BF), // T75, a ring grey step: tracks, 2:1 on white
+    line: Color(0x14000000), // ~8% black, inside data views only
+    line2: Color(0x29000000), // ~16% black
+    fg: Color(0xFF24282D), // graphite, 12.8:1 on bg, 14.8:1 on cards
+    fgDim: Color(0xFF43474C), // T30, 8.1:1 on bg
+    fgFaint: Color(0xFF5B5F64), // T40, 5.5:1 on bg, 5.0:1 on chrome
+    accent: Color(0xFF24282D), // graphite: selection, play, progress
+    // The ring grey is too light on white (1.8:1); its T60 step keeps
+    // secondary marks (unplayed waveform) at 3.2:1 on white.
+    accentDim: Color(0xFF8D9197),
+    onAccent: Color(0xFFFFFFFF), // white on graphite, 14.8:1
+    accentWash: Color(0x1A24282D), // ~10% graphite: hover
+    accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
+    onAccentContainer: Color(0xFF24282D), // 8.1:1
+    tonal: Color(0xFFD7DAE1), // T87, secondary buttons
+    onTonal: Color(0xFF24282D), // 10.6:1
+    green: Color(0xFF006C46), // 5.6:1 on bg
+    amber: Color(0xFF765A04), // 5.6:1 on bg
+    red: Color(0xFFAE2F34), // 5.6:1 on bg
   );
+
+  // ---- The logo (fixed, the same in both themes) --------------------
+
+  /// The logo disc, also [dark]'s stage.
+  static const Color logoGraphite = Color(0xFF24282D);
+
+  /// The logo ring.
+  static const Color logoRing = Color(0xFFBFBFBF);
+
+  /// The logo's play triangle.
+  static const Color logoWhite = Color(0xFFFFFFFF);
 
   static Palette _active = dark;
 

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-/// Pure-Dart analysis of the engine's [PcmFrame] taps — the maths the
+/// Pure-Dart analysis of the engine's [PcmFrame] taps: the maths the
 /// visualizers run on every audio frame, kept out of the widgets so a
 /// painter only ever receives finished numbers.
 ///

@@ -11,7 +11,7 @@ import '../../../ui/tokens.dart';
 import 'graphic_height.dart';
 import '../rack_environment.dart';
 
-/// The compressor's transfer curve — the universal dB-in / dB-out knee
+/// The compressor's transfer curve: the universal dB in, dB out knee
 /// diagram. The accent curve bends away from the faint unity (y = x)
 /// reference past the threshold; the shaded wedge between them is the
 /// gain it's giving back. When audio is playing a live dot rides the
@@ -303,7 +303,10 @@ class _KneePainter extends CustomPainter {
     wedge.close();
     canvas.save();
     canvas.clipRect(plot);
-    canvas.drawPath(wedge, Paint()..color = accent.withValues(alpha: 0.10));
+    canvas.drawPath(
+      wedge,
+      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
+    );
     canvas.restore();
     canvas.drawPath(
       curve,
@@ -331,7 +334,7 @@ class _KneePainter extends CustomPainter {
       );
     }
 
-    // GR readout — top-left chip.
+    // GR readout: top-left chip.
     final gr = grDb.value;
     if (enabled && gr > 0.1) {
       paintChartLabel(

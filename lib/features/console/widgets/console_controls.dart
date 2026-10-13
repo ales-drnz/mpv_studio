@@ -3,6 +3,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import 'console_log_view.dart';
 
 /// The log levels the filter offers, most severe first.
@@ -75,18 +77,15 @@ class _LevelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
     return Tooltip(
       message: 'Log level',
       child: OutlinedButton.icon(
         onPressed: () => _open(context),
-        icon: const Icon(Icons.filter_list_rounded, size: 18),
+        icon: const Icon(Icons.filter_list_rounded, size: 20),
         label: Text(logLevelLabel(level)),
         style: OutlinedButton.styleFrom(
-          minimumSize: Size(0, layout.minTap),
-          foregroundColor: Tokens.fg,
-          side: BorderSide(color: Tokens.line2),
-          padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+          minimumSize: Size(0, controlHeightOf(context)),
+          padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
         ),
       ),
     );
@@ -103,52 +102,25 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
-    return Container(
-      constraints: BoxConstraints(minHeight: layout.minTap),
-      decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
-      ),
-      padding: const EdgeInsets.only(left: Tokens.s12),
-      child: Row(
-        children: [
-          Icon(Icons.search_rounded, size: 16, color: Tokens.fgFaint),
-          const SizedBox(width: Tokens.s8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
-              style: Tokens.body,
-              cursorColor: Tokens.accent,
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'Search the log',
-                hintStyle: Tokens.caption,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+    return AppTextField(
+      controller: controller,
+      onChanged: onChanged,
+      hint: 'Search the log',
+      semanticLabel: 'Search the log',
+      leading: Icon(Icons.search_rounded, size: 20, color: Tokens.fgDim),
+      action: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller,
+        builder: (context, value, _) => value.text.isEmpty
+            ? const SizedBox(width: Tokens.s12)
+            : RoundIconButton(
+                tooltip: 'Clear search',
+                onTap: () {
+                  controller.clear();
+                  onChanged('');
+                },
+                icon: Icons.close_rounded,
+                size: 20,
               ),
-            ),
-          ),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: controller,
-            builder: (context, value, _) => value.text.isEmpty
-                ? const SizedBox(width: Tokens.s8)
-                : IconButton(
-                    tooltip: 'Clear search',
-                    onPressed: () {
-                      controller.clear();
-                      onChanged('');
-                    },
-                    icon: const Icon(Icons.close_rounded, size: 16),
-                    color: Tokens.fgFaint,
-                    constraints: BoxConstraints.tightFor(
-                      width: layout.minTap,
-                      height: layout.minTap,
-                    ),
-                  ),
-          ),
-        ],
       ),
     );
   }
@@ -173,20 +145,17 @@ class ConsoleInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
-    return Container(
-      constraints: BoxConstraints(minHeight: layout.minTap),
-      padding: const EdgeInsets.only(left: Tokens.s12),
-      decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
-      ),
+    final h = controlHeightOf(context);
+    final field = Container(
+      constraints: BoxConstraints(minHeight: h),
+      padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
       child: Row(
         children: [
           ExcludeSemantics(
             child: Text(
               '›',
-              style: TextStyle(color: Tokens.accent, fontSize: 16),
+              style: Tokens.heading.copyWith(color: Tokens.fgDim, height: 1),
             ),
           ),
           const SizedBox(width: Tokens.s8),
@@ -194,11 +163,7 @@ class ConsoleInput extends StatelessWidget {
             child: TextField(
               controller: controller,
               focusNode: focusNode,
-              style: TextStyle(
-                fontFamily: Tokens.mono,
-                fontSize: 13,
-                color: Tokens.fg,
-              ),
+              style: Tokens.body.copyWith(fontFamily: Tokens.mono),
               cursorColor: Tokens.accent,
               autocorrect: false,
               enableSuggestions: false,
@@ -212,29 +177,33 @@ class ConsoleInput extends StatelessWidget {
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'mpv command, or help',
-                hintStyle: Tokens.caption,
+                hintStyle: Tokens.body.copyWith(color: Tokens.fgFaint),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: controller,
-            builder: (context, value, _) => IconButton(
-              tooltip: 'Run',
-              onPressed: value.text.trim().isEmpty
-                  ? null
-                  : () => onSubmitted(value.text),
-              icon: const Icon(Icons.keyboard_return_rounded, size: 18),
-              color: Tokens.accent,
-              constraints: BoxConstraints.tightFor(
-                width: layout.minTap,
-                height: layout.minTap,
+                contentPadding: const EdgeInsets.symmetric(vertical: Tokens.s8),
               ),
             ),
           ),
         ],
       ),
+    );
+    return Row(
+      children: [
+        Expanded(child: field),
+        const SizedBox(width: Tokens.s8),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (context, value, _) => RoundIconButton(
+            tooltip: 'Run',
+            tone: RoundTone.primary,
+            diameter: h,
+            size: 20,
+            onTap: value.text.trim().isEmpty
+                ? null
+                : () => onSubmitted(value.text),
+            icon: Icons.keyboard_return_rounded,
+          ),
+        ),
+      ],
     );
   }
 }

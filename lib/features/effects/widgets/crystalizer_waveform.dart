@@ -6,12 +6,12 @@ import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 import 'graphic_height.dart';
 
-/// A before/after sketch of the crystalizer. A representative waveform is
-/// drawn faintly (the input) under the same waveform run through the
-/// crystalizer's sample-difference law — `y[n] = x[n] + i·(x[n]−x[n−1])`
-/// — in accent. Positive intensity sharpens transients (the accent trace
-/// grows spikier than the input); negative intensity smooths them. It's an
-/// illustration of the control's behaviour, not a live capture.
+/// A before and after sketch of the crystalizer. A representative waveform
+/// is drawn faintly (the input) under the same waveform run through the
+/// crystalizer's sample-difference law, `y[n] = x[n] + i·(x[n]−x[n−1])`,
+/// drawn in the accent. Positive intensity sharpens transients (the accent
+/// trace grows spikier than the input); negative intensity smooths them.
+/// It's an illustration of the control's behaviour, not a live capture.
 class CrystalizerWaveform extends StatelessWidget {
   final double intensity; // -10..10
   final bool enabled;
@@ -55,7 +55,7 @@ class _CrystalPainter extends CustomPainter {
 
   _CrystalPainter({required this.intensity, required this.enabled});
 
-  /// A representative input waveform — a couple of partials under a
+  /// A representative input waveform: a couple of partials under a
   /// percussive envelope, so transients are present for the law to act on.
   static double _input(double t) {
     final env = math.exp(-3.0 * (t % 0.34) / 0.34);
@@ -101,7 +101,7 @@ class _CrystalPainter extends CustomPainter {
       return p;
     }
 
-    // Input (before) — faint.
+    // Input (before): faint.
     canvas.drawPath(
       build(inVals),
       Paint()
@@ -110,7 +110,7 @@ class _CrystalPainter extends CustomPainter {
         ..strokeWidth = 1.2
         ..isAntiAlias = true,
     );
-    // Output (after) — accent.
+    // Output (after): accent.
     canvas.drawPath(
       build(outVals),
       Paint()

@@ -30,7 +30,7 @@ class WaveformMeter extends StatefulWidget {
   const WaveformMeter({super.key});
 
   /// Height of the time ruler at the top.
-  static const double rulerHeight = 22;
+  static const double rulerHeight = 24;
 
   /// The seek step of the accessibility actions.
   static const Duration semanticStep = Duration(seconds: 5);
@@ -315,8 +315,8 @@ class _WaveformMeterState extends State<WaveformMeter>
               children: [
                 Positioned.fill(child: _envelope(context, touch)),
                 Positioned(
-                  top: WaveformMeter.rulerHeight + 4,
-                  right: Tokens.s6,
+                  top: WaveformMeter.rulerHeight + Tokens.s8,
+                  right: Tokens.s8,
                   child: WaveformZoomControls(
                     canZoomIn: _view.canZoomIn,
                     canZoomOut: _view.canZoomOut,
@@ -325,7 +325,7 @@ class _WaveformMeterState extends State<WaveformMeter>
                   ),
                 ),
                 Positioned(
-                  top: WaveformMeter.rulerHeight + 6,
+                  top: WaveformMeter.rulerHeight + Tokens.s8,
                   left: Tokens.s8,
                   child: WaveformScanIndicator(
                     visible: _view.wave?.decoding == true,
@@ -336,7 +336,7 @@ class _WaveformMeterState extends State<WaveformMeter>
             ),
           ),
           WaveformScrollBar(
-            height: touch ? 20 : 14,
+            height: touch ? 20 : 16,
             enabled: _view.canScroll,
             viewStart: _view.leftRel,
             visibleSecs: _view.visibleSecs,

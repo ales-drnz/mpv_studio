@@ -155,8 +155,8 @@ class _EngineOptionsSectionState extends State<EngineOptionsSection> {
                     vertical: Tokens.s8,
                   ),
                   decoration: ShapeDecoration(
-                    color: Tokens.surface2,
-                    shape: Tokens.squircle(Tokens.rSm),
+                    color: Tokens.surface3,
+                    shape: Tokens.shape(Tokens.rMd),
                   ),
                   child: TextField(
                     controller: _text,

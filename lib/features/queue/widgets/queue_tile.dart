@@ -20,7 +20,9 @@ extension MediaOriginIcon on MediaOrigin {
 }
 
 /// One queue row: position or state, cover, title, artist and source, the
-/// outcome of its last play, the length, and the drag handle.
+/// outcome of its last play, the length, and the drag handle. A card tone
+/// row; the selected one a field tone, the current one the secondary
+/// selection fill with its content in [Tokens.onAccentContainer].
 ///
 /// With a pointer the play, remove and more buttons show on hover and on
 /// the selected row. On touch the whole row is the tap target and the
@@ -94,11 +96,18 @@ class _QueueTileState extends State<QueueTile> {
     final current = widget.current;
     final showActions = !touch && (_hovered || widget.selected);
 
+    // On the current row everything takes the container's content tone;
+    // the semantic red would not read on the ring grey in dark.
+    final on = current ? Tokens.onAccentContainer : null;
     final Widget lead;
     if (_failed) {
-      lead = Icon(Icons.error_outline_rounded, size: 18, color: Tokens.red);
+      lead = Icon(
+        Icons.error_outline_rounded,
+        size: 20,
+        color: on ?? Tokens.red,
+      );
     } else if (current) {
-      lead = Icon(Icons.volume_up_rounded, size: 18, color: Tokens.accent);
+      lead = Icon(Icons.graphic_eq_rounded, size: 20, color: on);
     } else {
       lead = Text(
         '${widget.index + 1}',
@@ -108,14 +117,12 @@ class _QueueTileState extends State<QueueTile> {
       );
     }
 
-    final titleColor = _failed
-        ? Tokens.fgDim
-        : (current ? Tokens.accent : Tokens.fg);
+    final titleColor = on ?? (_failed ? Tokens.fgDim : Tokens.fg);
     final Color background;
     if (current) {
-      background = Tokens.accentWash;
+      background = Tokens.accentContainer;
     } else if (widget.selected) {
-      background = Tokens.surface2;
+      background = Tokens.surface3;
     } else {
       background = Tokens.surface;
     }
@@ -133,23 +140,23 @@ class _QueueTileState extends State<QueueTile> {
             fontWeight: current ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: Tokens.s4),
         Row(
           children: [
-            Icon(info.origin.icon, size: 12, color: Tokens.fgFaint),
+            Icon(info.origin.icon, size: 14, color: on ?? Tokens.fgFaint),
             const SizedBox(width: Tokens.s4),
             if (widget.outcome != null) ...[
-              OutcomeBadge(widget.outcome!),
-              const SizedBox(width: Tokens.s6),
+              OutcomeBadge(widget.outcome!, onContainer: current),
+              const SizedBox(width: Tokens.s8),
             ],
             Flexible(
               child: Text(
                 _failed ? widget.outcome!.reason : info.subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: _failed
-                    ? Tokens.caption.copyWith(color: Tokens.red)
-                    : Tokens.caption,
+                style: Tokens.caption.copyWith(
+                  color: on ?? (_failed ? Tokens.red : null),
+                ),
               ),
             ),
           ],
@@ -160,13 +167,13 @@ class _QueueTileState extends State<QueueTile> {
     final content = Padding(
       padding: const EdgeInsets.fromLTRB(
         Tokens.s8,
-        Tokens.s6,
+        Tokens.s8,
         Tokens.s4,
-        Tokens.s6,
+        Tokens.s8,
       ),
       child: Row(
         children: [
-          SizedBox(width: 28, child: Center(child: lead)),
+          SizedBox(width: 32, child: Center(child: lead)),
           const SizedBox(width: Tokens.s8),
           QueueThumb(
             artUrl: info.artUrl,
@@ -177,24 +184,30 @@ class _QueueTileState extends State<QueueTile> {
           Expanded(child: text),
           if (info.duration != null) ...[
             const SizedBox(width: Tokens.s8),
-            Text(formatDuration(info.duration!), style: Tokens.numeric),
+            Text(
+              formatDuration(info.duration!),
+              style: Tokens.numeric.copyWith(color: on),
+            ),
           ],
           if (showActions) ...[
             const SizedBox(width: Tokens.s4),
             _RowButton(
               icon: Icons.play_arrow_rounded,
               tooltip: 'Play',
+              color: on,
               onPressed: widget.onPlay,
             ),
             _RowButton(
               icon: Icons.close_rounded,
               tooltip: 'Remove',
+              color: on,
               onPressed: widget.onRemove,
             ),
             Builder(
               builder: (context) => _RowButton(
                 icon: Icons.more_vert_rounded,
                 tooltip: 'More',
+                color: on,
                 onPressed: () {
                   final box = context.findRenderObject() as RenderBox?;
                   widget.onMore(
@@ -211,7 +224,7 @@ class _QueueTileState extends State<QueueTile> {
     final handle = touch
         ? ReorderableDelayedDragStartListener(
             index: widget.row,
-            child: _Handle(size: layout.minTap),
+            child: _Handle(size: layout.minTap, color: on),
           )
         : ReorderableDragStartListener(
             index: widget.row,
@@ -219,13 +232,13 @@ class _QueueTileState extends State<QueueTile> {
               cursor: SystemMouseCursors.grab,
               child: Tooltip(
                 message: 'Drag to reorder',
-                child: _Handle(size: layout.minTap),
+                child: _Handle(size: layout.minTap, color: on),
               ),
             ),
           );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s6),
+      padding: const EdgeInsets.only(bottom: Tokens.s4),
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
@@ -234,15 +247,10 @@ class _QueueTileState extends State<QueueTile> {
           child: Ink(
             decoration: ShapeDecoration(
               color: background,
-              shape: Tokens.squircle(
-                Tokens.rSm,
-                side: widget.selected && !current
-                    ? BorderSide(color: Tokens.line2)
-                    : BorderSide.none,
-              ),
+              shape: Tokens.shape(Tokens.rMd),
             ),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: touch ? 56 : 48),
+              constraints: const BoxConstraints(minHeight: 56),
               child: Row(
                 children: [
                   Expanded(
@@ -265,7 +273,7 @@ class _QueueTileState extends State<QueueTile> {
                         onLongPress: touch ? () => widget.onMore(null) : null,
                         child: InkWell(
                           onTap: widget.onTap,
-                          customBorder: Tokens.squircle(Tokens.rSm),
+                          customBorder: Tokens.shape(Tokens.rMd),
                           child: content,
                         ),
                       ),
@@ -283,45 +291,56 @@ class _QueueTileState extends State<QueueTile> {
 }
 
 class _Handle extends StatelessWidget {
-  const _Handle({required this.size});
+  const _Handle({required this.size, this.color});
 
   final double size;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => SizedBox(
     width: size,
     height: size,
-    child: Icon(Icons.drag_indicator_rounded, size: 20, color: Tokens.fgFaint),
+    child: Icon(
+      Icons.drag_indicator_rounded,
+      size: 20,
+      color: color ?? Tokens.fgFaint,
+    ),
   );
 }
 
+/// A hover action of a row: a bare icon in a round hit area, in [color]
+/// when the row has its own content tone.
 class _RowButton extends StatelessWidget {
   const _RowButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.color,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => IconButton(
     onPressed: onPressed,
     tooltip: tooltip,
-    icon: Icon(icon, size: 18),
-    color: Tokens.fgDim,
-    constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+    icon: Icon(icon, size: 20),
+    color: color ?? Tokens.fgDim,
+    constraints: const BoxConstraints.tightFor(width: 36, height: 36),
     padding: EdgeInsets.zero,
   );
 }
 
 /// How an entry's last play ended, as a small pill: red for a failure.
+/// [onContainer] draws it for the current row's secondary selection fill.
 class OutcomeBadge extends StatelessWidget {
-  const OutcomeBadge(this.outcome, {super.key});
+  const OutcomeBadge(this.outcome, {super.key, this.onContainer = false});
 
   final EntryOutcome outcome;
+  final bool onContainer;
 
   @override
   Widget build(BuildContext context) {
@@ -331,12 +350,20 @@ class OutcomeBadge extends StatelessWidget {
       EntryEnd.stopped => 'Skipped',
       EntryEnd.failed => 'Failed',
     };
-    final color = failed ? Tokens.red : Tokens.fgDim;
+    final color = onContainer
+        ? Tokens.onAccentContainer
+        : failed
+        ? Tokens.red
+        : Tokens.fgDim;
     final badge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s6, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
       decoration: ShapeDecoration(
-        color: failed ? Tokens.red.withValues(alpha: 0.14) : Tokens.surface3,
-        shape: Tokens.squircle(Tokens.rPill),
+        color: onContainer
+            ? Tokens.onAccentContainer.withValues(alpha: 0.14)
+            : failed
+            ? Tokens.red.withValues(alpha: 0.14)
+            : Tokens.surface3,
+        shape: Tokens.pill,
       ),
       child: Text(
         label,
@@ -360,12 +387,16 @@ class QueueThumb extends StatelessWidget {
     required this.current,
     required this.player,
     this.size = 40,
+    this.radius = Tokens.rSm,
   });
 
   final String? artUrl;
   final bool current;
   final PlayerApi player;
   final double size;
+
+  /// The corner radius of the cover.
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
@@ -380,14 +411,14 @@ class QueueThumb extends StatelessWidget {
         fit: BoxFit.cover,
         cacheWidth: cache,
         gaplessPlayback: true,
-        errorBuilder: (_, _, _) => const _ThumbPlaceholder(),
+        errorBuilder: (_, _, _) => _ThumbPlaceholder(size),
       );
     } else if (current) {
       image = Live<CoverArt?>(
         stream: player.stream.coverArt,
         initial: player.state.coverArt,
         builder: (context, art) => art == null
-            ? const _ThumbPlaceholder()
+            ? _ThumbPlaceholder(size)
             : Image.memory(
                 art.bytes,
                 width: size,
@@ -395,27 +426,33 @@ class QueueThumb extends StatelessWidget {
                 fit: BoxFit.cover,
                 cacheWidth: cache,
                 gaplessPlayback: true,
-                errorBuilder: (_, _, _) => const _ThumbPlaceholder(),
+                errorBuilder: (_, _, _) => _ThumbPlaceholder(size),
               ),
       );
     } else {
-      image = const _ThumbPlaceholder();
+      image = _ThumbPlaceholder(size);
     }
     return ClipPath(
-      clipper: ShapeBorderClipper(shape: Tokens.squircle(6)),
+      clipper: ShapeBorderClipper(shape: Tokens.shape(radius)),
       child: SizedBox(width: size, height: size, child: image),
     );
   }
 }
 
 class _ThumbPlaceholder extends StatelessWidget {
-  const _ThumbPlaceholder();
+  const _ThumbPlaceholder(this.size);
+
+  final double size;
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-    color: Tokens.surface2,
+    color: Tokens.surface3,
     child: Center(
-      child: Icon(Icons.music_note_rounded, size: 16, color: Tokens.fgFaint),
+      child: Icon(
+        Icons.music_note_rounded,
+        size: (size * 0.45).clamp(16.0, 32.0),
+        color: Tokens.fgFaint,
+      ),
     ),
   );
 }

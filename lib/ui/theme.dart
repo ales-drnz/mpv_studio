@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'layout/window_class.dart';
 import 'tokens.dart';
 
-/// The flat Material theme, built from a [Palette]. Material widgets are
-/// reconfigured so nothing emits elevation, splash glows or overlays: the
-/// look is uniformly flat in both the dark and the light palette.
+/// The Material theme of the "Expressive tonal" direction, built from a
+/// [Palette]: flat (no elevation, no splash glow), tonal fills instead of
+/// outlines, every button a pill and every icon button a circle, Roboto
+/// named on every text style.
 class AppTheme {
   AppTheme._();
 
@@ -20,28 +21,44 @@ class AppTheme {
   static ThemeData of(Palette palette, {InputMode input = InputMode.pointer}) {
     final p = palette;
     final touch = input == InputMode.touch;
-    final scheme = p.isDark
-        ? ColorScheme.dark(
-            surface: p.bg,
-            primary: p.accent,
-            onPrimary: p.onAccent,
-            secondary: p.accent,
-            error: p.red,
-            onSurface: p.fg,
-          )
-        : ColorScheme.light(
-            surface: p.bg,
-            primary: p.accent,
-            onPrimary: p.onAccent,
-            secondary: p.accent,
-            error: p.red,
-            onSurface: p.fg,
-          );
-    TextStyle text(double size, FontWeight weight, Color color) =>
-        TextStyle(fontSize: size, fontWeight: weight, color: color);
+    final scheme =
+        (p.isDark ? const ColorScheme.dark() : const ColorScheme.light())
+            .copyWith(
+              surface: p.bg,
+              surfaceContainerLowest: p.bg,
+              surfaceContainerLow: p.surface,
+              surfaceContainer: p.surface2,
+              surfaceContainerHigh: p.surface3,
+              surfaceContainerHighest: p.surface4,
+              onSurface: p.fg,
+              onSurfaceVariant: p.fgDim,
+              outline: p.fgFaint,
+              outlineVariant: p.line2,
+              primary: p.accent,
+              onPrimary: p.onAccent,
+              primaryContainer: p.accentContainer,
+              onPrimaryContainer: p.onAccentContainer,
+              secondary: p.accent,
+              onSecondary: p.onAccent,
+              secondaryContainer: p.tonal,
+              onSecondaryContainer: p.onTonal,
+              error: p.red,
+            );
+    TextStyle text(double size, FontWeight weight, Color color) => TextStyle(
+      fontFamily: Tokens.sans,
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
+    const pillPadding = EdgeInsets.symmetric(horizontal: Tokens.s24);
+    final buttonSize = Size(touch ? 48 : 40, touch ? 48 : 40);
+    final buttonText = WidgetStatePropertyAll(
+      text(14, FontWeight.w600, p.fg).copyWith(letterSpacing: 0.1),
+    );
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: Tokens.sans,
       brightness: p.brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: p.bg,
@@ -60,24 +77,90 @@ class AppTheme {
       hoverColor: p.accent.withValues(alpha: 0.10),
       dividerColor: p.line,
       textTheme: TextTheme(
-        titleLarge: text(
-          21,
-          FontWeight.w600,
-          p.fg,
-        ).copyWith(letterSpacing: -0.2),
-        titleMedium: text(15, FontWeight.w600, p.fg),
-        bodyMedium: text(13.5, FontWeight.w400, p.fg),
-        labelMedium: text(12, FontWeight.w500, p.fgDim),
-        bodySmall: text(11, FontWeight.w400, p.fgFaint),
+        headlineMedium: Tokens.display.copyWith(color: p.fg),
+        titleLarge: Tokens.title.copyWith(color: p.fg),
+        titleMedium: Tokens.heading.copyWith(color: p.fg),
+        bodyLarge: text(16, FontWeight.w400, p.fg),
+        bodyMedium: Tokens.body.copyWith(color: p.fg),
+        labelLarge: text(14, FontWeight.w600, p.fg),
+        labelMedium: Tokens.label.copyWith(color: p.fgDim),
+        bodySmall: Tokens.caption.copyWith(color: p.fgFaint),
+      ),
+      // Every text button family is a pill with a tonal or solid fill.
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          padding: const WidgetStatePropertyAll(pillPadding),
+          minimumSize: WidgetStatePropertyAll(buttonSize),
+          textStyle: buttonText,
+          elevation: const WidgetStatePropertyAll(0),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          padding: const WidgetStatePropertyAll(pillPadding),
+          minimumSize: WidgetStatePropertyAll(buttonSize),
+          textStyle: buttonText,
+          // Tonal instead of outlined: a hairline-free secondary button.
+          backgroundColor: WidgetStatePropertyAll(p.tonal),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.disabled) ? p.fgFaint : p.onTonal,
+          ),
+          side: const WidgetStatePropertyAll(BorderSide.none),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: Tokens.s16),
+          ),
+          minimumSize: WidgetStatePropertyAll(buttonSize),
+          textStyle: buttonText,
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          shape: const WidgetStatePropertyAll(CircleBorder()),
+          minimumSize: WidgetStatePropertyAll(buttonSize),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        shape: const StadiumBorder(),
+        side: BorderSide.none,
+        backgroundColor: p.surface3,
+        selectedColor: p.accentContainer,
+        labelStyle: text(13, FontWeight.w500, p.fg),
+        padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: p.surface4,
+        contentTextStyle: Tokens.body.copyWith(color: p.fg),
+        actionTextColor: p.accent,
+        elevation: 0,
+        shape: Tokens.shape(Tokens.rMd),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: p.accent,
+        linearTrackColor: p.surface4,
+        circularTrackColor: p.surface4,
+      ),
+      dividerTheme: DividerThemeData(color: p.line, thickness: 1, space: 1),
+      badgeTheme: BadgeThemeData(
+        backgroundColor: p.red,
+        textColor: p.onAccent,
+        textStyle: text(11, FontWeight.w700, p.onAccent),
       ),
       iconTheme: IconThemeData(color: p.fgDim, size: 22),
       sliderTheme: SliderThemeData(
         // Flat slider: thin track, small thumb, NO overlay or glow halo.
-        trackHeight: 4,
+        trackHeight: 8,
         overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
         activeTrackColor: p.accent,
-        inactiveTrackColor: p.line2,
+        inactiveTrackColor: p.surface4,
         thumbColor: p.accent,
         overlayColor: Colors.transparent,
         secondaryActiveTrackColor: p.accentDim,
@@ -87,17 +170,18 @@ class AppTheme {
           (s) => s.contains(WidgetState.selected) ? p.onAccent : p.fgFaint,
         ),
         trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? p.accent : p.surface3,
+          (s) => s.contains(WidgetState.selected) ? p.accent : p.surface4,
         ),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
         overlayColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
       tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(
-          color: p.surface3,
-          borderRadius: const BorderRadius.all(Radius.circular(Tokens.rSm)),
+        decoration: ShapeDecoration(color: p.surface4, shape: Tokens.pill),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Tokens.s12,
+          vertical: Tokens.s4,
         ),
-        textStyle: TextStyle(color: p.fg, fontSize: 12),
+        textStyle: text(12, FontWeight.w500, p.fg),
       ),
     );
   }

@@ -76,6 +76,7 @@ class QueueEntryInfo extends StatelessWidget {
               current: current,
               player: player,
               size: 72,
+              radius: Tokens.rLg,
             ),
             const SizedBox(width: Tokens.s16),
             Expanded(
@@ -94,7 +95,14 @@ class QueueEntryInfo extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 88, child: Text(label, style: Tokens.caption)),
+                SizedBox(
+                  width: 88,
+                  child: Padding(
+                    // On the body text's first baseline.
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(label, style: Tokens.caption),
+                  ),
+                ),
                 Expanded(
                   child: SelectableText(
                     value,
@@ -120,11 +128,7 @@ class QueueEntryInfo extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   shareableLocation(media),
-                  style: TextStyle(
-                    fontFamily: Tokens.mono,
-                    fontSize: 12,
-                    color: Tokens.fgDim,
-                  ),
+                  style: Tokens.numeric,
                 ),
               ),
             ],
@@ -144,11 +148,7 @@ class QueueEntryInfo extends StatelessWidget {
               onPressed: onCopy,
               icon: const Icon(Icons.link_rounded, size: 18),
               label: const Text('Copy location'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: buttonSize,
-                foregroundColor: Tokens.fg,
-                side: BorderSide(color: Tokens.line2),
-              ),
+              style: OutlinedButton.styleFrom(minimumSize: buttonSize),
             ),
             OutlinedButton.icon(
               onPressed: onRemove,
@@ -157,7 +157,6 @@ class QueueEntryInfo extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 minimumSize: buttonSize,
                 foregroundColor: Tokens.red,
-                side: BorderSide(color: Tokens.line2),
               ),
             ),
           ],

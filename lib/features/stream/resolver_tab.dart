@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/controls.dart';
 import '../../ui/widgets/custom_url_bar.dart';
 import '../../ui/widgets/section_header.dart';
 import '../../util/media_labels.dart';
@@ -127,15 +128,18 @@ class _ResolverControlsState extends State<_ResolverControls> {
       builder: (context, pl) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'A source resolver runs right before each stream opens, and once '
-            'more after a failed open with isRetry set, so an expired link '
-            'can be renewed. Any resolver plugs into setSourceResolver the '
-            'same way, a YouTube one included. This one signs links on the '
-            'device; the app chains it after the Plex resolver.',
-            style: Tokens.label,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+            child: Text(
+              'A source resolver runs right before each stream opens, and '
+              'once more after a failed open with isRetry set, so an expired '
+              'link can be renewed. Any resolver plugs into setSourceResolver '
+              'the same way, a YouTube one included. This one signs links on '
+              'the device; the app chains it after the Plex resolver.',
+              style: Tokens.body.copyWith(color: Tokens.fgDim),
+            ),
           ),
-          const SizedBox(height: Tokens.s12),
+          const SizedBox(height: Tokens.s16),
           ListenableBuilder(
             listenable: resolver,
             builder: (context, _) => _ExpirySwitch(
@@ -143,28 +147,35 @@ class _ResolverControlsState extends State<_ResolverControls> {
               onChanged: (v) => resolver.simulateExpiry = v,
             ),
           ),
-          const SizedBox(height: Tokens.s12),
+          const SizedBox(height: Tokens.s16),
           CustomUrlBar(
             hint: 'URL to sign, e.g. http://localhost:8000/a.flac',
             onPlay: (url) => _send(url, actions.play),
             onQueue: (url) => _send(url, (m) => actions.enqueue([m])),
           ),
-          if (_problem != null) ...[
-            const SizedBox(height: Tokens.s8),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _problem!,
-                style: Tokens.label.copyWith(color: Tokens.red),
+          if (_problem != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Tokens.s16,
+                Tokens.s8,
+                Tokens.s16,
+                0,
+              ),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  _problem!,
+                  style: Tokens.label.copyWith(color: Tokens.red),
+                ),
               ),
             ),
-          ],
           const SizedBox(height: Tokens.s16),
           ...referenceRows(
             categories: _signedExamples,
             actions: actions,
             origin: playingOrigin(pl),
             mediaFor: (item) => signedMedia(item.url, title: item.label),
+            icon: Icons.key_rounded,
           ),
         ],
       ),
@@ -182,16 +193,17 @@ class _ExpirySwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Tokens.surface,
-      shape: Tokens.squircle(Tokens.rMd),
+      shape: Tokens.shape(Tokens.rLg),
       clipBehavior: Clip.antiAlias,
-      child: SwitchListTile(
-        value: value,
-        onChanged: onChanged,
-        title: Text('Simulate expiry', style: Tokens.body),
-        subtitle: Text(
-          'The first link handed out is already expired, so the open fails '
-          'and the retry gets a fresh one.',
-          style: Tokens.caption.copyWith(color: Tokens.fgDim),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+        child: SwitchRow(
+          label: 'Simulate expiry',
+          subtitle:
+              'The first link handed out is already expired, so the open '
+              'fails and the retry gets a fresh one.',
+          value: value,
+          onChanged: onChanged,
         ),
       ),
     );
@@ -224,11 +236,15 @@ class ResolverLog extends StatelessWidget {
               ],
             ),
             if (log.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(Tokens.s16),
+              Container(
+                padding: const EdgeInsets.all(Tokens.s24),
+                decoration: ShapeDecoration(
+                  color: Tokens.surface,
+                  shape: Tokens.shape(Tokens.rLg),
+                ),
                 child: Text(
                   'No calls yet. Play a signed link to see the resolver run.',
-                  style: Tokens.label,
+                  style: Tokens.body.copyWith(color: Tokens.fgDim),
                   textAlign: TextAlign.center,
                 ),
               )
@@ -261,44 +277,60 @@ class ResolverLogTile extends StatelessWidget {
     final (label, color) = switch (entry.outcome) {
       ResolveOutcome.signed => ('Fresh link', Tokens.green),
       ResolveOutcome.expired => ('Expired link', Tokens.amber),
-      ResolveOutcome.kept => ('Kept', Tokens.fgDim),
+      ResolveOutcome.kept => ('Kept', null),
     };
-    final mono = Tokens.caption.copyWith(
-      fontFamily: Tokens.mono,
-      color: Tokens.fgDim,
-    );
+    final mono = Tokens.numeric;
     return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s6),
-      padding: const EdgeInsets.all(Tokens.s12),
+      margin: const EdgeInsets.only(bottom: Tokens.s4),
+      padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
             spacing: Tokens.s8,
-            runSpacing: Tokens.s4,
+            runSpacing: Tokens.s8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(_time(entry.at), style: Tokens.numeric),
-              _Badge(
-                entry.isRetry ? 'Retry' : 'Before open',
-                entry.isRetry ? Tokens.accent : Tokens.fgDim,
+              Text(
+                _time(entry.at),
+                style: Tokens.numeric.copyWith(
+                  color: Tokens.fg,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              _Badge(label, color),
+              entry.isRetry
+                  ? _Badge(
+                      'Retry',
+                      fill: Tokens.accentContainer,
+                      ink: Tokens.onAccentContainer,
+                    )
+                  : _Badge(
+                      'Before open',
+                      fill: Tokens.surface3,
+                      ink: Tokens.fgDim,
+                    ),
+              color == null
+                  ? _Badge(label, fill: Tokens.surface3, ink: Tokens.fgDim)
+                  : _Badge(
+                      label,
+                      fill: color.withValues(alpha: 0.16),
+                      ink: color,
+                    ),
               Text(_elapsed(entry.elapsed), style: Tokens.numeric),
             ],
           ),
-          const SizedBox(height: Tokens.s6),
+          const SizedBox(height: Tokens.s12),
           Text(
             'uri  ${withoutCredentials(entry.uri)}',
             style: mono,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: Tokens.s4),
           Text(
             entry.returned == null
                 ? 'kept as is'
@@ -313,20 +345,26 @@ class ResolverLogTile extends StatelessWidget {
   }
 }
 
+/// A small state pill of a log entry.
 class _Badge extends StatelessWidget {
-  const _Badge(this.text, this.color);
+  const _Badge(this.text, {required this.fill, required this.ink});
 
   final String text;
-  final Color color;
+  final Color fill;
+  final Color ink;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s6, vertical: 1),
-      decoration: ShapeDecoration(
-        shape: Tokens.squircle(Tokens.rSm, side: BorderSide(color: color)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Tokens.s8,
+        vertical: Tokens.s4,
       ),
-      child: Text(text, style: Tokens.caption.copyWith(color: color)),
+      decoration: ShapeDecoration(color: fill, shape: Tokens.pill),
+      child: Text(
+        text,
+        style: Tokens.caption.copyWith(color: ink, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

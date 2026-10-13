@@ -11,7 +11,7 @@ import '../../../ui/tokens.dart';
 import 'graphic_height.dart';
 import '../rack_environment.dart';
 
-/// A stereo vectorscope (goniometer) — the live picture of the stereo
+/// A stereo vectorscope (goniometer): the live picture of the stereo
 /// image. Each L/R sample pair is rotated into mid/side and scattered in
 /// the plane: a vertical pencil means mono, a wide cloud means a broad
 /// stereo field, and a horizontal smear means the channels are drifting
@@ -188,7 +188,7 @@ class _ScopePainter extends CustomPainter {
       Tokens.fgFaint,
     );
 
-    // Scatter — newest points brightest. Draw as tiny dots.
+    // Scatter: newest points brightest. Draw as tiny dots.
     final n = count();
     if (enabled && n > 0) {
       final h = head();
@@ -208,8 +208,8 @@ class _ScopePainter extends CustomPainter {
     final barTop = scopeH + 3;
     final barRect = Rect.fromLTWH(2, barTop, size.width - 4, _barH - 8);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(barRect, const Radius.circular(3)),
-      Paint()..color = Tokens.surface2,
+      RRect.fromRectAndRadius(barRect, Radius.circular(barRect.height / 2)),
+      Paint()..color = Tokens.surface3,
     );
     final c = corr.value;
     final mid = barRect.center.dx;
@@ -226,7 +226,7 @@ class _ScopePainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTRB(lo, barRect.top, hi, barRect.bottom),
-        const Radius.circular(3),
+        Radius.circular(barRect.height / 2),
       ),
       Paint()..color = enabled ? fillColor : Tokens.fgFaint,
     );

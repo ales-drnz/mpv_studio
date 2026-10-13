@@ -211,7 +211,7 @@ class _SignalChainViewState extends State<SignalChainView> {
                 QuickEditors(rack: rack, onOpen: _openFilter),
                 const SizedBox(height: Tokens.s16),
               ],
-              const RackNode(label: 'INPUT', detail: 'Decoded audio'),
+              const RackNode(label: 'Input', detail: 'Decoded audio'),
             ],
           ),
         ),
@@ -244,7 +244,7 @@ class _SignalChainViewState extends State<SignalChainView> {
           sliver: SliverList.list(
             children: [
               const RackNode(
-                label: 'OUTPUT',
+                label: 'Output',
                 detail: 'Then volume and the device',
               ),
               if (widget.footer != null) ...[

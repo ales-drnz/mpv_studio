@@ -110,7 +110,7 @@ void main() {
       find.text('Applies after a player restart: Normalize downmix.'),
       findsOneWidget,
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Restart player'));
+    await tester.tap(find.widgetWithText(TextButton, 'Restart player'));
     expect(h.restarts, 1);
     await drain(tester);
   });

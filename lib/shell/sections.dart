@@ -34,6 +34,13 @@ enum Section {
 
   final IconData icon;
 
+  /// The filled form of [icon], shown while the section is selected.
+  IconData get activeIcon => switch (this) {
+    nowPlaying => Icons.play_circle_rounded,
+    engine => Icons.monitor_heart_rounded,
+    _ => icon,
+  };
+
   /// Route location for this section's branch in the app [GoRouter]. The
   /// enum's declaration order also fixes each branch's index, so it must
   /// match the router's branch order.

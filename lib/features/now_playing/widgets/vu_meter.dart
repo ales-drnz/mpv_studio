@@ -137,9 +137,19 @@ class _VuPainter extends CustomPainter {
       ? palette.amber
       : palette.green;
 
+  /// The bar's pill and its empty track (the inactive track tone, which
+  /// reads on the stage and on cards in both themes).
+  RRect _track(Canvas canvas, Rect r) {
+    final rrect = RRect.fromRectAndRadius(
+      r,
+      Radius.circular(r.shortestSide / 2),
+    );
+    canvas.drawRRect(rrect, Paint()..color = palette.surface4);
+    return rrect;
+  }
+
   void _barH(Canvas canvas, Rect r, double db, double hold) {
-    final rrect = RRect.fromRectAndRadius(r, const Radius.circular(3));
-    canvas.drawRRect(rrect, Paint()..color = palette.surface2);
+    final rrect = _track(canvas, r);
     canvas.save();
     canvas.clipRRect(rrect);
     final litW = _t(db) * r.width;
@@ -173,8 +183,7 @@ class _VuPainter extends CustomPainter {
   }
 
   void _barV(Canvas canvas, Rect r, double db, double hold) {
-    final rrect = RRect.fromRectAndRadius(r, const Radius.circular(3));
-    canvas.drawRRect(rrect, Paint()..color = palette.surface2);
+    final rrect = _track(canvas, r);
     canvas.save();
     canvas.clipRRect(rrect);
     final litTopY = r.bottom - _t(db) * r.height;
@@ -212,8 +221,8 @@ class _VuPainter extends CustomPainter {
     final w = size.width, h = size.height;
     if (w <= 0 || h <= 0) return;
     if (axis == Axis.horizontal) {
-      const labelW = 14.0, barH = 10.0, gap = 4.0;
-      final barLeft = labelW + 6;
+      const labelW = 12.0, barH = 8.0, gap = 6.0;
+      final barLeft = labelW + 8;
       final barW = w - barLeft;
       if (barW <= 0) return;
       final topY = (h - (barH * 2 + gap)) / 2;
@@ -236,7 +245,7 @@ class _VuPainter extends CustomPainter {
       _barH(canvas, lRect, dbL, holdL);
       _barH(canvas, rRect, dbR, holdR);
     } else {
-      const labelH = 13.0, barW = 11.0, gap = 6.0;
+      const labelH = 16.0, barW = 8.0, gap = 6.0;
       final barsH = h - labelH;
       final totalW = barW * 2 + gap;
       final left = (w - totalW) / 2;

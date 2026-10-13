@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/section_header.dart';
 import '../http_options.dart';
 import 'choice_row.dart';
-import 'stream_form.dart';
 import 'stream_row.dart';
 
 /// Edits [HttpOptions]: a user agent, a list of request headers and a
@@ -84,121 +85,140 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(Tokens.s12),
-      decoration: ShapeDecoration(
-        color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Sent with this URL only. Proxy, cookies and certificates for '
-            'every stream are in Settings, Network.',
-            style: Tokens.label,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader('HTTP options'),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Tokens.s16,
+            vertical: Tokens.s4,
           ),
-          const SizedBox(height: Tokens.s12),
-          TextField(
-            controller: _userAgent,
-            onChanged: (_) => _emit(),
-            autocorrect: false,
-            enableSuggestions: false,
-            style: streamFieldStyle,
-            decoration: streamFieldDecoration(
-              context,
-              label: 'User agent',
-              hint: widget.globalUserAgent
-                  ? 'Default (Settings, Network)'
-                  : 'Default (libmpv)',
-              icon: Icons.badge_outlined,
-            ),
+          decoration: ShapeDecoration(
+            color: Tokens.surface,
+            shape: Tokens.shape(Tokens.rLg),
           ),
-          const SizedBox(height: Tokens.s12),
-          Text('Headers', style: Tokens.label.copyWith(color: Tokens.fg)),
-          const SizedBox(height: Tokens.s8),
-          for (var i = 0; i < _rows.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: Tokens.s8),
-              child: _headerRow(i),
-            ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _addRow,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Add header'),
-              style: TextButton.styleFrom(foregroundColor: Tokens.accent),
-            ),
-          ),
-          const SizedBox(height: Tokens.s8),
-          ChoiceRow<int?>(
-            label: 'Chunk size',
-            selected: _chunkSize,
-            choices: [
-              for (final size in [null, ...HttpOptions.chunkSizes])
-                Choice(size, size == null ? 'Off' : formatChunkSize(size)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SettingTile(
+                title: 'User agent',
+                description:
+                    'Sent with this URL only. Proxy, cookies and '
+                    'certificates for every stream are in Settings, Network.',
+                below: AppTextField(
+                  controller: _userAgent,
+                  onChanged: (_) => _emit(),
+                  semanticLabel: 'User agent',
+                  monospace: true,
+                  hint: widget.globalUserAgent
+                      ? 'Default (Settings, Network)'
+                      : 'Default (libmpv)',
+                ),
+              ),
+              SettingTile(
+                title: 'Headers',
+                below: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < _rows.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: Tokens.s8),
+                        child: _headerRow(i),
+                      ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _addRow,
+                        icon: const Icon(Icons.add_rounded, size: 20),
+                        label: const Text('Add header'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Tokens.s16),
+                child: ChoiceRow<int?>(
+                  label: 'Chunk size',
+                  description:
+                      'Fetches the stream in bounded range requests, for '
+                      'servers that slow down one long request.',
+                  selected: _chunkSize,
+                  choices: [
+                    for (final size in [null, ...HttpOptions.chunkSizes])
+                      Choice(
+                        size,
+                        size == null ? 'Off' : formatChunkSize(size),
+                      ),
+                  ],
+                  onSelected: (size) {
+                    setState(() => _chunkSize = size);
+                    _emit();
+                  },
+                ),
+              ),
             ],
-            onSelected: (size) {
-              setState(() => _chunkSize = size);
-              _emit();
-            },
           ),
-          const SizedBox(height: Tokens.s4),
-          Text(
-            'Fetches the stream in bounded range requests, for servers that '
-            'slow down one long request.',
-            style: Tokens.caption,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _headerRow(int i) {
     final row = _rows[i];
-    String? nameError() {
-      final n = row.name.text.trim();
-      return n.isEmpty ? null : headerNameProblem(n);
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final n = row.name.text.trim();
+    final problems = [
+      if (n.isNotEmpty) ?headerNameProblem(n),
+      ?headerValueProblem(row.value.text),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: 2,
-          child: TextField(
-            controller: row.name,
-            onChanged: (_) => setState(_emit),
-            autocorrect: false,
-            enableSuggestions: false,
-            style: streamFieldStyle,
-            decoration: streamFieldDecoration(
-              context,
-              label: 'Name',
-            ).copyWith(errorText: nameError(), errorMaxLines: 2),
-          ),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: AppTextField(
+                controller: row.name,
+                onChanged: (_) => setState(_emit),
+                semanticLabel: 'Header name',
+                hint: 'Name',
+                monospace: true,
+              ),
+            ),
+            const SizedBox(width: Tokens.s8),
+            Expanded(
+              flex: 3,
+              child: AppTextField(
+                controller: row.value,
+                onChanged: (_) => setState(_emit),
+                semanticLabel: 'Header value',
+                hint: 'Value',
+                monospace: true,
+              ),
+            ),
+            const SizedBox(width: Tokens.s4),
+            RowButton(
+              icon: Icons.close_rounded,
+              tooltip: 'Remove header',
+              onPressed: () => _removeRow(i),
+            ),
+          ],
         ),
-        const SizedBox(width: Tokens.s8),
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: row.value,
-            onChanged: (_) => setState(_emit),
-            autocorrect: false,
-            enableSuggestions: false,
-            style: streamFieldStyle,
-            decoration: streamFieldDecoration(context, label: 'Value').copyWith(
-              errorText: headerValueProblem(row.value.text),
-              errorMaxLines: 2,
+        for (final p in problems)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Tokens.s16,
+              Tokens.s4,
+              Tokens.s16,
+              0,
+            ),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(p, style: Tokens.label.copyWith(color: Tokens.red)),
             ),
           ),
-        ),
-        RowButton(
-          icon: Icons.close_rounded,
-          tooltip: 'Remove header',
-          onPressed: () => _removeRow(i),
-        ),
       ],
     );
   }

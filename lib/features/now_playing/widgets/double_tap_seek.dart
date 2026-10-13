@@ -95,7 +95,7 @@ class _Badge extends StatelessWidget {
       ),
       decoration: ShapeDecoration(
         color: Tokens.surface3.withValues(alpha: 0.92),
-        shape: Tokens.squircle(Tokens.rPill),
+        shape: Tokens.shape(Tokens.rPill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

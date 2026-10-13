@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/controls.dart';
+import '../../ui/widgets/round_icon_button.dart';
 import 'settings_catalog.dart';
 
 /// The Settings search box. Escape clears it; Ctrl+F (Cmd+F) focuses it
@@ -20,7 +21,6 @@ class SettingsSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tap = context.layout.minTap;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): controller.clear,
@@ -34,11 +34,12 @@ class SettingsSearchField extends StatelessWidget {
         leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
         action: controller.text.isEmpty
             ? null
-            : IconButton(
-                onPressed: controller.clear,
+            : RoundIconButton(
+                icon: Icons.close_rounded,
+                size: 20,
+                color: Tokens.fgDim,
                 tooltip: 'Clear search',
-                constraints: BoxConstraints.tightFor(width: tap, height: tap),
-                icon: Icon(Icons.close_rounded, size: 18, color: Tokens.fgDim),
+                onTap: controller.clear,
               ),
       ),
     );
@@ -80,9 +81,9 @@ class SettingsSearchResults extends StatelessWidget {
           if (i == 0) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(
-                Tokens.s4,
+                Tokens.s16,
                 0,
-                Tokens.s4,
+                Tokens.s16,
                 Tokens.s8,
               ),
               child: Semantics(
@@ -125,40 +126,43 @@ class _ResultTile extends StatelessWidget {
       button: true,
       label: '${entry.title}, in ${entry.group.title}, ${entry.section}',
       excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: Tokens.squircle(Tokens.rSm),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: context.layout.minTap),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s12,
-              vertical: Tokens.s8,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text.rich(
-                  highlightMatches(entry.title, words, Tokens.body),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: Tokens.s4),
+        child: Material(
+          color: Tokens.surface,
+          shape: Tokens.shape(Tokens.rMd),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.shape(Tokens.rMd),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: context.layout.minTap),
+              child: Padding(
+                padding: const EdgeInsets.all(Tokens.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      highlightMatches(entry.title, words, Tokens.body),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${entry.group.title}, ${entry.section}',
+                      style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                    ),
+                    const SizedBox(height: Tokens.s4),
+                    Text.rich(
+                      highlightMatches(
+                        entry.description,
+                        words,
+                        Tokens.label.copyWith(color: Tokens.fgDim),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${entry.group.title}, ${entry.section}',
-                  style: Tokens.caption.copyWith(color: Tokens.accent),
-                ),
-                const SizedBox(height: 2),
-                Text.rich(
-                  highlightMatches(
-                    entry.description,
-                    words,
-                    Tokens.label.copyWith(color: Tokens.fgDim),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
           ),
         ),

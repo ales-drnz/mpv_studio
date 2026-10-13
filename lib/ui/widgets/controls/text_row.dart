@@ -5,7 +5,7 @@ import 'control_metrics.dart';
 import 'setting_tile.dart';
 
 /// Title (+ description) with a full-width single-line text field beneath,
-/// in the same flat squircle language as the other controls. Seeds its
+/// in the same flat pill language as the other controls. Seeds its
 /// editing buffer from [value]; reports edits through [onChanged] and the
 /// Enter key through [onSubmitted] (give either or both). The controller is reseeded only when
 /// [value] changes from outside (e.g. a reset) and the field isn't
@@ -89,8 +89,8 @@ class _TextRowState extends State<TextRow> {
   }
 }
 
-/// The app's flat single-line text field: a squircle box at the control
-/// height ([controlHeightOf]), surface2 fill, text vertically centred, an
+/// The app's flat single-line text field: a pill box at the control
+/// height ([controlHeightOf]), surface3 fill, text vertically centred, an
 /// optional trailing [action]. Shared by [TextRow] and the search fields.
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -128,13 +128,10 @@ class AppTextField extends StatelessWidget {
     );
     return Container(
       constraints: BoxConstraints(minHeight: controlHeightOf(context)),
-      decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
-      ),
+      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
       padding: EdgeInsets.only(
-        left: leading == null ? Tokens.s12 : Tokens.s8,
-        right: action == null ? Tokens.s12 : Tokens.s4,
+        left: leading == null ? Tokens.s16 : Tokens.s12,
+        right: action == null ? Tokens.s16 : Tokens.s4,
       ),
       // A Row centres the field vertically; a TextField forced to the full
       // height would top-anchor its text instead.

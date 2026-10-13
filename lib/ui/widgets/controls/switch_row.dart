@@ -35,7 +35,7 @@ class SwitchRow extends StatelessWidget {
   }
 }
 
-/// A flat, theme-coloured toggle with a squircle track and knob. Purely
+/// A flat, theme-coloured toggle with a pill track and a round knob. Purely
 /// visual: the surrounding [SwitchRow] (or card) owns the tap and the
 /// semantics.
 class AppSwitch extends StatelessWidget {
@@ -46,27 +46,40 @@ class AppSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final track = enabled
-        ? (value ? Tokens.accent : Tokens.surface3)
-        : Tokens.surface2;
+        ? (value ? Tokens.accent : Tokens.surface4)
+        : Tokens.surface3;
     final knob = enabled
         ? (value ? Tokens.onAccent : Tokens.fgDim)
         : Tokens.fgFaint;
+    // Shape contrast: the knob grows from a small dot (off) to a full
+    // circle (on), as Material 3 switches do.
+    final size = value ? 20.0 : 14.0;
     return ExcludeSemantics(
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        width: 42,
-        height: 24,
-        padding: const EdgeInsets.all(3),
-        decoration: ShapeDecoration(color: track, shape: Tokens.squircle(12)),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        width: 48,
+        height: 28,
+        padding: const EdgeInsets.all(Tokens.s4),
+        decoration: ShapeDecoration(color: track, shape: Tokens.pill),
         child: AnimatedAlign(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            width: 18,
-            height: 18,
-            decoration: ShapeDecoration(color: knob, shape: Tokens.squircle(9)),
+          child: SizedBox.square(
+            dimension: 20,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                width: size,
+                height: size,
+                decoration: ShapeDecoration(
+                  color: knob,
+                  shape: const CircleBorder(),
+                ),
+              ),
+            ),
           ),
         ),
       ),

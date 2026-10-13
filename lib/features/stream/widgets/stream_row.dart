@@ -5,9 +5,9 @@ import '../../../ui/tokens.dart';
 import '../stream_actions.dart';
 
 /// One row of every Stream list (reference streams, server tracks, Samba
-/// entries): a squircle card with a leading glyph, a title over an optional
-/// subtitle, and trailing buttons. The row that started the current track
-/// gets the accent wash and a speaker glyph.
+/// entries): a tonal card with a leading glyph in a circle, a title over an
+/// optional subtitle, and trailing buttons. The row that started the
+/// current track takes the secondary selection fill and an equalizer glyph.
 ///
 /// With [menu] the row has a context menu: right click on a pointer, long
 /// press (a bottom sheet) on touch.
@@ -17,6 +17,7 @@ class StreamRow extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.icon,
+    this.leading,
     this.current = false,
     this.onTap,
     this.trailing = const [],
@@ -29,8 +30,12 @@ class StreamRow extends StatelessWidget {
   final String? subtitle;
 
   /// The leading glyph; null for none. The current row always shows the
-  /// speaker glyph.
+  /// equalizer glyph.
   final IconData? icon;
+
+  /// A leading picture ([leadSize] square) in place of [icon], such as a
+  /// cover; the current row still shows the equalizer glyph.
+  final Widget? leading;
 
   /// Whether this row started the current track.
   final bool current;
@@ -45,49 +50,52 @@ class StreamRow extends StatelessWidget {
   /// Sets the subtitle in the monospace face (URLs, paths).
   final bool monoSubtitle;
 
+  /// The diameter of the leading glyph circle.
+  static const double leadSize = 40;
+
+  /// Whether [context] sits inside the current row (its buttons and text
+  /// take the colours that read on the selection fill).
+  static bool onCurrent(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_CurrentRow>() != null;
+
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
-    final glyph = current ? Icons.volume_up_rounded : icon;
-    final shape = Tokens.squircle(Tokens.rSm);
+    final glyph = current ? Icons.graphic_eq_rounded : icon;
+    final shape = Tokens.shape(Tokens.rMd);
+    final content = Row(
+      children: [
+        if (!current && leading != null) ...[
+          SizedBox.square(dimension: leadSize, child: leading),
+          const SizedBox(width: Tokens.s12),
+        ] else if (glyph != null) ...[
+          _Lead(glyph: glyph, current: current),
+          const SizedBox(width: Tokens.s12),
+        ] else
+          const SizedBox(width: Tokens.s8),
+        Expanded(child: _texts()),
+        ...trailing,
+      ],
+    );
     Widget row = Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s6),
+      padding: const EdgeInsets.only(bottom: Tokens.s4),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
           customBorder: shape,
-          // Ink so the hover highlight shows over the card surface.
+          // Ink so the hover wash shows over the card fill.
           child: Ink(
             decoration: ShapeDecoration(
-              color: current ? Tokens.accentWash : Tokens.surface,
+              color: current ? Tokens.accentContainer : Tokens.surface,
               shape: shape,
             ),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: layout.minTap + 8),
+              constraints: const BoxConstraints(
+                minHeight: leadSize + 2 * Tokens.s8,
+              ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s12,
-                  Tokens.s6,
-                  Tokens.s4,
-                  Tokens.s6,
-                ),
-                child: Row(
-                  children: [
-                    if (glyph != null) ...[
-                      Icon(
-                        glyph,
-                        size: 18,
-                        color: current || icon == Icons.folder_rounded
-                            ? Tokens.accent
-                            : Tokens.fgFaint,
-                      ),
-                      const SizedBox(width: Tokens.s12),
-                    ],
-                    Expanded(child: _texts()),
-                    ...trailing,
-                  ],
-                ),
+                padding: const EdgeInsets.all(Tokens.s8),
+                child: current ? _CurrentRow(child: content) : content,
               ),
             ),
           ),
@@ -109,43 +117,85 @@ class StreamRow extends StatelessWidget {
     );
   }
 
-  Widget _texts() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Tokens.body.copyWith(
-          color: current ? Tokens.accent : Tokens.fg,
-          fontWeight: current ? FontWeight.w600 : FontWeight.w400,
-        ),
-      ),
-      if (subtitle != null && subtitle!.isNotEmpty) ...[
-        const SizedBox(height: 2),
+  Widget _texts() {
+    final ink = current ? Tokens.onAccentContainer : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Text(
-          subtitle!,
+          title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: monoSubtitle
-              ? Tokens.caption.copyWith(fontFamily: Tokens.mono)
-              : Tokens.caption.copyWith(color: Tokens.fgDim),
+          style: Tokens.body.copyWith(
+            color: ink ?? Tokens.fg,
+            fontWeight: current ? FontWeight.w600 : FontWeight.w500,
+          ),
         ),
+        if (subtitle != null && subtitle!.isNotEmpty) ...[
+          const SizedBox(height: Tokens.s4),
+          Text(
+            subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Tokens.label.copyWith(
+              fontFamily: monoSubtitle ? Tokens.mono : null,
+              fontWeight: FontWeight.w400,
+              color: ink ?? Tokens.fgDim,
+            ),
+          ),
+        ],
       ],
-    ],
-  );
+    );
+  }
+}
+
+/// Marks the subtree of the current row.
+class _CurrentRow extends InheritedWidget {
+  const _CurrentRow({required super.child});
+
+  @override
+  bool updateShouldNotify(_CurrentRow oldWidget) => false;
+}
+
+/// The leading glyph of a row in a tonal circle; on the current row a
+/// graphite disc on the ring grey fill, the logo's own pairing.
+class _Lead extends StatelessWidget {
+  const _Lead({required this.glyph, required this.current});
+
+  final IconData glyph;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: StreamRow.leadSize,
+        height: StreamRow.leadSize,
+        decoration: ShapeDecoration(
+          color: current ? Tokens.onAccentContainer : Tokens.surface3,
+          shape: const CircleBorder(),
+        ),
+        child: Icon(
+          glyph,
+          size: 20,
+          color: current ? Tokens.accentContainer : Tokens.fgDim,
+        ),
+      ),
+    );
+  }
 }
 
 /// A trailing icon button of a [StreamRow] (and of the bars above the
-/// lists): always tooltipped, at least one tap target big.
+/// lists): a bare icon in a circle, always tooltipped, at least one tap
+/// target big. Inside the current row it takes the selection's content
+/// colour.
 class RowButton extends StatelessWidget {
   const RowButton({
     super.key,
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.accent = false,
     this.selected = false,
   });
 
@@ -153,22 +203,36 @@ class RowButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback? onPressed;
 
-  /// Draws the glyph in the accent (the primary action of a row).
-  final bool accent;
-
-  /// Draws the glyph in the accent as a toggled-on state (a favourite).
+  /// A toggle that is on (a favourite): the secondary selection fill.
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final tap = context.layout.minTap;
+    final onCurrent = StreamRow.onCurrent(context);
+    final Color color;
+    if (onPressed == null) {
+      color = onCurrent ? Tokens.onAccentContainer : Tokens.fgFaint;
+    } else if (onCurrent || selected) {
+      color = Tokens.onAccentContainer;
+    } else {
+      color = Tokens.fg;
+    }
     return IconButton(
       onPressed: onPressed,
       tooltip: tooltip,
       isSelected: selected,
       icon: Icon(icon, size: 20),
-      color: accent || selected ? Tokens.accent : Tokens.fgDim,
-      disabledColor: Tokens.fgFaint,
+      color: color,
+      disabledColor: color,
+      style: IconButton.styleFrom(
+        backgroundColor: selected && !onCurrent
+            ? Tokens.accentContainer
+            : Colors.transparent,
+        hoverColor: onCurrent
+            ? Tokens.onAccentContainer.withValues(alpha: 0.10)
+            : Tokens.accentWash,
+      ),
       constraints: BoxConstraints.tightFor(width: tap, height: tap),
       padding: EdgeInsets.zero,
     );

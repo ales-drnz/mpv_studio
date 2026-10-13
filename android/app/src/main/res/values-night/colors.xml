@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Graphite #24282D, the logo disc and the dark stage
+         (Palette.dark.bg). -->
+    <color name="launch_background">#FF24282D</color>
+</resources>

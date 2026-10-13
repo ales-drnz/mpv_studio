@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
 
 /// One option of a [ChoiceRow].
 class Choice<T> {
@@ -13,7 +14,8 @@ class Choice<T> {
   final String? disabledReason;
 }
 
-/// A labelled row of single-select chips that wraps on narrow widths.
+/// A labelled row of single-select pills that wraps on narrow widths: the
+/// picked one in the secondary selection fill, the others tonal.
 class ChoiceRow<T> extends StatelessWidget {
   const ChoiceRow({
     super.key,
@@ -21,9 +23,13 @@ class ChoiceRow<T> extends StatelessWidget {
     required this.choices,
     required this.selected,
     required this.onSelected,
+    this.description,
   });
 
   final String label;
+
+  /// A line under the label.
+  final String? description;
   final List<Choice<T>> choices;
   final T selected;
   final ValueChanged<T> onSelected;
@@ -33,37 +39,87 @@ class ChoiceRow<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Tokens.label.copyWith(color: Tokens.fg)),
+        Text(label, style: Tokens.body.copyWith(fontWeight: FontWeight.w500)),
+        if (description != null) ...[
+          const SizedBox(height: Tokens.s4),
+          Text(
+            description!,
+            style: Tokens.label.copyWith(fontWeight: FontWeight.w400),
+          ),
+        ],
         const SizedBox(height: Tokens.s8),
         Wrap(
           spacing: Tokens.s8,
           runSpacing: Tokens.s8,
-          children: [for (final c in choices) _chip(c)],
+          children: [
+            for (final c in choices)
+              _ChoicePill(
+                choice: c,
+                on: c.value == selected,
+                onSelected: onSelected,
+              ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _chip(Choice<T> c) {
-    final on = c.value == selected;
-    final enabled = c.disabledReason == null;
-    final chip = ChoiceChip(
-      label: Text(c.label),
+class _ChoicePill<T> extends StatelessWidget {
+  const _ChoicePill({
+    required this.choice,
+    required this.on,
+    required this.onSelected,
+  });
+
+  final Choice<T> choice;
+  final bool on;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = choice.disabledReason == null;
+    final pill = Semantics(
+      button: true,
       selected: on,
-      showCheckmark: false,
-      selectedColor: Tokens.accentWash,
-      backgroundColor: Tokens.surface2,
-      disabledColor: Tokens.surface2,
-      side: BorderSide(color: on ? Tokens.accent : Tokens.line2),
-      labelStyle: Tokens.label.copyWith(
-        color: !enabled
-            ? Tokens.fgFaint
-            : on
-            ? Tokens.accent
-            : Tokens.fg,
+      enabled: enabled,
+      inMutuallyExclusiveGroup: true,
+      label: choice.label,
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: enabled ? () => onSelected(choice.value) : null,
+          customBorder: Tokens.pill,
+          child: Ink(
+            height: controlHeightOf(context),
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+            decoration: ShapeDecoration(
+              color: on ? Tokens.accentContainer : Tokens.surface3,
+              shape: Tokens.pill,
+            ),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                choice.label,
+                maxLines: 1,
+                style: Tokens.label.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: !enabled
+                      ? Tokens.fgFaint
+                      : on
+                      ? Tokens.onAccentContainer
+                      : Tokens.fg,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      onSelected: enabled ? (_) => onSelected(c.value) : null,
     );
-    return enabled ? chip : Tooltip(message: c.disabledReason!, child: chip);
+    return enabled
+        ? pill
+        : Tooltip(message: choice.disabledReason!, child: pill);
   }
 }

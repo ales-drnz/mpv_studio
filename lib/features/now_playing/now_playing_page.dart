@@ -95,7 +95,7 @@ _Shape _shapeFor(Size size) {
       size.width > size.height) {
     return _Shape.side;
   }
-  if (wide.atLeast(WidthClass.large)) return _Shape.split;
+  if (size.width >= Breakpoints.splitContent) return _Shape.split;
   // Phones, and tablets standing up: one column.
   if (wide == WidthClass.compact || size.height > size.width * 1.2) {
     return _Shape.column;
@@ -205,10 +205,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final meter = DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rMd)),
+        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rLg)),
         child: WaveformMeter(key: _waveformKey),
       ),
     );

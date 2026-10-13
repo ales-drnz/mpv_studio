@@ -93,10 +93,9 @@ class ConsoleLogView extends StatelessWidget {
   final ScrollController controller;
   final String emptyText;
 
-  static TextStyle get _mono => TextStyle(
-    fontFamily: Tokens.mono,
-    fontSize: 12,
+  static TextStyle get _mono => Tokens.numeric.copyWith(
     height: 1.5,
+    fontWeight: FontWeight.w400,
     color: Tokens.fg,
   );
 
@@ -115,13 +114,26 @@ class ConsoleLogView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: Tokens.surface,
+        shape: Tokens.shape(Tokens.rLg),
+      ),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rLg)),
+        child: _lines(context),
+      ),
+    );
+  }
+
+  Widget _lines(BuildContext context) {
     if (lines.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(Tokens.s16),
+          padding: const EdgeInsets.all(Tokens.s24),
           child: Text(
             emptyText,
-            style: Tokens.caption,
+            style: Tokens.body.copyWith(color: Tokens.fgDim),
             textAlign: TextAlign.center,
           ),
         ),
@@ -145,7 +157,7 @@ class ConsoleLogView extends StatelessWidget {
         ),
         child: ListView.builder(
           controller: controller,
-          padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
+          padding: const EdgeInsets.all(Tokens.s16),
           itemCount: lines.length,
           itemBuilder: (context, i) => _row(lines[i]),
         ),
@@ -164,7 +176,10 @@ class ConsoleLogView extends StatelessWidget {
             if (l.kind == ConsoleLineKind.log) ...[
               TextSpan(
                 text: '${l.level.mpvValue.padRight(5)} ',
-                style: mono.copyWith(color: _color(l)),
+                style: mono.copyWith(
+                  color: _color(l),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (l.prefix.isNotEmpty)
                 TextSpan(

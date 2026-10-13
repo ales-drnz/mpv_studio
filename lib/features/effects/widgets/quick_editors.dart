@@ -4,14 +4,16 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
+import '../../../ui/widgets/section_header.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
 
-/// The featured effects as chips, one tap from their editor: wrapped over
-/// as many lines as they need on wide windows, a scrolling row on compact
-/// ones or with [singleRow], faded at the edge that has more and with
-/// arrows on pointer.
-/// A chip is lit while the chain has that effect switched on.
+/// The featured effects as pill chips, one tap from their editor: wrapped
+/// over as many lines as they need on wide windows, a scrolling row on
+/// compact ones or with [singleRow], faded at the edge that has more and
+/// with arrows on pointer while some chips are out of view.
+/// A chip is filled while the chain has that effect switched on.
 class QuickEditors extends StatelessWidget {
   final RackController rack;
 
@@ -45,18 +47,7 @@ class QuickEditors extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Tokens.s4,
-            0,
-            Tokens.s4,
-            Tokens.s8,
-          ),
-          child: Semantics(
-            header: true,
-            child: Text('QUICK EDITORS', style: Tokens.caption),
-          ),
-        ),
+        const SectionHeader('Quick editors'),
         if (layout.isCompact || singleRow)
           _ScrollingRow(height: layout.minTap, children: chips)
         else
@@ -78,7 +69,7 @@ class _QuickChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = Tokens.squircle(Tokens.rSm);
+    final fg = active ? Tokens.onAccentContainer : Tokens.fg;
     return Tooltip(
       message: kFeaturedSubtitles[d.filter] ?? d.title,
       child: Semantics(
@@ -89,36 +80,26 @@ class _QuickChip extends StatelessWidget {
           child: InkWell(
             key: ValueKey('quick-${d.name}'),
             onTap: onTap,
-            customBorder: shape,
+            customBorder: Tokens.pill,
             child: Ink(
               height: context.layout.minTap,
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+              padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
               decoration: ShapeDecoration(
-                color: active ? Tokens.accentWash : Tokens.surface,
-                shape: shape,
+                color: active ? Tokens.accentContainer : Tokens.surface,
+                shape: Tokens.pill,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(d.icon, size: 18, color: Tokens.accent),
+                  Icon(d.icon, size: 18, color: fg),
                   const SizedBox(width: Tokens.s8),
                   Text(
                     d.title,
                     style: Tokens.label.copyWith(
-                      color: active ? Tokens.fg : Tokens.fgDim,
+                      color: fg,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (active) ...[
-                    const SizedBox(width: Tokens.s8),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: ShapeDecoration(
-                        color: Tokens.accent,
-                        shape: const CircleBorder(),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -215,24 +196,28 @@ class _ScrollingRowState extends State<_ScrollingRow> {
         ),
       ),
     );
-    if (!pointer) return row;
+    // Every chip in view: no arrows to offer.
+    if (!pointer || (!_less && !_more)) return row;
     Widget arrow(IconData icon, String tip, int direction, bool shown) =>
-        // Hidden at the end it cannot go past, keeping its place.
+        // Dimmed at the end it cannot go past, keeping its place.
         Opacity(
-          opacity: shown ? 1 : 0,
+          opacity: shown ? 1 : 0.4,
           child: ExcludeSemantics(
             excluding: !shown,
-            child: IconButton(
+            child: RoundIconButton(
+              icon: icon,
+              size: 20,
               tooltip: tip,
-              onPressed: shown ? () => _page(direction) : null,
-              icon: Icon(icon, size: 18, color: Tokens.fgDim),
+              onTap: shown ? () => _page(direction) : null,
             ),
           ),
         );
     return Row(
+      // Both arrows after the chips, so the row starts under its label.
       children: [
-        arrow(Icons.chevron_left_rounded, 'Scroll back', -1, _less),
         Expanded(child: row),
+        const SizedBox(width: Tokens.s4),
+        arrow(Icons.chevron_left_rounded, 'Scroll back', -1, _less),
         arrow(Icons.chevron_right_rounded, 'More quick editors', 1, _more),
       ],
     );

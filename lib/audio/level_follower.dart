@@ -1,12 +1,12 @@
 import 'pcm_analysis.dart';
 
-/// A peak-program meter follower with peak-hold, in dBFS — the ballistics
+/// A peak-program meter follower with peak-hold, in dBFS: the ballistics
 /// behind a VU/PPM bar, as pure Dart state. Feed it frame peaks as they
 /// arrive, then [tick] it once per render frame; read [db] for the live
 /// bar and [holdDb] for the latched marker.
 ///
 /// Keeping this off the widget means the meter widget is just "push peaks,
-/// tick, paint" — no smoothing maths interleaved with the build.
+/// tick, paint": no smoothing maths interleaved with the build.
 class LevelFollower {
   LevelFollower({
     this.minDb = -120,

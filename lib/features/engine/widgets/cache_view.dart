@@ -93,7 +93,7 @@ class CacheView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: Tokens.s6),
+          const SizedBox(height: Tokens.s8),
           Semantics(
             label: 'Cached ahead over the last minute',
             value: EngineFormat.seconds(s.bufferDuration),

@@ -22,6 +22,7 @@ void main() {
     WidgetTester tester,
     String name, {
     bool withKeyboard = false,
+    bool withCommands = false,
     double textScale = 1,
     Palette palette = Palette.dark,
   }) async {
@@ -38,6 +39,15 @@ void main() {
       textScale: textScale,
       padding: input == InputMode.touch ? phoneInsets(s.size) : EdgeInsets.zero,
     );
+    if (withCommands) {
+      // A command that answers, one routed to the Player API and one that
+      // fails, so every line colour shows.
+      for (final line in ['get volume', 'set pause yes', 'frobnicate']) {
+        await tester.enterText(find.byType(TextField).last, line);
+        await tester.testTextInput.receiveAction(TextInputAction.send);
+        await tester.pumpAndSettle();
+      }
+    }
     if (withKeyboard) {
       await tester.tap(find.byType(TextField).last);
       await keyboard(tester);
@@ -60,19 +70,22 @@ void main() {
     );
   }, skip: skipGoldens);
 
-  for (final name in ['915x412', '1440x900']) {
-    testWidgets('console at $name', (tester) async {
-      await pump(tester, name);
-      expectNoOverflow(tester, reason: name);
-      await expectLater(
-        find.byType(WidgetsApp),
-        matchesGoldenFile('goldens/console_dark_$name.png'),
-      );
-    }, skip: skipGoldens);
+  for (final palette in [Palette.dark, Palette.light]) {
+    final theme = palette.isDark ? 'dark' : 'light';
+    for (final name in ['915x412', '1440x900', '412x915']) {
+      testWidgets('$theme console at $name', (tester) async {
+        await pump(tester, name, withCommands: true, palette: palette);
+        expectNoOverflow(tester, reason: name);
+        await expectLater(
+          find.byType(WidgetsApp),
+          matchesGoldenFile('goldens/console_${theme}_$name.png'),
+        );
+      }, skip: skipGoldens);
+    }
   }
 
-  testWidgets('light console on a phone', (tester) async {
-    await pump(tester, '360x780', palette: Palette.light);
+  testWidgets('light console on a phone with the suggestions', (tester) async {
+    await pump(tester, '360x780', withKeyboard: true, palette: Palette.light);
     expectNoOverflow(tester);
     await expectLater(
       find.byType(WidgetsApp),

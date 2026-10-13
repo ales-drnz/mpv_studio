@@ -29,7 +29,7 @@ const Set<String> kAudioExtensions = {
 };
 
 /// Apple platforms (iOS/macOS) filter the document picker by Uniform Type
-/// Identifier, not by extension — and `file_selector_ios` *throws* an
+/// Identifier, not by extension, and `file_selector_ios` *throws* an
 /// `ArgumentError` if a type group carries only `extensions` (so the picker
 /// never opens and "Add files" silently does nothing). `public.audio` is the
 /// umbrella audio UTI; the common formats (mp3, m4a, aac, wav, aiff, alac,

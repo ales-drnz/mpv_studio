@@ -4,6 +4,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/section_header.dart';
 import '../rack_catalog.dart';
 import '../stage_presets.dart';
 
@@ -28,7 +30,26 @@ class AddStageCatalog extends StatefulWidget {
 }
 
 class _AddStageCatalogState extends State<AddStageCatalog> {
-  String _query = '';
+  final _search = TextEditingController();
+  final _searchFocus = FocusNode(debugLabel: 'add stage search');
+  String get _query => _search.text;
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+    // With a keyboard at hand, typing filters at once.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.layout.isPointer) _searchFocus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
 
   static const _advancedTitle = 'Advanced (mandatory options)';
 
@@ -63,7 +84,6 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
     final groups = _groups();
     final q = _query.trim().toLowerCase();
     final showRaw = q.isEmpty || 'raw lavfi'.contains(q);
@@ -87,16 +107,8 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
         ),
       for (final (title, list) in groups) ...[
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Tokens.s8,
-            Tokens.s16,
-            Tokens.s8,
-            Tokens.s4,
-          ),
-          child: Semantics(
-            header: true,
-            child: Text(title.toUpperCase(), style: Tokens.caption),
-          ),
+          padding: const EdgeInsets.only(top: Tokens.s8),
+          child: SectionHeader(title),
         ),
         for (final d in list)
           _Entry(
@@ -128,35 +140,14 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            constraints: BoxConstraints(minHeight: layout.minTap),
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
-            decoration: ShapeDecoration(
-              color: Tokens.surface2,
-              shape: Tokens.squircle(Tokens.rSm),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.search_rounded, size: 16, color: Tokens.fgFaint),
-                const SizedBox(width: Tokens.s8),
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('add-stage-search'),
-                    autofocus: layout.isPointer,
-                    onChanged: (v) => setState(() => _query = v),
-                    style: Tokens.body,
-                    cursorColor: Tokens.accent,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      hintText: 'Search filters',
-                      hintStyle: Tokens.caption,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          AppTextField(
+            key: const ValueKey('add-stage-search'),
+            controller: _search,
+            focusNode: _searchFocus,
+            hint: 'Search filters',
+            semanticLabel: 'Search filters',
+            textInputAction: TextInputAction.search,
+            leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
           ),
           const SizedBox(height: Tokens.s4),
           Expanded(
@@ -191,19 +182,19 @@ class _Entry extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         key: ValueKey('add-$id'),
-        customBorder: Tokens.squircle(Tokens.rSm),
+        customBorder: Tokens.pill,
         onTap: onTap,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: context.layout.minTap),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s8,
-              vertical: Tokens.s4,
+              horizontal: Tokens.s16,
+              vertical: Tokens.s8,
             ),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: Tokens.accent),
-                const SizedBox(width: Tokens.s12),
+                Icon(icon, size: 20, color: Tokens.fg),
+                const SizedBox(width: Tokens.s16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

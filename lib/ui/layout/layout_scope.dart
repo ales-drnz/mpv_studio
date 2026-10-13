@@ -66,7 +66,7 @@ class StudioLayout {
   /// The page's side margin.
   double get gutter => switch (width) {
     WidthClass.compact => Tokens.s16,
-    WidthClass.medium => Tokens.s20,
+    WidthClass.medium => Tokens.s24,
     WidthClass.expanded => Tokens.s24,
     WidthClass.large || WidthClass.xlarge => Tokens.s32,
   };

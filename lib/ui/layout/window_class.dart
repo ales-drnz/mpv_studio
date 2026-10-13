@@ -19,6 +19,12 @@ abstract final class Breakpoints {
   /// A window lower than this is [HeightClass.short] (phones in landscape).
   static const double short = 500;
 
+  /// An available page width (the space the shell leaves the page, not
+  /// the window) from which a page puts two full columns side by side.
+  /// Pages compare their own `LayoutBuilder` width against it, so the
+  /// layout does not move when the sidebar opens or collapses.
+  static const double splitContent = 1080;
+
   /// The default maximum width of a page's readable content, centred on
   /// wider windows.
   static const double readable = 960;

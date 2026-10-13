@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
 
 /// Whether folders can be picked here: file_selector has no folder picker
@@ -31,8 +32,8 @@ class QueueHeaderAction {
   final String? disabledReason;
 }
 
-/// The Queue header buttons: labelled on wide pointer windows, icons with
-/// tooltips elsewhere.
+/// The Queue header buttons: labelled pills on wide pointer windows (the
+/// primary one filled), bare round icons with tooltips elsewhere.
 List<Widget> queueHeaderButtons(
   BuildContext context,
   List<QueueHeaderAction> actions,
@@ -41,15 +42,12 @@ List<Widget> queueHeaderButtons(
   final labelled = layout.isPointer && layout.width.atLeast(WidthClass.large);
   Widget button(QueueHeaderAction a) {
     if (!labelled) {
-      return IconButton(
-        onPressed: a.onPressed,
-        tooltip: a.onPressed == null ? null : a.label,
-        icon: Icon(a.icon),
-        color: a.primary ? Tokens.accent : Tokens.fgDim,
-        constraints: BoxConstraints.tightFor(
-          width: layout.minTap,
-          height: layout.minTap,
-        ),
+      // A disabled button says why; an enabled one names itself.
+      return RoundIconButton(
+        icon: a.icon,
+        tooltip: a.onPressed == null ? a.disabledReason ?? a.label : a.label,
+        label: a.label,
+        onTap: a.onPressed,
       );
     }
     final icon = Icon(a.icon, size: 18);
@@ -70,9 +68,9 @@ List<Widget> queueHeaderButtons(
   return [
     for (final a in actions)
       Padding(
-        padding: const EdgeInsets.only(left: Tokens.s4),
-        // A disabled button says why; an enabled icon names itself.
-        child: a.onPressed == null
+        padding: EdgeInsets.only(left: labelled ? Tokens.s8 : Tokens.s4),
+        // A disabled pill says why.
+        child: labelled && a.onPressed == null
             ? Tooltip(message: a.disabledReason ?? a.label, child: button(a))
             : button(a),
       ),
@@ -127,17 +125,21 @@ class QueueSummary extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(height: Tokens.s6),
+        const SizedBox(height: Tokens.s4),
         SizedBox(
-          height: 2,
+          height: 4,
           child: adding > 0
-              ? LinearProgressIndicator(
-                  color: Tokens.accent,
-                  backgroundColor: Tokens.surface2,
+              ? ClipPath(
+                  clipper: const ShapeBorderClipper(shape: StadiumBorder()),
+                  child: LinearProgressIndicator(
+                    minHeight: 4,
+                    color: Tokens.accent,
+                    backgroundColor: Tokens.surface4,
+                  ),
                 )
               : null,
         ),
-        const SizedBox(height: Tokens.s6),
+        const SizedBox(height: Tokens.s8),
       ],
     );
   }

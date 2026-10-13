@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 
 import 'tokens.dart';
 
-/// Paints a short monospace label onto a [Canvas] — the single text helper
+/// Paints a short monospace label onto a [Canvas]: the single text helper
 /// shared by every chart and meter painter (response curve, knee plot,
-/// goniometer, gauges, VU meter, …), replacing the per-painter copies.
+/// goniometer, gauges, VU meter and the Engine charts).
 ///
 /// [at] is the anchor: the top-left by default, the top-centre when
 /// [center] is set (x only), the top-right when [end] is set, and the

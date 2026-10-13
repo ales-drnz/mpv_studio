@@ -6,6 +6,7 @@ import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
 import '../widgets/stream_row.dart';
+import 'server_cover.dart';
 
 /// [track] of [server] as a queue entry played with [options]. The extras
 /// carry the tags the queue shows before the stream's own load, the
@@ -93,6 +94,11 @@ class ServerTrackRow extends StatelessWidget {
     return StreamRow(
       title: track.title,
       subtitle: sub,
+      leading: ServerCover(
+        url: track.artUrl,
+        radius: Tokens.rPill,
+        placeholderIcon: Icons.music_note_rounded,
+      ),
       current: current,
       onTap: onTap,
       menu: () {
@@ -111,11 +117,17 @@ class ServerTrackRow extends StatelessWidget {
           onToggle: onAction,
         ),
         if (track.duration > Duration.zero)
-          Padding(
-            padding: const EdgeInsets.only(right: Tokens.s8),
-            child: Text(
-              formatTrackLength(track.duration),
-              style: Tokens.numeric,
+          Builder(
+            builder: (context) => Padding(
+              padding: const EdgeInsets.only(right: Tokens.s8),
+              child: Text(
+                formatTrackLength(track.duration),
+                style: Tokens.numeric.copyWith(
+                  color: StreamRow.onCurrent(context)
+                      ? Tokens.onAccentContainer
+                      : Tokens.fgDim,
+                ),
+              ),
             ),
           ),
       ],
