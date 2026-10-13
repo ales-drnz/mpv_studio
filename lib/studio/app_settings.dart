@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/effects/effects_codec.dart';
 import 'settings_store.dart';
+import 'studio_log.dart';
 
 part 'app_settings_sync.dart';
 
@@ -334,7 +335,10 @@ class AppSettings {
     try {
       return EffectsCodec.decode(_store['effects']);
     } on Object catch (e) {
-      debugPrint('Persisted effects chain unreadable: $e');
+      StudioLog.write(
+        'persisted effects chain unreadable: $e',
+        level: LogLevel.warn,
+      );
       return const [];
     }
   }

@@ -14,6 +14,7 @@ import 'loudness_normalizer.dart';
 import 'media_servers.dart';
 import 'playback_issues.dart';
 import 'playback_snapshot.dart';
+import 'studio_log.dart';
 
 /// The running MPV Studio: every long-lived service the player app needs,
 /// owned in one place. [launch] turns the app on (settings, audio engine,
@@ -97,9 +98,11 @@ class MpvStudio {
     // session) running: what was built is torn down, newest first, and the
     // error goes on to the caller (the startup error screen, whose retry
     // launches again).
+    StudioLog.attach(engine.consoleLog);
     final undo = <FutureOr<void> Function()>[
       engine.player.dispose,
       engine.consoleLog.dispose,
+      () => StudioLog.detach(engine.consoleLog),
       settings.dispose,
     ];
     try {
@@ -137,7 +140,7 @@ class MpvStudio {
         disposeServers: media.dispose,
         rack: rack,
       );
-      studio._reportSettingFailures(engine.failures);
+      studio._reportSettingFailures([...engine.failures, ...media.failures]);
       return studio;
     } on Object {
       await undoAll(undo);
@@ -168,7 +171,7 @@ class MpvStudio {
 
   /// A line of the app's own in the Console log.
   void _log(LogLevel level, String text) {
-    debugPrint('studio: $text');
+    if (kDebugMode) debugPrint('studio: $text');
     consoleLog.add(MpvLogEntry(prefix: 'studio', level: level, text: text));
   }
 
@@ -209,6 +212,7 @@ class MpvStudio {
     queueDetails.dispose();
     rack.dispose();
     await settings.dispose();
+    StudioLog.detach(consoleLog);
     await consoleLog.dispose();
     await player.dispose();
   }

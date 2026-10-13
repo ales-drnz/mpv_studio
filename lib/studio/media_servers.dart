@@ -9,6 +9,7 @@ import '../features/stream/media_server.dart';
 import '../features/stream/playback_reporter.dart';
 import '../features/stream/plex_server.dart';
 import '../features/stream/signed_url_resolver.dart';
+import 'app_settings.dart';
 import 'source_resolvers.dart';
 
 /// Brings up the app-level media servers (Jellyfin and Plex), restores any
@@ -25,6 +26,7 @@ Future<
     Map<ServerKind, MediaServer> servers,
     FavoritesController favorites,
     void Function() dispose,
+    List<SettingFailure> failures,
   })
 >
 connectMediaServers(Player player) async {
@@ -44,8 +46,9 @@ connectMediaServers(Player player) async {
   // The player has one resolver slot. Plex hands mpv `plex-transcode://`
   // markers and the Resolver tab plays `studio-signed://` links; the chain
   // turns each into the real URL right before it opens. A refused install
-  // only costs those links, so it never stops the launch.
-  await SourceResolverChain([
+  // only costs those links, so it never stops the launch: it joins the
+  // launch's failures.
+  final refused = await SourceResolverChain([
     plex.resolveSource,
     SignedUrlResolver.shared.resolve,
   ]).installOn(player);
@@ -64,5 +67,6 @@ connectMediaServers(Player player) async {
       unawaited(reporter.dispose());
       plex.dispose();
     },
+    failures: [?refused],
   );
 }
