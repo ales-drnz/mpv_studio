@@ -20,7 +20,16 @@ import 'playback_issues.dart';
 class PlayerScope extends InheritedWidget {
   final MpvStudio studio;
 
-  const PlayerScope({super.key, required this.studio, required super.child});
+  /// Restarts the player (see [MpvStudio.restart]); null where the tree
+  /// is hosted without the app around it.
+  final Future<void> Function()? onRestart;
+
+  const PlayerScope({
+    super.key,
+    required this.studio,
+    this.onRestart,
+    required super.child,
+  });
 
   static MpvStudio _scope(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<PlayerScope>();
@@ -65,6 +74,12 @@ class PlayerScope extends InheritedWidget {
   static FavoritesController favoritesOf(BuildContext context) =>
       _scope(context).favorites;
 
+  /// Restarts the player with the current settings, keeping the queue; the
+  /// whole tree is rebuilt on the new player. Null without the app around.
+  static Future<void> Function()? restartOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PlayerScope>()?.onRestart;
+
   @override
-  bool updateShouldNotify(PlayerScope oldWidget) => oldWidget.studio != studio;
+  bool updateShouldNotify(PlayerScope oldWidget) =>
+      oldWidget.studio != studio || oldWidget.onRestart != onRestart;
 }

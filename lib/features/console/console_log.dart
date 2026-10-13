@@ -43,6 +43,10 @@ class ConsoleLog {
     }
   }
 
+  /// Appends a line the app logs itself (a refused setting, an uncaught
+  /// error) to the backlog and the live Console.
+  void add(MpvLogEntry entry) => _onEntry(entry);
+
   void _onEntry(MpvLogEntry entry) {
     _buffer.addLast(entry);
     while (_buffer.length > maxLines) {

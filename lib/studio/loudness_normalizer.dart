@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import 'app_settings.dart';
+import 'playback_issues.dart';
 
 /// EBU R128 volume normalization, driven by the engine's offline loudness
 /// scan (`player.stream.loudnessScan`).
@@ -23,10 +24,14 @@ import 'app_settings.dart';
 /// Owned by [MpvStudio]; the Settings rows and the Now Playing badge observe
 /// this notifier.
 class LoudnessNormalizer extends ChangeNotifier {
-  LoudnessNormalizer(this._player, this._settings);
+  LoudnessNormalizer(this._player, this._settings, {CallGuard? guard})
+    : _guard = guard ?? unguarded;
 
-  final Player _player;
+  final PlayerApi _player;
   final AppSettings _settings;
+
+  /// Runs the `volume-gain` writes, so a refused one becomes a notice.
+  final CallGuard _guard;
 
   StreamSubscription<LoudnessScan?>? _sub;
   LoudnessScan? _lastScan;
@@ -91,7 +96,7 @@ class LoudnessNormalizer extends ChangeNotifier {
 
   void _apply(double gainDb) {
     _appliedGainDb = gainDb;
-    unawaited(_player.setVolumeGain(gainDb));
+    unawaited(_guard(() => _player.setVolumeGain(gainDb)));
   }
 
   @override

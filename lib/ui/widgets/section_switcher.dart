@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// The single transition shape used across the app's navigation: a gentle
-/// fade plus a short horizontal slide. Shared by [SectionSwitcher] (in-page
-/// grid→detail), [fadeSlidePageRoute] (pushed full-page routes), and the
-/// top-level section switch, so every navigation reads the same.
+/// fade plus a short horizontal slide. Shared by [SectionSwitcher] (an
+/// in-page list to detail swap, as in `TwoPane`) and [fadeSlidePageRoute]
+/// (pushed full-page routes), so every navigation reads the same.
 const Duration kNavTransition = Duration(milliseconds: 220);
 const Offset kNavSlideOffset = Offset(0.04, 0);
 
@@ -20,10 +20,8 @@ Widget _navTransition(Animation<double> animation, Widget child) {
   );
 }
 
-/// A pushed full-page route (over the shell) using the shared fade+slide
-/// transition — for every grid→detail push (Settings categories, Effects
-/// featured editors and the effects catalog category screen) so a push
-/// matches the in-page transitions.
+/// A pushed full-page route (over the shell) using the shared fade and
+/// slide, so a push matches the in-page transitions.
 Route<T> fadeSlidePageRoute<T>(Widget page) {
   return PageRouteBuilder<T>(
     transitionDuration: kNavTransition,
@@ -37,10 +35,10 @@ Route<T> fadeSlidePageRoute<T>(Widget page) {
   );
 }
 
-/// Animates the in-page swap between a grid landing and a pushed detail
-/// (Settings categories, Effects featured editors) so the detail doesn't
-/// just snap in. A gentle fade + short horizontal slide — the flat-design
-/// equivalent of a push transition, without leaving the section's shell.
+/// Animates the in-page swap between a list and a detail drawn over it
+/// (`TwoPane` on narrow windows) so the detail doesn't just snap in: the
+/// flat equivalent of a push transition, without leaving the section's
+/// shell.
 ///
 /// The [child] must change its key when the view changes (e.g.
 /// `KeyedSubtree(key: ValueKey(pushedIndex), …)`), otherwise there's

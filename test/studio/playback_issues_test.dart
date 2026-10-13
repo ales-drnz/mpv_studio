@@ -109,6 +109,59 @@ void main() {
     },
   );
 
+  test('ended tells finished, stopped and failed entries apart', () async {
+    Future<void> end(MpvEndFileReason reason, [int error = 0]) async {
+      h.endFile.add(MpvFileEndedEvent(reason: reason, error: error));
+      await pumpEventQueue();
+    }
+
+    h.playlist.add(const Playlist([_a, _b], index: 0));
+    await pumpEventQueue();
+    await end(MpvEndFileReason.eof);
+    h.playlist.add(const Playlist([_a, _b], index: 1));
+    await pumpEventQueue();
+    await end(MpvEndFileReason.stop);
+    expect(h.issues.ended.value, {
+      _a: const EntryEnd(EndReason.finished),
+      _b: const EntryEnd(EndReason.stopped),
+    });
+
+    await h.fail(MpvError.mpvErrorLoadingFailed);
+    expect(
+      h.issues.ended.value[_b],
+      const EntryEnd(EndReason.failed, error: MpvError.mpvErrorLoadingFailed),
+    );
+
+    // Quitting records nothing; loading again clears the entry; leaving
+    // the queue drops it.
+    await end(MpvEndFileReason.quit);
+    h.loaded.add(null);
+    await pumpEventQueue();
+    expect(h.issues.ended.value.keys, [_a]);
+    h.playlist.add(const Playlist([_b], index: 0));
+    await pumpEventQueue();
+    expect(h.issues.ended.value, isEmpty);
+  });
+
+  test('notices raised before anyone listens wait for the first', () async {
+    final quiet = PlaybackIssues(
+      errors: const Stream.empty(),
+      endFile: const Stream.empty(),
+      playlist: const Stream.empty(),
+      loaded: const Stream.empty(),
+    );
+    addTearDown(quiet.dispose);
+    quiet.notify('End of queue');
+    quiet.notify('Settings refused', isError: true);
+    final got = <PlaybackNotice>[];
+    quiet.notices.listen(got.add);
+    await pumpEventQueue();
+    expect(got.map((n) => (n.message, n.isError)), [
+      ('End of queue', false),
+      ('Settings refused', true),
+    ]);
+  });
+
   test('guard turns thrown player errors into notices', () async {
     final r1 = await h.issues.guard<Object?>(
       () => throw const MpvCommandException(
