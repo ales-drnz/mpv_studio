@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -142,6 +143,14 @@ class AppSettings {
 
   void recordLoudnessTargetLufs(double v) => _snap('loudnessTargetLufs', v);
   void recordDemuxerCacheDir(String v) => _snap('demuxerCacheDir', v);
+
+  // ---- Appearance -------------------------------------------------------
+  /// The app theme: dark (the default), light, or following the system.
+  /// Read at launch; the theme controller records changes through
+  /// [recordThemeMode].
+  ThemeMode get themeMode =>
+      _enumByName('themeMode', ThemeMode.values, ThemeMode.dark);
+  void recordThemeMode(ThemeMode v) => _snap('themeMode', v.name);
 
   /// The build-time configuration assembled from the persisted knobs, passed
   /// to the [Player] constructor in `startAudioEngine`.
