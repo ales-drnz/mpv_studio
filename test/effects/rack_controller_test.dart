@@ -146,7 +146,7 @@ void main() {
       final copy = rack.duplicate(id)!;
       expect(rack.chain.effects, [bass, comp, comp, kMeterStage]);
       expect(rack.isExpanded(copy), isTrue);
-      rack.move(0, 3);
+      rack.move(0, 2);
       expect(rack.chain.effects, [comp, comp, bass, kMeterStage]);
       rack.remove(copy);
       rack.setMeter(false);

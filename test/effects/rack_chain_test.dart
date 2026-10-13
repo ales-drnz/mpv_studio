@@ -9,11 +9,10 @@ void main() {
   const bass = BassEffect(gain: 4);
   const comp = AcompressorEffect(ratio: 4);
 
-  test('move follows ReorderableList indices', () {
+  test('move puts the stage at its final index', () {
     final c = RackChain.of([eqLow, bass, comp]);
     final ids = [for (final s in c.stages) s.id];
-    // Down: drop before the slot after "comp".
-    final down = c.move(0, 3);
+    final down = c.move(0, 2);
     expect(down.effects, [bass, comp, eqLow]);
     expect(down.stages.last.id, ids.first);
     // Up.
@@ -21,7 +20,7 @@ void main() {
     expect(up.effects, [comp, eqLow, bass]);
     // No-ops.
     expect(c.move(1, 1), c);
-    expect(c.move(1, 2), c);
+    expect(c.move(0, 1).effects, [bass, eqLow, comp]);
     expect(c.move(9, 0), c);
   });
 

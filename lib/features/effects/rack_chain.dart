@@ -121,12 +121,10 @@ class RackChain {
     return insert(stages[i].effect, index: i + 1);
   }
 
-  /// Moves the stage at [from] to [to], with [ReorderableList]'s
-  /// convention: [to] counts the slot before the removal.
+  /// Moves the stage at [from] so it ends up at index [to].
   RackChain move(int from, int to) {
     if (from < 0 || from >= stages.length) return this;
-    var target = to.clamp(0, stages.length);
-    if (target > from) target -= 1;
+    final target = to.clamp(0, stages.length - 1);
     if (target == from) return this;
     final next = [...stages];
     final s = next.removeAt(from);

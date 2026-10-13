@@ -163,7 +163,7 @@ class RackController extends ChangeNotifier {
     return r.$2;
   }
 
-  /// Moves a stage, with [ReorderableList]'s indices.
+  /// Moves the stage at [from] so it ends up at index [to].
   void move(int from, int to) => _set(_chain.move(from, to));
 
   void setMeter(bool on) => _set(_chain.withMeter(on));
