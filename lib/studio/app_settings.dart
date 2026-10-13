@@ -328,7 +328,16 @@ class AppSettings {
   // ---- Effects ----------------------------------------------------------
   /// The persisted effects chain, in order. Reads the blob of MPV Studio
   /// 0.2 too, which the next change rewrites in the current format.
-  List<AudioEffect> get effects => EffectsCodec.decode(_store['effects']);
+  /// A chain that cannot be read is dropped rather than stopping the
+  /// launch.
+  List<AudioEffect> get effects {
+    try {
+      return EffectsCodec.decode(_store['effects']);
+    } on Object catch (e) {
+      debugPrint('Persisted effects chain unreadable: $e');
+      return const [];
+    }
+  }
 
   /// While true the chain on `stream.audioEffects` is not recorded: the
   /// rack's global bypass plays a switched-off copy of the chain, and
