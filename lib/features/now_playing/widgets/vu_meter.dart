@@ -11,10 +11,11 @@ import '../../../ui/tokens.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
 
-/// A stereo peak meter fed by `player.stream.pcm`. Two bars (L / R) with
-/// pro PPM ballistics — fast attack, slow release, a latched peak-hold
-/// marker — and flat green/amber/red zones. The ballistics live in
-/// [LevelFollower]; this widget just pushes frame peaks, ticks, and paints.
+/// A stereo peak meter fed by `player.stream.pcm`. Two bars (left and
+/// right) with pro PPM ballistics (fast attack, slow release, a latched
+/// peak-hold marker) and flat green, amber and red zones. The ballistics
+/// live in [LevelFollower]; this widget pushes frame peaks, ticks and
+/// paints.
 /// It only ticks while there is something to show: frames arriving or bars
 /// still falling. Subscribing arms the PCM tap (shared with the spectrum);
 /// it disarms on unmount.

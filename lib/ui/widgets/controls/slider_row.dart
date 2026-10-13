@@ -119,6 +119,9 @@ class AppSlider extends StatefulWidget {
 }
 
 class _AppSliderState extends State<AppSlider> {
+  /// The value under the finger during a drag.
+  double? _dragged;
+
   static const double _track = 6;
   static const double _pointerHeight = 24;
 
@@ -220,10 +223,18 @@ class _AppSliderState extends State<AppSlider> {
                     ? (d) => widget.onChangeEnd!(valueAt(d.localPosition.dx))
                     : null,
                 onHorizontalDragUpdate: enabled
-                    ? (d) => widget.onChanged(valueAt(d.localPosition.dx))
+                    ? (d) {
+                        _dragged = valueAt(d.localPosition.dx);
+                        widget.onChanged(_dragged!);
+                      }
                     : null,
+                // The last dragged value: the parent may not have rebuilt
+                // with it yet (it updates asynchronously).
                 onHorizontalDragEnd: enabled && widget.onChangeEnd != null
-                    ? (_) => widget.onChangeEnd!(widget.value)
+                    ? (_) {
+                        widget.onChangeEnd!(_dragged ?? widget.value);
+                        _dragged = null;
+                      }
                     : null,
                 child: SizedBox(
                   height: height,

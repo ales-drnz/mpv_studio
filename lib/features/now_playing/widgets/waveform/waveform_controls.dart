@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../ui/layout/layout.dart';
@@ -208,7 +210,8 @@ class _WaveformScrollBarState extends State<WaveformScrollBar> {
                       ? 1.0
                       : widget.visibleSecs / widget.timelineSecs)
                   .clamp(0.06, 1.0);
-          final thumbW = (w * frac).clamp(28.0, w);
+          // A strip narrower than the thumb's minimum gets a full-width thumb.
+          final thumbW = (w * frac).clamp(math.min(28.0, w), w).toDouble();
           final avail = w - thumbW;
           final thumbX = widget.maxStart > 0
               ? (widget.viewStart / widget.maxStart) * avail

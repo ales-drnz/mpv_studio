@@ -221,6 +221,62 @@ void main() {
     });
   });
 
+  testWidgets('Space goes to a focused button or switch', (tester) async {
+    var pressed = 0;
+    var switched = false;
+    final button = FocusNode();
+    final toggle = FocusNode();
+    addTearDown(button.dispose);
+    addTearDown(toggle.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlaybackShortcuts(
+            player: player,
+            child: StatefulBuilder(
+              builder: (context, setState) => Column(
+                children: [
+                  TextButton(
+                    focusNode: button,
+                    onPressed: () => pressed++,
+                    child: const Text('button'),
+                  ),
+                  Switch(
+                    focusNode: toggle,
+                    value: switched,
+                    onChanged: (v) => setState(() => switched = v),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    button.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    expect(pressed, 1);
+
+    toggle.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    expect(switched, isTrue);
+    expect(player.calls, isEmpty);
+
+    // Other keys still drive playback with a control focused.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    expect(player.calls, ['setMute true']);
+
+    // Back on the shortcuts' own node, Space plays.
+    Focus.of(tester.element(find.byType(StatefulBuilder))).requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    expect(player.calls, ['setMute true', 'play']);
+  });
+
   testWidgets('nothing happens when disabled (mobile layout)', (tester) async {
     await _pump(tester, player, enabled: false);
     await tester.sendKeyEvent(LogicalKeyboardKey.space);

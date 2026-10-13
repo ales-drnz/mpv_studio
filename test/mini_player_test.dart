@@ -170,6 +170,16 @@ void main() {
     expect(player.calls, ['seek 60000']);
   });
 
+  testWidgets('on touch the progress bar only shows the progress', (
+    tester,
+  ) async {
+    await _pump(tester, MiniPlayer(player: player), input: InputMode.touch);
+    final box = tester.getRect(find.byKey(const ValueKey('mini-progress')));
+    await tester.tapAt(Offset(box.left + box.width / 4, box.center.dy));
+    await tester.pump();
+    expect(player.calls, isEmpty);
+  });
+
   testWidgets('a spinner rings the button while loading or buffering', (
     tester,
   ) async {

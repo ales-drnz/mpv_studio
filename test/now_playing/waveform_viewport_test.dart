@@ -43,6 +43,12 @@ void main() {
     expect(track.zoomBy(0.001).visibleSecs, WaveformViewport.minWindow);
   });
 
+  test('a track shorter than the zoom floor zooms without throwing', () {
+    const short = WaveformViewport(duration: Duration(seconds: 2));
+    expect(short.zoomBy(0.5).visibleSecs, 2);
+    expect(short.canZoomIn, isFalse);
+  });
+
   test('scrolling stays within the track', () {
     final zoomed = track.zoomBy(0.1);
     expect(zoomed.scrollTo(-20).leftRel, 0);

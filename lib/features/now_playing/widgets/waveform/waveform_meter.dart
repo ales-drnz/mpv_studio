@@ -46,7 +46,10 @@ class _WaveformMeterState extends State<WaveformMeter>
   late final Ticker _ticker = createTicker((_) {
     if (mounted) setState(() {});
   });
-  late final WaveformPan _pan = WaveformPan(onPan: _panBy);
+  late final WaveformPan _pan = WaveformPan(
+    onPan: _panBy,
+    canPan: () => _view.canScroll,
+  );
 
   /// The playhead between position events: [_anchor] plus the time the
   /// stopwatch has run, at the playback rate.

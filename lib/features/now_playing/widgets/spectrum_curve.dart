@@ -64,7 +64,7 @@ class _CurvePainter extends CustomPainter {
     for (var i = 1; i < n; i++) {
       final x0 = xOf(i - 1), y0 = yOf(i - 1);
       final x1 = xOf(i), y1 = yOf(i);
-      // Quadratic through the midpoint — smooths the band envelope.
+      // Quadratic through the midpoint: smooths the band envelope.
       top.quadraticBezierTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
     }
     top.lineTo(xOf(n - 1), yOf(n - 1));

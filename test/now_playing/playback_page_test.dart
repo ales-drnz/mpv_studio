@@ -181,6 +181,19 @@ void main() {
       expect(player.calls, ['setChapter 2', 'setChapter 1']);
     });
 
+    testWidgets('before the first chapter no chapter is claimed', (
+      tester,
+    ) async {
+      final player = playingTrack()
+        ..emit((s) => s.copyWith(currentChapter: null));
+      await _pumpPage(tester, player);
+      final title = find.byKey(const ValueKey('chapter-title'));
+      expect(tester.widget<Text>(title).data, 'Before the first chapter');
+      expect(find.text('3 chapters'), findsOneWidget);
+      await tester.tap(find.byTooltip('Next chapter'));
+      expect(player.calls, ['setChapter 0']);
+    });
+
     testWidgets('a track without chapters shows no chapter line', (
       tester,
     ) async {
@@ -320,6 +333,114 @@ void main() {
           .evaluate()
           .isNotEmpty;
       expect(hasTooltip || isTextButton, isTrue, reason: '$button');
+    }
+  });
+
+  group('low and tiny windows', () {
+    for (final size in const [
+      Size(1024, 500),
+      Size(1000, 520),
+      Size(824, 560),
+    ]) {
+      testWidgets('the stage with a failure banner fits ${size.width.round()}x'
+          '${size.height.round()}', (tester) async {
+        final player = playingTrack();
+        final failed = ValueNotifier<Set<Media>>({
+          player.state.playlist.items.first,
+        });
+        addTearDown(failed.dispose);
+        await _pumpPage(tester, player, size: size, failed: failed);
+        expectNoOverflow(tester);
+        expect(find.text('Retry'), findsOneWidget);
+      });
+    }
+
+    for (final size in const [
+      Size(330, 270),
+      Size(200, 200),
+      Size(1300, 300),
+    ]) {
+      testWidgets('nothing throws at ${size.width.round()}x'
+          '${size.height.round()}', (tester) async {
+        await _pumpPage(tester, playingTrack(), size: size);
+        // A window this small may clip, but never throws.
+        final error = tester.takeException();
+        expect(error, anyOf(isNull, isA<FlutterError>()));
+        expect(error is ArgumentError, isFalse);
+      });
+    }
+
+    testWidgets('phone landscape has one info button', (tester) async {
+      await pumpPlayback(tester, playingTrack(), size: studioSize('780x360'));
+      expect(find.byTooltip('Track and playback info'), findsOneWidget);
+    });
+
+    testWidgets('a desktop window has one info button', (tester) async {
+      await _pumpPage(tester, playingTrack());
+      expect(find.byTooltip('Track and playback info'), findsOneWidget);
+    });
+  });
+
+  testWidgets('the wheel pans a zoomed waveform, not the page', (tester) async {
+    await _pumpPage(tester, playingTrack(), size: const Size(412, 600));
+    final page = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    final meter = tester.getCenter(
+      find.bySemanticsLabel('Waveform and position'),
+    );
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    Future<void> wheel() async {
+      await tester.sendEventToBinding(pointer.hover(meter));
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, 40)));
+      await tester.pump();
+    }
+
+    // The whole track shows: nothing to pan, the page scrolls.
+    await wheel();
+    expect(page.position.pixels, greaterThan(0));
+    page.position.jumpTo(0);
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Zoom in'));
+    await tester.pump();
+    final meterNow = tester.getCenter(
+      find.bySemanticsLabel('Waveform and position'),
+    );
+    expect(meterNow, meter);
+    await wheel();
+    expect(page.position.pixels, 0);
+  });
+
+  testWidgets('transport buttons keep 48 dp on a 360 wide phone', (
+    tester,
+  ) async {
+    await pumpPlayback(tester, playingTrack(), size: studioSize('360x780'));
+    for (final tip in [
+      'Previous (long press to force)',
+      'Back 10 s',
+      'Forward 10 s',
+      'Next (long press to force)',
+      'Shuffle off',
+      'Stop',
+      'Repeat off',
+      'Undo last seek',
+      'Playback speed',
+      'Track and playback info',
+    ]) {
+      final size = tester.getSize(
+        find.descendant(
+          of: find.byTooltip(tip),
+          matching: find.byType(InkWell),
+        ),
+      );
+      expect(size.width, greaterThanOrEqualTo(48), reason: tip);
+      expect(size.height, greaterThanOrEqualTo(48), reason: tip);
     }
   });
 

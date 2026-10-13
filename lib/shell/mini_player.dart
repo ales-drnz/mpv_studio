@@ -295,8 +295,11 @@ class _RailMini extends StatelessWidget {
   }
 }
 
-/// A thin progress line along the top edge of the mini-player. Tap or
-/// drag anywhere on it to seek; the hit area is taller than the line.
+/// A thin progress line along the top edge of the mini-player. With a
+/// pointer, a click or drag anywhere on it seeks (the hit area is taller
+/// than the line). On touch it only shows the progress: a strip this thin
+/// is no tap target and sits next to the swipe area, so seeking is left to
+/// Playback and to the screen reader's increase and decrease actions.
 class MiniProgressBar extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
@@ -323,6 +326,7 @@ class MiniProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final touch = context.layout.isTouch;
     return Live<Duration>(
       stream: player.stream.duration,
       initial: player.state.duration,
@@ -368,15 +372,19 @@ class MiniProgressBar extends StatelessWidget {
               waitDuration: const Duration(milliseconds: 600),
               child: LayoutBuilder(
                 builder: (context, c) => MouseRegion(
-                  cursor: seekable
+                  cursor: seekable && !touch
                       ? SystemMouseCursors.click
                       : SystemMouseCursors.basic,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTapDown: (d) =>
-                        _seekAt(d.localPosition.dx, c.maxWidth, duration),
-                    onHorizontalDragUpdate: (d) =>
-                        _seekAt(d.localPosition.dx, c.maxWidth, duration),
+                    onTapDown: touch
+                        ? null
+                        : (d) =>
+                              _seekAt(d.localPosition.dx, c.maxWidth, duration),
+                    onHorizontalDragUpdate: touch
+                        ? null
+                        : (d) =>
+                              _seekAt(d.localPosition.dx, c.maxWidth, duration),
                     child: SizedBox(
                       key: const ValueKey('mini-progress'),
                       height: _hit,

@@ -99,7 +99,7 @@ class _InfoBody extends StatelessWidget {
     );
   }
 
-  // ── Source signal — stat grid ───────────────────────────────────────
+  // ── Source signal: stat grid ───────────────────────────────────────
 
   Widget _source() {
     return Live<AudioParams>(
@@ -175,7 +175,7 @@ class _InfoBody extends StatelessWidget {
     return '${db.toStringAsFixed(1)} dBFS';
   }
 
-  // ── Output (device side) — stat grid ────────────────────────────────
+  // ── Output (device side): stat grid ────────────────────────────────
 
   Widget _output() {
     return Live<AudioParams>(
@@ -197,7 +197,7 @@ class _InfoBody extends StatelessWidget {
     );
   }
 
-  // ── Open pipeline — dense rows ──────────────────────────────────────
+  // ── Open pipeline: dense rows ──────────────────────────────────────
 
   Widget _stream() {
     return _section(
@@ -226,7 +226,7 @@ class _InfoBody extends StatelessWidget {
     );
   }
 
-  // ── Lifecycle / timing — dense rows ─────────────────────────────────
+  // ── Lifecycle and timing: dense rows ─────────────────────────────────
 
   Widget _playback() {
     return _section(

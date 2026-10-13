@@ -62,7 +62,9 @@ void paintAbLoop(
       RRect.fromRectAndRadius(box, const Radius.circular(3)),
       Paint()..color = loop,
     );
-    tp.paint(canvas, Offset(bx + 4, top + 3));
+    tp
+      ..paint(canvas, Offset(bx + 4, top + 3))
+      ..dispose();
   }
 
   marker(xa, 'A');
