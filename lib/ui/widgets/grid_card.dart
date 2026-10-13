@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../tokens.dart';
 
-/// A square squircle tile for the app's landing grids — a centred accent
-/// icon over a title, on a flat surface. Shared by the Settings category
-/// grid and the Effects featured grid so the two read as the same object.
+/// A square squircle tile for the app's landing grids: a centred accent
+/// icon over a title, on a flat surface. Lay several out with
+/// `ResponsiveGrid`.
 ///
 /// When [active] is set the tile fills with the accent wash and shows an
-/// "on" pip in the top-right (used by Effects to flag an engaged effect);
-/// the icon stays accent in both states so the grids match.
+/// "on" pip in the top-right corner, for a tile whose feature is engaged;
+/// the icon stays accent in both states.
 class GridCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
 
-  /// Accent wash + "on" pip. Settings categories leave this false; an
-  /// engaged effect sets it true.
+  /// The accent wash and the "on" pip.
   final bool active;
 
   const GridCard({
@@ -28,7 +27,7 @@ class GridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Squircle (superellipse) corners — the same flat surface as the rest.
+    // Squircle (superellipse) corners, the same flat surface as the rest.
     final shape = ContinuousRectangleBorder(
       borderRadius: BorderRadius.circular(40),
     );
@@ -37,7 +36,7 @@ class GridCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: shape,
-        // Ink (not Container) so the hover/ink highlight paints on the
+        // Ink (not Container) so the hover and ink highlight paints on the
         // Material above the surface fill instead of being hidden behind it.
         child: Ink(
           decoration: ShapeDecoration(
