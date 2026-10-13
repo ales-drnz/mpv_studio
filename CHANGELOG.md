@@ -5,7 +5,7 @@
 - A light theme next to the dark one, plus a System choice. The theme switches live and is saved.
 - A layout that adapts to every window: bottom tabs on phones, a navigation rail on tablets and phones in landscape, a sidebar on desktop that collapses to a rail.
 - A welcome screen on first launch to open files, play a demo stream or connect a server. Settings can show it again.
-- A Signal chain rack on the Effects page: stages in play order that you can drag, switch on and off, duplicate, remove and add from the catalog or as raw lavfi.
+- A signal chain rack on the Effects page: stages in play order that you can drag, switch on and off, duplicate, remove and add from the catalog or as raw lavfi.
 - Live editing in the rack, with before and after meters on the open stages and a readable message when mpv refuses a chain.
 - A global FX bypass to compare the chain on and off. It keeps the loudness meter on and saves your chain, not the muted copy.
 - A live loudness gauge and panel with momentary, short-term and integrated loudness, LRA, the track scan and the applied normalization gain.
@@ -24,7 +24,7 @@
 - The Android back button closes sheets and details first, then returns to Playback.
 - Screen reader labels and values on the waveform, meters, curves and queue rows.
 - Readable toasts for failed tracks and player calls, and a badge with the count of new mpv errors on the Console entry.
-- Queue rows show title, artist, source, length and cover, mark the tracks that played, were skipped or failed, and a details pane on wide windows.
+- Queue rows show title, artist, source, length and cover, and mark the tracks that played, were skipped or failed. Wide windows add a details pane.
 - A GitHub Actions workflow that analyzes, tests and builds the app without publishing anything.
 
 ### Changed
@@ -43,6 +43,7 @@
 ### Fixed
 - A server address typed with `https://` got the default port added.
 - Signing out of Samba with a dead connection left the login saved.
+- The Console and the resolver log no longer show credentials typed into a URL.
 - A damaged settings value no longer blocks the launch, and a failed launch no longer leaves a player running.
 - Player calls that fail, such as a seek with nothing loaded, show a message instead of failing silently.
 

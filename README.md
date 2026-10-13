@@ -233,7 +233,7 @@ To build a release artifact, use the standard `flutter build <platform>`.
 
 #### 9.3 Continuous integration
 
-GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push and pull request. Pushes to main also build Windows, macOS and iOS. Nothing is published: each run keeps its builds as artifacts for a week.
+GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. Nothing is published: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week.
 
 ---
 
