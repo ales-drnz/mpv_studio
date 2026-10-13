@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../generated/filter_catalog.dart';
-import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 
@@ -155,44 +154,23 @@ class _SubmitTextRowState extends State<SubmitTextRow> {
 
   @override
   Widget build(BuildContext context) {
-    final field = Container(
-      constraints: BoxConstraints(minHeight: controlHeightOf(context)),
-      decoration: ShapeDecoration(
-        color: Tokens.surface3,
-        // A pill for one line; a several-line entry keeps round corners.
-        shape: widget.maxLines == 1 ? Tokens.pill : Tokens.shape(Tokens.rMd),
-      ),
-      padding: const EdgeInsets.only(left: Tokens.s16, right: Tokens.s4),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _text,
-              enabled: widget.enabled,
-              minLines: 1,
-              maxLines: widget.maxLines,
-              onSubmitted: (_) => _submit(),
-              style: Tokens.body.copyWith(
-                fontFamily: Tokens.mono,
-                color: widget.enabled ? Tokens.fg : Tokens.fgFaint,
-              ),
-              cursorColor: Tokens.accent,
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-                hintText: widget.hint,
-                hintStyle: Tokens.caption,
-              ),
-            ),
-          ),
-          RoundIconButton(
-            icon: Icons.check_rounded,
-            size: 20,
-            tooltip: 'Apply',
-            onTap: widget.enabled && _dirty ? _submit : null,
-          ),
-        ],
+    // A pill for one line; a several-line entry keeps round corners.
+    final field = AppTextField(
+      controller: _text,
+      label: widget.label,
+      enabled: widget.enabled,
+      minLines: 1,
+      maxLines: widget.maxLines,
+      monospace: true,
+      autocorrect: false,
+      enableSuggestions: false,
+      hint: widget.hint,
+      onSubmitted: (_) => _submit(),
+      action: RoundIconButton(
+        icon: Icons.check_rounded,
+        size: 20,
+        tooltip: 'Apply',
+        onTap: widget.enabled && _dirty ? _submit : null,
       ),
     );
     return SettingTile(

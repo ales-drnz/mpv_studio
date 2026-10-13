@@ -106,7 +106,8 @@ class _SearchField extends StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       hint: 'Search the log',
-      semanticLabel: 'Search the log',
+      label: 'Search the log',
+      autocorrect: false,
       leading: Icon(Icons.search_rounded, size: 20, color: Tokens.fgDim),
       action: ValueListenableBuilder<TextEditingValue>(
         valueListenable: controller,
@@ -146,44 +147,26 @@ class ConsoleInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final h = controlHeightOf(context);
-    final field = Container(
-      constraints: BoxConstraints(minHeight: h),
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
-      child: Row(
-        children: [
-          ExcludeSemantics(
-            child: Text(
-              '›',
-              style: Tokens.heading.copyWith(color: Tokens.fgDim, height: 1),
-            ),
-          ),
-          const SizedBox(width: Tokens.s8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              style: Tokens.body.copyWith(fontFamily: Tokens.mono),
-              cursorColor: Tokens.accent,
-              autocorrect: false,
-              enableSuggestions: false,
-              textInputAction: TextInputAction.send,
-              // The page's tap region owns closing; tapping a suggestion
-              // must not drop the focus first.
-              onTapOutside: (_) {},
-              onTap: onTap,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'mpv command, or help',
-                hintStyle: Tokens.body.copyWith(color: Tokens.fgFaint),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-              ),
-            ),
-          ),
-        ],
+    final field = AppTextField(
+      controller: controller,
+      focusNode: focusNode,
+      label: 'Command',
+      hint: 'mpv command, or help',
+      monospace: true,
+      autocorrect: false,
+      enableSuggestions: false,
+      textInputAction: TextInputAction.send,
+      // The page's tap region owns closing; tapping a suggestion must not
+      // drop the focus first.
+      onTapOutside: (_) {},
+      onTap: onTap,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      leading: ExcludeSemantics(
+        child: Text(
+          '›',
+          style: Tokens.heading.copyWith(color: Tokens.fgDim, height: 1),
+        ),
       ),
     );
     return Row(

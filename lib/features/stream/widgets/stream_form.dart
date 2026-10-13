@@ -5,88 +5,6 @@ import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import 'stream_states.dart';
 
-/// The input decoration of every Stream text field: a field pill
-/// ([Tokens.surface3]) with an optional leading glyph, an accent ring when
-/// focused and a red one when invalid, the error under the pill. One
-/// control height tall ([controlHeightOf]).
-InputDecoration streamFieldDecoration(
-  BuildContext context, {
-  String? hint,
-  IconData? icon,
-  Widget? suffix,
-}) {
-  final h = controlHeightOf(context);
-  OutlineInputBorder border(Color color) => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(h / 2),
-    borderSide: color == Colors.transparent
-        ? BorderSide.none
-        : BorderSide(color: color, width: 2),
-  );
-  // The text line is 20 high; the rest of the control height is padding.
-  final v = (h - 20) / 2;
-  return InputDecoration(
-    hintText: hint,
-    isDense: true,
-    // The compact pointer density would take 8 off the control height.
-    visualDensity: VisualDensity.standard,
-    filled: true,
-    fillColor: Tokens.surface3,
-    hoverColor: Colors.transparent,
-    hintStyle: Tokens.body.copyWith(color: Tokens.fgFaint),
-    hintMaxLines: 1,
-    errorStyle: Tokens.label.copyWith(color: Tokens.red),
-    errorMaxLines: 3,
-    prefixIcon: icon == null ? null : Icon(icon, size: 20),
-    prefixIconColor: Tokens.fgDim,
-    prefixIconConstraints: const BoxConstraints(
-      minWidth: Tokens.s48,
-      minHeight: Tokens.s24,
-    ),
-    suffixIcon: suffix,
-    contentPadding: EdgeInsetsDirectional.only(
-      start: icon == null ? Tokens.s16 : 0,
-      end: Tokens.s16,
-      top: v,
-      bottom: v,
-    ),
-    border: border(Colors.transparent),
-    enabledBorder: border(Colors.transparent),
-    focusedBorder: border(Tokens.accent),
-    errorBorder: border(Tokens.red),
-    focusedErrorBorder: border(Tokens.red),
-  );
-}
-
-/// The text style of Stream text fields: monospace, since they hold hosts,
-/// URLs and names.
-TextStyle get streamFieldStyle =>
-    Tokens.body.copyWith(fontFamily: Tokens.mono, fontSize: 13);
-
-/// The label above a Stream field, inset like the field's text.
-class StreamFieldLabel extends StatelessWidget {
-  const StreamFieldLabel(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: Padding(
-      padding: const EdgeInsets.only(
-        left: Tokens.s16,
-        right: Tokens.s16,
-        bottom: Tokens.s8,
-      ),
-      child: Text(
-        text,
-        style: Tokens.label.copyWith(
-          color: Tokens.fg,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-  );
-}
-
 /// A labelled text field of a sign-in form: the label above a field pill.
 /// Enter moves to the next field, and submits on the last one
 /// ([onSubmitted]).
@@ -127,30 +45,24 @@ class StreamTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        StreamFieldLabel(label),
-        Semantics(
-          label: label,
-          child: TextFormField(
-            controller: controller,
-            obscureText: obscure,
-            validator: validator,
-            autofocus: autofocus,
-            keyboardType: keyboardType,
-            autofillHints: autofillHints,
-            autocorrect: false,
-            enableSuggestions: !obscure && keyboardType != TextInputType.url,
-            textInputAction: last ? TextInputAction.go : TextInputAction.next,
-            onFieldSubmitted: last ? (_) => onSubmitted?.call() : null,
-            style: streamFieldStyle,
-            cursorColor: Tokens.accent,
-            decoration: streamFieldDecoration(context, hint: hint, icon: icon),
-          ),
-        ),
-      ],
+    return AppTextField(
+      controller: controller,
+      label: label,
+      showLabel: true,
+      hint: hint,
+      monospace: true,
+      leading: icon == null ? null : Icon(icon, size: 20, color: Tokens.fgDim),
+      obscureText: obscure,
+      validator: validator,
+      autofocus: autofocus,
+      keyboardType: keyboardType,
+      autofillHints: autofillHints,
+      // Hosts, URLs, user names and passwords are not prose; only names
+      // keep the keyboard's suggestions.
+      autocorrect: false,
+      enableSuggestions: !obscure && keyboardType != TextInputType.url,
+      textInputAction: last ? TextInputAction.go : TextInputAction.next,
+      onSubmitted: last ? (_) => onSubmitted?.call() : null,
     );
   }
 }

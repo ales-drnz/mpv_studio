@@ -262,7 +262,9 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                   controller: _search,
                   onChanged: _onSearch,
                   textInputAction: TextInputAction.search,
-                  semanticLabel: _view == LibraryView.songs
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  label: _view == LibraryView.songs
                       ? 'Search songs'
                       : 'Search albums',
                   hint: _view == LibraryView.songs

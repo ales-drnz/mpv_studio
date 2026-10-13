@@ -29,7 +29,8 @@ class SettingsSearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         hint: 'Search settings',
-        semanticLabel: 'Search settings',
+        label: 'Search settings',
+        autocorrect: false,
         textInputAction: TextInputAction.search,
         leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
         action: controller.text.isEmpty

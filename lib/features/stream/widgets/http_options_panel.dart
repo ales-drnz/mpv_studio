@@ -109,7 +109,9 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
                 below: AppTextField(
                   controller: _userAgent,
                   onChanged: (_) => _emit(),
-                  semanticLabel: 'User agent',
+                  label: 'User agent',
+                  autocorrect: false,
+                  enableSuggestions: false,
                   monospace: true,
                   hint: widget.globalUserAgent
                       ? 'Default (Settings, Network)'
@@ -182,7 +184,9 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
               child: AppTextField(
                 controller: row.name,
                 onChanged: (_) => setState(_emit),
-                semanticLabel: 'Header name',
+                label: 'Header name',
+                autocorrect: false,
+                enableSuggestions: false,
                 hint: 'Name',
                 monospace: true,
               ),
@@ -193,7 +197,9 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
               child: AppTextField(
                 controller: row.value,
                 onChanged: (_) => setState(_emit),
-                semanticLabel: 'Header value',
+                label: 'Header value',
+                autocorrect: false,
+                enableSuggestions: false,
                 hint: 'Value',
                 monospace: true,
               ),

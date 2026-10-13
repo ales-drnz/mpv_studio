@@ -149,30 +149,16 @@ class _EngineOptionsSectionState extends State<EngineOptionsSection> {
             below: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Tokens.s12,
-                    vertical: Tokens.s8,
-                  ),
-                  decoration: ShapeDecoration(
-                    color: Tokens.surface3,
-                    shape: Tokens.shape(Tokens.rMd),
-                  ),
-                  child: TextField(
-                    controller: _text,
-                    minLines: 3,
-                    maxLines: 8,
-                    keyboardType: TextInputType.multiline,
-                    style: Tokens.body.copyWith(fontFamily: Tokens.mono),
-                    cursorColor: Tokens.accent,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      hintText: 'demuxer-lavf-probesize=1048576',
-                      hintStyle: Tokens.caption,
-                    ),
-                  ),
+                AppTextField(
+                  controller: _text,
+                  label: entry.title,
+                  minLines: 3,
+                  maxLines: 8,
+                  keyboardType: TextInputType.multiline,
+                  monospace: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  hint: 'demuxer-lavf-probesize=1048576',
                 ),
                 const SizedBox(height: Tokens.s8),
                 TileButton(

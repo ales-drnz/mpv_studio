@@ -23,8 +23,7 @@ class AppTextField extends StatelessWidget {
     this.focusNode,
     this.enabled = true,
     this.hint,
-    String? label,
-    String? semanticLabel,
+    this.label,
     this.showLabel = false,
     this.monospace = false,
     this.onChanged,
@@ -43,7 +42,7 @@ class AppTextField extends StatelessWidget {
     this.autofocus = false,
     this.minLines,
     this.maxLines = 1,
-  }) : label = label ?? semanticLabel;
+  });
 
   final TextEditingController controller;
   final FocusNode? focusNode;
