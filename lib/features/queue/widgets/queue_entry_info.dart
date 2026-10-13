@@ -154,9 +154,11 @@ class QueueEntryInfo extends StatelessWidget {
               onPressed: onRemove,
               icon: const Icon(Icons.close_rounded, size: 18),
               label: const Text('Remove'),
+              // Red on the tonal fill is too faint for text: the icon
+              // carries the warning, the label stays in the tonal ink.
               style: OutlinedButton.styleFrom(
                 minimumSize: buttonSize,
-                foregroundColor: Tokens.red,
+                iconColor: Tokens.red,
               ),
             ),
           ],
