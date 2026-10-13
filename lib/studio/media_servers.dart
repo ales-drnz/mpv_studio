@@ -3,6 +3,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import '../features/stream/playback_reporter.dart';
+import '../features/stream/signed_url_resolver.dart';
+import 'source_resolvers.dart';
 
 /// Brings up the app-level media servers (Jellyfin / Plex), restores any
 /// saved sessions, resolves the real device name for Now Playing, and starts
@@ -36,9 +38,13 @@ connectMediaServers(Player player) async {
   };
   await Future.wait([jellyfin.tryRestore(), plex.tryRestore()]);
 
-  // Plex hands mpv `plex-transcode://` marker URLs; the source resolver turns
-  // each one into the real URL right before it opens.
-  await player.setSourceResolver(plex.resolveSource);
+  // The player has one resolver slot. Plex hands mpv `plex-transcode://`
+  // markers and the Resolver tab plays `studio-signed://` links; the chain
+  // turns each into the real URL right before it opens.
+  await SourceResolverChain([
+    plex.resolveSource,
+    SignedUrlResolver.shared.resolve,
+  ]).installOn(player);
 
   final favorites = FavoritesController(servers);
 
