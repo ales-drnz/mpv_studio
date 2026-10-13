@@ -14,6 +14,7 @@ import 'samba/samba_tab.dart';
 import 'signed_url_resolver.dart';
 import 'stream_actions.dart';
 import 'widgets/stream_tab_scope.dart';
+import '../../ui/widgets/scroll_fade.dart';
 
 /// The tabs of the Stream page, in order.
 enum StreamTab {
@@ -252,20 +253,23 @@ class _StreamTabRowState extends State<StreamTabRow> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: Tokens.s4, bottom: Tokens.s8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (final t in StreamTab.values) ...[
-              if (t.index > 0) const SizedBox(width: Tokens.s8),
-              _TabPill(
-                key: _keys[t],
-                label: t.label,
-                selected: t == widget.selected,
-                onTap: () => widget.onSelect(t),
-              ),
+      // On a phone the pills run past the edges: the fade says so.
+      child: ScrollFade(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final t in StreamTab.values) ...[
+                if (t.index > 0) const SizedBox(width: Tokens.s8),
+                _TabPill(
+                  key: _keys[t],
+                  label: t.label,
+                  selected: t == widget.selected,
+                  onTap: () => widget.onSelect(t),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
