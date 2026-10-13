@@ -25,14 +25,14 @@ class FeaturedEditor {
   ///
   /// [tapInstance] and [live] let the compressor curve follow the right
   /// stage, only while the rack grants it a tap. [loudness] is the live
-  /// meter reading, for the loudnorm gauge.
+  /// loudness meter, for the loudnorm gauge (null while the meter is off).
   static FeaturedEditor? of(
     AudioEffect e, {
     required StageChange onChange,
     required VoidCallback onEnd,
     int tapInstance = 0,
     bool live = false,
-    Loudness? loudness,
+    Stream<Loudness>? loudness,
   }) {
     Widget slider(
       String label,
@@ -299,12 +299,15 @@ class FeaturedEditor {
         );
       case LoudnormEffect ln:
         return FeaturedEditor(
-          LoudnessGauge(
-            reading: loudness,
-            target: ln.i,
-            range: ln.lra,
-            truePeak: ln.tp,
-            enabled: ln.enabled,
+          StreamBuilder<Loudness>(
+            stream: loudness,
+            builder: (context, snap) => LoudnessGauge(
+              reading: snap.data,
+              target: ln.i,
+              range: ln.lra,
+              truePeak: ln.tp,
+              enabled: ln.enabled,
+            ),
           ),
           [
             slider(

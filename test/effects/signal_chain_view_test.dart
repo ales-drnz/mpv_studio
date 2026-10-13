@@ -6,7 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/effects_page.dart';
 import 'package:mpv_studio/features/effects/rack_catalog.dart';
 import 'package:mpv_studio/features/effects/rack_controller.dart';
-import 'package:mpv_studio/features/effects/widgets/stage_meters.dart';
+import 'package:mpv_studio/features/effects/rack_environment.dart';
 import 'package:mpv_studio/ui/widgets/back_bar.dart';
 
 import '../support/fake_engine.dart';
@@ -34,6 +34,7 @@ Future<RackController> pumpRack(
       home: Scaffold(
         body: RackEnvironment(
           taps: (taps ?? RecordingTaps()).call,
+          pcm: const Stream.empty(),
           spectrum: const SpectrumSettings(),
           loudness: const Stream.empty(),
           child: SignalChainView(rack: rack),

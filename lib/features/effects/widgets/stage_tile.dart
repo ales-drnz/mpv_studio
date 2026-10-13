@@ -5,6 +5,7 @@ import '../../../generated/filter_catalog.dart';
 import '../../../ui/tokens.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
+import '../stage_presets.dart';
 import 'stage_editor.dart';
 
 /// What the stage menu can do.
@@ -39,23 +40,6 @@ class StageTile extends StatelessWidget {
       case StageAction.remove:
         rack.remove(id);
     }
-  }
-
-  Future<void> _power(bool on) async {
-    final e = rack.chain.stage(id)?.effect;
-    if (e == null) return;
-    // A filter with an empty mandatory option would be refused: start it
-    // from its first preset instead.
-    final d = descriptorOf(e.filter);
-    if (on && !stageReady(e) && d != null && d.presets.isNotEmpty) {
-      await applyPreset(rack, id, d, d.presets.first);
-      return;
-    }
-    if (on && !stageReady(e) && !rack.isExpanded(id)) {
-      rack.toggleExpanded(id);
-      return;
-    }
-    rack.setEnabled(id, on);
   }
 
   @override
@@ -141,7 +125,7 @@ class StageTile extends StatelessWidget {
           IconButton(
             key: ValueKey('stage-power-$id'),
             tooltip: on ? 'Switch off' : 'Switch on',
-            onPressed: () => _power(!on),
+            onPressed: () => powerStage(rack, id, !on),
             icon: Icon(
               Icons.power_settings_new_rounded,
               size: 18,

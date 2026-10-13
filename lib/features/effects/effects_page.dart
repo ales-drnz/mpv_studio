@@ -12,9 +12,9 @@ import '../../ui/widgets/section_switcher.dart';
 import '../../util/reactive.dart';
 import 'rack_catalog.dart';
 import 'rack_controller.dart';
+import 'rack_environment.dart';
 import 'widgets/loudness_panel.dart';
 import 'widgets/stage_editor.dart';
-import 'widgets/stage_meters.dart';
 import 'widgets/stage_tile.dart';
 
 /// The Effects section: the signal chain as a rack of stages, in the
@@ -36,6 +36,7 @@ class EffectsPage extends StatelessWidget {
       builder: (context, spectrum) => RackEnvironment(
         taps: (f, instance, side) =>
             player.stream.tap(f, instance: instance, side: side),
+        pcm: player.stream.pcm,
         spectrum: spectrum,
         loudness: player.stream.loudnessMeter,
         child: SignalChainView(
@@ -415,6 +416,7 @@ void openQuickEditor(
           ? screen
           : RackEnvironment(
               taps: env.taps,
+              pcm: env.pcm,
               spectrum: env.spectrum,
               loudness: env.loudness,
               child: screen,

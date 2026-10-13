@@ -7,35 +7,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../audio/pcm_analysis.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
-
-/// The samples on one side of one stage: `player.stream.tap`.
-typedef TapSource =
-    Stream<PcmFrame> Function(AudioFilter filter, int instance, TapSide side);
-
-/// What the rack's meters read, handed down the tree so the rack can be
-/// built without a player in tests.
-class RackEnvironment extends InheritedWidget {
-  final TapSource taps;
-  final SpectrumSettings spectrum;
-
-  /// The live loudness meter: `player.stream.loudnessMeter`.
-  final Stream<Loudness> loudness;
-
-  const RackEnvironment({
-    super.key,
-    required this.taps,
-    required this.spectrum,
-    required this.loudness,
-    required super.child,
-  });
-
-  static RackEnvironment? maybeOf(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<RackEnvironment>();
-
-  @override
-  bool updateShouldNotify(RackEnvironment old) =>
-      old.taps != taps || old.spectrum != spectrum || old.loudness != loudness;
-}
+import '../rack_environment.dart';
 
 /// A stage's before and after view: the input spectrum as a faint line,
 /// the output spectrum filled over it, and the input and output levels
