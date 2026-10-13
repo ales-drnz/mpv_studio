@@ -1,3 +1,28 @@
+## [0.3.0] - unreleased
+
+### Added
+- A Signal chain rack on the Effects page: stages in play order that you can drag, switch on and off, duplicate, remove and add from the catalog or as raw lavfi.
+- Live editing in the rack, with before and after meters on the open stages and a readable message when mpv refuses a chain.
+- A global FX bypass to compare the chain on and off. It keeps the loudness meter on and saves your chain, not the muted copy.
+- A live loudness gauge and panel with momentary, short-term and integrated loudness, LRA, the track scan and the applied normalization gain.
+- An Engine section with playback state, demuxer cache, prefetch, waveform and loudness scan, audio output, effects chain and library builds.
+- A mini-player on every section but Playback, with cover, title, play and pause, next, a seekable progress bar and the FX bypass toggle.
+- Keyboard shortcuts on desktop: Space plays and pauses, Left and Right seek 5 seconds, M mutes, N and P skip.
+- Readable toasts for failed tracks and player calls, with an action that opens the Console log.
+- A badge with the count of new mpv errors on the Console entry.
+- Queue rows show title, artist, source, length and cover, and mark the tracks that failed to play.
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.5.0`.
+- The whole effects chain is saved in order, raw stages and duplicates included. Settings from version 0.2 are read and converted.
+- On mobile the tab bar keeps Play, Queue, Stream and FX, and Engine, Settings and Console move to a More menu.
+- The waveform draws its body from the RMS level with a lighter peak outline.
+- Plex transcoded streams open through the player's source resolver.
+- Building the app requires Flutter 3.38 and Dart 3.10.
+
+### Fixed
+- Player calls that fail, such as a seek with nothing loaded, show a message instead of failing silently.
+
 ## [0.2.18] - 24-09-2026
 
 ### Changed
