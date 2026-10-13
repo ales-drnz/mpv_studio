@@ -73,7 +73,8 @@ class PlaybackFake extends FakePlayer {
 }
 
 /// The streams of a [PlaybackFake]: the shared fake's, plus the ones the
-/// Playback page reads. The analysers (PCM, FFT) never emit.
+/// Playback page and its info sheet read. The analysers (PCM, FFT) never
+/// emit.
 class PlaybackFakeStream extends FakePlayerStream {
   PlaybackFakeStream(this._fake) : super(_fake);
 
@@ -109,6 +110,32 @@ class PlaybackFakeStream extends FakePlayerStream {
   @override
   Stream<Map<String, String>> get chapterMetadata =>
       _s((s) => s.chapterMetadata);
+  @override
+  Stream<AudioParams> get audioParams => _s((s) => s.audioParams);
+  @override
+  Stream<AudioParams> get audioOutParams => _s((s) => s.audioOutParams);
+  @override
+  Stream<String> get fileFormat => _s((s) => s.fileFormat);
+  @override
+  Stream<double?> get audioBitrate => _s((s) => s.audioBitrate);
+  @override
+  Stream<double> get volumeGain => _s((s) => s.volumeGain);
+  @override
+  Stream<String> get streamPath => _s((s) => s.streamPath);
+  @override
+  Stream<String> get path => _s((s) => s.path);
+  @override
+  Stream<String> get filename => _s((s) => s.filename);
+  @override
+  Stream<int> get fileSize => _s((s) => s.fileSize);
+  @override
+  Stream<Duration> get audioPts => _s((s) => s.audioPts);
+  @override
+  Stream<Duration> get timeRemaining => _s((s) => s.timeRemaining);
+  @override
+  Stream<bool> get partiallySeekable => _s((s) => s.partiallySeekable);
+  @override
+  Stream<bool> get eofReached => _s((s) => s.eofReached);
   @override
   Stream<void> get seekCompleted => const Stream.empty();
   @override
