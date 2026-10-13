@@ -95,7 +95,7 @@ _Shape _shapeFor(Size size) {
       size.width > size.height) {
     return _Shape.side;
   }
-  if (wide.atLeast(WidthClass.large)) return _Shape.split;
+  if (size.width >= Breakpoints.splitContent) return _Shape.split;
   // Phones, and tablets standing up: one column.
   if (wide == WidthClass.compact || size.height > size.width * 1.2) {
     return _Shape.column;
