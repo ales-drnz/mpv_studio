@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
+import '../../studio/studio_log.dart';
 import 'media_server.dart';
 
 /// App-level store of favourite (like) state for media-server tracks, shared
@@ -34,7 +36,10 @@ class FavoritesController extends ChangeNotifier {
       await _servers[kind]?.setFavorite(id, value);
       return true;
     } catch (e) {
-      debugPrint('FavoritesController: ${kind.name} refused $id: $e');
+      StudioLog.write(
+        'FavoritesController: ${kind.name} refused $id: $e',
+        level: LogLevel.warn,
+      );
       if (had) {
         _overrides[key] = before!;
       } else {

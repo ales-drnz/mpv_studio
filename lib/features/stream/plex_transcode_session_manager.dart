@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:dart_plex/dart_plex.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+
+import '../../studio/studio_log.dart';
 
 /// Owns the lifecycle of Plex audio transcode sessions.
 ///
@@ -113,11 +114,17 @@ class PlexTranscodeSessionManager {
     if (marker == null) return null;
     final pending = _pending[marker];
     if (pending == null) {
-      debugPrint('PlexTranscode: no pending session for $marker');
+      StudioLog.write(
+        'PlexTranscode: no pending session for $marker',
+        level: LogLevel.v,
+      );
       return null;
     }
     if (request.isRetry) {
-      debugPrint('PlexTranscode: open failed, renewing session for $marker');
+      StudioLog.write(
+        'PlexTranscode: open failed, renewing session for $marker',
+        level: LogLevel.v,
+      );
       pending.renew(_newSessionId());
     }
     _activeMarker = marker;
@@ -145,7 +152,10 @@ class PlexTranscodeSessionManager {
         pending.params['path'] as String,
         pending.fallbackUrl,
       );
-      debugPrint('PlexTranscode: direct play $session → $direct');
+      StudioLog.write(
+        'PlexTranscode: direct play $session → ${redactUri(direct)}',
+        level: LogLevel.v,
+      );
       return pending.resolved = direct;
     }
 
@@ -184,9 +194,10 @@ class PlexTranscodeSessionManager {
       // genuinely non-playable decision (an error code) falls through to
       // the direct part URL.
       if (!decision.isPlayable) {
-        debugPrint(
+        StudioLog.write(
           'PlexTranscode: decision=${decision.code} not playable '
           '→ direct play',
+          level: LogLevel.v,
         );
         final direct = await _directPlayUrl(
           params['path'] as String,
@@ -194,7 +205,10 @@ class PlexTranscodeSessionManager {
         );
         return pending.resolved = direct;
       }
-      debugPrint('PlexTranscode: decision=${decision.code} → transcode');
+      StudioLog.write(
+        'PlexTranscode: decision=${decision.code} → transcode',
+        level: LogLevel.v,
+      );
 
       // ffmpeg/lavf opens the manifest directly and does NOT inherit the
       // Dio request's X-Plex-* base headers, so we embed the full client
@@ -216,14 +230,18 @@ class PlexTranscodeSessionManager {
           '&X-Plex-Device-Name=${Uri.encodeQueryComponent(creds.deviceName)}'
           '&X-Plex-Product=${Uri.encodeQueryComponent(creds.product)}'
           '&X-Plex-Version=${Uri.encodeQueryComponent(creds.version)}';
-      debugPrint(
+      StudioLog.write(
         'PlexTranscode: resolved $session (decision=${decision.code})',
+        level: LogLevel.v,
       );
       return pending.resolved = manifestUrl;
     } catch (e) {
       // Network/auth failure: degrade to direct play and memoise so we
       // don't hammer /decision on every re-open.
-      debugPrint('PlexTranscode: resolve error for $session: $e → direct play');
+      StudioLog.write(
+        'PlexTranscode: resolve error for $session: $e → direct play',
+        level: LogLevel.warn,
+      );
       final direct = await _directPlayUrl(
         params['path'] as String,
         pending.fallbackUrl,
@@ -257,8 +275,9 @@ class PlexTranscodeSessionManager {
       return '${_client.baseUrl}$partKey?download=0'
           '&X-Plex-Token=${Uri.encodeQueryComponent(token)}';
     } catch (e) {
-      debugPrint(
+      StudioLog.write(
         'PlexTranscode: directPlayUrl fetch failed for $ratingKey: $e',
+        level: LogLevel.warn,
       );
       return lastResort;
     }

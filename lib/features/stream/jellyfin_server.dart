@@ -1,7 +1,8 @@
 import 'package:dart_jellyfin/dart_jellyfin.dart';
-import 'package:flutter/foundation.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../studio/studio_log.dart';
 import 'device_identity.dart';
 import 'media_server.dart';
 
@@ -294,7 +295,7 @@ class JellyfinServer extends MediaServer {
     try {
       await call(c);
     } catch (e) {
-      debugPrint('JellyfinServer: $what failed: $e');
+      StudioLog.write('JellyfinServer: $what failed: $e', level: LogLevel.warn);
     }
   }
 }

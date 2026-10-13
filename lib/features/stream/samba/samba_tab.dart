@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
+import '../../../studio/studio_log.dart';
 import '../../../ui/tokens.dart';
 import '../source_failure.dart';
 import '../stream_actions.dart';
@@ -76,7 +78,7 @@ class _SambaTabState extends State<SambaTab> {
       c.dispose();
     }
     _connection?.disconnect().catchError((Object e) {
-      debugPrint('Samba: disconnect failed: $e');
+      StudioLog.write('Samba: disconnect failed: $e', level: LogLevel.warn);
     });
     super.dispose();
   }
@@ -86,7 +88,10 @@ class _SambaTabState extends State<SambaTab> {
     try {
       saved = await widget.restore();
     } catch (e) {
-      debugPrint('Samba: saved login unreadable: $e');
+      StudioLog.write(
+        'Samba: saved login unreadable: $e',
+        level: LogLevel.warn,
+      );
     }
     if (!mounted) return;
     if (saved == null) {
@@ -127,7 +132,7 @@ class _SambaTabState extends State<SambaTab> {
         try {
           await login.save();
         } catch (e) {
-          debugPrint('Samba: login not saved: $e');
+          StudioLog.write('Samba: login not saved: $e', level: LogLevel.warn);
         }
       }
       if (!mounted) {
@@ -166,7 +171,7 @@ class _SambaTabState extends State<SambaTab> {
       await share?.disconnect();
       await SambaLogin.clear();
     } catch (e) {
-      debugPrint('Samba: disconnect failed: $e');
+      StudioLog.write('Samba: disconnect failed: $e', level: LogLevel.warn);
     }
   }
 

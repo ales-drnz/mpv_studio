@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
+import '../../../studio/studio_log.dart';
 import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
@@ -77,7 +79,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     try {
       await _server.logout();
     } catch (e) {
-      debugPrint('${_server.name}: sign out failed: $e');
+      StudioLog.write(
+        '${_server.name}: sign out failed: $e',
+        level: LogLevel.warn,
+      );
     }
     if (!mounted) return;
     setState(() {
