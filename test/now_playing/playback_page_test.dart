@@ -368,6 +368,33 @@ void main() {
     });
   });
 
+  testWidgets('transport buttons keep 48 dp on a 360 wide phone', (
+    tester,
+  ) async {
+    await pumpPlayback(tester, playingTrack(), size: studioSize('360x780'));
+    for (final tip in [
+      'Previous (long press to force)',
+      'Back 10 s',
+      'Forward 10 s',
+      'Next (long press to force)',
+      'Shuffle off',
+      'Stop',
+      'Repeat off',
+      'Undo last seek',
+      'Playback speed',
+      'Track and playback info',
+    ]) {
+      final size = tester.getSize(
+        find.descendant(
+          of: find.byTooltip(tip),
+          matching: find.byType(InkWell),
+        ),
+      );
+      expect(size.width, greaterThanOrEqualTo(48), reason: tip);
+      expect(size.height, greaterThanOrEqualTo(48), reason: tip);
+    }
+  });
+
   group('large text on a small phone', () {
     for (final empty in [false, true]) {
       testWidgets(empty ? 'empty' : 'playing', (tester) async {

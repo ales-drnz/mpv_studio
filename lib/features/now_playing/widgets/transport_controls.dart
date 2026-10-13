@@ -30,18 +30,41 @@ class TransportControls extends StatelessWidget {
     final player = scope.player;
     final guard = scope.guard;
     final notify = feedbackFor(context);
-    final gap = dense ? Tokens.s4 : Tokens.s12;
-    final modeGap = dense ? Tokens.s4 : Tokens.s12;
+    final maxGap = dense ? Tokens.s4 : Tokens.s12;
+    final minTap = context.layout.minTap;
+    final pad = dense ? Tokens.s4 : Tokens.s12;
+    final play = dense ? 52.0 : 60.0;
+    return LayoutBuilder(
+      builder: (context, c) {
+        // The gaps give way first, so the buttons keep their full tap
+        // size; the FittedBoxes only shrink a row that still does not fit.
+        double gapFor(double fixed, int gaps) => c.maxWidth.isFinite
+            ? ((c.maxWidth - fixed) / gaps).clamp(0.0, maxGap).toDouble()
+            : maxGap;
+        final gap = gapFor(4 * minTap + play + 2 * pad, 4);
+        final modeGap = gapFor(6 * minTap, 5);
+        return _rows(context, player, guard, notify, gap, modeGap, pad, play);
+      },
+    );
+  }
+
+  Widget _rows(
+    BuildContext context,
+    PlayerApi player,
+    CallGuard guard,
+    Notify notify,
+    double gap,
+    double modeGap,
+    double pad,
+    double play,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: dense ? Tokens.s4 : Tokens.s12,
-              vertical: Tokens.s4,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: pad, vertical: Tokens.s4),
             decoration: ShapeDecoration(
               color: Tokens.surface2,
               shape: Tokens.squircle(Tokens.rLg),
@@ -67,11 +90,7 @@ class TransportControls extends StatelessWidget {
                   onTap: () => guard(() => player.seek(-_skip, relative: true)),
                 ),
                 SizedBox(width: gap),
-                PlayPauseButton(
-                  player: player,
-                  guard: guard,
-                  size: dense ? 52 : 60,
-                ),
+                PlayPauseButton(player: player, guard: guard, size: play),
                 SizedBox(width: gap),
                 TransportButton(
                   icon: Icons.forward_10_rounded,
