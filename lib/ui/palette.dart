@@ -161,7 +161,7 @@ class Palette {
     surface: Color(0xFFFFFFFF), // white cards and rows
     surface2: Color(0xFFE0E2E9), // T90, chrome, sheets, dialogs
     surface3: Color(0xFFE5E8EF), // T92, fields, tonal circles
-    surface4: Color(0xFFC3C7CD), // T80, the ring grey of this hue: tracks
+    surface4: Color(0xFFB6B9BF), // T75, a ring grey step: tracks, 2:1 on white
     line: Color(0x14000000), // ~8% black, inside data views only
     line2: Color(0x29000000), // ~16% black
     fg: Color(0xFF24282D), // graphite, 12.8:1 on bg, 14.8:1 on cards
