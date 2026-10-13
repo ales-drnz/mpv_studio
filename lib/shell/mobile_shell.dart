@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../ui/tokens.dart';
+import 'section_badge.dart';
 import 'sections.dart';
 
 /// Mobile chrome: the section body with a bottom tab bar that stays **pinned**
@@ -156,7 +157,10 @@ class _Tab extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(section.icon, size: 22, color: color),
+                SectionBadge(
+                  section: section,
+                  child: Icon(section.icon, size: 22, color: color),
+                ),
                 const SizedBox(height: 3),
                 Text(
                   section.shortLabel,

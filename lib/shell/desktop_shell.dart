@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../ui/tokens.dart';
 import '../ui/widgets/resize_handle.dart';
+import 'section_badge.dart';
 import 'sections.dart';
 
 /// Desktop chrome: a resizable text sidebar on the left and the section
@@ -170,10 +171,13 @@ class _NavItem extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    section.icon,
-                    size: 18,
-                    color: active ? Tokens.onAccent : Tokens.fgDim,
+                  SectionBadge(
+                    section: section,
+                    child: Icon(
+                      section.icon,
+                      size: 18,
+                      color: active ? Tokens.onAccent : Tokens.fgDim,
+                    ),
                   ),
                   const SizedBox(width: Tokens.s12),
                   Text(
