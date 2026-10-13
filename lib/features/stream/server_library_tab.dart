@@ -235,7 +235,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
             'artist': t.artist,
             'album': t.album,
             if (t.artUrl != null) 'art': t.artUrl,
-            if (segment != null) 'segment': segment,
+            'segment': ?segment,
             // Lets the app-level PlaybackReporter report this track back to
             // the right server (Now Playing / progress / scrobble) and drive
             // the OS lock-screen "like" from the track's favourite state.

@@ -644,7 +644,7 @@ class _ScanIndicator extends StatelessWidget {
                           tween: Tween(end: f.clamp(0.0, 1.0)),
                           duration: const Duration(milliseconds: 240),
                           curve: Curves.easeOut,
-                          builder: (_, v, __) => LinearProgressIndicator(
+                          builder: (_, v, _) => LinearProgressIndicator(
                             value: v,
                             minHeight: 3,
                             color: Tokens.accent,

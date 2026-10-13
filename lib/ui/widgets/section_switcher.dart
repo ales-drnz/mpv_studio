@@ -60,7 +60,7 @@ class SectionSwitcher extends StatelessWidget {
         alignment: Alignment.topLeft,
         children: [
           for (final c in previousChildren) Positioned.fill(child: c),
-          if (currentChild != null) currentChild,
+          ?currentChild,
         ],
       ),
       child: child,
