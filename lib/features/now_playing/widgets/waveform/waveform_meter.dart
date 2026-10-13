@@ -295,6 +295,25 @@ class _WaveformMeterState extends State<WaveformMeter>
     }
 
     const step = WaveformMeter.semanticStep;
+    final zoom = WaveformZoomControls(
+      canZoomIn: _view.canZoomIn,
+      canZoomOut: _view.canZoomOut,
+      onZoomIn: () => _zoom(WaveformViewport.zoomStep),
+      onZoomOut: () => _zoom(1 / WaveformViewport.zoomStep),
+    );
+    // On touch the scrollbar is a full touch target tall, and the zoom
+    // pill sits beside it instead of over the waveform (a third of a
+    // phone's meter).
+    final scrollBar = WaveformScrollBar(
+      height: touch ? context.layout.minTap : 16,
+      thickness: touch ? 12 : 8,
+      enabled: _view.canScroll,
+      viewStart: _view.leftRel,
+      visibleSecs: _view.visibleSecs,
+      maxStart: _view.maxStart,
+      timelineSecs: _view.timelineSecs,
+      onChanged: (v) => setState(() => _view = _view.scrollTo(v)),
+    );
     return Semantics(
       container: true,
       slider: true,
@@ -314,16 +333,12 @@ class _WaveformMeterState extends State<WaveformMeter>
             child: Stack(
               children: [
                 Positioned.fill(child: _envelope(context, touch)),
-                Positioned(
-                  top: WaveformMeter.rulerHeight + Tokens.s8,
-                  right: Tokens.s8,
-                  child: WaveformZoomControls(
-                    canZoomIn: _view.canZoomIn,
-                    canZoomOut: _view.canZoomOut,
-                    onZoomIn: () => _zoom(WaveformViewport.zoomStep),
-                    onZoomOut: () => _zoom(1 / WaveformViewport.zoomStep),
+                if (!touch)
+                  Positioned(
+                    top: WaveformMeter.rulerHeight + Tokens.s8,
+                    right: Tokens.s8,
+                    child: zoom,
                   ),
-                ),
                 Positioned(
                   top: WaveformMeter.rulerHeight + Tokens.s8,
                   left: Tokens.s8,
@@ -335,15 +350,16 @@ class _WaveformMeterState extends State<WaveformMeter>
               ],
             ),
           ),
-          WaveformScrollBar(
-            height: touch ? 20 : 16,
-            enabled: _view.canScroll,
-            viewStart: _view.leftRel,
-            visibleSecs: _view.visibleSecs,
-            maxStart: _view.maxStart,
-            timelineSecs: _view.timelineSecs,
-            onChanged: (v) => setState(() => _view = _view.scrollTo(v)),
-          ),
+          if (touch)
+            Row(
+              children: [
+                Expanded(child: scrollBar),
+                const SizedBox(width: Tokens.s8),
+                zoom,
+              ],
+            )
+          else
+            scrollBar,
         ],
       ),
     );

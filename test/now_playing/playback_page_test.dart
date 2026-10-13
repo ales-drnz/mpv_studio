@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/now_playing/widgets/waveform/waveform_controls.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/now_playing/now_playing_page.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
@@ -492,5 +493,35 @@ void main() {
     setStudioView(tester, const Size(780, 360));
     await tester.pumpAndSettle();
     expect(canZoomOut(), isTrue, reason: 'the zoom survived the new layout');
+  });
+
+  group('waveform targets', () {
+    testWidgets('on touch the scrollbar is a full target and the zoom pill '
+        'sits beside it', (tester) async {
+      await _pumpPage(
+        tester,
+        playingTrack(),
+        size: const Size(360, 780),
+        input: InputMode.touch,
+      );
+      final bar = find.byType(WaveformScrollBar);
+      expect(tester.getSize(bar).height, greaterThanOrEqualTo(48));
+      final zoom = tester.getRect(find.byType(WaveformZoomControls));
+      final strip = tester.getRect(bar);
+      // In the scrollbar's row, not over the waveform.
+      expect(zoom.center.dy, closeTo(strip.center.dy, 1));
+      expect(zoom.left, greaterThanOrEqualTo(strip.right));
+      expectNoOverflow(tester);
+    });
+
+    testWidgets('with a pointer the zoom pill floats over the waveform', (
+      tester,
+    ) async {
+      await _pumpPage(tester, playingTrack());
+      final bar = tester.getRect(find.byType(WaveformScrollBar));
+      final zoom = tester.getRect(find.byType(WaveformZoomControls));
+      expect(zoom.bottom, lessThan(bar.top));
+      expect(bar.height, 16);
+    });
   });
 }

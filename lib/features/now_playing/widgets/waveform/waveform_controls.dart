@@ -129,7 +129,8 @@ class WaveformScanIndicator extends StatelessWidget {
   }
 }
 
-/// The horizontal scrollbar under the meter: a strip whose pill thumb is
+/// The horizontal scrollbar under the meter: a strip [height] tall (the
+/// hit area) whose pill thumb, [thickness] thick and centred in it, is
 /// the visible part of the timeline. Tap or drag to move the view; the
 /// thumb lights up in the accent on hover.
 class WaveformScrollBar extends StatefulWidget {
@@ -142,6 +143,7 @@ class WaveformScrollBar extends StatefulWidget {
     required this.timelineSecs,
     required this.onChanged,
     required this.height,
+    this.thickness = 8,
   });
 
   final bool enabled;
@@ -151,6 +153,9 @@ class WaveformScrollBar extends StatefulWidget {
   final double timelineSecs;
   final ValueChanged<double> onChanged;
   final double height;
+
+  /// The thumb's thickness, at most [height].
+  final double thickness;
 
   @override
   State<WaveformScrollBar> createState() => _WaveformScrollBarState();
@@ -195,7 +200,9 @@ class _WaveformScrollBarState extends State<WaveformScrollBar> {
             onTapDown: (d) => setFromX(d.localPosition.dx),
             onHorizontalDragUpdate: (d) => setFromX(d.localPosition.dx),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
+              padding: EdgeInsets.symmetric(
+                vertical: math.max(0, widget.height - widget.thickness) / 2,
+              ),
               child: Stack(
                 children: [
                   Positioned(
