@@ -205,10 +205,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final meter = DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.shape(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rMd)),
+        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rLg)),
         child: WaveformMeter(key: _waveformKey),
       ),
     );

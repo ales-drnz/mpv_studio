@@ -6,9 +6,10 @@ import '../../../../ui/tokens.dart';
 // the chapter starts. Each takes pixel positions already mapped by the
 // meter's viewport and the palette to draw with.
 
-/// The A-B loop: the span between [xa] and [xb] shaded once both are set,
-/// and each point as a full-height line with a labelled flag hanging from
-/// the ruler. A null or off-screen point is not drawn.
+/// The A-B loop: the span between [xa] and [xb] washed once both are set,
+/// and each point as a full-height line in the text tone with a labelled
+/// pill flag hanging from the ruler. A null or off-screen point is not
+/// drawn.
 void paintAbLoop(
   Canvas canvas,
   Size size, {
@@ -19,14 +20,14 @@ void paintAbLoop(
 }) {
   final w = size.width;
   final h = size.height;
-  final loop = palette.amber;
+  final loop = palette.fg;
   if (xa != null && xb != null && xb > xa) {
     final l = xa.clamp(0.0, w);
     final r = xb.clamp(0.0, w);
     if (r > l) {
       canvas.drawRect(
         Rect.fromLTRB(l, top, r, h),
-        Paint()..color = loop.withValues(alpha: 0.14),
+        Paint()..color = palette.accentWash,
       );
     }
   }
@@ -45,11 +46,11 @@ void paintAbLoop(
           fontFamily: Tokens.mono,
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: palette.isDark ? palette.onAccent : palette.surface,
+          color: palette.onAccent,
         ),
       ),
     )..layout();
-    final boxW = tp.width + 8;
+    final boxW = tp.width + 10;
     final boxH = tp.height + 4;
     // A flag to the right of its line, or to the left at the right edge;
     // B flags the other way first, so A and B close together stay apart.
@@ -59,11 +60,11 @@ void paintAbLoop(
     if (bx < 0) bx = x + 1;
     final box = Rect.fromLTWH(bx, top + 1, boxW, boxH);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(box, const Radius.circular(3)),
+      RRect.fromRectAndRadius(box, Radius.circular(boxH / 2)),
       Paint()..color = loop,
     );
     tp
-      ..paint(canvas, Offset(bx + 4, top + 3))
+      ..paint(canvas, Offset(bx + 5, top + 3))
       ..dispose();
   }
 

@@ -36,8 +36,9 @@ import 'waveform_viewport.dart';
 }
 
 /// Paints the waveform meter: the time ruler, the envelope (played part in
-/// the accent), the chapter and A-B loop marks, the hover cursor and the
-/// playhead, all in [palette].
+/// the accent, the rest in the secondary tone, each a solid RMS body in a
+/// lighter step of its peaks), the chapter and A-B loop marks, the hover
+/// cursor and the playhead, all in [palette].
 class WaveformPainter extends CustomPainter {
   WaveformPainter({
     required this.view,
@@ -153,14 +154,7 @@ class WaveformPainter extends CustomPainter {
   ) {
     canvas.drawRect(
       Rect.fromLTWH(0, 0, w, rulerHeight),
-      Paint()..color = palette.surface2,
-    );
-    canvas.drawLine(
-      Offset(0, rulerHeight - 0.5),
-      Offset(w, rulerHeight - 0.5),
-      Paint()
-        ..color = palette.line
-        ..strokeWidth = 1,
+      Paint()..color = palette.surface3,
     );
     final start = view.originSecs;
     final end = start + view.timelineSecs;
@@ -180,11 +174,12 @@ class WaveformPainter extends CustomPainter {
         formatDuration(Duration(microseconds: (t * 1e6).round())),
         palette.fgDim,
       );
+      // Clear of the card's rounded corners at both ends.
       var dx = x - tp.width / 2;
-      if (dx + tp.width > w - 1) dx = w - 1 - tp.width;
-      if (dx < 1) dx = 1;
+      if (dx + tp.width > w - Tokens.s16) dx = w - Tokens.s16 - tp.width;
+      if (dx < Tokens.s16) dx = Tokens.s16;
       tp
-        ..paint(canvas, Offset(dx, 2))
+        ..paint(canvas, Offset(dx, 5))
         ..dispose();
     }
   }
@@ -201,15 +196,20 @@ class WaveformPainter extends CustomPainter {
     final wv = view.wave;
     if (wv == null || wv.bins == 0 || wv.duration <= Duration.zero) return;
     final played = Paint()..color = palette.accent;
-    final upcoming = Paint()..color = palette.fgFaint.withValues(alpha: 0.55);
+    // The ring grey sits close to white: in dark it steps down a little
+    // further so the played part stands apart (still 4:1 on the card);
+    // light's secondary step is already the 3:1 minimum on white.
+    final upcoming = Paint()
+      ..color = palette.accentDim.withValues(alpha: palette.isDark ? 0.7 : 1);
     // Bins not yet covered (a progressive envelope ahead of the playhead,
     // or a region a seek skipped) are a faint baseline, not a flat spike.
     final unloaded = Paint()..color = palette.line;
     // With RMS the RMS is the solid body and the min and max peaks a
     // lighter outline around it, which keeps loud, limited masters
     // readable. Without it the peaks are the body.
-    final playedPeak = Paint()..color = palette.accent.withValues(alpha: 0.35);
-    final upcomingPeak = Paint()..color = palette.fg.withValues(alpha: 0.08);
+    final playedPeak = Paint()..color = palette.accent.withValues(alpha: 0.45);
+    final upcomingPeak = Paint()
+      ..color = palette.accentDim.withValues(alpha: 0.35);
     final posSecs = position.inMicroseconds / 1e6;
     final rms = wv.rms;
     // Bin i sits at absolute media time `start + i * binSecs`: 0 based for a
@@ -270,20 +270,17 @@ class WaveformPainter extends CustomPainter {
       formatDuration(Duration(microseconds: (t * 1e6).round())),
       palette.fg,
     );
+    // A pill beside the cursor, flipped to its left at the right edge.
+    final bw = tp.width + 12;
     var bx = hx + 4;
-    if (bx + tp.width + 6 > w) bx = hx - 4 - tp.width - 6;
-    final bubble = Rect.fromLTWH(
-      bx,
-      rulerHeight + 3,
-      tp.width + 6,
-      tp.height + 3,
-    );
+    if (bx + bw > w) bx = hx - 4 - bw;
+    final bubble = Rect.fromLTWH(bx, rulerHeight + 4, bw, tp.height + 4);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(bubble, const Radius.circular(3)),
+      RRect.fromRectAndRadius(bubble, Radius.circular(bubble.height / 2)),
       Paint()..color = palette.surface3,
     );
     tp
-      ..paint(canvas, Offset(bx + 3, rulerHeight + 4))
+      ..paint(canvas, Offset(bx + 6, rulerHeight + 6))
       ..dispose();
   }
 

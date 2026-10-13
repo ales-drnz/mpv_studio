@@ -2,11 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../ui/layout/layout.dart';
 import '../../../../ui/tokens.dart';
+import '../../../../ui/widgets/round_icon_button.dart';
 
-/// The zoom pill (out and in) over the waveform meter. Its buttons are a
-/// full tap target on touch.
+/// The zoom pill (out and in) over the waveform meter: two bare round
+/// buttons on a field-tone pill, each a full tap target on touch.
 class WaveformZoomControls extends StatelessWidget {
   const WaveformZoomControls({
     super.key,
@@ -24,62 +24,23 @@ class WaveformZoomControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.shape(Tokens.rMd),
-      ),
+      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ZoomButton(
+          RoundIconButton(
             icon: Icons.zoom_out_rounded,
+            size: 20,
             tooltip: 'Zoom out',
             onTap: canZoomOut ? onZoomOut : null,
           ),
-          _ZoomButton(
+          RoundIconButton(
             icon: Icons.zoom_in_rounded,
+            size: 20,
             tooltip: 'Zoom in',
             onTap: canZoomIn ? onZoomIn : null,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ZoomButton extends StatelessWidget {
-  const _ZoomButton({required this.icon, required this.tooltip, this.onTap});
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final side = context.layout.isTouch ? context.layout.minTap : 28.0;
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        enabled: onTap != null,
-        label: tooltip,
-        excludeSemantics: true,
-        onTap: onTap,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const CircleBorder(),
-            child: SizedBox.square(
-              dimension: side,
-              child: Icon(
-                icon,
-                size: 18,
-                color: onTap != null ? Tokens.fgDim : Tokens.fgFaint,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -104,9 +65,9 @@ class WaveformScanIndicator extends StatelessWidget {
     final f = visible ? fraction : 0.0;
     final bar = f == null
         ? LinearProgressIndicator(
-            minHeight: 3,
+            minHeight: 4,
             color: Tokens.accent,
-            backgroundColor: Tokens.line2,
+            backgroundColor: Tokens.surface4,
           )
         : TweenAnimationBuilder<double>(
             tween: Tween(end: f.clamp(0.0, 1.0)),
@@ -114,9 +75,9 @@ class WaveformScanIndicator extends StatelessWidget {
             curve: Curves.easeOut,
             builder: (_, v, _) => LinearProgressIndicator(
               value: v,
-              minHeight: 3,
+              minHeight: 4,
               color: Tokens.accent,
-              backgroundColor: Tokens.line2,
+              backgroundColor: Tokens.surface4,
             ),
           );
     return IgnorePointer(
@@ -127,12 +88,12 @@ class WaveformScanIndicator extends StatelessWidget {
         curve: Curves.easeOut,
         child: Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: Tokens.s8,
+            horizontal: Tokens.s12,
             vertical: Tokens.s4,
           ),
           decoration: ShapeDecoration(
-            color: Tokens.surface2,
-            shape: Tokens.shape(Tokens.rSm),
+            color: Tokens.surface3,
+            shape: Tokens.pill,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -141,8 +102,8 @@ class WaveformScanIndicator extends StatelessWidget {
               const SizedBox(width: Tokens.s8),
               SizedBox(
                 width: 60,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
+                child: ClipPath(
+                  clipper: const ShapeBorderClipper(shape: StadiumBorder()),
                   child: visible ? bar : null,
                 ),
               ),
@@ -168,7 +129,7 @@ class WaveformScanIndicator extends StatelessWidget {
   }
 }
 
-/// The horizontal scrollbar under the meter: a flat strip whose thumb is
+/// The horizontal scrollbar under the meter: a strip whose pill thumb is
 /// the visible part of the timeline. Tap or drag to move the view; the
 /// thumb lights up in the accent on hover.
 class WaveformScrollBar extends StatefulWidget {
@@ -224,20 +185,17 @@ class _WaveformScrollBarState extends State<WaveformScrollBar> {
           }
 
           final thumbColour = !widget.enabled
-              ? Tokens.surface2
+              ? Tokens.surface3
               : _hoverThumb
               ? Tokens.accent
-              : Tokens.surface3;
+              : Tokens.surface4;
 
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: (d) => setFromX(d.localPosition.dx),
             onHorizontalDragUpdate: (d) => setFromX(d.localPosition.dx),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Tokens.surface2,
-                border: Border(top: BorderSide(color: Tokens.line)),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
               child: Stack(
                 children: [
                   Positioned(
@@ -253,7 +211,12 @@ class _WaveformScrollBarState extends State<WaveformScrollBar> {
                           ? (_) => setState(() => _hoverThumb = true)
                           : null,
                       onExit: (_) => setState(() => _hoverThumb = false),
-                      child: ColoredBox(color: thumbColour),
+                      child: DecoratedBox(
+                        decoration: ShapeDecoration(
+                          color: thumbColour,
+                          shape: Tokens.pill,
+                        ),
+                      ),
                     ),
                   ),
                 ],
