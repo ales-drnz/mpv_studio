@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
+import '../../ui/layout/window_class.dart';
 import '../../ui/tokens.dart';
 import '../../util/duration_format.dart';
 import '../../util/media_import.dart';
@@ -225,10 +226,11 @@ class _Toolbar extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Four labelled pills don't fit a phone. Below the desktop
-          // breakpoint, keep every action but collapse them to icon-only
-          // buttons (labels move into tooltips) so nothing overflows.
-          if (constraints.maxWidth < Tokens.desktopBreakpoint) {
+          // Four labelled pills don't fit a narrow area. Below the
+          // expanded breakpoint, keep every action but collapse them to
+          // icon-only buttons (labels move into tooltips) so nothing
+          // overflows.
+          if (constraints.maxWidth < Breakpoints.expanded) {
             return Row(
               children: [
                 ToolButton(

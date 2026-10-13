@@ -2,11 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
 import 'section_badge.dart';
 import 'sections.dart';
+import 'shell_tools.dart';
 
-/// Mobile chrome: the section body with a bottom tab bar that stays **pinned**
+/// The bottom bar chrome (compact windows): the section body with a bottom tab bar that stays **pinned**
 /// to the screen edge. The soft keyboard overlays the bar instead of pushing it
 /// up — only the body content lifts above the keyboard, so a focused text field
 /// (e.g. the Console input) stays visible. The root [Scaffold] sets
@@ -72,9 +74,13 @@ class _MobileShellState extends State<MobileShell> {
           Positioned.fill(
             child: Padding(
               padding: EdgeInsets.only(bottom: bottomReserve),
-              child: Material(
-                type: MaterialType.transparency,
-                child: widget.body,
+              child: MediaQuery.removeViewInsets(
+                context: context,
+                removeBottom: true,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: widget.body,
+                ),
               ),
             ),
           ),
@@ -106,12 +112,8 @@ class _TabBar extends StatelessWidget {
   const _TabBar({required this.section, required this.onSelect});
 
   Future<void> _openMore(BuildContext context) async {
-    final picked = await showModalBottomSheet<Section>(
-      context: context,
-      backgroundColor: Tokens.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Tokens.rLg)),
-      ),
+    final picked = await showStudioSheet<Section>(
+      context,
       builder: (context) => _MoreSheet(current: section),
     );
     if (picked != null) onSelect(picked);
@@ -240,38 +242,22 @@ class _MoreSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Tokens.s12,
-          Tokens.s12,
-          Tokens.s12,
-          Tokens.s8,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: Tokens.s12),
-                decoration: BoxDecoration(
-                  color: Tokens.line2,
-                  borderRadius: BorderRadius.all(Radius.circular(2)),
-                ),
-              ),
-            ),
-            for (final s in Section.more)
-              _MoreItem(
-                section: s,
-                active: s == current,
-                onTap: () => Navigator.of(context).pop(s),
-              ),
-          ],
-        ),
-      ),
+    final tools = shellTools(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final s in Section.more)
+          _MoreItem(
+            section: s,
+            active: s == current,
+            onTap: () => Navigator.of(context).pop(s),
+          ),
+        if (tools.isNotEmpty) ...[
+          Divider(height: Tokens.s16, color: Tokens.line),
+          ...tools,
+        ],
+      ],
     );
   }
 }
@@ -306,7 +292,7 @@ class _MoreItem extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(
                 horizontal: Tokens.s16,
-                vertical: Tokens.s12,
+                vertical: 14,
               ),
               child: Row(
                 children: [

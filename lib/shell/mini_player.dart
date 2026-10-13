@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/effects/rack_controller.dart';
 import '../studio/playback_issues.dart';
+import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
 import '../util/duration_format.dart';
 import '../util/reactive.dart';
@@ -12,14 +13,17 @@ import '../util/reactive.dart';
 /// seekable progress bar, a loading and buffering indicator from
 /// `playbackState`, and the FX bypass toggle of the effects [rack].
 ///
-/// [compact] trims it for the mobile shell, where it sits above the tab
-/// bar. [onOpen] (tapping the cover or the title) goes to Playback. The
-/// player calls run through [guard].
+/// [variant] fits it to the shell: a full [MiniPlayerVariant.bar] under
+/// the sidebar or the rail, a trimmed [MiniPlayerVariant.compact] bar above
+/// the phone tab bar, or a vertical [MiniPlayerVariant.rail] stack at the
+/// foot of the navigation rail on low windows. [onOpen] (tapping the cover
+/// or the title) goes to Playback. The player calls run through [guard].
+/// The shell owns the safe-area insets around it.
 class MiniPlayer extends StatelessWidget {
   final PlayerApi player;
   final RackController? rack;
   final VoidCallback? onOpen;
-  final bool compact;
+  final MiniPlayerVariant variant;
   final CallGuard guard;
 
   const MiniPlayer({
@@ -27,12 +31,16 @@ class MiniPlayer extends StatelessWidget {
     required this.player,
     this.rack,
     this.onOpen,
-    this.compact = false,
+    this.variant = MiniPlayerVariant.bar,
     this.guard = unguarded,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (variant == MiniPlayerVariant.rail) {
+      return _RailMini(player: player, guard: guard);
+    }
+    final compact = variant == MiniPlayerVariant.compact;
     final cover = compact ? 40.0 : 44.0;
     return Material(
       color: Tokens.surface,
@@ -91,6 +99,56 @@ class MiniPlayer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The shapes of the [MiniPlayer].
+enum MiniPlayerVariant {
+  /// A full-width bar: cover, title, FX toggle, play and next.
+  bar,
+
+  /// The bar trimmed for a phone: smaller cover, icon-only FX toggle.
+  compact,
+
+  /// A narrow vertical stack for the navigation rail: play and pause ringed
+  /// by the progress, and next.
+  rail,
+}
+
+/// The rail mini-player: play and pause inside a ring that shows the
+/// progress (or spins while loading), then next.
+class _RailMini extends StatelessWidget {
+  final PlayerApi player;
+  final CallGuard guard;
+  const _RailMini({required this.player, required this.guard});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Live<Duration>(
+          stream: player.stream.duration,
+          initial: player.state.duration,
+          builder: (context, duration) => Live<Duration>(
+            stream: player.stream.position,
+            initial: player.state.position,
+            builder: (context, position) {
+              final total = duration.inMilliseconds;
+              final f = total <= 0
+                  ? 0.0
+                  : (position.inMilliseconds / total).clamp(0.0, 1.0);
+              return _PlayPause(player: player, guard: guard, progress: f);
+            },
+          ),
+        ),
+        _MiniGlyph(
+          icon: Icons.skip_next_rounded,
+          tooltip: 'Next',
+          onTap: () => guard(player.next),
+        ),
+      ],
     );
   }
 }
@@ -328,7 +386,10 @@ class _MiniTitle extends StatelessWidget {
 class _PlayPause extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
-  const _PlayPause({required this.player, required this.guard});
+
+  /// When set, a ring around the button shows this much progress.
+  final double? progress;
+  const _PlayPause({required this.player, required this.guard, this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -348,6 +409,7 @@ class _PlayPause extends StatelessWidget {
             _ => null,
           };
           final action = wants ? 'Pause' : 'Play';
+          final dimension = context.layout.isTouch ? 48.0 : 44.0;
           return Semantics(
             button: true,
             label: action,
@@ -356,27 +418,37 @@ class _PlayPause extends StatelessWidget {
             onTap: () => guard(wants ? player.pause : player.play),
             child: Tooltip(
               message: stateLabel == null ? action : '$action ($stateLabel)',
-              child: SizedBox.square(
-                dimension: 44,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (waiting)
-                      SizedBox.square(
-                        key: ValueKey('mini-waiting'),
-                        dimension: 42,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Tokens.accent,
-                          backgroundColor: Tokens.line,
-                        ),
-                      ),
-                    Material(
-                      type: MaterialType.transparency,
-                      child: InkWell(
-                        onTap: () => guard(wants ? player.pause : player.play),
-                        customBorder: const CircleBorder(),
-                        child: Container(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: () => guard(wants ? player.pause : player.play),
+                  customBorder: const CircleBorder(),
+                  child: SizedBox.square(
+                    dimension: dimension,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (waiting)
+                          SizedBox.square(
+                            key: const ValueKey('mini-waiting'),
+                            dimension: dimension - 2,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Tokens.accent,
+                              backgroundColor: Tokens.line,
+                            ),
+                          )
+                        else if (progress != null)
+                          SizedBox.square(
+                            dimension: dimension - 2,
+                            child: CircularProgressIndicator(
+                              value: progress,
+                              strokeWidth: 2,
+                              color: Tokens.accent,
+                              backgroundColor: Tokens.line2,
+                            ),
+                          ),
+                        Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
@@ -391,9 +463,9 @@ class _PlayPause extends StatelessWidget {
                             color: Tokens.onAccent,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -428,9 +500,15 @@ class _MiniGlyph extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             customBorder: const CircleBorder(),
-            child: Padding(
-              padding: const EdgeInsets.all(Tokens.s8),
-              child: Icon(icon, size: 24, color: Tokens.fg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: context.layout.minTap,
+                minHeight: context.layout.minTap,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Tokens.s8),
+                child: Icon(icon, size: 24, color: Tokens.fg),
+              ),
             ),
           ),
         ),
@@ -479,42 +557,55 @@ class FxBypassToggle extends StatelessWidget {
               child: InkWell(
                 onTap: enabled ? _toggle : null,
                 customBorder: Tokens.squircle(Tokens.rSm),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: compact ? Tokens.s6 : Tokens.s8,
-                    vertical: Tokens.s6,
+                // The pill stays small; the tap area grows to a full target.
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: context.layout.minTap,
+                    minHeight: context.layout.minTap,
                   ),
-                  decoration: ShapeDecoration(
-                    color: on
-                        ? Tokens.amber.withValues(alpha: 0.16)
-                        : Colors.transparent,
-                    shape: Tokens.squircle(
-                      Tokens.rSm,
-                      side: BorderSide(
-                        color: on ? Colors.transparent : Tokens.line2,
+                  child: Center(
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? Tokens.s6 : Tokens.s8,
+                        vertical: Tokens.s6,
                       ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        on ? Icons.layers_clear_rounded : Icons.layers_rounded,
-                        size: 16,
-                        color: color,
-                      ),
-                      if (!compact) ...[
-                        const SizedBox(width: Tokens.s6),
-                        Text(
-                          on ? 'Dry' : 'FX',
-                          style: Tokens.label.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w600,
+                      decoration: ShapeDecoration(
+                        color: on
+                            ? Tokens.amber.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                        shape: Tokens.squircle(
+                          Tokens.rSm,
+                          side: BorderSide(
+                            color: on ? Colors.transparent : Tokens.line2,
                           ),
                         ),
-                      ],
-                    ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            on
+                                ? Icons.layers_clear_rounded
+                                : Icons.layers_rounded,
+                            size: 16,
+                            color: color,
+                          ),
+                          if (!compact) ...[
+                            const SizedBox(width: Tokens.s6),
+                            Text(
+                              on ? 'Dry' : 'FX',
+                              style: Tokens.label.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

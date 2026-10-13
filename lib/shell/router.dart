@@ -11,26 +11,28 @@ import '../features/stream/stream_page.dart';
 import 'app_shell.dart';
 import 'sections.dart';
 
-/// One navigator key per section branch. They let the shell pop a branch's
-/// own pushed detail (e.g. a settings category opened with `Navigator.push`)
-/// when its tab/sidebar icon is tapped again — "tap the active icon to go
-/// back". Top-level and stable so the keys survive rebuilds.
-final List<GlobalKey<NavigatorState>> branchNavigatorKeys = [
-  for (final _ in Section.values) GlobalKey<NavigatorState>(),
-];
-
-/// Builds the app router. One [StatefulShellBranch] per [Section]; every
-/// branch stays mounted inside a keep-alive [IndexedStack], so player
-/// subscriptions and the Now Playing visualizers survive section switches.
-/// Switching sections from the sidebar is deliberately instant (no
-/// transition) — the shared fade+slide is for in-page navigation only.
-GoRouter createAppRouter() {
+/// Builds the app router. One [StatefulShellBranch] per [Section], each
+/// with its own navigator (the shell reaches it to pop a pushed detail);
+/// every branch stays mounted inside a keep-alive [IndexedStack], so
+/// player subscriptions and the Now Playing visualizers survive section
+/// switches. Switching sections is deliberately instant (no transition):
+/// the shared fade and slide is for in-page navigation only.
+///
+/// [shell] and [page] default to the real [AppShell] and pages; tests
+/// swap in a player-free shell and placeholder pages.
+GoRouter createAppRouter({
+  Widget Function(StatefulNavigationShell navigationShell)? shell,
+  Widget Function(Section section)? page,
+}) {
+  final buildShell =
+      shell ?? (navigationShell) => AppShell(navigationShell: navigationShell);
+  final buildPage = page ?? _pageFor;
   return GoRouter(
     initialLocation: Section.nowPlaying.path,
     routes: [
       StatefulShellRoute(
         builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+            buildShell(navigationShell),
         navigatorContainerBuilder: (context, navigationShell, children) =>
             IndexedStack(
               index: navigationShell.currentIndex,
@@ -40,11 +42,11 @@ GoRouter createAppRouter() {
         branches: [
           for (final section in Section.values)
             StatefulShellBranch(
-              navigatorKey: branchNavigatorKeys[section.index],
+              navigatorKey: GlobalKey<NavigatorState>(debugLabel: section.name),
               routes: [
                 GoRoute(
                   path: section.path,
-                  builder: (context, state) => _pageFor(section),
+                  builder: (context, state) => buildPage(section),
                 ),
               ],
             ),

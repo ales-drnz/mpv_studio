@@ -103,9 +103,4 @@ class Tokens {
     color: fgDim,
     fontFeatures: const [FontFeature.tabularFigures()],
   );
-
-  // ---- Breakpoint -------------------------------------------------
-  /// Below this width the app uses the mobile shell (tab bar + sheets);
-  /// at or above it uses the desktop shell (sidebar + dock).
-  static const double desktopBreakpoint = 720;
 }
