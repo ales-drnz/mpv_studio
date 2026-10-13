@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
@@ -7,7 +9,7 @@ import '../../../audio/pcm_analysis.dart';
 import '../../../studio/player_scope.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
-import '../../../util/reactive.dart';
+import 'stage_meters.dart';
 
 /// The compressor's transfer curve — the universal dB-in / dB-out knee
 /// diagram. The accent curve bends away from the faint unity (y = x)
@@ -26,6 +28,13 @@ class CompressorCurve extends StatefulWidget {
   final double makeup; // linear amplitude
   final bool enabled;
 
+  /// Which compressor of the chain the live dot follows (0 for the first).
+  final int instance;
+
+  /// Whether to tap the stage at all: the rack turns it off for a stage
+  /// that is switched off or over the tap budget.
+  final bool live;
+
   const CompressorCurve({
     super.key,
     required this.threshold,
@@ -33,6 +42,8 @@ class CompressorCurve extends StatefulWidget {
     required this.knee,
     required this.makeup,
     required this.enabled,
+    this.instance = 0,
+    this.live = true,
   });
 
   @override
@@ -42,31 +53,63 @@ class CompressorCurve extends StatefulWidget {
 const double _dbFloor = -60;
 const double _dbCeil = 0;
 
-class _CompressorCurveState extends State<CompressorCurve>
-    with StreamListenerState<CompressorCurve> {
+class _CompressorCurveState extends State<CompressorCurve> {
   final _inDb = ValueNotifier<double>(_dbFloor);
   final _grDb = ValueNotifier<double>(0);
   double _inRms = _dbFloor;
   double _outRms = _dbFloor;
   double _inPeak = _dbFloor;
+  final List<StreamSubscription<PcmFrame>> _subs = [];
+  TapSource? _taps;
 
   @override
-  void onSubscribe() {
-    final player = PlayerScope.of(context);
-    listen(player.stream.tap(AudioFilter.acompressor, side: TapSide.pre),
-        (pcm) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The rack's tap source when inside it, the player's otherwise.
+    final env = RackEnvironment.maybeOf(context);
+    final TapSource taps = env?.taps ??
+        (() {
+          final player = PlayerScope.of(context);
+          return (AudioFilter f, int instance, TapSide side) =>
+              player.stream.tap(f, instance: instance, side: side);
+        })();
+    if (_taps == null || env != null && env.taps != _taps) {
+      _taps = taps;
+      _subscribe();
+    }
+  }
+
+  @override
+  void didUpdateWidget(CompressorCurve old) {
+    super.didUpdateWidget(old);
+    if (old.instance != widget.instance || old.live != widget.live) {
+      _subscribe();
+    }
+  }
+
+  void _subscribe() {
+    for (final s in _subs) {
+      s.cancel();
+    }
+    _subs.clear();
+    _inDb.value = _dbFloor;
+    _grDb.value = 0;
+    final taps = _taps;
+    if (!widget.live || taps == null) return;
+    _subs.add(taps(AudioFilter.acompressor, widget.instance, TapSide.pre)
+        .listen((pcm) {
       if (!mounted) return;
       _inPeak = _smoothPeak(pcm, _inPeak);
       _inRms = _smoothRms(pcm, _inRms);
       _inDb.value = _inPeak;
       _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
-    });
-    listen(player.stream.tap(AudioFilter.acompressor, side: TapSide.post),
-        (pcm) {
+    }));
+    _subs.add(taps(AudioFilter.acompressor, widget.instance, TapSide.post)
+        .listen((pcm) {
       if (!mounted) return;
       _outRms = _smoothRms(pcm, _outRms);
       _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
-    });
+    }));
   }
 
   /// Peak level in dB, snappy attack / slow release.
@@ -85,6 +128,9 @@ class _CompressorCurveState extends State<CompressorCurve>
 
   @override
   void dispose() {
+    for (final s in _subs) {
+      s.cancel();
+    }
     _inDb.dispose();
     _grDb.dispose();
     super.dispose();
