@@ -98,8 +98,8 @@ void main() {
       }
       await gesture.up();
       await tester.pumpAndSettle();
-      expect(engine.current.first, comp);
-      expect(engine.current.toSet(), {bass, comp, kMeterStage});
+      // 140 px down carries the first stage past both others.
+      expect(engine.current, [comp, kMeterStage, bass]);
     });
 
     testWidgets('add a raw lavfi stage from the dialog and edit it', (
