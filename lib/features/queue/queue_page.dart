@@ -455,9 +455,7 @@ class _QueueTile extends StatelessWidget {
                           const SizedBox(width: Tokens.s4),
                           Expanded(
                             child: Text(
-                              failed
-                                  ? 'Could not play'
-                                  : (info.artist ?? info.origin.label),
+                              failed ? 'Could not play' : info.subtitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: failed
@@ -510,14 +508,6 @@ class _QueueTile extends StatelessWidget {
 }
 
 extension on MediaOrigin {
-  String get label => switch (this) {
-    MediaOrigin.file => 'Local file',
-    MediaOrigin.http => 'Web stream',
-    MediaOrigin.smb => 'Samba share',
-    MediaOrigin.jellyfin => 'Jellyfin',
-    MediaOrigin.plex => 'Plex',
-  };
-
   IconData get icon => switch (this) {
     MediaOrigin.file => Icons.audio_file_outlined,
     MediaOrigin.http => Icons.public_rounded,
