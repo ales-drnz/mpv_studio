@@ -252,10 +252,7 @@ class _EqPainter extends CustomPainter {
     canvas.clipRect(r.inflate(1));
     canvas.drawPath(
       fill,
-      Paint()
-        ..color = (enabled ? Tokens.accent : Tokens.fgFaint).withValues(
-          alpha: 0.13,
-        ),
+      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
     );
     canvas.restore();
 
@@ -280,7 +277,7 @@ class _EqPainter extends CustomPainter {
       canvas.drawCircle(
         p,
         isActive ? 4.5 : 2.6,
-        Paint()..color = isActive ? accent : Tokens.bg,
+        Paint()..color = isActive ? accent : Tokens.surface,
       );
       canvas.drawCircle(
         p,

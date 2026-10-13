@@ -180,7 +180,10 @@ class _ResponsePainter extends CustomPainter {
       ..close();
     canvas.save();
     canvas.clipRect(plot.inflate(1));
-    canvas.drawPath(fill, Paint()..color = accent.withValues(alpha: 0.12));
+    canvas.drawPath(
+      fill,
+      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
+    );
     canvas.restore();
 
     canvas.drawPath(
