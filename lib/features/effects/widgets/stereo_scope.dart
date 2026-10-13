@@ -8,6 +8,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../audio/pcm_analysis.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 import '../rack_environment.dart';
 
 /// A stereo vectorscope (goniometer) — the live picture of the stereo
@@ -17,8 +18,8 @@ import '../rack_environment.dart';
 /// out of phase. A phase-correlation bar underneath puts a number on it
 /// (+1 mono → −1 inverted).
 ///
-/// Fed by the chain's output ([RackEnvironment.pcm]) so it reflects whatever the width control is
-/// doing to the output. Flat house style; scales to fit any width.
+/// Fed by the chain's output ([RackEnvironment.pcm]) so it reflects
+/// whatever the width control is doing to the output. Flat house style; scales to fit any width.
 class StereoScope extends StatefulWidget {
   final bool enabled;
   const StereoScope({super.key, required this.enabled});
@@ -87,7 +88,7 @@ class _StereoScopeState extends State<StereoScope> {
       label: 'Stereo vectorscope with phase correlation',
       value: widget.enabled ? null : 'Stage is off',
       child: SizedBox(
-        height: 188,
+        height: graphicHeight(context, 0, min: 188, max: 188),
         width: double.infinity,
         child: RepaintBoundary(
           child: CustomPaint(

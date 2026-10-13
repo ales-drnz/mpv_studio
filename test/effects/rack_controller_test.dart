@@ -31,6 +31,51 @@ void main() {
     });
   });
 
+  test('a drag that would rebuild the filter waits for the release', () {
+    fakeAsync((async) {
+      final engine = FakeEngine([bass, const SuperequalizerEffect()]);
+      final rack = RackController(engine);
+      final eq = rack.chain.stages[1].id;
+      for (var i = 1; i <= 10; i++) {
+        rack.edit(
+          eq,
+          SuperequalizerEffect(params: {'1b': 1 + i / 10}),
+          live: true,
+        );
+        async.elapse(const Duration(milliseconds: 20));
+      }
+      expect(engine.applied, isEmpty, reason: 'no rebuild per step');
+      expect(
+        rack.chain.effects.last,
+        const SuperequalizerEffect(params: {'1b': 2}),
+        reason: 'the rack shows the drag',
+      );
+      // An echo from the engine meanwhile does not undo the drag.
+      engine.external(engine.current);
+      expect(rack.chain.effects.last.runtimeType, SuperequalizerEffect);
+      expect(
+        rack.chain.effects.last,
+        const SuperequalizerEffect(params: {'1b': 2}),
+      );
+      rack.flush();
+      async.flushMicrotasks();
+      expect(engine.applied.single.last, isA<SuperequalizerEffect>());
+      expect(
+        engine.current.last,
+        const SuperequalizerEffect(params: {'1b': 2}),
+      );
+      // A runtime option (bass gain) still writes while dragged.
+      rack.edit(
+        rack.chain.stages.first.id,
+        const BassEffect(gain: 9),
+        live: true,
+      );
+      async.flushMicrotasks();
+      expect(engine.applied.length, 2);
+      rack.dispose();
+    });
+  });
+
   test('a refused chain goes back to the last accepted one', () {
     fakeAsync((async) {
       final engine = FakeEngine([bass])

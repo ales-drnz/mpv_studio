@@ -11,10 +11,11 @@ import '../support/layout_harness.dart';
 import 'rack_harness.dart';
 
 /// The Effects page with a chain of three stages, the bass stage open, at
-/// every size of the responsive contract: dark everywhere, light on a
-/// phone, a laptop and a desktop window. Phones show the open stage on its
-/// own, medium pointer windows unfold it in the chain, wide windows edit
-/// it beside the chain.
+/// every size of the responsive contract (dark everywhere, light on a
+/// phone, a laptop and a desktop window) and in a medium pointer window.
+/// Phones, touch screens and low windows show the open stage on its own;
+/// wide windows at least 600 high edit it beside the chain; the medium
+/// pointer window (800x560) unfolds it in the chain.
 void main() {
   setUpAll(loadStudioFonts);
 
@@ -24,8 +25,9 @@ void main() {
     Palette palette, {
     double textScale = 1,
     bool open = true,
+    InputMode? input,
   }) async {
-    final input = inputFor(s);
+    input ??= inputFor(s);
     await pumpRack(
       tester,
       FakeEngine([
@@ -66,6 +68,19 @@ void main() {
       );
     }, skip: skipGoldens);
   }
+
+  testWidgets('dark effects inline at 800x560', (tester) async {
+    await golden(
+      tester,
+      const StudioSize('800x560', 800, 560),
+      Palette.dark,
+      input: InputMode.pointer,
+    );
+    await expectLater(
+      find.byType(WidgetsApp),
+      matchesGoldenFile('goldens/effects_dark_800x560.png'),
+    );
+  }, skip: skipGoldens);
 
   for (final name in ['360x780', '1024x700', '1920x1080']) {
     testWidgets('light effects at $name', (tester) async {

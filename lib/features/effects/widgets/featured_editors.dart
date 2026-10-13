@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../audio/biquad.dart';
 import '../../../audio/pcm_analysis.dart';
+import '../../../audio/units.dart';
 import '../../../ui/widgets/controls.dart';
 import 'compressor_curve.dart';
 import 'crossfeed_diagram.dart';
@@ -145,7 +146,7 @@ class FeaturedEditor {
             enabled: b.enabled,
             description:
                 '${b.gain.toStringAsFixed(1)} dB below '
-                '${b.frequency.round()} Hz',
+                '${formatHz(b.frequency)}',
           ),
           [
             slider(
@@ -163,7 +164,7 @@ class FeaturedEditor {
               20,
               500,
               (v) => b.copyWith(frequency: v),
-              format: (v) => '${v.round()} Hz',
+              format: formatHz,
               resetTo: 100,
             ),
           ],
@@ -176,7 +177,7 @@ class FeaturedEditor {
             enabled: t.enabled,
             description:
                 '${t.gain.toStringAsFixed(1)} dB above '
-                '${t.frequency.round()} Hz',
+                '${formatHz(t.frequency)}',
           ),
           [
             slider(
@@ -194,7 +195,7 @@ class FeaturedEditor {
               1000,
               16000,
               (v) => t.copyWith(frequency: v),
-              format: (v) => '${(v / 1000).toStringAsFixed(1)}k Hz',
+              format: formatHz,
               resetTo: 3000,
             ),
           ],
@@ -209,7 +210,7 @@ class FeaturedEditor {
             markerHz: sb.cutoff,
             description:
                 'boost ${sb.boost.toStringAsFixed(1)} below '
-                '${sb.cutoff.round()} Hz',
+                '${formatHz(sb.cutoff)}',
             enabled: sb.enabled,
           ),
           [
@@ -228,7 +229,7 @@ class FeaturedEditor {
               50,
               900,
               (v) => sb.copyWith(cutoff: v),
-              format: (v) => '${v.round()} Hz',
+              format: formatHz,
               resetTo: 100,
             ),
             slider(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 
 /// The 18 fixed bands of ffmpeg's `superequalizer`, in order. The key is
 /// the raw ffmpeg option name (digit-prefixed, so it lives in the
@@ -108,10 +109,15 @@ class _EqualizerState extends State<Equalizer> {
     final moved = [
       for (final b in kEqBands)
         if ((widget.bandsDb[b.key] ?? 0).abs() >= 0.5)
-          '${b.label} Hz ${_signed(widget.bandsDb[b.key]!)} dB',
+          '${_hz(b.label)} ${_signed(widget.bandsDb[b.key]!)} dB',
     ];
     return moved.isEmpty ? 'Flat' : moved.join(', ');
   }
+
+  /// A band label (`92`, `1.5k`) with its unit (`92 Hz`, `1.5 kHz`).
+  static String _hz(String label) => label.endsWith('k')
+      ? '${label.substring(0, label.length - 1)} kHz'
+      : '$label Hz';
 
   static String _signed(double db) =>
       '${db > 0 ? '+' : ''}${db.toStringAsFixed(1)}';
@@ -121,7 +127,13 @@ class _EqualizerState extends State<Equalizer> {
     return LayoutBuilder(
       builder: (context, c) {
         // Taller on wide editors so the curve keeps its shape.
-        final height = (c.maxWidth * 0.32).clamp(168.0, 260.0);
+        final height = graphicHeight(
+          context,
+          c.maxWidth,
+          ratio: 0.32,
+          min: 168,
+          max: 260,
+        );
         final size = Size(c.maxWidth, height);
         return Semantics(
           label: '18-band equalizer curve',

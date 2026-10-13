@@ -92,6 +92,19 @@ class _SignalChainViewState extends State<SignalChainView> {
 
   RackController get rack => widget.rack;
 
+  @override
+  void initState() {
+    super.initState();
+    // Back on the page with a stage left open: show its controls, as when
+    // it was opened.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final open = rack.focused;
+      if (mounted && open != null && _mode == RackMode.inline) {
+        _revealNow(open);
+      }
+    });
+  }
+
   /// Opens stage [id] the way the current mode shows it.
   void _open(int id) {
     if (_mode == RackMode.inline) {
@@ -152,31 +165,33 @@ class _SignalChainViewState extends State<SignalChainView> {
   /// fits, else its top, so the controls of a stage just opened are on
   /// screen instead of under the bottom edge.
   void _reveal(int id) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _tiles[id]?.currentContext;
-      if (ctx == null || !ctx.mounted) return;
-      final box = ctx.findRenderObject();
-      final scrollable = Scrollable.maybeOf(ctx);
-      if (box is! RenderBox || !box.attached || scrollable == null) return;
-      final viewport = RenderAbstractViewport.maybeOf(box);
-      if (viewport == null) return;
-      final position = scrollable.position;
-      final atTop = viewport.getOffsetToReveal(box, 0).offset;
-      final atBottom = viewport.getOffsetToReveal(box, 1).offset;
-      var target = position.pixels;
-      if (box.size.height > position.viewportDimension || target > atTop) {
-        target = atTop;
-      } else if (target < atBottom) {
-        target = atBottom;
-      }
-      target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
-      if ((target - position.pixels).abs() < 1) return;
-      position.animateTo(
-        target,
-        duration: kNavTransition,
-        curve: Curves.easeOutCubic,
-      );
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revealNow(id));
+  }
+
+  void _revealNow(int id) {
+    final ctx = _tiles[id]?.currentContext;
+    if (ctx == null || !ctx.mounted) return;
+    final box = ctx.findRenderObject();
+    final scrollable = Scrollable.maybeOf(ctx);
+    if (box is! RenderBox || !box.attached || scrollable == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null) return;
+    final position = scrollable.position;
+    final atTop = viewport.getOffsetToReveal(box, 0).offset;
+    final atBottom = viewport.getOffsetToReveal(box, 1).offset;
+    var target = position.pixels;
+    if (box.size.height > position.viewportDimension || target > atTop) {
+      target = atTop;
+    } else if (target < atBottom) {
+      target = atBottom;
+    }
+    target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    if ((target - position.pixels).abs() < 1) return;
+    position.animateTo(
+      target,
+      duration: kNavTransition,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Widget _chain({required bool inline, required bool quick, double end = 0}) {
@@ -254,7 +269,7 @@ class _SignalChainViewState extends State<SignalChainView> {
           builder: (context, c) {
             final gutter = layout.gutter;
             final width = math.min(c.maxWidth - 2 * gutter, Breakpoints.wide);
-            final mode = _mode = RackMode.of(layout, width);
+            final mode = _mode = RackMode.of(layout, width, c.maxHeight);
             _tiles.removeWhere((id, _) => rack.chain.stage(id) == null);
             final focus = mode == RackMode.inline ? null : rack.focused;
             final covering = mode == RackMode.detail && focus != null;
@@ -265,8 +280,8 @@ class _SignalChainViewState extends State<SignalChainView> {
                 content = _chain(inline: true, quick: true);
               case RackMode.detail:
                 content = TwoPane(
-                  listWidth: RackMode.listWidth,
-                  minDetailWidth: RackMode.minDetailWidth,
+                  // Never side by side here, even on a wide low window.
+                  minDetailWidth: double.infinity,
                   list: _chain(inline: false, quick: true),
                   detail: focus == null
                       ? null
@@ -276,7 +291,7 @@ class _SignalChainViewState extends State<SignalChainView> {
                           id: focus,
                           showHeader: false,
                           padding: EdgeInsets.only(
-                            top: Tokens.s8,
+                            top: Tokens.s4,
                             bottom: layout.pagePadding.bottom,
                           ),
                           onClose: rack.closeAll,
@@ -293,7 +308,11 @@ class _SignalChainViewState extends State<SignalChainView> {
                         top: Tokens.s8,
                         bottom: Tokens.s12,
                       ),
-                      child: QuickEditors(rack: rack, onOpen: _openFilter),
+                      child: QuickEditors(
+                        rack: rack,
+                        onOpen: _openFilter,
+                        singleRow: true,
+                      ),
                     ),
                     Expanded(
                       child: TwoPane(
@@ -335,24 +354,11 @@ class _SignalChainViewState extends State<SignalChainView> {
               onBack: covering ? rack.closeAll : null,
               actions: covering
                   ? [
-                      Builder(
-                        builder: (context) => IconButton(
-                          key: ValueKey('detail-menu-$focus'),
-                          tooltip: 'Stage actions',
-                          onPressed: () async {
-                            final picked = await showStageMenu(
-                              context,
-                              rack,
-                              focus,
-                              position: centreOf(context),
-                            );
-                            if (picked != null) _action(focus, picked);
-                          },
-                          icon: Icon(
-                            Icons.more_vert_rounded,
-                            color: Tokens.fgDim,
-                          ),
-                        ),
+                      StagePowerButton(rack: rack, id: focus),
+                      StageMenuButton(
+                        rack: rack,
+                        id: focus,
+                        onAction: (a) => _action(focus, a),
                       ),
                     ]
                   : [
@@ -376,13 +382,18 @@ class _SignalChainViewState extends State<SignalChainView> {
                         onTap: _add,
                       ),
                     ],
-              bottom: covering
+              // A low window gives the editor every line it can.
+              bottom: covering && layout.isShort
                   ? null
                   : Padding(
                       padding: const EdgeInsets.only(bottom: Tokens.s4),
                       child: Text(
-                        chainSummary(rack, layout),
+                        covering
+                            ? stagePlace(rack, focus)
+                            : chainSummary(rack, layout),
                         style: Tokens.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
               scrollable: false,

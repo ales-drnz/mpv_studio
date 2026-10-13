@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
@@ -13,7 +14,8 @@ import 'stage_meters.dart';
 /// The open body of one stage: its before and after meters, then the
 /// editor that fits it (a featured graphic editor, presets and text
 /// options for the filters that need them, the raw entry, or one control
-/// per parameter), then a reset.
+/// per parameter), then a reset. On a low window the meters go last, so
+/// the first controls are on screen as the stage opens.
 class StageEditor extends StatelessWidget {
   final RackController rack;
   final int id;
@@ -33,9 +35,10 @@ class StageEditor extends StatelessWidget {
         rack.edit(id, next, live: live);
 
     final children = <Widget>[];
+    final meters = <Widget>[];
     final filter = e.filter;
     if (filter != null && instance != null) {
-      children.add(
+      meters.add(
         StageMeters(
           filter: filter,
           instance: instance,
@@ -49,7 +52,12 @@ class StageEditor extends StatelessWidget {
               : 'Meters off',
         ),
       );
-      children.add(const SizedBox(height: Tokens.s12));
+    }
+    final metersLast = context.layout.isShort;
+    if (meters.isNotEmpty && !metersLast) {
+      children
+        ..addAll(meters)
+        ..add(const SizedBox(height: Tokens.s12));
     }
 
     if (e is RawAudioEffect) {
@@ -131,6 +139,11 @@ class StageEditor extends StatelessWidget {
       }
     }
 
+    if (meters.isNotEmpty && metersLast) {
+      children
+        ..add(const SizedBox(height: Tokens.s12))
+        ..addAll(meters);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: children,

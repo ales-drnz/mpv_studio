@@ -98,8 +98,8 @@ void main() {
       }
       await gesture.up();
       await tester.pumpAndSettle();
-      expect(engine.current.first, comp);
-      expect(engine.current.toSet(), {bass, comp, kMeterStage});
+      // 140 px down carries the first stage past both others.
+      expect(engine.current, [comp, kMeterStage, bass]);
     });
 
     testWidgets('add a raw lavfi stage from the dialog and edit it', (
@@ -319,7 +319,7 @@ void main() {
         ),
       );
       expect(row.height, greaterThanOrEqualTo(48));
-      await tester.tap(find.text('Bypass this stage'));
+      await tester.tap(find.text('Switch off'));
       await tester.pumpAndSettle();
       expect(engine.current, [bass.copyWith(enabled: false), comp]);
     });
@@ -361,6 +361,16 @@ void main() {
         final r = tester.getRect(find.byKey(key));
         expect(r.height, greaterThanOrEqualTo(48), reason: '$key');
       }
+      final handle = tester.getRect(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.drag_indicator_rounded),
+              matching: find.byType(SizedBox),
+            )
+            .first,
+      );
+      expect(handle.width, greaterThanOrEqualTo(48), reason: 'drag handle');
+      expect(handle.height, greaterThanOrEqualTo(48), reason: 'drag handle');
     });
   });
 

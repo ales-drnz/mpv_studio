@@ -61,7 +61,8 @@ class EngineCard extends StatelessWidget {
   }
 }
 
-/// A small status light with its label: lit in [color] (green by default) when [on].
+/// A small status light with its label: lit in [color] (green by
+/// default) when [on].
 class Spy extends StatelessWidget {
   final String label;
   final bool on;
@@ -196,7 +197,8 @@ class ReadoutGrid extends StatelessWidget {
   }
 }
 
-/// A thin rounded progress track, filled to [fraction] in [color] (the accent by default).
+/// A thin rounded progress track, filled to [fraction] in [color] (the
+/// accent by default).
 class ThinBar extends StatelessWidget {
   final double fraction;
   final Color? color;

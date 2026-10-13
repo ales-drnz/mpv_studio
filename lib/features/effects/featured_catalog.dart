@@ -35,8 +35,8 @@ List<({String label, Object value})> _options<E extends Enum>(
   String Function(E) wire,
 ) => [for (final o in values) (label: wire(o), value: o as Object)];
 
-/// The featured filters: the ones with a graphic editor and a quick tile.
-/// Listed in the order the tiles show them.
+/// The featured filters: the ones with a graphic editor and a quick
+/// editor chip. Listed in the order the chips show them.
 final List<FilterDescriptor> kFeaturedCatalog = [
   FilterDescriptor(
     name: 'superequalizer',
@@ -655,7 +655,7 @@ final List<FilterDescriptor> kFeaturedCatalog = [
   ),
 ];
 
-/// One-line descriptions of the featured filters, for their tiles and
+/// One-line descriptions of the featured filters, for their chips and
 /// stage headers.
 const Map<AudioFilter, String> kFeaturedSubtitles = {
   AudioFilter.superequalizer: '18-band graphic',

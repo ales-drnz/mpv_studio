@@ -29,13 +29,17 @@ class StatusView extends StatelessWidget {
     MpvPlaybackState.completed => Tokens.fgDim,
   };
 
-  /// Why the request and the audio differ, or null when they agree.
-  static String? mismatch(PlayerState s) {
+  /// Why the request and the audio differ, or null when they agree or
+  /// there is nothing to wait for (no file loaded, the end reached).
+  static String? mismatch(PlayerState s, MpvPlaybackState phase) {
     if (s.playing && !s.playWhenReady) {
       return 'Audio runs without a play request: a raw command started '
           'it. The request follows the next play or pause.';
     }
-    if (s.playWhenReady && !s.playing && !s.completed) {
+    final waiting =
+        phase == MpvPlaybackState.loading ||
+        phase == MpvPlaybackState.buffering;
+    if (s.playWhenReady && !s.playing && waiting) {
       return 'Play requested, waiting for the engine to load or buffer.';
     }
     return null;
@@ -46,7 +50,7 @@ class StatusView extends StatelessWidget {
     final s = snapshot.state;
     final phase = snapshot.playbackState;
     final color = colorOf(phase);
-    final note = mismatch(s);
+    final note = mismatch(s, phase);
     final opened = s.streamOpenFilename;
     final source = s.streamPath.isNotEmpty ? s.streamPath : s.path;
     final rewritten = opened.isNotEmpty && opened != source;

@@ -9,7 +9,8 @@ import '../rack_controller.dart';
 
 /// The featured effects as chips, one tap from their editor: wrapped over
 /// as many lines as they need on wide windows, a scrolling row on compact
-/// ones, faded at the edge that has more and with arrows on pointer.
+/// ones or with [singleRow], faded at the edge that has more and with
+/// arrows on pointer.
 /// A chip is lit while the chain has that effect switched on.
 class QuickEditors extends StatelessWidget {
   final RackController rack;
@@ -17,7 +18,16 @@ class QuickEditors extends StatelessWidget {
   /// Opens the first stage of the filter, adding one when there is none.
   final ValueChanged<AudioFilter> onOpen;
 
-  const QuickEditors({super.key, required this.rack, required this.onOpen});
+  /// Keeps the chips on one scrolling line at any width, to leave the
+  /// height to an editor below.
+  final bool singleRow;
+
+  const QuickEditors({
+    super.key,
+    required this.rack,
+    required this.onOpen,
+    this.singleRow = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +57,7 @@ class QuickEditors extends StatelessWidget {
             child: Text('QUICK EDITORS', style: Tokens.caption),
           ),
         ),
-        if (layout.isCompact)
+        if (layout.isCompact || singleRow)
           _ScrollingRow(height: layout.minTap, children: chips)
         else
           Wrap(spacing: Tokens.s8, runSpacing: Tokens.s8, children: chips),
@@ -189,12 +199,19 @@ class _ScrollingRowState extends State<_ScrollingRow> {
           ],
           stops: const [0, 0.08, 0.92, 1],
         ).createShader(rect),
-        child: ListView.separated(
-          controller: _scroll,
-          scrollDirection: Axis.horizontal,
-          itemCount: widget.children.length,
-          separatorBuilder: (_, _) => const SizedBox(width: Tokens.s8),
-          itemBuilder: (_, i) => widget.children[i],
+        // A resize or rotation changes what is hidden without a scroll.
+        child: NotificationListener<ScrollMetricsNotification>(
+          onNotification: (_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+            return false;
+          },
+          child: ListView.separated(
+            controller: _scroll,
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.children.length,
+            separatorBuilder: (_, _) => const SizedBox(width: Tokens.s8),
+            itemBuilder: (_, i) => widget.children[i],
+          ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 
 /// A magnitude-vs-frequency plot — the response any tone control draws on
 /// the signal, sketched in the flat house style over a log-frequency
@@ -43,7 +44,13 @@ class ResponseCurve extends StatelessWidget {
       value: description,
       child: LayoutBuilder(
         builder: (context, c) => SizedBox(
-          height: (c.maxWidth * 0.24).clamp(132.0, 220.0),
+          height: graphicHeight(
+            context,
+            c.maxWidth,
+            ratio: 0.24,
+            min: 132,
+            max: 220,
+          ),
           width: double.infinity,
           child: CustomPaint(
             size: Size.infinite,
