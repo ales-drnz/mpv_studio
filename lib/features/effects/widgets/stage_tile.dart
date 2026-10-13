@@ -58,14 +58,16 @@ class StageTile extends StatelessWidget {
     final live = on && (!rack.bypass || isMeterStage(e));
     final meter = isMeterStage(e);
     final title = stageTitle(e);
-    // Content on the selection fill is graphite in both themes.
+    // Content on the selection fill is graphite in both themes. Text keeps
+    // its full tone (4.5:1 or more); only glyphs of an off stage fade.
     final ink = selected ? Tokens.onAccentContainer : null;
     final lit = ink ?? Tokens.accent;
-    final faint = ink?.withValues(alpha: 0.6) ?? Tokens.fgFaint;
+    final faint = ink ?? Tokens.fgFaint;
+    final faintGlyph = ink?.withValues(alpha: 0.6) ?? Tokens.fgFaint;
 
     final handleIcon = SizedBox.square(
       dimension: layout.minTap,
-      child: Icon(Icons.drag_indicator_rounded, size: 18, color: faint),
+      child: Icon(Icons.drag_indicator_rounded, size: 18, color: faintGlyph),
     );
     final handle = Semantics(
       label: 'Reorder $title',
@@ -90,7 +92,7 @@ class StageTile extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Tokens.s8),
-        Icon(stageIcon(e), size: 18, color: live ? lit : faint),
+        Icon(stageIcon(e), size: 18, color: live ? lit : faintGlyph),
         const SizedBox(width: Tokens.s12),
         Expanded(
           child: Padding(
@@ -134,7 +136,7 @@ class StageTile extends StatelessWidget {
           size: 20,
           tooltip: on ? 'Switch off' : 'Switch on',
           toggled: on,
-          color: on ? lit : faint,
+          color: on ? lit : faintGlyph,
           onTap: () => powerStage(rack, id, !on),
         ),
         Builder(
@@ -189,48 +191,53 @@ class StageTile extends StatelessWidget {
       ],
     );
 
-    return Opacity(
-      opacity: on ? 1 : 0.72,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
-        decoration: ShapeDecoration(
-          color: selected ? Tokens.accentContainer : Tokens.surface,
-          // An open stage holds a whole editor: a card's radius.
-          shape: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                width: 4,
+    // An off stage reads by its dim title and glyphs and the missing
+    // state bar, not by fading the whole tile (its captions would drop
+    // under 4.5:1).
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
+      decoration: ShapeDecoration(
+        color: selected ? Tokens.accentContainer : Tokens.surface,
+        // An open stage holds a whole editor: a card's radius.
+        shape: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // The state bar: a pill inset from the corners, so their arcs
+          // never clip it.
+          Positioned(
+            left: Tokens.s4,
+            top: Tokens.s8,
+            bottom: Tokens.s8,
+            width: Tokens.s4,
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
                 color: live ? (meter ? Tokens.amber : lit) : Colors.transparent,
+                shape: Tokens.pill,
               ),
             ),
-            Material(
-              type: MaterialType.transparency,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  header,
-                  if (open)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        Tokens.s16,
-                        0,
-                        Tokens.s16,
-                        Tokens.s12,
-                      ),
-                      child: StageEditor(rack: rack, id: id),
+          ),
+          Material(
+            type: MaterialType.transparency,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                if (open)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Tokens.s16,
+                      0,
+                      Tokens.s16,
+                      Tokens.s12,
                     ),
-                ],
-              ),
+                    child: StageEditor(rack: rack, id: id),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
