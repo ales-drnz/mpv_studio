@@ -100,10 +100,13 @@ class CacheBarPainter extends CustomPainter {
     canvas.clipRRect(rr);
     canvas.drawRect(bar, Paint()..color = Tokens.surface3);
 
-    // The part read so far.
+    // The part read so far, its ends rounded like the track (concentric
+    // where it meets the track's own corners).
     for (final r in g.ranges) {
-      canvas.drawRect(
-        Rect.fromLTRB(x(r.$1), _top, x(r.$2), _top + _barH),
+      final range = Rect.fromLTRB(x(r.$1), _top, x(r.$2), _top + _barH);
+      final radius = math.min(Tokens.rMd, range.width / 2);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(range, Radius.circular(radius)),
         Paint()..color = Tokens.accentWash,
       );
     }

@@ -167,13 +167,23 @@ class PrefetchTimelinePainter extends CustomPainter {
   }
 
   void _band(Canvas canvas, Rect r, PrefetchState s) {
+    if (s == PrefetchState.idle) return;
+    // Each stretch is a rounded band, a pixel in from its neighbours, so
+    // its ends read as arcs like the track's.
+    final inner = r.width > 2
+        ? Rect.fromLTRB(r.left + 1, r.top, r.right - 1, r.bottom)
+        : r;
+    final band = RRect.fromRectAndRadius(
+      inner,
+      Radius.circular(math.min(Tokens.rXs, inner.width / 2)),
+    );
     switch (s) {
       case PrefetchState.idle:
         return;
       case PrefetchState.loading:
-        canvas.drawRect(r, Paint()..color = Tokens.accentDim);
+        canvas.drawRRect(band, Paint()..color = Tokens.accentDim);
         canvas.save();
-        canvas.clipRect(r);
+        canvas.clipRRect(band);
         final stripe = Paint()
           ..color = Tokens.accent.withValues(alpha: 0.35)
           ..strokeWidth = 3;
@@ -186,14 +196,17 @@ class PrefetchTimelinePainter extends CustomPainter {
         }
         canvas.restore();
       case PrefetchState.ready:
-        canvas.drawRect(r, Paint()..color = Tokens.accentDim);
+        canvas.drawRRect(band, Paint()..color = Tokens.accentDim);
       case PrefetchState.used:
-        canvas.drawRect(
-          r,
+        canvas.drawRRect(
+          band,
           Paint()..color = Tokens.green.withValues(alpha: 0.45),
         );
       case PrefetchState.failed:
-        canvas.drawRect(r, Paint()..color = Tokens.red.withValues(alpha: 0.35));
+        canvas.drawRRect(
+          band,
+          Paint()..color = Tokens.red.withValues(alpha: 0.35),
+        );
     }
     if (r.width > 44) {
       paintChartLabel(
