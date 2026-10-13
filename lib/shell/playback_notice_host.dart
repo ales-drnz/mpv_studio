@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../studio/playback_issues.dart';
 import '../studio/player_scope.dart';
-import '../ui/tokens.dart';
+import '../ui/widgets/studio_snack.dart';
 import '../util/reactive.dart';
 
 /// Shows the app's [PlaybackNotice]s as toasts with a "Show log" action, and
@@ -52,22 +52,13 @@ class _PlaybackNoticeHostState extends State<PlaybackNoticeHost>
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
     // A burst of failures (a queue of dead links) shows the latest only.
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(notice.message, style: TextStyle(color: Tokens.fg)),
-        backgroundColor: Tokens.surface3,
-        behavior: SnackBarBehavior.floating,
-        // Information passes quickly and has nothing to show in the log.
-        duration: Duration(seconds: notice.isError ? 6 : 2),
-        action: widget.consoleVisible || !notice.isError
-            ? null
-            : SnackBarAction(
-                label: 'Show log',
-                textColor: Tokens.accent,
-                onPressed: widget.onShowLog,
-              ),
-      ),
+    final showLog = notice.isError && !widget.consoleVisible;
+    messenger.showStudioSnack(
+      notice.message,
+      // Information passes quickly and has nothing to show in the log.
+      duration: Duration(seconds: notice.isError ? 6 : 2),
+      actionLabel: showLog ? 'Show log' : null,
+      onAction: showLog ? widget.onShowLog : null,
     );
   }
 

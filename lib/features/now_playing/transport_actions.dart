@@ -3,7 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
-import '../../ui/tokens.dart';
+import '../../ui/widgets/studio_snack.dart';
 import '../../util/duration_format.dart';
 
 /// The playback actions shared by the Playback page, the mini-player and
@@ -17,19 +17,7 @@ typedef Notify = void Function(String message);
 /// [feedbackFor] goes through [PlaybackIssues.notify] instead. Does nothing
 /// once [context] is gone.
 void showPlaybackFeedback(BuildContext context, String message) {
-  if (!context.mounted) return;
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  if (messenger == null) return;
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: Tokens.fg)),
-        backgroundColor: Tokens.surface3,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  showStudioSnack(context, message, duration: const Duration(seconds: 2));
 }
 
 /// A [Notify] for feedback on an action that worked or had nothing to do:
