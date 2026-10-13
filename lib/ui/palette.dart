@@ -52,7 +52,7 @@ class Palette {
   /// The shell chrome (sidebar, rail, bars), sheets and dialogs.
   final Color surface2;
 
-  /// Fields, segmented tracks, tonal circles, placeholders.
+  /// Fields, segmented tracks, placeholders.
   final Color surface3;
 
   /// The highest tone: inactive slider and switch tracks, the phone
@@ -131,7 +131,7 @@ class Palette {
     bg: Color(0xFF24282D), // T16, the logo disc: the stage
     surface: Color(0xFF31353A), // T22, cards and rows
     surface2: Color(0xFF181C21), // T10, chrome, sheets, dialogs
-    surface3: Color(0xFF3A3E43), // T26, fields, tonal circles
+    surface3: Color(0xFF3A3E43), // T26, fields, segmented tracks
     surface4: Color(0xFF484C51), // T32, inactive tracks
     line: Color(0x14FFFFFF), // ~8% white, inside data views only
     line2: Color(0x26FFFFFF), // ~15% white
@@ -154,19 +154,24 @@ class Palette {
   /// The mirror of [dark]: white and near-white steps of the same hue,
   /// graphite #24282D as the accent wherever dark has white, the ring
   /// grey as the secondary selection. The stage sits a step below the
-  /// white cards so they read clearly.
+  /// white cards so they read clearly. As dark's chrome is its darkest
+  /// step, light's is its lightest: white, so the stage panel stands out
+  /// from it as clearly (1.16:1, dark 1.15:1). Fields sit well below
+  /// white and the stage and still clear the ring grey selection, so an
+  /// unselected chip, a selected one and the surface under both read.
   static const Palette light = Palette(
     brightness: Brightness.light,
-    bg: Color(0xFFEBEEF5), // T94, the stage
+    bg: Color(0xFFEBEEF5), // T94, the stage, 1.16:1 on the chrome
     surface: Color(0xFFFFFFFF), // white cards and rows
-    surface2: Color(0xFFE0E2E9), // T90, chrome, sheets, dialogs
-    surface3: Color(0xFFE5E8EF), // T92, fields, tonal circles
+    surface2: Color(0xFFFFFFFF), // white chrome, sheets, dialogs
+    // T84, fields: 1.5:1 on white, 1.29:1 on bg, 1.23:1 to the ring grey.
+    surface3: Color(0xFFD0D3DA),
     surface4: Color(0xFFB6B9BF), // T75, a ring grey step: tracks, 2:1 on white
     line: Color(0x14000000), // ~8% black, inside data views only
     line2: Color(0x29000000), // ~16% black
     fg: Color(0xFF24282D), // graphite, 12.8:1 on bg, 14.8:1 on cards
     fgDim: Color(0xFF43474C), // T30, 8.1:1 on bg
-    fgFaint: Color(0xFF5B5F64), // T40, 5.5:1 on bg, 5.0:1 on chrome
+    fgFaint: Color(0xFF4F5358), // T35, 6.7:1 on bg, 5.2:1 on fields
     accent: Color(0xFF24282D), // graphite: selection, play, progress
     // The ring grey is too light on white (1.8:1); its T60 step keeps
     // secondary marks (unplayed waveform) at 3.2:1 on white.
@@ -175,8 +180,8 @@ class Palette {
     accentWash: Color(0x1A24282D), // ~10% graphite: hover
     accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
     onAccentContainer: Color(0xFF24282D), // 8.1:1
-    tonal: Color(0xFFD7DAE1), // T87, secondary buttons
-    onTonal: Color(0xFF24282D), // 10.6:1
+    tonal: Color(0xFFC9CCD3), // T81, secondary buttons, 1.6:1 on white
+    onTonal: Color(0xFF24282D), // 9.2:1
     green: Color(0xFF006C46), // 5.6:1 on bg
     amber: Color(0xFF765A04), // 5.6:1 on bg
     red: Color(0xFFAE2F34), // 5.6:1 on bg

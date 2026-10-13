@@ -11,7 +11,7 @@ enum RoundTone {
   /// A bare icon in a circular hit area (tertiary actions).
   plain,
 
-  /// A tonal circle ([Tokens.surface3]) behind the icon (secondary
+  /// A tonal circle ([Tokens.tonal]) behind the icon (secondary
   /// actions: previous and next, shell tools).
   tonal,
 
@@ -72,8 +72,8 @@ class RoundIconButton extends StatelessWidget {
         enabled ? Tokens.onAccent : Tokens.fgFaint,
       ),
       RoundTone.tonal => (
-        Tokens.surface3,
-        enabled ? this.color ?? Tokens.fg : Tokens.fgFaint,
+        Tokens.tonal,
+        enabled ? this.color ?? Tokens.onTonal : Tokens.fgFaint,
       ),
       RoundTone.plain => (
         Colors.transparent,

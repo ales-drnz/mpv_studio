@@ -695,7 +695,7 @@ class FxBypassToggle extends StatelessWidget {
                       decoration: ShapeDecoration(
                         color: on
                             ? Tokens.amber.withValues(alpha: 0.18)
-                            : (compact ? Colors.transparent : Tokens.surface3),
+                            : (compact ? Colors.transparent : Tokens.tonal),
                         shape: Tokens.pill,
                       ),
                       child: Row(

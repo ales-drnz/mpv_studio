@@ -35,7 +35,7 @@ class ShellToolButton extends StatelessWidget {
       child: Tooltip(
         message: label,
         child: Material(
-          color: expanded ? Colors.transparent : Tokens.surface3,
+          color: expanded ? Colors.transparent : Tokens.tonal,
           shape: expanded ? Tokens.pill : const CircleBorder(),
           child: InkWell(
             onTap: onTap,
