@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
@@ -63,20 +62,15 @@ void main() {
     final node = tester.getSemantics(find.bySemanticsLabel('Waveform height'));
     expect(
       node,
-      containsSemantics(
+      isSemantics(
         label: 'Waveform height',
         hasIncreaseAction: true,
         hasDecreaseAction: true,
       ),
     );
-    tester.binding.pipelineOwner.semanticsOwner!.performAction(
-      node.id,
-      SemanticsAction.increase,
-    );
-    tester.binding.pipelineOwner.semanticsOwner!.performAction(
-      node.id,
-      SemanticsAction.decrease,
-    );
+    final seam = find.semantics.byLabel('Waveform height');
+    tester.semantics.increase(seam);
+    tester.semantics.decrease(seam);
     expect(deltas, [16, -16]);
 
     deltas.clear();
