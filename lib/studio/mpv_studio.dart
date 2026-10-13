@@ -1,13 +1,14 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
-import '../features/stream/plex_transcode_session_manager.dart';
 import 'app_settings.dart';
 import 'audio_engine.dart';
 import 'loudness_normalizer.dart';
 import 'media_servers.dart';
+import 'playback_issues.dart';
 
 /// The running MPV Studio: every long-lived service the player app needs,
 /// owned in one place. [launch] turns the app on (settings → audio engine →
@@ -41,6 +42,14 @@ class MpvStudio {
   /// scan. The Settings toggle and the Now Playing badge observe this.
   final LoudnessNormalizer normalizer;
 
+  /// Engine errors made readable: toasts, the Console badge and the failed
+  /// queue entries.
+  final PlaybackIssues issues;
+
+  /// Titles, artists and lengths the engine read from the queue entries
+  /// that have played.
+  final QueueDetails queueDetails;
+
   const MpvStudio._({
     required this.player,
     required this.settings,
@@ -48,11 +57,17 @@ class MpvStudio {
     required this.favorites,
     required this.consoleLog,
     required this.normalizer,
-  });
+    required this.issues,
+    required this.queueDetails,
+    required void Function() disposeServers,
+  }) : _disposeServers = disposeServers;
+
+  /// Stops the media servers' background work (the Plex heartbeat).
+  final void Function() _disposeServers;
 
   /// Powers the app on. Restores persisted settings, starts the audio engine
-  /// (with the OS media session and DSP rack), wires Plex's transcode hook,
-  /// and connects the media servers + playback reporting. Everything is ready
+  /// (with the OS media session and DSP rack), and connects the media servers
+  /// with playback reporting and Plex's source resolver. Everything is ready
   /// by the time this returns, so the first frame renders live state.
   static Future<MpvStudio> launch() async {
     // Persisted settings, restored before the first frame.
@@ -60,8 +75,9 @@ class MpvStudio {
 
     final engine = await startAudioEngine(settings);
 
-    // Plex hands mpv marker URLs that must be resolved in an on_load hook.
-    await wirePlexTranscodeHook(engine.player);
+    // Subscribed before anything loads, so no failure goes unseen.
+    final issues = PlaybackIssues.of(engine.player);
+    final queueDetails = QueueDetails.of(engine.player);
 
     final media = await connectMediaServers(engine.player);
 
@@ -76,6 +92,9 @@ class MpvStudio {
       favorites: media.favorites,
       consoleLog: engine.consoleLog,
       normalizer: normalizer,
+      issues: issues,
+      queueDetails: queueDetails,
+      disposeServers: media.dispose,
     );
   }
 
@@ -83,6 +102,9 @@ class MpvStudio {
   /// log buffer, then tears down the audio engine last.
   Future<void> shutdown() async {
     normalizer.dispose();
+    _disposeServers();
+    issues.dispose();
+    queueDetails.dispose();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();

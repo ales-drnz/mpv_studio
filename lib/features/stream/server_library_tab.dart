@@ -198,7 +198,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     });
   }
 
-  void _play(int index) {
+  Future<void> _play(int index) async {
     final items = _paging.value.items ?? const <ServerTrack>[];
     if (index < 0 || index >= items.length) return;
     final favorites = PlayerScope.favoritesOf(context);
@@ -234,8 +234,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
             'title': t.title,
             'artist': t.artist,
             'album': t.album,
+            if (t.duration > Duration.zero)
+              'durationMs': t.duration.inMilliseconds,
             if (t.artUrl != null) 'art': t.artUrl,
-            if (segment != null) 'segment': segment,
+            'segment': ?segment,
             // Lets the app-level PlaybackReporter report this track back to
             // the right server (Now Playing / progress / scrobble) and drive
             // the OS lock-screen "like" from the track's favourite state.
@@ -245,7 +247,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
           },
         ),
     ];
-    _player?.openAll(medias, play: true, index: 0);
+    final player = _player;
+    if (player == null) return;
+    await PlayerScope.issuesOf(context)
+        .guard(() => player.openAll(medias, play: true, index: 0));
   }
 
   // ── Transcode option dropdowns (shown only in transcode mode) ────────

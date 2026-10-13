@@ -59,7 +59,6 @@ class _StreamingGroupState extends State<StreamingGroup> {
             ),
             StreamBuilder<PrefetchState>(
               stream: player.stream.prefetchState,
-              initialData: PrefetchState.idle,
               builder: (context, snap) => InfoRow(
                 label: 'Prefetch state',
                 value: (snap.data ?? PrefetchState.idle).name,
@@ -67,7 +66,6 @@ class _StreamingGroupState extends State<StreamingGroup> {
             ),
             StreamBuilder<Duration>(
               stream: player.stream.prefetchCacheDuration,
-              initialData: Duration.zero,
               builder: (context, snap) {
                 final d = snap.data ?? Duration.zero;
                 return InfoRow(

@@ -499,7 +499,7 @@ class _FeaturedDetailScreen extends StatelessWidget {
             Expanded(
               child: ListenableBuilder(
                 listenable: listenable,
-                builder: (_, __) => detailBuilder(),
+                builder: (_, _) => detailBuilder(),
               ),
             ),
           ],

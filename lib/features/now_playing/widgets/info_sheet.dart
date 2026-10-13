@@ -72,11 +72,9 @@ class _InfoSheet extends StatelessWidget {
                 children: [
                   _source(),
                   // Seed the loudness section from the normalizer's cached
-                  // scan: `stream.loudness` re-emits its cached result only to
-                  // the FIRST broadcast listener, so when normalization is on
-                  // (the normalizer already holds that subscription) a sheet
-                  // opened mid-track would otherwise stay empty until the next
-                  // track change.
+                  // scan: `stream.loudnessScan` replays the current result to
+                  // every listener, but only after the first frame, and
+                  // `player.state` has no loudness field to seed from.
                   _loudness(PlayerScope.normalizerOf(context).lastScan),
                   _output(),
                   _stream(),
@@ -243,7 +241,6 @@ class _InfoSheet extends StatelessWidget {
       _card([
         StreamBuilder<MpvPlaybackState>(
           stream: player.stream.playbackState,
-          initialData: MpvPlaybackState.idle,
           builder: (c, s) =>
               _kv('State', (s.data ?? MpvPlaybackState.idle).name),
         ),

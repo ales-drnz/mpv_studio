@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../studio/player_scope.dart';
 import '../ui/tokens.dart';
-import '../util/reactive.dart';
 import 'desktop_shell.dart';
 import 'mobile_shell.dart';
+import 'playback_notice_host.dart';
 import 'router.dart';
 import 'sections.dart';
 
 /// Root chrome. Wraps the routed section bodies (carried by
 /// [navigationShell]) in the desktop or mobile shell depending on width, and
-/// surfaces engine errors as SnackBars. The bodies themselves live in a
+/// surfaces readable playback errors as SnackBars ([PlaybackNoticeHost]). The bodies themselves live in a
 /// single keep-alive IndexedStack built by the router, so player
 /// subscriptions (and the Now Playing visualizers) survive section switches.
 class AppShell extends StatefulWidget {
@@ -23,27 +22,7 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell>
-    with StreamListenerState<AppShell> {
-  @override
-  void onSubscribe() {
-    // Surface engine errors (failed loads, decode errors) so they're not
-    // silent — the full log stays in the Console panel.
-    listen(PlayerScope.of(context).stream.error, (e) {
-      if (!mounted) return;
-      // Also echo to the debug console so failures show in `flutter run`.
-      debugPrint('mpv error: ${e.message}');
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(e.message, style: const TextStyle(color: Tokens.fg)),
-          backgroundColor: Tokens.surface3,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    });
-  }
-
+class _AppShellState extends State<AppShell> {
   void _select(Section section) {
     final shell = widget.navigationShell;
     if (section.index == shell.currentIndex) {
@@ -70,7 +49,7 @@ class _AppShellState extends State<AppShell>
 
     // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars on
     // (the shells themselves are custom, not Scaffolds).
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: Tokens.bg,
       // The bottom tab bar must stay pinned when the soft keyboard opens — the
       // mobile shell lifts only the body content above the keyboard itself
@@ -93,6 +72,11 @@ class _AppShellState extends State<AppShell>
           );
         },
       ),
+    );
+    return PlaybackNoticeHost(
+      consoleVisible: section == Section.console,
+      onShowLog: () => navigationShell.goBranch(Section.console.index),
+      child: scaffold,
     );
   }
 }

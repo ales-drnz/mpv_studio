@@ -45,14 +45,14 @@ class CoverArtView extends StatelessWidget {
                   art.bytes,
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
-                  errorBuilder: (_, __, ___) => const _Placeholder(),
+                  errorBuilder: (_, _, _) => const _Placeholder(),
                 );
               } else if (artUrl != null) {
                 child = Image.network(
                   artUrl,
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
-                  errorBuilder: (_, __, ___) => const _Placeholder(),
+                  errorBuilder: (_, _, _) => const _Placeholder(),
                 );
               } else {
                 child = const _Placeholder();

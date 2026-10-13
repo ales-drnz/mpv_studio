@@ -9,7 +9,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 /// lazily by the shell's keep-alive `IndexedStack` — only when you first
 /// open the Console section. Without this service every log line emitted
 /// before that first visit (mpv/ffmpeg init, the `ao=help` driver scan, the
-/// Plex on_load hook, the first file load…) would be lost, because the log
+/// Plex source resolver, the first file load…) would be lost, because the log
 /// streams are live broadcasts with no replay.
 ///
 /// This buffers the most recent [maxLines] entries from `player.stream.log`

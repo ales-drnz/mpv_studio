@@ -283,7 +283,7 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
 
   /// Queue the current folder's audio files starting at the tapped one (capped
   /// at [_queueMax]) and play.
-  void _play(Smb2DirEntry tapped) {
+  Future<void> _play(Smb2DirEntry tapped) async {
     final files = _entries.where((e) => e.isFile).toList();
     final start = files.indexOf(tapped);
     if (start < 0) return;
@@ -302,7 +302,10 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
           },
         ),
     ];
-    _player?.openAll(medias, play: true, index: 0);
+    final player = _player;
+    if (player == null) return;
+    await PlayerScope.issuesOf(context)
+        .guard(() => player.openAll(medias, play: true, index: 0));
   }
 
   static String _stripExt(String name) {

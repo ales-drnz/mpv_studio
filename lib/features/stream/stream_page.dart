@@ -9,6 +9,7 @@ import '../../ui/widgets/chapter_scrubber.dart';
 import '../../ui/widgets/custom_url_bar.dart';
 import '../../ui/widgets/section_body.dart';
 import '../../ui/widgets/section_header.dart';
+import '../../util/media_labels.dart';
 import 'media_server.dart';
 import 'samba_browser_tab.dart';
 import 'server_library_tab.dart';
@@ -524,7 +525,7 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
     if (pl.items.isEmpty || pl.index < 0 || pl.index >= pl.items.length) {
       return '';
     }
-    return (pl.items[pl.index].extras?['title'] as String?) ?? '';
+    return titleOf(pl.items[pl.index]);
   }
 
   @override
@@ -713,13 +714,16 @@ class _ReferenceTab extends StatelessWidget {
     this.nowPlayingChapters = false,
   });
 
-  static Media _media(String url) =>
-      Media(url, extras: {'title': url, 'artist': 'Stream'});
+  // No title: the queue names a bare URL after its last path segment, and
+  // the tags replace that once the stream loads.
+  static Media _media(String url) => Media(url, extras: {'artist': 'Stream'});
 
   @override
   Widget build(BuildContext context) {
     final player = PlayerScope.of(context);
-    void play(String url) => player.open(_media(url), play: true);
+    final issues = PlayerScope.issuesOf(context);
+    Future<void> play(String url) =>
+        issues.guard(() => player.open(_media(url), play: true));
 
     return StreamBuilder<Playlist>(
       stream: player.stream.playlist,
@@ -769,15 +773,16 @@ class _StreamTile extends StatelessWidget {
   Media get _media =>
       Media(item.url, extras: {'title': item.label, 'artist': 'Stream'});
 
-  void _play() => player.open(_media, play: true);
+  Future<void> _play(BuildContext context) => PlayerScope.issuesOf(context)
+      .guard(() => player.open(_media, play: true));
 
-  void _enqueue() {
-    if (player.state.playlist.items.isEmpty) {
-      player.open(_media, play: true);
-    } else {
-      player.add(_media);
-    }
-  }
+  Future<void> _enqueue(BuildContext context) =>
+      PlayerScope.issuesOf(context).guard(() {
+        if (player.state.playlist.items.isEmpty) {
+          return player.open(_media, play: true);
+        }
+        return player.add(_media);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -790,7 +795,7 @@ class _StreamTile extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          onTap: _play,
+          onTap: () => _play(context),
           customBorder: Tokens.squircle(Tokens.rMd),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -831,14 +836,14 @@ class _StreamTile extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: _enqueue,
+                  onPressed: () => _enqueue(context),
                   icon: const Icon(Icons.playlist_add_rounded, size: 18),
                   color: Tokens.fgDim,
                   splashRadius: 18,
                   tooltip: 'Add to queue',
                 ),
                 IconButton(
-                  onPressed: _play,
+                  onPressed: () => _play(context),
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   color: Tokens.accent,
                   splashRadius: 18,

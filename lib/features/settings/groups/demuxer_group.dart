@@ -129,7 +129,6 @@ class _DemuxerGroupState extends State<DemuxerGroup> {
             ),
             StreamBuilder<bool>(
               stream: player.stream.demuxerIdle,
-              initialData: true,
               builder: (context, snap) => InfoRow(
                 label: 'Idle',
                 value: (snap.data ?? true) ? 'yes' : 'no',

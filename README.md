@@ -3,7 +3,7 @@
 #### Cross-platform audio player built on mpv_audio_kit.
 
 [![](https://img.shields.io/badge/built%20with-mpv__audio__kit-orange.svg?style=for-the-badge)](https://pub.dev/packages/mpv_audio_kit)
-[![](https://img.shields.io/badge/Flutter-3.27+-blue.svg?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![](https://img.shields.io/badge/Flutter-3.38+-blue.svg?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![](https://img.shields.io/github/stars/ales-drnz/mpv_studio?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ales-drnz/mpv_studio)
 [![](https://img.shields.io/discord/1485588004029333516?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/g2Qf4Mq9MP)
 [![](https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/cw/ales_drnz)
@@ -26,7 +26,7 @@
 | **iOS** | 15.0 | arm64, x86_64 |
 | **macOS** | 12.0 | arm64, x86_64 |
 | **Windows**| 10 | arm64, x86_64 |
-| **Linux** | Ubuntu 24.04 | aarch64, x86_64 |
+| **Linux** | glibc 2.31 (Ubuntu 20.04, Debian 11) | aarch64, x86_64 |
 
 ---
 
@@ -171,7 +171,9 @@ A built-in mpv command console with a command catalog, autocomplete suggestions,
 
 #### 7.1 Requirements
 
-- **Flutter** 3.27 or newer (Dart `^3.6.0`).
+- **Flutter** 3.38 or newer (Dart 3.10). Building for iOS needs Flutter 3.47.4 or newer.
+- **Android** SDK 24 (Android 7.0) or newer on the device.
+- **Linux** glibc 2.31 or newer, with ALSA; PipeWire or PulseAudio when installed.
 - The native toolchain for your target platform (Xcode for Apple, Android SDK and NDK for Android, the desktop build tools for Linux and Windows).
 
 #### 7.2 Run

@@ -54,6 +54,10 @@ mixin StreamListenerState<T extends StatefulWidget> on State<T> {
 /// Pairs a `player.stream.X` with its `player.state.X` seed in one
 /// widget so call sites never write `?? default` fallbacks. The single
 /// reactive primitive used across MPV Studio.
+///
+/// State streams replay their current value to each new listener, but that
+/// first event arrives after the first frame. [initial] fills that frame, so
+/// a widget never flashes a default before showing the real value.
 class Live<T> extends StatelessWidget {
   final Stream<T> stream;
   final T initial;
