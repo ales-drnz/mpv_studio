@@ -93,7 +93,6 @@ class RailShell extends StatelessWidget {
     );
 
     final stage = SafeArea(
-      left: false,
       bottom: mini == null,
       child: ClipRect(
         child: Material(type: MaterialType.transparency, child: body),
@@ -107,18 +106,20 @@ class RailShell extends StatelessWidget {
         children: [
           rail,
           Expanded(
-            child: mini == null
-                ? stage
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: stage),
-                      ColoredBox(
-                        color: Tokens.surface,
-                        child: SafeArea(top: false, left: false, child: mini),
-                      ),
-                    ],
-                  ),
+            child: withoutLeftInset(
+              mini == null
+                  ? stage
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: stage),
+                        ColoredBox(
+                          color: Tokens.surface,
+                          child: SafeArea(top: false, child: mini),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ],
       ),
