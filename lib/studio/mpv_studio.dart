@@ -93,38 +93,69 @@ class MpvStudio {
 
     final engine = await startAudioEngine(settings);
 
-    // Subscribed before anything loads, so no failure goes unseen.
-    final issues = PlaybackIssues.of(engine.player);
-    final queueDetails = QueueDetails.of(engine.player);
+    // From here a failure must not leave a player (and its OS media
+    // session) running: what was built is torn down, newest first, and the
+    // error goes on to the caller (the startup error screen, whose retry
+    // launches again).
+    final undo = <FutureOr<void> Function()>[
+      engine.player.dispose,
+      engine.consoleLog.dispose,
+      settings.dispose,
+    ];
+    try {
+      // Subscribed before anything loads, so no failure goes unseen.
+      final issues = PlaybackIssues.of(engine.player);
+      undo.add(issues.dispose);
+      final queueDetails = QueueDetails.of(engine.player);
+      undo.add(queueDetails.dispose);
 
-    final media = await connectMediaServers(engine.player);
+      final media = await connectMediaServers(engine.player);
+      undo.add(media.dispose);
 
-    // Volume normalization rides the engine's offline loudness scan; the
-    // subscription itself arms the scan, so an off toggle costs nothing.
-    final normalizer = LoudnessNormalizer(
-      engine.player,
-      settings,
-      guard: issues.guard,
-    )..restore();
+      // Volume normalization rides the engine's offline loudness scan; the
+      // subscription itself arms the scan, so an off toggle costs nothing.
+      final normalizer = LoudnessNormalizer(
+        engine.player,
+        settings,
+        guard: issues.guard,
+      )..restore();
+      undo.add(normalizer.dispose);
 
-    // The rack's bypass holds persistence while it plays the muted copy,
-    // so a quit mid-comparison keeps the real chain on disk.
-    final rack = RackController.forSettings(engine.player, settings);
+      // The rack's bypass holds persistence while it plays the muted copy,
+      // so a quit mid-comparison keeps the real chain on disk.
+      final rack = RackController.forSettings(engine.player, settings);
 
-    final studio = MpvStudio._(
-      player: engine.player,
-      settings: settings,
-      servers: media.servers,
-      favorites: media.favorites,
-      consoleLog: engine.consoleLog,
-      normalizer: normalizer,
-      issues: issues,
-      queueDetails: queueDetails,
-      disposeServers: media.dispose,
-      rack: rack,
-    );
-    studio._reportSettingFailures(engine.failures);
-    return studio;
+      final studio = MpvStudio._(
+        player: engine.player,
+        settings: settings,
+        servers: media.servers,
+        favorites: media.favorites,
+        consoleLog: engine.consoleLog,
+        normalizer: normalizer,
+        issues: issues,
+        queueDetails: queueDetails,
+        disposeServers: media.dispose,
+        rack: rack,
+      );
+      studio._reportSettingFailures(engine.failures);
+      return studio;
+    } on Object {
+      await undoAll(undo);
+      rethrow;
+    }
+  }
+
+  /// Runs [steps] newest first, each on its own: one that throws is
+  /// logged and the others still run.
+  @visibleForTesting
+  static Future<void> undoAll(List<FutureOr<void> Function()> steps) async {
+    for (final step in steps.reversed) {
+      try {
+        await step();
+      } on Object catch (e) {
+        debugPrint('Cleanup after a failed launch: $e');
+      }
+    }
   }
 
   void _reportSettingFailures(List<SettingFailure> failures) {
