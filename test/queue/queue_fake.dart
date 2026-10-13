@@ -174,12 +174,28 @@ class QueueFakePlayer extends FakePlayer {
   final List<Hook> registeredHooks = [];
   final List<int> continuedHooks = [];
 
+  /// The timeout of each registered hook.
+  final Map<Hook, Duration?> hookTimeouts = {};
+
+  /// Hooks whose registration throws.
+  final Set<Hook> failingHooks = {};
+
   @override
   Future<void> registerHook(
     Hook hook, {
     int priority = 0,
     Duration? timeout,
-  }) async => registeredHooks.add(hook);
+  }) async {
+    if (failingHooks.contains(hook)) {
+      throw const MpvCommandException(
+        name: 'hook_add',
+        code: -12,
+        message: 'refused',
+      );
+    }
+    registeredHooks.add(hook);
+    hookTimeouts[hook] = timeout;
+  }
 
   @override
   Future<void> continueHook(int id) async => continuedHooks.add(id);

@@ -92,12 +92,18 @@ class _ConsoleViewState extends State<ConsoleView>
     _scheduleScrollToEnd();
     listen(widget.log.entries, (e) => _add(ConsoleLine.log(e)));
     listen(
-      HookMonitor.of(widget.player).events,
-      (e) => _add(
-        ConsoleLine(
-          ConsoleLineKind.output,
-          'hook ${e.hook.mpvValue} (id ${e.id}), continued',
-        ),
+      HookMonitor.of(widget.player).reports,
+      (r) => _add(
+        r.continued
+            ? ConsoleLine(
+                ConsoleLineKind.output,
+                'hook ${r.event.hook.mpvValue} (id ${r.event.id}), continued',
+              )
+            : ConsoleLine(
+                ConsoleLineKind.error,
+                'hook ${r.event.hook.mpvValue} (id ${r.event.id}) could not '
+                'be continued; mpv waits for its timeout',
+              ),
       ),
     );
   }

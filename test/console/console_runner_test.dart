@@ -167,19 +167,35 @@ void main() {
   });
 
   test('hooks on registers every hook and continues each event', () async {
-    final events = <MpvHookEvent>[];
+    final reports = <HookReport>[];
     expect((await run('hooks on')).single, startsWith('output: Reporting'));
     expect(player.registeredHooks, Hook.values);
-    final sub = HookMonitor.of(player).events.listen(events.add);
+    final sub = HookMonitor.of(player).reports.listen(reports.add);
     player.hooks.add(const MpvHookEvent(7, Hook.load));
     await pumpEventQueue();
     expect(player.continuedHooks, [7]);
-    expect(events.single.hook, Hook.load);
+    expect(reports.single.event.hook, Hook.load);
+    expect(reports.single.continued, isTrue);
     await run('hooks off');
     player.hooks.add(const MpvHookEvent(8, Hook.unload));
     await pumpEventQueue();
     expect(player.continuedHooks, [7, 8]);
-    expect(events, hasLength(1));
+    expect(reports, hasLength(1));
     await sub.cancel();
+  });
+
+  test('the resolver hooks keep the resolver timeout', () async {
+    await run('hooks on');
+    // A short timeout on on_load would cut a slow source resolve short.
+    expect(player.hookTimeouts[Hook.load], isNull);
+    expect(player.hookTimeouts[Hook.loadFail], isNull);
+    expect(player.hookTimeouts[Hook.unload], HookMonitor.timeout);
+  });
+
+  test('a hook that fails to register is reported, not claimed', () async {
+    player.failingHooks.add(Hook.preloaded);
+    final out = await run('hooks on');
+    expect(out.first, isNot(contains('on_preloaded')));
+    expect(out.last, 'error: Could not register: on_preloaded');
   });
 }

@@ -329,12 +329,21 @@ class ConsoleRunner {
     final monitor = HookMonitor.of(player);
     switch (mode) {
       case 'on':
-        await monitor.start();
+        final failed = await monitor.start();
+        final names = [
+          for (final h in Hook.values)
+            if (monitor.registered.contains(h)) h.mpvValue,
+        ];
         return [
-          const ConsoleResult.output(
-            'Reporting hooks: on_before_start_file, on_load, on_load_fail, '
-            'on_preloaded, on_unload, on_after_end_file',
-          ),
+          if (names.isEmpty)
+            const ConsoleResult.error('No hook could be registered')
+          else
+            ConsoleResult.output('Reporting hooks: ${names.join(', ')}'),
+          if (failed.isNotEmpty && names.isNotEmpty)
+            ConsoleResult.error(
+              'Could not register: '
+              '${failed.map((h) => h.mpvValue).join(', ')}',
+            ),
         ];
       case 'off':
         monitor.stop();
