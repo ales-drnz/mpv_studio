@@ -139,11 +139,11 @@ class CacheBarPainter extends CustomPainter {
       final t = g.position + secondsOf(secs);
       if (t < g.axisEnd) {
         final cx = x(t);
-        _dashed(canvas, Offset(cx, _top - 4), Offset(cx, _top + _barH + 6));
+        _dashed(canvas, Offset(cx, _top - 4), Offset(cx, _top + _barH + 30));
         paintChartLabel(
           canvas,
           'cache secs',
-          Offset(math.min(cx + 4, w - 60), _top + _barH + 22),
+          Offset(math.min(cx + 4, w - 60), _top + _barH + 32),
           Tokens.fgFaint,
         );
       }
@@ -171,29 +171,37 @@ class CacheBarPainter extends CustomPainter {
       center: true,
     );
 
-    // Brackets under the read part: behind and ahead.
+    // Brackets under the read part: behind and ahead, their labels
+    // anchored at the playhead and pushed apart so they never overlap.
     final cur = g.current;
     if (cur != null) {
       final by = _top + _barH + 8;
       final l = x(cur.$1), r = x(cur.$2);
+      final behind = 'behind ${EngineFormat.seconds(g.behind)}';
+      final ahead = 'ahead ${EngineFormat.seconds(g.ahead)}';
+      var behindEnd = px - 4;
       if (px - l > 6) {
         _bracket(canvas, l + 1, px - 3, by);
+        behindEnd = math.max(behindEnd, chartLabelWidth(behind));
         paintChartLabel(
           canvas,
-          'behind ${EngineFormat.seconds(g.behind)}',
-          Offset((l + px) / 2, by + 8),
+          behind,
+          Offset(behindEnd, by + 8),
           Tokens.fgDim,
-          center: true,
+          end: true,
         );
       }
-      if (r - px > 6) {
+      final aheadStart = math.min(
+        math.max(px + 4, px - l > 6 ? behindEnd + 8 : 0.0),
+        w - chartLabelWidth(ahead),
+      );
+      if (r - px > 6 && aheadStart >= (px - l > 6 ? behindEnd + 8 : 0.0)) {
         _bracket(canvas, px + 3, r - 1, by);
         paintChartLabel(
           canvas,
-          'ahead ${EngineFormat.seconds(g.ahead)}',
-          Offset((px + r) / 2, by + 8),
+          ahead,
+          Offset(aheadStart, by + 8),
           Tokens.fgDim,
-          center: true,
         );
       }
     }

@@ -6,6 +6,9 @@ import '../engine_format.dart';
 import '../engine_snapshot.dart';
 import 'engine_parts.dart';
 
+/// Below this width the decoder and device formats stack.
+const double _sideBySide = 360;
+
 /// The audio output: its lifecycle, driver and device, and the format
 /// coming out of the decoder next to the one sent to the device.
 class OutputView extends StatelessWidget {
@@ -55,7 +58,7 @@ class OutputView extends StatelessWidget {
                 title: 'To the device',
                 params: s.audioOutParams,
               );
-              if (c.maxWidth < 360) {
+              if (c.maxWidth < _sideBySide) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

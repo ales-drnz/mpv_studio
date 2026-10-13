@@ -62,6 +62,7 @@ class CacheView extends StatelessWidget {
           ReadoutGrid(
             children: [
               Readout('Cached ahead', EngineFormat.seconds(s.bufferDuration)),
+              Readout('Buffered to', EngineFormat.seconds(s.buffer)),
               Readout('Behind', EngineFormat.seconds(geometry.behind)),
               Readout('Speed', EngineFormat.rate(s.cacheSpeed)),
               Readout(
@@ -93,13 +94,18 @@ class CacheView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Tokens.s6),
-          SizedBox(
-            height: 72,
-            child: CustomPaint(
-              painter: CacheHistoryPainter(
-                samples: snapshot.cacheHistory,
-                now: snapshot.now,
-                pauseWait: pauseOn ? secondsOf(s.cache.pauseWait) : null,
+          Semantics(
+            label: 'Cached ahead over the last minute',
+            value: EngineFormat.seconds(s.bufferDuration),
+            excludeSemantics: true,
+            child: SizedBox(
+              height: 72,
+              child: CustomPaint(
+                painter: CacheHistoryPainter(
+                  samples: snapshot.cacheHistory,
+                  now: snapshot.now,
+                  pauseWait: pauseOn ? secondsOf(s.cache.pauseWait) : null,
+                ),
               ),
             ),
           ),

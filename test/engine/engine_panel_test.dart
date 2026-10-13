@@ -7,9 +7,10 @@ import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/engine/engine_page.dart';
 import 'package:mpv_studio/features/engine/widgets/analysis_view.dart';
 import 'package:mpv_studio/features/engine/widgets/chain_view.dart';
+import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/theme.dart';
 
-import 'support/fake_player.dart';
+import '../support/fake_player.dart';
 
 PlayerState _streaming() => PlayerState(
   playWhenReady: true,
@@ -72,6 +73,8 @@ Future<void> _pump(WidgetTester tester, Widget child, Size size) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.dark,
+      builder: (context, child) =>
+          LayoutScope(inputMode: InputMode.pointer, child: child!),
       home: Scaffold(body: child),
     ),
   );
@@ -166,6 +169,46 @@ void main() {
       find.text(ChainView.nameOf(const BassEffect(gain: 4))),
       findsOneWidget,
     );
+  });
+
+  testWidgets('the play request and the audio are two labelled facts', (
+    tester,
+  ) async {
+    // As after `loadfile URL append-play` from the Console: audio runs,
+    // nothing asked the Player API to play.
+    player.emit(
+      (s) => s.copyWith(
+        playWhenReady: false,
+        playing: true,
+        percentPos: 16.7,
+        playtimeRemaining: const Duration(minutes: 3, seconds: 20),
+        streamPath: 'plex-transcode://42',
+        streamOpenFilename: 'https://plex.test/transcode/42.flac',
+        buffer: const Duration(seconds: 75),
+      ),
+    );
+    await _pump(tester, EnginePanel(player: player), const Size(1280, 1600));
+
+    expect(find.text('Play requested'), findsOneWidget);
+    expect(find.text('Audio running'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Play requested (playWhenReady): no'),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel('Audio running (playing): yes'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('engine-intent-note')), findsOneWidget);
+    expect(find.text('40.0 s, 17%'), findsOneWidget);
+    expect(find.text('3:20'), findsOneWidget);
+    expect(find.text('plex-transcode://42'), findsOneWidget);
+    expect(find.text('https://plex.test/transcode/42.flac'), findsOneWidget);
+    expect(find.text('1:15'), findsOneWidget, reason: 'buffered to');
+
+    player.emit((s) => s.copyWith(playWhenReady: true));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.byKey(const ValueKey('engine-intent-note')), findsNothing);
   });
 
   test('waveform phases', () {

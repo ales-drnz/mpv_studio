@@ -7,8 +7,15 @@ import '../engine_format.dart';
 import '../engine_snapshot.dart';
 import 'engine_parts.dart';
 
-/// The headline: `playbackState` with its three axes as status lights,
-/// and the libmpv and FFmpeg builds.
+/// The headline: `playbackState`, then what the app asked for next to
+/// what the engine does, where the track stands, what was opened, and the
+/// libmpv and FFmpeg builds.
+///
+/// The request (`playWhenReady`) and the audio (`playing`) are two facts:
+/// the request changes only through the Player API (play, pause, open,
+/// stop), so a raw command can start the audio without it, and a request
+/// waits while the engine loads or buffers. The card shows both, and says
+/// why when they differ.
 class StatusView extends StatelessWidget {
   final EngineSnapshot snapshot;
   const StatusView({super.key, required this.snapshot});
@@ -22,11 +29,27 @@ class StatusView extends StatelessWidget {
     MpvPlaybackState.completed => Tokens.fgDim,
   };
 
+  /// Why the request and the audio differ, or null when they agree.
+  static String? mismatch(PlayerState s) {
+    if (s.playing && !s.playWhenReady) {
+      return 'Audio runs without a play request: a raw command started '
+          'it. The request follows the next play or pause.';
+    }
+    if (s.playWhenReady && !s.playing && !s.completed) {
+      return 'Play requested, waiting for the engine to load or buffer.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = snapshot.state;
     final phase = snapshot.playbackState;
     final color = colorOf(phase);
+    final note = mismatch(s);
+    final opened = s.streamOpenFilename;
+    final source = s.streamPath.isNotEmpty ? s.streamPath : s.path;
+    final rewritten = opened.isNotEmpty && opened != source;
 
     final headline = Semantics(
       label: 'Playback state ${EngineFormat.playbackState(phase)}',
@@ -41,64 +64,159 @@ class StatusView extends StatelessWidget {
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
           const SizedBox(width: Tokens.s12),
-          Text(EngineFormat.playbackState(phase), style: Tokens.title),
+          Flexible(
+            child: Text(
+              EngineFormat.playbackState(phase),
+              style: Tokens.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
 
-    final spies = Wrap(
-      spacing: Tokens.s16,
-      runSpacing: Tokens.s8,
-      children: [
-        Spy(label: 'playWhenReady', on: s.playWhenReady, color: Tokens.accent),
-        Spy(label: 'playing', on: s.playing),
-        Spy(label: 'completed', on: s.completed, color: Tokens.fgDim),
-      ],
-    );
-
-    final versions = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _Version('libmpv', s.mpvVersion),
-        const SizedBox(height: Tokens.s4),
-        _Version('FFmpeg', s.ffmpegVersion),
-      ],
-    );
-
     return EngineCard(
-      title: 'Engine',
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final wide = c.maxWidth >= 520;
-          final left = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+      title: 'Playback',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          headline,
+          const SizedBox(height: Tokens.s12),
+          ReadoutGrid(
+            minCellWidth: 150,
             children: [
-              headline,
-              const SizedBox(height: Tokens.s12),
-              spies,
+              _Fact(
+                title: 'Play requested',
+                wire: 'playWhenReady',
+                on: s.playWhenReady,
+                color: Tokens.accent,
+              ),
+              _Fact(title: 'Audio running', wire: 'playing', on: s.playing),
+              _Fact(
+                title: 'Reached the end',
+                wire: 'completed',
+                on: s.completed,
+                color: Tokens.fgDim,
+              ),
             ],
-          );
-          if (!wide) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                left,
-                const SizedBox(height: Tokens.s16),
-                versions,
-              ],
-            );
-          }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          if (note != null) ...[
+            const SizedBox(height: Tokens.s8),
+            Text(
+              note,
+              key: const ValueKey('engine-intent-note'),
+              style: Tokens.caption.copyWith(color: Tokens.amber),
+            ),
+          ],
+          const SizedBox(height: Tokens.s16),
+          ReadoutGrid(
             children: [
-              Expanded(child: left),
-              const SizedBox(width: Tokens.s16),
-              versions,
+              Readout(
+                'Position',
+                s.duration > Duration.zero
+                    ? '${EngineFormat.seconds(s.position)}, '
+                          '${s.percentPos.round()}%'
+                    : EngineFormat.seconds(s.position),
+              ),
+              Readout('Remaining', EngineFormat.seconds(s.playtimeRemaining)),
             ],
-          );
-        },
+          ),
+          if (source.isNotEmpty) ...[
+            const SizedBox(height: Tokens.s12),
+            _Path(label: 'Source', value: source),
+            if (rewritten) ...[
+              const SizedBox(height: Tokens.s8),
+              _Path(
+                label: 'Opened as (rewritten by the source resolver)',
+                value: opened,
+                color: Tokens.accent,
+              ),
+            ],
+          ],
+          const SizedBox(height: Tokens.s16),
+          Wrap(
+            spacing: Tokens.s16,
+            runSpacing: Tokens.s8,
+            children: [
+              _Version('libmpv', s.mpvVersion),
+              _Version('FFmpeg', s.ffmpegVersion),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One yes or no fact with its light: the plain name over the property.
+class _Fact extends StatelessWidget {
+  final String title;
+  final String wire;
+  final bool on;
+  final Color? color;
+  const _Fact({
+    required this.title,
+    required this.wire,
+    required this.on,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: Tokens.s8),
+      child: Semantics(
+        label: '$title ($wire): ${on ? 'yes' : 'no'}',
+        excludeSemantics: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Spy(label: on ? 'yes' : 'no', on: on, color: color),
+            const SizedBox(height: Tokens.s2),
+            Text(
+              title,
+              style: Tokens.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              wire,
+              style: Tokens.caption.copyWith(fontFamily: Tokens.mono),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A path or URL, one line, the whole of it in a tooltip.
+class _Path extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+  const _Path({required this.label, required this.value, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: value,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Tokens.caption),
+          const SizedBox(height: Tokens.s2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Tokens.numeric.copyWith(color: color ?? Tokens.fg),
+          ),
+        ],
       ),
     );
   }
@@ -114,7 +232,8 @@ class _Version extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(width: 56, child: Text(name, style: Tokens.caption)),
+        Text(name, style: Tokens.caption),
+        const SizedBox(width: Tokens.s8),
         ValueBadge(value.isEmpty ? 'n/a' : value, color: Tokens.fg),
       ],
     );
