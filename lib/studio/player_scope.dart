@@ -6,6 +6,7 @@ import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
+import 'fx_bypass.dart';
 import 'loudness_normalizer.dart';
 import 'mpv_studio.dart';
 import 'playback_issues.dart';
@@ -40,6 +41,9 @@ class PlayerScope extends InheritedWidget {
   static LoudnessNormalizer normalizerOf(BuildContext context) =>
       _scope(context).normalizer;
 
+  /// The FX bypass (before and after comparison of the effects chain).
+  static FxBypass fxBypassOf(BuildContext context) => _scope(context).fxBypass;
+
   /// The connected server of the given [kind].
   static MediaServer serverOf(BuildContext context, ServerKind kind) =>
       _scope(context).servers[kind]!;
@@ -51,6 +55,11 @@ class PlayerScope extends InheritedWidget {
   /// Engine errors made readable (toasts, Console badge, failed entries).
   static PlaybackIssues issuesOf(BuildContext context) =>
       _scope(context).issues;
+
+  /// [issuesOf], or null outside a [PlayerScope] (a shell hosted on its
+  /// own, as in the navigation tests).
+  static PlaybackIssues? maybeIssuesOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PlayerScope>()?.studio.issues;
 
   /// What the engine read from the queue entries that have played.
   static QueueDetails queueDetailsOf(BuildContext context) =>

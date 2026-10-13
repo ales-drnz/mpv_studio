@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/console/console_page.dart';
 import '../features/effects/effects_page.dart';
+import '../features/engine/engine_page.dart';
 import '../features/now_playing/now_playing_page.dart';
 import '../features/queue/queue_page.dart';
 import '../features/settings/settings_page.dart';
@@ -61,6 +62,8 @@ Widget _pageFor(Section section) {
       return const QueuePage();
     case Section.effects:
       return const EffectsPage();
+    case Section.engine:
+      return const EnginePage();
     case Section.stream:
       return const StreamPage();
     case Section.settings:

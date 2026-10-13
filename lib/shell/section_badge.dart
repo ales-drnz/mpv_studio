@@ -14,9 +14,10 @@ class SectionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (section != Section.console) return child;
+    final issues = PlayerScope.maybeIssuesOf(context);
+    if (section != Section.console || issues == null) return child;
     return ValueListenableBuilder<int>(
-      valueListenable: PlayerScope.issuesOf(context).unseenLogErrors,
+      valueListenable: issues.unseenLogErrors,
       child: child,
       builder: (context, count, child) => Badge(
         isLabelVisible: count > 0,

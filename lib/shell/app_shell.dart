@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../studio/player_scope.dart';
 import '../ui/tokens.dart';
 import 'desktop_shell.dart';
+import 'mini_player.dart';
 import 'mobile_shell.dart';
 import 'playback_notice_host.dart';
+import 'playback_shortcuts.dart';
 import 'router.dart';
 import 'sections.dart';
 
@@ -46,6 +49,17 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
     final section = Section.values[navigationShell.currentIndex];
+    final player = PlayerScope.of(context);
+    // The mini-player rides along everywhere but Playback, which already
+    // shows the full transport.
+    Widget? mini(bool compact) => section == Section.nowPlaying
+        ? null
+        : MiniPlayer(
+            player: player,
+            bypass: PlayerScope.fxBypassOf(context),
+            compact: compact,
+            onOpen: () => _select(Section.nowPlaying),
+          );
 
     // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars on
     // (the shells themselves are custom, not Scaffolds).
@@ -58,17 +72,22 @@ class _AppShellState extends State<AppShell> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final desktop = constraints.maxWidth >= Tokens.desktopBreakpoint;
-          if (desktop) {
-            return DesktopShell(
-              section: section,
-              onSelect: _select,
-              body: navigationShell,
-            );
-          }
-          return MobileShell(
-            section: section,
-            onSelect: _select,
-            body: navigationShell,
+          return PlaybackShortcuts(
+            player: player,
+            enabled: desktop,
+            child: desktop
+                ? DesktopShell(
+                    section: section,
+                    onSelect: _select,
+                    body: navigationShell,
+                    miniPlayer: mini(false),
+                  )
+                : MobileShell(
+                    section: section,
+                    onSelect: _select,
+                    body: navigationShell,
+                    miniPlayer: mini(true),
+                  ),
           );
         },
       ),
