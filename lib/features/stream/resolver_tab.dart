@@ -83,11 +83,41 @@ class ResolverTab extends StatelessWidget {
   }
 }
 
-class _ResolverControls extends StatelessWidget {
+/// Why [url] cannot be signed, or null when it can: the resolver only
+/// handles full http and https URLs.
+String? signableUrlProblem(String url) {
+  final uri = Uri.tryParse(url);
+  final ok =
+      uri != null &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      SignedUrlResolver.unwrap(SignedUrlResolver.wrap(url)) != null;
+  return ok
+      ? null
+      : 'Enter a full http or https URL, e.g. http://localhost:8000/a.flac.';
+}
+
+class _ResolverControls extends StatefulWidget {
   const _ResolverControls({required this.actions, required this.resolver});
 
   final StreamActions actions;
   final SignedUrlResolver resolver;
+
+  @override
+  State<_ResolverControls> createState() => _ResolverControlsState();
+}
+
+class _ResolverControlsState extends State<_ResolverControls> {
+  String? _problem;
+
+  StreamActions get actions => widget.actions;
+  SignedUrlResolver get resolver => widget.resolver;
+
+  /// Sends [url] signed, or says why it cannot be.
+  void _send(String url, Future<void> Function(Media media) send) {
+    final problem = signableUrlProblem(url);
+    setState(() => _problem = problem);
+    if (problem == null) send(signedMedia(url));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,9 +145,19 @@ class _ResolverControls extends StatelessWidget {
           const SizedBox(height: Tokens.s12),
           CustomUrlBar(
             hint: 'URL to sign, e.g. http://localhost:8000/a.flac',
-            onPlay: (url) => actions.play(signedMedia(url)),
-            onQueue: (url) => actions.enqueue([signedMedia(url)]),
+            onPlay: (url) => _send(url, actions.play),
+            onQueue: (url) => _send(url, (m) => actions.enqueue([m])),
           ),
+          if (_problem != null) ...[
+            const SizedBox(height: Tokens.s8),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _problem!,
+                style: Tokens.label.copyWith(color: Tokens.red),
+              ),
+            ),
+          ],
           const SizedBox(height: Tokens.s16),
           ...referenceRows(
             categories: _signedExamples,

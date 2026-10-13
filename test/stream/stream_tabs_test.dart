@@ -118,6 +118,39 @@ void main() {
         'studio-signed://https://streams.radiomast.io/ref-128k-mp3-stereo',
       );
     });
+
+    testWidgets('refuses to sign a URL without a scheme', (tester) async {
+      final player = StreamPlayer();
+      await pumpAt(
+        tester,
+        streamView(player: player, tab: StreamTab.resolver),
+        '1440x900',
+      );
+      final field = find.widgetWithText(
+        TextField,
+        'URL to sign, e.g. http://localhost:8000/a.flac',
+      );
+      await tester.enterText(field, 'localhost:8000/a.flac');
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(player.loaded, isEmpty);
+      expect(
+        find.textContaining('Enter a full http or https URL'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(field, 'http://localhost:8000/a.flac');
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(
+        player.loaded.single.uri,
+        'studio-signed://http://localhost:8000/a.flac',
+      );
+      expect(
+        find.textContaining('Enter a full http or https URL'),
+        findsNothing,
+      );
+    });
   });
 
   group('Lab URL entry', () {
