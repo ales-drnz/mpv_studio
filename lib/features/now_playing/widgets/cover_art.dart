@@ -74,7 +74,7 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       color: Tokens.surface2,
       child: Center(
         child: Icon(Icons.music_note_rounded, size: 44, color: Tokens.fgFaint),

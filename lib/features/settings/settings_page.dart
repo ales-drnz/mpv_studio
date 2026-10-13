@@ -415,7 +415,7 @@ class _ResumeGroupState extends State<_ResumeGroup> {
                   : _dir,
               trailing: GestureDetector(
                 onTap: _pickDir,
-                child: const ValueBadge('Choose…', color: Tokens.accent),
+                child: ValueBadge('Choose…', color: Tokens.accent),
               ),
             ),
           ],
@@ -431,7 +431,7 @@ class _ResumeGroupState extends State<_ResumeGroup> {
                   await player.writeResumeConfig();
                   _toast('Resume point saved');
                 },
-                child: const ValueBadge('Save', color: Tokens.accent),
+                child: ValueBadge('Save', color: Tokens.accent),
               ),
             ),
             SettingTile(

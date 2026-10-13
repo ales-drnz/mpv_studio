@@ -595,11 +595,7 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.music_note_rounded,
-                size: 16,
-                color: Tokens.accent,
-              ),
+              Icon(Icons.music_note_rounded, size: 16, color: Tokens.accent),
               const SizedBox(width: Tokens.s8),
               Expanded(
                 child: Text(
@@ -682,11 +678,11 @@ class _YtExampleTile extends StatelessWidget {
                     width: 18,
                     height: 18,
                     child: resolving
-                        ? const CircularProgressIndicator(
+                        ? CircularProgressIndicator(
                             strokeWidth: 2,
                             color: Tokens.accent,
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.volume_up_rounded,
                             size: 18,
                             color: Tokens.accent,
@@ -865,11 +861,7 @@ class _StreamTile extends StatelessWidget {
             child: Row(
               children: [
                 if (current) ...[
-                  const Icon(
-                    Icons.volume_up_rounded,
-                    size: 16,
-                    color: Tokens.accent,
-                  ),
+                  Icon(Icons.volume_up_rounded, size: 16, color: Tokens.accent),
                   const SizedBox(width: Tokens.s12),
                 ],
                 Expanded(

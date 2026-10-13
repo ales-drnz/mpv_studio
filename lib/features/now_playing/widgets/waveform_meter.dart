@@ -675,7 +675,7 @@ class _ScanIndicator extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(2),
                   child: f == null
-                      ? const LinearProgressIndicator(
+                      ? LinearProgressIndicator(
                           minHeight: 3,
                           color: Tokens.accent,
                           backgroundColor: Tokens.line2,
@@ -816,7 +816,7 @@ class _HScrollBarState extends State<_HScrollBar> {
             // Flush, square strip — a recessed track colour so it reads as a
             // control, with a hairline above separating it from the waveform.
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Tokens.surface2,
                 border: Border(top: BorderSide(color: Tokens.line, width: 1)),
               ),
@@ -969,7 +969,7 @@ class _MeterPainter extends CustomPainter {
         );
         tp.text = TextSpan(
           text: formatDuration(Duration(microseconds: (t * 1e6).round())),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: Tokens.mono,
             fontSize: 9.5,
             color: Tokens.fgDim,
@@ -1050,7 +1050,7 @@ class _MeterPainter extends CustomPainter {
     double xOfSecs(double tSecs) => (tSecs - tLeft) * pxPerSec;
     final xa = abA == null ? null : xOfSecs(abA!.inMicroseconds / 1e6);
     final xb = abB == null ? null : xOfSecs(abB!.inMicroseconds / 1e6);
-    const loop = Tokens.amber;
+    final loop = Tokens.amber;
     // Shade the loop span once both ends are set (A < B).
     if (xa != null && xb != null && xb > xa) {
       final l = xa.clamp(0.0, w);
@@ -1072,7 +1072,7 @@ class _MeterPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
         text: TextSpan(
           text: label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: Tokens.mono,
             fontSize: 9,
             fontWeight: FontWeight.w700,
@@ -1107,7 +1107,7 @@ class _MeterPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
         text: TextSpan(
           text: formatDuration(Duration(microseconds: (t * 1e6).round())),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: Tokens.mono,
             fontSize: 9.5,
             color: Tokens.fg,
@@ -1258,7 +1258,7 @@ class _InstantMenu extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         shape: Tokens.squircle(
           Tokens.rMd,
-          side: const BorderSide(color: Tokens.line2),
+          side: BorderSide(color: Tokens.line2),
         ),
         child: IntrinsicWidth(
           child: Column(
@@ -1268,7 +1268,7 @@ class _InstantMenu extends StatelessWidget {
               const SizedBox(height: Tokens.s4),
               for (final e in entries)
                 if (e.isDivider)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: Tokens.s4),
                     child: Divider(
                       height: 1,

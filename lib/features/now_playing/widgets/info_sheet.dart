@@ -32,7 +32,7 @@ class _InfoSheet extends StatelessWidget {
     final maxH = MediaQuery.sizeOf(context).height * 0.85;
     return Container(
       constraints: BoxConstraints(maxHeight: maxH),
-      decoration: const ShapeDecoration(
+      decoration: ShapeDecoration(
         color: Tokens.surface,
         shape: ContinuousRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -518,7 +518,7 @@ class _StatCell extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: Tokens.mono,
               fontSize: 13,
               color: Tokens.fg,

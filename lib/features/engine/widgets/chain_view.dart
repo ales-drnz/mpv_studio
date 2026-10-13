@@ -38,7 +38,7 @@ class ChainView extends StatelessWidget {
                 ? '$off more stage${off == 1 ? '' : 's'} switched off.'
                 : null),
       trailing: bypassed != null
-          ? const StatePill('Bypass', color: Tokens.amber)
+          ? StatePill('Bypass', color: Tokens.amber)
           : StatePill(
               '${active.length} active',
               color: Tokens.accent,
@@ -123,5 +123,5 @@ class _Arrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const Icon(Icons.arrow_forward_rounded, size: 14, color: Tokens.fgFaint);
+      Icon(Icons.arrow_forward_rounded, size: 14, color: Tokens.fgFaint);
 }

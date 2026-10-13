@@ -753,7 +753,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                 AnimatedRotation(
                   turns: _open ? 0.5 : 0,
                   duration: const Duration(milliseconds: 150),
-                  child: const Icon(
+                  child: Icon(
                     Icons.expand_more_rounded,
                     size: 18,
                     color: Tokens.fgDim,

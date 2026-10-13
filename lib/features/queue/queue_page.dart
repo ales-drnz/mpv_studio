@@ -333,11 +333,7 @@ class _PlaylistBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.queue_music_rounded,
-              size: 16,
-              color: Tokens.accent,
-            ),
+            Icon(Icons.queue_music_rounded, size: 16, color: Tokens.accent),
             const SizedBox(width: Tokens.s8),
             Expanded(
               child: Text(
@@ -391,16 +387,12 @@ class _QueueTile extends StatelessWidget {
     final duration = info.duration;
     final Widget lead;
     if (failed) {
-      lead = const Tooltip(
+      lead = Tooltip(
         message: 'Could not play this track',
         child: Icon(Icons.error_outline_rounded, size: 16, color: Tokens.red),
       );
     } else if (current) {
-      lead = const Icon(
-        Icons.volume_up_rounded,
-        size: 16,
-        color: Tokens.accent,
-      );
+      lead = Icon(Icons.volume_up_rounded, size: 16, color: Tokens.accent);
     } else {
       lead = Text(
         '${index + 1}',
@@ -484,7 +476,7 @@ class _QueueTile extends StatelessWidget {
                 // Drag-to-reorder handle (we disabled the default one).
                 ReorderableDragStartListener(
                   index: index,
-                  child: const MouseRegion(
+                  child: MouseRegion(
                     cursor: SystemMouseCursors.grab,
                     child: Padding(
                       padding: EdgeInsets.all(Tokens.s6),
@@ -601,7 +593,7 @@ class _ThumbPlaceholder extends StatelessWidget {
   const _ThumbPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const ColoredBox(
+  Widget build(BuildContext context) => ColoredBox(
     color: Tokens.surface2,
     child: Center(
       child: Icon(Icons.music_note_rounded, size: 16, color: Tokens.fgFaint),
@@ -650,15 +642,11 @@ class _EmptyQueue extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.queue_music_rounded,
-            size: 40,
-            color: Tokens.fgFaint,
-          ),
+          Icon(Icons.queue_music_rounded, size: 40, color: Tokens.fgFaint),
           const SizedBox(height: Tokens.s12),
-          const Text('Queue is empty', style: Tokens.label),
+          Text('Queue is empty', style: Tokens.label),
           const SizedBox(height: Tokens.s4),
-          const Text(
+          Text(
             'Add files, a folder, or drop them here.',
             style: Tokens.caption,
           ),

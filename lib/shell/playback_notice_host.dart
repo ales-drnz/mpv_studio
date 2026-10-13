@@ -55,7 +55,7 @@ class _PlaybackNoticeHostState extends State<PlaybackNoticeHost>
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        content: Text(notice.message, style: const TextStyle(color: Tokens.fg)),
+        content: Text(notice.message, style: TextStyle(color: Tokens.fg)),
         backgroundColor: Tokens.surface3,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 6),

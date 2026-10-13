@@ -116,7 +116,7 @@ class StageEditor extends StatelessWidget {
       );
     } else if (isMeterStage(e)) {
       children.add(
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(vertical: Tokens.s8),
           child: Text(
             'Feeds the live loudness meter. It measures the audio at this '
@@ -169,7 +169,7 @@ class StageEditor extends StatelessWidget {
         }
         if (d.params.isEmpty) {
           children.add(
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: Tokens.s8),
               child: Text('No adjustable parameters.', style: Tokens.caption),
             ),

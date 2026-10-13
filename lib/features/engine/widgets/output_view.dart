@@ -60,7 +60,7 @@ class OutputView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     input,
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: Tokens.s6),
                       child: Icon(
                         Icons.arrow_downward_rounded,
@@ -76,7 +76,7 @@ class OutputView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(child: input),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: Tokens.s8),
                     child: Icon(
                       Icons.arrow_forward_rounded,

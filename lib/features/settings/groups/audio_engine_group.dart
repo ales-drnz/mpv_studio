@@ -99,7 +99,7 @@ class _AudioEngineGroupState extends State<AudioEngineGroup> {
               padding: const EdgeInsets.symmetric(vertical: Tokens.s6),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text('Reload audio engine', style: Tokens.body),
                   ),
                   IconButton(
@@ -353,7 +353,7 @@ class _ClientNameFieldState extends State<_ClientNameField> {
                 controller: _controller,
                 style: Tokens.body,
                 cursorColor: Tokens.accent,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
                   hintText: 'mpv_studio',

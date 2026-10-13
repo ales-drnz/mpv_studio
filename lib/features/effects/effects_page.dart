@@ -165,7 +165,7 @@ class _RackHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Signal chain', style: Tokens.heading),
+                Text('Signal chain', style: Tokens.heading),
                 const SizedBox(height: 2),
                 Text(
                   n == 0
@@ -264,18 +264,14 @@ class _ErrorBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, size: 16, color: Tokens.red),
+          Icon(Icons.error_outline_rounded, size: 16, color: Tokens.red),
           const SizedBox(width: Tokens.s8),
           Expanded(child: Text(rack.error!, style: Tokens.label)),
           IconButton(
             tooltip: 'Dismiss',
             visualDensity: VisualDensity.compact,
             onPressed: rack.clearError,
-            icon: const Icon(
-              Icons.close_rounded,
-              size: 16,
-              color: Tokens.fgDim,
-            ),
+            icon: Icon(Icons.close_rounded, size: 16, color: Tokens.fgDim),
           ),
         ],
       ),
@@ -299,7 +295,7 @@ class _Node extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const ShapeDecoration(
+            decoration: ShapeDecoration(
               color: Tokens.accentDim,
               shape: CircleBorder(),
             ),
@@ -332,14 +328,14 @@ class _EmptyRack extends StatelessWidget {
       decoration: ShapeDecoration(
         shape: Tokens.squircle(
           Tokens.rMd,
-          side: const BorderSide(color: Tokens.line2),
+          side: BorderSide(color: Tokens.line2),
         ),
       ),
       child: Column(
         children: [
-          const Text('The audio plays as decoded.', style: Tokens.body),
+          Text('The audio plays as decoded.', style: Tokens.body),
           const SizedBox(height: Tokens.s4),
-          const Text(
+          Text(
             'Add a stage, or open a quick editor above.',
             style: Tokens.caption,
           ),
@@ -452,7 +448,7 @@ class QuickEditorScreen extends StatelessWidget {
                 ),
                 Expanded(
                   child: stage == null
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             'This stage is no longer in the chain.',
                             style: Tokens.caption,

@@ -45,7 +45,7 @@ class _Line {
 class _ConsolePageState extends State<ConsolePage>
     with StreamListenerState<ConsolePage> {
   static const _max = 2000;
-  static const _mono = TextStyle(
+  static TextStyle get _mono => TextStyle(
     fontFamily: Tokens.mono,
     fontSize: 12,
     height: 1.5,
@@ -558,17 +558,14 @@ class _ConsolePageState extends State<ConsolePage>
         ),
         child: Row(
           children: [
-            const Text(
-              '›',
-              style: TextStyle(color: Tokens.accent, fontSize: 16),
-            ),
+            Text('›', style: TextStyle(color: Tokens.accent, fontSize: 16)),
             const SizedBox(width: Tokens.s8),
             Expanded(
               // Content-sized so the Row centres it vertically in the pill.
               child: TextField(
                 controller: _input,
                 focusNode: _inputFocus,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: Tokens.mono,
                   fontSize: 12.5,
                   color: Tokens.fg,
@@ -581,7 +578,7 @@ class _ConsolePageState extends State<ConsolePage>
                 onTap: () => _recompute(),
                 onChanged: (_) => _recompute(),
                 onSubmitted: _run,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
                   hintText: 'command',
                   hintStyle: Tokens.caption,
@@ -728,20 +725,20 @@ class _SearchField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, size: 15, color: Tokens.fgFaint),
+          Icon(Icons.search_rounded, size: 15, color: Tokens.fgFaint),
           const SizedBox(width: Tokens.s6),
           Expanded(
             // Content-sized so the Row centres it vertically in the pill.
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: Tokens.mono,
                 fontSize: 12,
                 color: Tokens.fg,
               ),
               cursorColor: Tokens.accent,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Search log',
                 hintStyle: Tokens.caption,
@@ -760,7 +757,7 @@ class _SearchField extends StatelessWidget {
                       onChanged('');
                     },
                     customBorder: const CircleBorder(),
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.all(2),
                       child: Icon(
                         Icons.close_rounded,

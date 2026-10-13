@@ -58,7 +58,7 @@ class GridCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Tokens.fg,
@@ -77,7 +77,7 @@ class GridCard extends StatelessWidget {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const ShapeDecoration(
+                    decoration: ShapeDecoration(
                       color: Tokens.accent,
                       shape: CircleBorder(),
                     ),

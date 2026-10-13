@@ -80,7 +80,7 @@ class StageTile extends StatelessWidget {
         children: [
           ReorderableDragStartListener(
             index: index,
-            child: const MouseRegion(
+            child: MouseRegion(
               cursor: SystemMouseCursors.grab,
               child: Padding(
                 padding: EdgeInsets.all(Tokens.s8),
@@ -151,11 +151,7 @@ class StageTile extends StatelessWidget {
           PopupMenuButton<StageAction>(
             key: ValueKey('stage-menu-$id'),
             tooltip: 'Stage actions',
-            icon: const Icon(
-              Icons.more_vert_rounded,
-              size: 18,
-              color: Tokens.fgDim,
-            ),
+            icon: Icon(Icons.more_vert_rounded, size: 18, color: Tokens.fgDim),
             color: Tokens.surface3,
             onSelected: _onAction,
             itemBuilder: (_) => [
@@ -338,7 +334,7 @@ class _AddStageSheetState extends State<AddStageSheet> {
           ),
           child: Row(
             children: [
-              const Text('Add stage', style: Tokens.heading),
+              Text('Add stage', style: Tokens.heading),
               const SizedBox(width: Tokens.s16),
               Expanded(
                 child: Container(
@@ -350,7 +346,7 @@ class _AddStageSheetState extends State<AddStageSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.search_rounded,
                         size: 16,
                         color: Tokens.fgFaint,
@@ -363,7 +359,7 @@ class _AddStageSheetState extends State<AddStageSheet> {
                           onChanged: (v) => setState(() => _query = v),
                           style: Tokens.body,
                           cursorColor: Tokens.accent,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
                             border: InputBorder.none,
                             hintText: 'Search filters',

@@ -113,7 +113,7 @@ class AudioTrackGroup extends StatelessWidget {
                           'Load a separate dub or commentary as a selectable track',
                       trailing: GestureDetector(
                         onTap: () => _addExternal(context),
-                        child: const ValueBadge('Add…', color: Tokens.accent),
+                        child: ValueBadge('Add…', color: Tokens.accent),
                       ),
                     ),
                     if (current != null && current.external)

@@ -1,5 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+import 'palette.dart';
+
+export 'palette.dart';
+
 /// Flat design tokens for MPV Studio.
 ///
 /// Deliberately flat: no shadows, no glows, no gradients. Hierarchy is
@@ -8,31 +12,38 @@ import 'package:flutter/widgets.dart';
 class Tokens {
   Tokens._();
 
-  // ---- Surfaces (near-black, layered by lightness) ----------------
-  static const Color bg = Color(0xFF0E0F11);
-  static const Color surface = Color(0xFF16181B);
-  static const Color surface2 = Color(0xFF1C1F23);
-  static const Color surface3 = Color(0xFF24282D);
+  // ---- Colours, from the active [Palette] ---------------------------
+  // Getters, not constants: they follow the theme. Never use them in a
+  // `const` expression or cache them in a `static final`.
 
-  // ---- Hairlines (flat borders, never shadows) --------------------
-  static const Color line = Color(0x12FFFFFF); // ~7% white
-  static const Color line2 = Color(0x1FFFFFFF); // ~12% white
+  /// The colour set in use; prefer the named members below.
+  static Palette get palette => Palette.active;
 
-  // ---- Text -------------------------------------------------------
-  static const Color fg = Color(0xFFE6E8EA);
-  static const Color fgDim = Color(0xFF8A9097);
-  static const Color fgFaint = Color(0xFF565C63);
+  // Surfaces (layered by lightness).
+  static Color get bg => Palette.active.bg;
+  static Color get surface => Palette.active.surface;
+  static Color get surface2 => Palette.active.surface2;
+  static Color get surface3 => Palette.active.surface3;
 
-  // ---- Accent (the one blue) --------------------------------------
-  static const Color accent = Color(0xFF91D8F9);
-  static const Color accentDim = Color(0xFF4E8BAA);
-  static const Color onAccent = Color(0xFF08151C);
-  static const Color accentWash = Color(0x2291D8F9); // ~13% for active fills
+  // Hairlines (flat borders, never shadows).
+  static Color get line => Palette.active.line;
+  static Color get line2 => Palette.active.line2;
 
-  // ---- Semantic ---------------------------------------------------
-  static const Color green = Color(0xFF5FD39A);
-  static const Color amber = Color(0xFFE9C46A);
-  static const Color red = Color(0xFFE55A5A);
+  // Text.
+  static Color get fg => Palette.active.fg;
+  static Color get fgDim => Palette.active.fgDim;
+  static Color get fgFaint => Palette.active.fgFaint;
+
+  // Accent (the one blue).
+  static Color get accent => Palette.active.accent;
+  static Color get accentDim => Palette.active.accentDim;
+  static Color get onAccent => Palette.active.onAccent;
+  static Color get accentWash => Palette.active.accentWash;
+
+  // Semantic.
+  static Color get green => Palette.active.green;
+  static Color get amber => Palette.active.amber;
+  static Color get red => Palette.active.red;
 
   // ---- Radius -----------------------------------------------------
   static const double rSm = 8;
@@ -68,40 +79,29 @@ class Tokens {
   static const double s32 = 32;
 
   // ---- Type -------------------------------------------------------
+  // Getters for the same reason as the colours: they carry one.
   static const String mono = 'monospace';
 
-  static const TextStyle title = TextStyle(
+  static TextStyle get title => TextStyle(
     fontSize: 21,
     fontWeight: FontWeight.w600,
     color: fg,
     letterSpacing: -0.2,
   );
-  static const TextStyle heading = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
-    color: fg,
-  );
-  static const TextStyle body = TextStyle(
-    fontSize: 13.5,
-    fontWeight: FontWeight.w400,
-    color: fg,
-  );
-  static const TextStyle label = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    color: fgDim,
-  );
-  static const TextStyle caption = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w400,
-    color: fgFaint,
-  );
-  static const TextStyle numeric = TextStyle(
+  static TextStyle get heading =>
+      TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg);
+  static TextStyle get body =>
+      TextStyle(fontSize: 13.5, fontWeight: FontWeight.w400, color: fg);
+  static TextStyle get label =>
+      TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: fgDim);
+  static TextStyle get caption =>
+      TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: fgFaint);
+  static TextStyle get numeric => TextStyle(
     fontFamily: mono,
     fontSize: 11.5,
     fontWeight: FontWeight.w400,
     color: fgDim,
-    fontFeatures: [FontFeature.tabularFigures()],
+    fontFeatures: const [FontFeature.tabularFigures()],
   );
 
   // ---- Breakpoint -------------------------------------------------

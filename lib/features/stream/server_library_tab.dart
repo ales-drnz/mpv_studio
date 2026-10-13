@@ -516,7 +516,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
                           _paging.value.error?.toString() ?? 'Failed to load.',
                       onRetry: _paging.refresh,
                     ),
-                    noItemsFoundIndicatorBuilder: (_) => const Center(
+                    noItemsFoundIndicatorBuilder: (_) => Center(
                       child: Padding(
                         padding: EdgeInsets.all(Tokens.s24),
                         child: Text('No songs found.', style: Tokens.caption),
@@ -584,11 +584,7 @@ class _TrackTile extends StatelessWidget {
             child: Row(
               children: [
                 if (current) ...[
-                  const Icon(
-                    Icons.volume_up_rounded,
-                    size: 16,
-                    color: Tokens.accent,
-                  ),
+                  Icon(Icons.volume_up_rounded, size: 16, color: Tokens.accent),
                   const SizedBox(width: Tokens.s12),
                 ],
                 Expanded(
@@ -706,7 +702,7 @@ class _Field extends StatelessWidget {
               obscureText: obscure,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: Tokens.mono,
                 fontSize: 12.5,
                 color: Tokens.fg,
@@ -747,7 +743,7 @@ class _ConnectButton extends StatelessWidget {
             shape: Tokens.squircle(Tokens.rSm),
           ),
           child: busy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
@@ -755,7 +751,7 @@ class _ConnectButton extends StatelessWidget {
                     color: Tokens.fgDim,
                   ),
                 )
-              : const Text(
+              : Text(
                   'Connect',
                   style: TextStyle(
                     fontSize: 13.5,
@@ -772,7 +768,7 @@ class _ConnectButton extends StatelessWidget {
 class _Spinner extends StatelessWidget {
   const _Spinner();
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.all(Tokens.s16),
     child: Center(
       child: SizedBox(

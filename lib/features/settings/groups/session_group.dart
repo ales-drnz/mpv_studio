@@ -271,10 +271,7 @@ class _SessionGroupState extends State<SessionGroup> {
           color: Tokens.surface,
           shape: Tokens.squircle(Tokens.rMd),
         ),
-        child: const Text(
-          'No controls yet. Add some below.',
-          style: Tokens.caption,
-        ),
+        child: Text('No controls yet. Add some below.', style: Tokens.caption),
       );
     }
     return ReorderableListView(
@@ -450,7 +447,7 @@ class _ShownTile extends StatelessWidget {
               children: [
                 ReorderableDragStartListener(
                   index: index,
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(Tokens.s12),
                     child: Icon(
                       Icons.drag_indicator_rounded,

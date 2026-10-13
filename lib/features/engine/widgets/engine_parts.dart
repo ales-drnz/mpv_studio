@@ -61,21 +61,17 @@ class EngineCard extends StatelessWidget {
   }
 }
 
-/// A small status light with its label: lit in [color] when [on].
+/// A small status light with its label: lit in [color] (green by default) when [on].
 class Spy extends StatelessWidget {
   final String label;
   final bool on;
-  final Color color;
+  final Color? color;
 
-  const Spy({
-    super.key,
-    required this.label,
-    required this.on,
-    this.color = Tokens.green,
-  });
+  const Spy({super.key, required this.label, required this.on, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final lit = color ?? Tokens.green;
     return Semantics(
       label: '$label ${on ? 'on' : 'off'}',
       excludeSemantics: true,
@@ -88,8 +84,8 @@ class Spy extends StatelessWidget {
             height: 8,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: on ? color : Tokens.surface3,
-              border: Border.all(color: on ? color : Tokens.line2),
+              color: on ? lit : Tokens.surface3,
+              border: Border.all(color: on ? lit : Tokens.line2),
             ),
           ),
           const SizedBox(width: Tokens.s6),
@@ -200,16 +196,16 @@ class ReadoutGrid extends StatelessWidget {
   }
 }
 
-/// A thin rounded progress track, filled to [fraction] in [color].
+/// A thin rounded progress track, filled to [fraction] in [color] (the accent by default).
 class ThinBar extends StatelessWidget {
   final double fraction;
-  final Color color;
+  final Color? color;
   final double height;
 
   const ThinBar({
     super.key,
     required this.fraction,
-    this.color = Tokens.accent,
+    this.color,
     this.height = 6,
   });
 
@@ -222,11 +218,11 @@ class ThinBar extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const ColoredBox(color: Tokens.surface3),
+            ColoredBox(color: Tokens.surface3),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: fraction.clamp(0.0, 1.0),
-              child: ColoredBox(color: color),
+              child: ColoredBox(color: color ?? Tokens.accent),
             ),
           ],
         ),

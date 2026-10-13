@@ -1,78 +1,104 @@
 import 'package:flutter/material.dart';
+
+import 'layout/window_class.dart';
 import 'tokens.dart';
 
-/// Flat dark theme. Material widgets are reconfigured so nothing emits
-/// elevation, splash glows, or overlays — the look is uniformly flat.
+/// The flat Material theme, built from a [Palette]. Material widgets are
+/// reconfigured so nothing emits elevation, splash glows or overlays: the
+/// look is uniformly flat in both the dark and the light palette.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark {
-    const scheme = ColorScheme.dark(
-      surface: Tokens.bg,
-      primary: Tokens.accent,
-      onPrimary: Tokens.onAccent,
-      secondary: Tokens.accent,
-      error: Tokens.red,
-      onSurface: Tokens.fg,
-    );
+  /// The dark theme for pointer input.
+  static ThemeData get dark => of(Palette.dark);
 
-    final base = ThemeData(
+  /// The light theme for pointer input.
+  static ThemeData get light => of(Palette.light);
+
+  /// The theme for [palette]. [input] sets the density: roomy 48 dp tap
+  /// targets on touch, compact controls on pointer.
+  static ThemeData of(Palette palette, {InputMode input = InputMode.pointer}) {
+    final p = palette;
+    final touch = input == InputMode.touch;
+    final scheme = p.isDark
+        ? ColorScheme.dark(
+            surface: p.bg,
+            primary: p.accent,
+            onPrimary: p.onAccent,
+            secondary: p.accent,
+            error: p.red,
+            onSurface: p.fg,
+          )
+        : ColorScheme.light(
+            surface: p.bg,
+            primary: p.accent,
+            onPrimary: p.onAccent,
+            secondary: p.accent,
+            error: p.red,
+            onSurface: p.fg,
+          );
+    TextStyle text(double size, FontWeight weight, Color color) =>
+        TextStyle(fontSize: size, fontWeight: weight, color: color);
+
+    return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: p.brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor: Tokens.bg,
-      canvasColor: Tokens.bg,
-      // Flat: kill ripple/highlight glows everywhere.
+      scaffoldBackgroundColor: p.bg,
+      canvasColor: p.bg,
+      visualDensity: touch ? VisualDensity.standard : VisualDensity.compact,
+      materialTapTargetSize: touch
+          ? MaterialTapTargetSize.padded
+          : MaterialTapTargetSize.shrinkWrap,
+      // Flat: kill ripple and highlight glows everywhere.
       splashFactory: NoSplash.splashFactory,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       // App-wide hover: a faint accent wash so every InkWell-backed element
-      // (sidebar, settings/effects grids, lists, tiles) lights up under the
-      // pointer.
-      hoverColor: Tokens.accent.withValues(alpha: 0.10),
-      dividerColor: Tokens.line,
-      textTheme: const TextTheme(
-        titleLarge: Tokens.title,
-        titleMedium: Tokens.heading,
-        bodyMedium: Tokens.body,
-        labelMedium: Tokens.label,
-        bodySmall: Tokens.caption,
+      // (sidebar, settings and effects grids, lists, tiles) lights up under
+      // the pointer.
+      hoverColor: p.accent.withValues(alpha: 0.10),
+      dividerColor: p.line,
+      textTheme: TextTheme(
+        titleLarge: text(
+          21,
+          FontWeight.w600,
+          p.fg,
+        ).copyWith(letterSpacing: -0.2),
+        titleMedium: text(15, FontWeight.w600, p.fg),
+        bodyMedium: text(13.5, FontWeight.w400, p.fg),
+        labelMedium: text(12, FontWeight.w500, p.fgDim),
+        bodySmall: text(11, FontWeight.w400, p.fgFaint),
       ),
-      iconTheme: const IconThemeData(color: Tokens.fgDim, size: 22),
-      sliderTheme: const SliderThemeData(
-        // Flat slider: thin track, small thumb, NO overlay/glow halo.
+      iconTheme: IconThemeData(color: p.fgDim, size: 22),
+      sliderTheme: SliderThemeData(
+        // Flat slider: thin track, small thumb, NO overlay or glow halo.
         trackHeight: 4,
-        overlayShape: RoundSliderOverlayShape(overlayRadius: 0),
-        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-        activeTrackColor: Tokens.accent,
-        inactiveTrackColor: Tokens.line2,
-        thumbColor: Tokens.accent,
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+        activeTrackColor: p.accent,
+        inactiveTrackColor: p.line2,
+        thumbColor: p.accent,
         overlayColor: Colors.transparent,
-        secondaryActiveTrackColor: Tokens.accentDim,
+        secondaryActiveTrackColor: p.accentDim,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected)
-              ? Tokens.onAccent
-              : Tokens.fgFaint,
+          (s) => s.contains(WidgetState.selected) ? p.onAccent : p.fgFaint,
         ),
         trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected)
-              ? Tokens.accent
-              : Tokens.surface3,
+          (s) => s.contains(WidgetState.selected) ? p.accent : p.surface3,
         ),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
         overlayColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
-      tooltipTheme: const TooltipThemeData(
+      tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: Tokens.surface3,
-          borderRadius: BorderRadius.all(Radius.circular(Tokens.rSm)),
+          color: p.surface3,
+          borderRadius: const BorderRadius.all(Radius.circular(Tokens.rSm)),
         ),
-        textStyle: TextStyle(color: Tokens.fg, fontSize: 12),
+        textStyle: TextStyle(color: p.fg, fontSize: 12),
       ),
     );
-
-    return base;
   }
 }

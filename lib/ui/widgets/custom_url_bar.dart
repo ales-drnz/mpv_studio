@@ -49,7 +49,7 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
       padding: const EdgeInsets.only(left: Tokens.s12, right: Tokens.s4),
       child: Row(
         children: [
-          const Icon(Icons.link_rounded, size: 16, color: Tokens.fgFaint),
+          Icon(Icons.link_rounded, size: 16, color: Tokens.fgFaint),
           const SizedBox(width: Tokens.s8),
           Expanded(
             child: TextField(
@@ -59,7 +59,7 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
               keyboardType: TextInputType.url,
               autocorrect: false,
               enableSuggestions: false,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: Tokens.mono,
                 fontSize: 12.5,
                 color: Tokens.fg,

@@ -123,7 +123,7 @@ class _TabBar extends StatelessWidget {
     // the inset, so the bar runs continuously to the screen edge.
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Tokens.surface,
         border: Border(top: BorderSide(color: Tokens.line)),
       ),
@@ -257,7 +257,7 @@ class _MoreSheet extends StatelessWidget {
                 width: 36,
                 height: 4,
                 margin: const EdgeInsets.only(bottom: Tokens.s12),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Tokens.line2,
                   borderRadius: BorderRadius.all(Radius.circular(2)),
                 ),

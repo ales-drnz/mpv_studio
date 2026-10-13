@@ -455,7 +455,7 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
                   ),
                 )
               : _entries.isEmpty
-              ? const Center(
+              ? Center(
                   child: Padding(
                     padding: EdgeInsets.all(Tokens.s24),
                     child: Text('Empty folder.', style: Tokens.caption),
@@ -520,10 +520,10 @@ class _EntryTile extends StatelessWidget {
     // Leading: folder glyph for dirs, a speaker glyph for the playing file, and
     // a music-note glyph for every other (track) file.
     final Widget leading = dir
-        ? const Icon(Icons.folder_rounded, size: 18, color: Tokens.accent)
+        ? Icon(Icons.folder_rounded, size: 18, color: Tokens.accent)
         : current
-        ? const Icon(Icons.volume_up_rounded, size: 18, color: Tokens.accent)
-        : const Icon(Icons.music_note_rounded, size: 18, color: Tokens.fgFaint);
+        ? Icon(Icons.volume_up_rounded, size: 18, color: Tokens.accent)
+        : Icon(Icons.music_note_rounded, size: 18, color: Tokens.fgFaint);
     return Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s6),
       child: Material(
@@ -562,7 +562,7 @@ class _EntryTile extends StatelessWidget {
                 const SizedBox(width: Tokens.s8),
                 Text(dir ? '' : _size(entry.size), style: Tokens.numeric),
                 if (dir)
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     size: 18,
                     color: Tokens.fgFaint,
@@ -611,7 +611,7 @@ class _Field extends StatelessWidget {
               controller: controller,
               obscureText: obscure,
               onSubmitted: onSubmitted,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: Tokens.mono,
                 fontSize: 12.5,
                 color: Tokens.fg,
@@ -652,7 +652,7 @@ class _ConnectButton extends StatelessWidget {
             shape: Tokens.squircle(Tokens.rSm),
           ),
           child: busy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
@@ -660,7 +660,7 @@ class _ConnectButton extends StatelessWidget {
                     color: Tokens.fgDim,
                   ),
                 )
-              : const Text(
+              : Text(
                   'Connect',
                   style: TextStyle(
                     fontSize: 13.5,
@@ -677,7 +677,7 @@ class _ConnectButton extends StatelessWidget {
 class _Spinner extends StatelessWidget {
   const _Spinner();
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.all(Tokens.s16),
     child: Center(
       child: SizedBox(

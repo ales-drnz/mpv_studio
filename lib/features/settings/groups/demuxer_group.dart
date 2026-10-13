@@ -106,7 +106,7 @@ class _DemuxerGroupState extends State<DemuxerGroup> {
                   : _cacheDir,
               trailing: GestureDetector(
                 onTap: _pickCacheDir,
-                child: const ValueBadge('Choose…', color: Tokens.accent),
+                child: ValueBadge('Choose…', color: Tokens.accent),
               ),
             ),
           ],

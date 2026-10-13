@@ -37,7 +37,7 @@ class MiniPlayer extends StatelessWidget {
     return Material(
       color: Tokens.surface,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: Tokens.line)),
         ),
         child: Column(
@@ -187,11 +187,11 @@ class MiniProgressBar extends StatelessWidget {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              const ColoredBox(color: Tokens.line2),
+                              ColoredBox(color: Tokens.line2),
                               FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
                                 widthFactor: f,
-                                child: const ColoredBox(color: Tokens.accent),
+                                child: ColoredBox(color: Tokens.accent),
                               ),
                             ],
                           ),
@@ -216,7 +216,7 @@ class _MiniCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const placeholder = ColoredBox(
+    final placeholder = ColoredBox(
       color: Tokens.surface2,
       child: Center(
         child: Icon(Icons.music_note_rounded, size: 20, color: Tokens.fgFaint),
@@ -362,7 +362,7 @@ class _PlayPause extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     if (waiting)
-                      const SizedBox.square(
+                      SizedBox.square(
                         key: ValueKey('mini-waiting'),
                         dimension: 42,
                         child: CircularProgressIndicator(
@@ -379,7 +379,7 @@ class _PlayPause extends StatelessWidget {
                         child: Container(
                           width: 36,
                           height: 36,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Tokens.accent,
                           ),
