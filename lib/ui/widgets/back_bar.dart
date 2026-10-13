@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../layout/layout_scope.dart';
 import '../tokens.dart';
 
 /// The flat in-page navigation header shown atop any pushed detail or
@@ -17,7 +18,7 @@ class BackBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: context.layout.isTouch ? 48 : 44,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

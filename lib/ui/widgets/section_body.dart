@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 
+import '../layout/layout_scope.dart';
 import '../tokens.dart';
 import 'controls.dart';
 import 'section_header.dart';
 
-/// Standard scrollable body for a section. Fills the full stage width —
-/// no lateral cap — so content runs edge to edge. The shell already
-/// renders the section title above this.
+/// Standard scrollable body for a section: a column with the window
+/// class's page padding (`context.layout.pagePadding`) unless [padding] is
+/// given. It fills the full stage width; pages that want a readable width
+/// cap use `PageFrame` instead.
 class SectionBody extends StatelessWidget {
   final List<Widget> children;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final CrossAxisAlignment crossAxisAlignment;
 
   const SectionBody({
     super.key,
     required this.children,
-    this.padding = const EdgeInsets.fromLTRB(
-      Tokens.s20,
-      Tokens.s8,
-      Tokens.s20,
-      Tokens.s32,
-    ),
+    this.padding,
     this.crossAxisAlignment = CrossAxisAlignment.stretch,
   });
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: padding,
+      padding: padding ?? context.layout.pagePadding,
       child: Column(crossAxisAlignment: crossAxisAlignment, children: children),
     );
   }
