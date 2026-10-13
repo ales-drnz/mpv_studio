@@ -91,7 +91,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Tokens.s12,
-        vertical: Tokens.s6,
+        vertical: Tokens.s8,
       ),
       decoration: ShapeDecoration(
         color: Tokens.surface3.withValues(alpha: 0.92),

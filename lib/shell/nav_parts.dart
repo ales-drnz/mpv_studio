@@ -23,7 +23,7 @@ enum NavItemLayout {
 }
 
 /// One navigation destination in every shell: the pill indicator of
-/// Material 3, filled with the accent container when [active], the icon
+/// Material 3, filled with the accent when [active], the icon
 /// switching to its filled form. The tap target is the whole item, never
 /// less than `context.layout.minTap`.
 class NavDestination extends StatelessWidget {

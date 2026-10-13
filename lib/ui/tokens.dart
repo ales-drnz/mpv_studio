@@ -80,15 +80,11 @@ class Tokens {
   static const double controlH = 40;
 
   // ---- Spacing ----------------------------------------------------
-  // The 4 and 8 grid. s2, s6 and s20 remain only for legacy page code and
-  // are not used by the shell or the shared controls.
-  static const double s2 = 2;
+  // The 4 and 8 grid, and nothing off it.
   static const double s4 = 4;
-  static const double s6 = 6;
   static const double s8 = 8;
   static const double s12 = 12;
   static const double s16 = 16;
-  static const double s20 = 20;
   static const double s24 = 24;
   static const double s32 = 32;
   static const double s40 = 40;

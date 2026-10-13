@@ -99,7 +99,7 @@ Future<void> showShortcutHelp(BuildContext context) {
       children: [
         for (final (keys, action) in playbackShortcutList)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: Tokens.s6),
+            padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -187,7 +187,7 @@ class _RestartCover extends StatelessWidget {
                 color: Tokens.surface2,
                 shape: Tokens.shape(Tokens.rMd),
                 child: Padding(
-                  padding: const EdgeInsets.all(Tokens.s20),
+                  padding: const EdgeInsets.all(Tokens.s24),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
