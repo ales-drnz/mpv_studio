@@ -78,12 +78,14 @@ class Palette {
   /// Captions, hints and disabled content.
   final Color fgFaint;
 
-  // ---- Accent (the one blue) ----------------------------------------
+  // ---- Accent (white in dark, graphite in light) --------------------
 
-  /// The single accent: transport, progress, active state.
+  /// The single accent: the selected destination, the play circle,
+  /// progress, active tracks, switches on, focus.
   final Color accent;
 
-  /// A quieter accent (secondary tracks, buffered ranges).
+  /// The secondary tone (the ring grey): unplayed and buffered ranges,
+  /// secondary marks.
   final Color accentDim;
 
   /// Content drawn on a solid [accent] fill.
@@ -92,8 +94,8 @@ class Palette {
   /// A translucent accent for active fills.
   final Color accentWash;
 
-  /// A solid, quieter accent fill: the selected state of a chip or a
-  /// segment, the open stage, the current queue row.
+  /// The secondary selection fill (the ring grey): a selected chip, the
+  /// current queue row, the selected stage.
   final Color accentContainer;
 
   /// Content drawn on [accentContainer].
@@ -120,60 +122,64 @@ class Palette {
   /// Whether this is the [dark] colour set.
   bool get isDark => brightness == Brightness.dark;
 
-  /// The graphite studio look, the default theme. Tonal roles of the
-  /// seed #2FA8F0 (HCT hue 244) over a graphite neutral (hue 250, chroma
-  /// 5, the logo's own grey).
+  /// The default theme, in the logo's own colours: graphite #24282D (the
+  /// disc) as the stage, darker and lighter steps of its hue (HCT 250,
+  /// chroma 7) for the chrome and the cards, the ring grey #BFBFBF for
+  /// secondary emphasis and white as the one accent.
   static const Palette dark = Palette(
     brightness: Brightness.dark,
-    bg: Color(0xFF111417), // N6, surface
-    surface: Color(0xFF191C1F), // N10, container low
-    surface2: Color(0xFF1D2023), // N12, container
-    surface3: Color(0xFF282A2E), // N17, container high
-    surface4: Color(0xFF323539), // N22, container highest
-    line: Color(0x14FFFFFF), // ~8% white, rare dividers
-    line2: Color(0x26FFFFFF), // ~15% white, inactive tracks
-    fg: Color(0xFFE1E2E7), // N90, 14.3:1 on bg
-    fgDim: Color(0xFFC1C7D0), // NV80, 10.9:1
-    fgFaint: Color(0xFF8B919A), // NV60, 5.8:1
-    accent: Color(0xFF8FCDFF), // P80, 10.9:1
-    accentDim: Color(0xFF007EBA), // P50
-    onAccent: Color(0xFF003450), // P20, 7.7:1 on accent
-    accentWash: Color(0x248FCDFF), // ~14%
-    accentContainer: Color(0xFF004B71), // P30
-    onAccentContainer: Color(0xFFCBE6FF), // P90, 7.3:1
-    tonal: Color(0xFF364959), // S30
-    onTonal: Color(0xFFD1E5F9), // S90, 7.2:1
-    green: Color(0xFF68DCA2),
-    amber: Color(0xFFE7C268),
-    red: Color(0xFFFF8985),
+    bg: Color(0xFF24282D), // T16, the logo disc: the stage
+    surface: Color(0xFF31353A), // T22, cards and rows
+    surface2: Color(0xFF181C21), // T10, chrome, sheets, dialogs
+    surface3: Color(0xFF3A3E43), // T26, fields, tonal circles
+    surface4: Color(0xFF484C51), // T32, inactive tracks
+    line: Color(0x14FFFFFF), // ~8% white, inside data views only
+    line2: Color(0x26FFFFFF), // ~15% white
+    fg: Color(0xFFF1F4FA), // T96, 13.5:1 on bg, 11.2:1 on cards
+    fgDim: Color(0xFFBFBFBF), // the ring grey, 8.1:1 on bg, 6.7:1 on cards
+    fgFaint: Color(0xFFA8ABB2), // T70, 6.5:1 on bg, 4.7:1 on fields
+    accent: Color(0xFFFFFFFF), // white: selection, play, progress
+    accentDim: Color(0xFFBFBFBF), // the ring grey: secondary marks
+    onAccent: Color(0xFF24282D), // graphite on white, 14.8:1
+    accentWash: Color(0x1FFFFFFF), // ~12% white: hover
+    accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
+    onAccentContainer: Color(0xFF24282D), // 8.1:1
+    tonal: Color(0xFF43474C), // T30, secondary buttons
+    onTonal: Color(0xFFF1F4FA), // 8.5:1
+    green: Color(0xFF68DCA2), // 8.7:1 on bg
+    amber: Color(0xFFE7C268), // 8.7:1 on bg
+    red: Color(0xFFFF8985), // 6.5:1 on bg, 5.4:1 on cards
   );
 
-  /// The light counterpart: the same roles at light tones. The page sits
-  /// one step down (N94) so cards, in white, stand out clearly on it, and
-  /// the chrome is one step further down (N90).
+  /// The mirror of [dark]: white and near-white steps of the same hue,
+  /// graphite #24282D as the accent wherever dark has white, the ring
+  /// grey as the secondary selection. The stage sits a step below the
+  /// white cards so they read clearly.
   static const Palette light = Palette(
     brightness: Brightness.light,
-    bg: Color(0xFFEDEEF2), // N94, the stage
-    surface: Color(0xFFFFFFFF), // N100, cards
-    surface2: Color(0xFFE1E2E7), // N90, chrome, sheets
-    surface3: Color(0xFFE7E8EC), // N92, fields, tonal circles
-    surface4: Color(0xFFD9DADE), // N87, tracks
-    line: Color(0x14000000), // ~8% black
+    bg: Color(0xFFEBEEF5), // T94, the stage
+    surface: Color(0xFFFFFFFF), // white cards and rows
+    surface2: Color(0xFFE0E2E9), // T90, chrome, sheets, dialogs
+    surface3: Color(0xFFE5E8EF), // T92, fields, tonal circles
+    surface4: Color(0xFFC3C7CD), // T80, the ring grey of this hue: tracks
+    line: Color(0x14000000), // ~8% black, inside data views only
     line2: Color(0x29000000), // ~16% black
-    fg: Color(0xFF191C1F), // N10, 14.8:1 on bg
-    fgDim: Color(0xFF41474F), // NV30, 8.1:1
-    fgFaint: Color(0xFF595F67), // NV40, 5.6:1 (5.0:1 on chrome)
-    accent: Color(0xFF006495), // P40, 5.6:1
-    accentDim: Color(0xFF8FCDFF), // P80
-    onAccent: Color(0xFFFFFFFF), // 6.4:1 on accent
-    accentWash: Color(0x1F006495), // ~12%
-    accentContainer: Color(0xFFCBE6FF), // P90
-    onAccentContainer: Color(0xFF001E30), // P10, 13.3:1
-    tonal: Color(0xFFD1E5F9), // S90
-    onTonal: Color(0xFF091D2C), // S10, 13.3:1
-    green: Color(0xFF006C46),
-    amber: Color(0xFF765A05),
-    red: Color(0xFFAD3134),
+    fg: Color(0xFF24282D), // graphite, 12.8:1 on bg, 14.8:1 on cards
+    fgDim: Color(0xFF43474C), // T30, 8.1:1 on bg
+    fgFaint: Color(0xFF5B5F64), // T40, 5.5:1 on bg, 5.0:1 on chrome
+    accent: Color(0xFF24282D), // graphite: selection, play, progress
+    // The ring grey is too light on white (1.8:1); its T60 step keeps
+    // secondary marks (unplayed waveform) at 3.2:1 on white.
+    accentDim: Color(0xFF8D9197),
+    onAccent: Color(0xFFFFFFFF), // white on graphite, 14.8:1
+    accentWash: Color(0x1A24282D), // ~10% graphite: hover
+    accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
+    onAccentContainer: Color(0xFF24282D), // 8.1:1
+    tonal: Color(0xFFD7DAE1), // T87, secondary buttons
+    onTonal: Color(0xFF24282D), // 10.6:1
+    green: Color(0xFF006C46), // 5.6:1 on bg
+    amber: Color(0xFF765A04), // 5.6:1 on bg
+    red: Color(0xFFAE2F34), // 5.6:1 on bg
   );
 
   static Palette _active = dark;

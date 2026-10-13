@@ -37,7 +37,7 @@ class Tokens {
   static Color get fgDim => Palette.active.fgDim;
   static Color get fgFaint => Palette.active.fgFaint;
 
-  // Accent (the one blue).
+  // Accent: white in dark, graphite in light.
   static Color get accent => Palette.active.accent;
   static Color get accentDim => Palette.active.accentDim;
   static Color get onAccent => Palette.active.onAccent;
