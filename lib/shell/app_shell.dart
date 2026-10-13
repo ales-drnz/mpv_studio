@@ -7,6 +7,7 @@ import '../util/reactive.dart';
 import 'desktop_shell.dart';
 import 'mini_player.dart';
 import 'mobile_shell.dart';
+import 'playback_shortcuts.dart';
 import 'router.dart';
 import 'sections.dart';
 
@@ -91,19 +92,22 @@ class _AppShellState extends State<AppShell>
       body: LayoutBuilder(
         builder: (context, constraints) {
           final desktop = constraints.maxWidth >= Tokens.desktopBreakpoint;
-          if (desktop) {
-            return DesktopShell(
-              section: section,
-              onSelect: _select,
-              body: navigationShell,
-              miniPlayer: mini(false),
-            );
-          }
-          return MobileShell(
-            section: section,
-            onSelect: _select,
-            body: navigationShell,
-            miniPlayer: mini(true),
+          return PlaybackShortcuts(
+            player: player,
+            enabled: desktop,
+            child: desktop
+                ? DesktopShell(
+                    section: section,
+                    onSelect: _select,
+                    body: navigationShell,
+                    miniPlayer: mini(false),
+                  )
+                : MobileShell(
+                    section: section,
+                    onSelect: _select,
+                    body: navigationShell,
+                    miniPlayer: mini(true),
+                  ),
           );
         },
       ),
