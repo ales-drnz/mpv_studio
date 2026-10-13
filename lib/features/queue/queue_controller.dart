@@ -116,7 +116,8 @@ class QueueController {
 
   /// Puts [media] back at [index] after a [remove].
   Future<void> restore(Media media, int index) => guard(() async {
-    // The appended entry lands at the current length.
+    // The appended entry lands at the current length, unless the queue
+    // changes elsewhere between the add and the move.
     final last = _items.length;
     await player.add(media);
     if (index < last) await player.move(last, index);
