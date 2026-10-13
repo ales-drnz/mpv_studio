@@ -53,4 +53,31 @@ void main() {
     expect(titleOf(const Media('/a/b.flac', extras: {'title': ' T '})), 'T');
     expect(titleOf(const Media('/a/b.flac', extras: {'title': ''})), 'b');
   });
+
+  test('shareableLocation drops credentials and server tokens', () {
+    expect(shareableLocation(const Media('/a/b c.flac')), '/a/b c.flac');
+    expect(
+      shareableLocation(const Media('http://u:p@h:8000/a%20b.mp3?x=1')),
+      'http://h:8000/a%20b.mp3?x=1',
+    );
+    expect(
+      shareableLocation(
+        const Media(
+          'https://jf/Audio/1/stream?api_key=k',
+          extras: {'server': 'jellyfin'},
+        ),
+      ),
+      'https://jf/Audio/1/stream',
+    );
+  });
+
+  test('every source has one label', () {
+    expect(MediaOrigin.values.map((o) => o.label), [
+      'Local file',
+      'Web stream',
+      'Samba share',
+      'Jellyfin',
+      'Plex',
+    ]);
+  });
 }

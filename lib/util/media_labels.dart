@@ -2,8 +2,19 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import 'media_import.dart';
 
-/// Where a queue entry comes from, shown as an icon on its row.
-enum MediaOrigin { file, http, smb, jellyfin, plex }
+/// Where a queue entry comes from, shown with its [label] on its row.
+enum MediaOrigin {
+  file('Local file'),
+  http('Web stream'),
+  smb('Samba share'),
+  jellyfin('Jellyfin'),
+  plex('Plex');
+
+  const MediaOrigin(this.label);
+
+  /// The source as the app names it everywhere.
+  final String label;
+}
 
 /// The [MediaOrigin] of [media]: the `server` extra for Jellyfin and Plex
 /// entries, otherwise the URI scheme.
@@ -51,4 +62,24 @@ String nameFromUri(String uri) {
   }
   if (segments.isEmpty) return parsed.host.isEmpty ? uri : parsed.host;
   return segments.last;
+}
+
+/// Where [media] lives, safe to show and copy: a local path as is, a URL
+/// without its user name and password, and a media server URL also without
+/// its query (which carries the access token).
+String shareableLocation(Media media) {
+  final uri = media.uri;
+  if (uri.indexOf('://') <= 1) return uri;
+  final parsed = Uri.tryParse(uri);
+  if (parsed == null) return uri;
+  final origin = originOf(media);
+  final server = origin == MediaOrigin.jellyfin || origin == MediaOrigin.plex;
+  final clean = Uri(
+    scheme: parsed.scheme,
+    host: parsed.host,
+    port: parsed.hasPort ? parsed.port : null,
+    path: parsed.path,
+    query: server || !parsed.hasQuery ? null : parsed.query,
+  );
+  return clean.toString();
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import 'completion_engine.dart';
 
-/// The autocomplete popup — a flat list of [Suggestion]s that sits just
+/// The autocomplete popup: a flat list of [Suggestion]s that sits just
 /// above the console input and grows upward, Minecraft-style. The selected
 /// row is washed in accent and bolds the typed match.
 ///
@@ -33,10 +34,15 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
   final _scroll = ScrollController();
 
   /// Two-line (taller) rows when any suggestion carries a description
-  /// (the command list); single-line otherwise (properties / values). A
-  /// given popup is homogeneous in kind, so one height fits the whole list.
-  double get _rowHeight =>
-      widget.suggestions.any((s) => s.description != null) ? 44.0 : 30.0;
+  /// (the command list), single-line otherwise (properties and values). A
+  /// popup is homogeneous in kind, so one height fits the whole list. On
+  /// touch every row is at least a finger tall.
+  double get _rowHeight {
+    final twoLines = widget.suggestions.any((s) => s.description != null);
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final base = (twoLines ? 44.0 : 30.0) * scale.clamp(1.0, 2.0);
+    return context.layout.isTouch && base < 52 ? 52 : base;
+  }
 
   @override
   void didUpdateWidget(SuggestionPopup old) {

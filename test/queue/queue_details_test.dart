@@ -22,6 +22,8 @@ class _Harness {
   final playlist = StreamController<Playlist>.broadcast();
   final loaded = StreamController<void>.broadcast();
   final metadataChanged = StreamController<Object?>.broadcast();
+  final endFile = StreamController<MpvFileEndedEvent>.broadcast();
+  final errors = StreamController<PlayerError>.broadcast();
   Map<String, String> metadata = const {};
   String mediaTitle = '';
   Duration duration = Duration.zero;
@@ -35,6 +37,8 @@ class _Harness {
       changes: [metadataChanged.stream],
       snapshot: () =>
           (metadata: metadata, mediaTitle: mediaTitle, duration: duration),
+      endFile: endFile.stream,
+      errors: errors.stream,
     );
   }
 
@@ -47,6 +51,13 @@ class _Harness {
     loaded.add(null);
     await pumpEventQueue();
   }
+
+  Future<void> end(MpvEndFileReason reason, {int error = 0}) async {
+    endFile.add(MpvFileEndedEvent(reason: reason, error: error));
+    await pumpEventQueue();
+  }
+
+  EntryOutcome? outcome(Media m) => details.outcomes.value[m];
 
   QueueRowInfo row(Media m) => QueueRowInfo.of(m, details.details.value[m]);
 }
@@ -118,5 +129,103 @@ void main() {
     expect(h.details.details.value.keys, [_song]);
     await h.play([_url], 0);
     expect(h.details.details.value, isEmpty);
+  });
+
+  group('one labelling path for every row', () {
+    // The Stream page queues a URL with a placeholder artist; a playlist
+    // file or the Console queues the same source bare.
+    const placeholder = Media(
+      'https://radio.example.com/live/a.mp3',
+      extras: {'artist': 'Stream'},
+    );
+    const bare = Media('https://radio.example.com/live/b.mp3');
+
+    test('the same HTTP source reads "Web stream" on every row', () async {
+      await h.play([placeholder, bare], 0);
+      h.metadata = {'title': 'So What', 'artist': 'Miles Davis'};
+      await h.load();
+      expect(h.row(placeholder).origin.label, 'Web stream');
+      expect(h.row(bare).origin.label, 'Web stream');
+      expect(h.row(placeholder).subtitle, 'Miles Davis · Web stream');
+      expect(h.row(bare).subtitle, 'Web stream');
+    });
+
+    test('the tagged artist wins over the extras on the current row', () async {
+      // The current row showed the placeholder, the mini-player the tag.
+      await h.play([placeholder, bare], 0);
+      h.metadata = {'ARTIST': 'Miles Davis', 'Album': 'Kind of Blue'};
+      await h.load();
+      final row = h.row(placeholder);
+      expect(row.artist, 'Miles Davis');
+      expect(row.album, 'Kind of Blue');
+    });
+
+    test('tags show on the row as soon as they change', () async {
+      await h.play([bare], 0);
+      await h.load();
+      expect(h.row(bare).artist, isNull);
+      h.metadata = {'artist': 'Late tag'};
+      h.metadataChanged.add(null);
+      await pumpEventQueue();
+      expect(h.row(bare).artist, 'Late tag');
+    });
+  });
+
+  group('outcomes', () {
+    test('a track that plays to its end is played', () async {
+      await h.play([_song, _url], 0);
+      await h.load();
+      expect(h.outcome(_song), isNull);
+      // mpv may move the queue on before it reports the end.
+      await h.play([_song, _url], 1);
+      await h.end(MpvEndFileReason.eof);
+      expect(h.outcome(_song)?.end, EntryEnd.ended);
+      expect(h.outcome(_url), isNull);
+    });
+
+    test('a track left early is skipped', () async {
+      await h.play([_song, _url], 0);
+      await h.load();
+      await h.play([_song, _url], 1);
+      await h.end(MpvEndFileReason.stop);
+      expect(h.outcome(_song)?.end, EntryEnd.stopped);
+      expect(h.outcome(_song)?.reason, 'Skipped');
+    });
+
+    test('a track that cannot open fails with the reason', () async {
+      await h.play([_song, _url], 1);
+      await h.end(
+        MpvEndFileReason.error,
+        error: MpvError.mpvErrorLoadingFailed,
+      );
+      h.errors.add(
+        const EndFileError(
+          reason: MpvEndFileReason.error,
+          code: MpvError.mpvErrorLoadingFailed,
+          message: 'loading failed',
+        ),
+      );
+      await pumpEventQueue();
+      final o = h.outcome(_url)!;
+      expect(o.end, EntryEnd.failed);
+      expect(o.message, 'loading failed');
+      expect(o.reason, 'Could not open the file or stream');
+    });
+
+    test('playing again clears the outcome', () async {
+      await h.play([_song], 0);
+      await h.end(MpvEndFileReason.error, error: -17);
+      expect(h.outcome(_song)?.reason, 'No playable audio found');
+      await h.load();
+      expect(h.outcome(_song), isNull);
+    });
+
+    test('quit and redirect are not outcomes', () async {
+      await h.play([_song], 0);
+      await h.load();
+      await h.end(MpvEndFileReason.redirect);
+      await h.end(MpvEndFileReason.quit);
+      expect(h.details.outcomes.value, isEmpty);
+    });
   });
 }
