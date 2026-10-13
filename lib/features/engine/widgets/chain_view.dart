@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../generated/filter_catalog.dart';
 import '../../../ui/tokens.dart';
+import '../../effects/rack_catalog.dart';
 import '../engine_snapshot.dart';
 import 'engine_parts.dart';
 
@@ -12,13 +12,8 @@ class ChainView extends StatelessWidget {
   final EngineSnapshot snapshot;
   const ChainView({super.key, required this.snapshot});
 
-  static final Map<AudioFilter, String> _titles = {
-    for (final d in kFilterCatalog) d.filter: d.title,
-  };
-
-  /// A readable name for [stage]: the catalog title, else the lavfi name.
-  static String nameOf(AudioEffect stage) =>
-      _titles[stage.filter] ?? stage.filterName;
+  /// A readable name for [stage], as the Effects rack titles it.
+  static String nameOf(AudioEffect stage) => stageTitle(stage);
 
   @override
   Widget build(BuildContext context) {

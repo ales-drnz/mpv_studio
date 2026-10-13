@@ -1,65 +1,14 @@
-import 'dart:io';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../generated/filter_catalog.dart';
 import '../../../ui/tokens.dart';
-import '../../../ui/widgets/controls.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
+import '../rack_environment.dart';
 import 'featured_editors.dart';
-import 'loudness_gauge.dart';
 import 'param_controls.dart';
+import 'stage_editor_parts.dart';
 import 'stage_meters.dart';
-
-/// Whether every mandatory text option of [e] has a value, so the stage
-/// can be switched on without mpv refusing the chain.
-bool stageReady(AudioEffect e) {
-  final d = descriptorOf(e.filter);
-  if (d == null) return e is! RawAudioEffect || e.entry.trim().isNotEmpty;
-  return d.params
-      .whereType<StringParam>()
-      .where((p) => p.required)
-      .every((p) => p.get(e).trim().isNotEmpty);
-}
-
-/// Copies a bundled asset (a noise model) to a temp file mpv can open.
-Future<String> materializeAsset(String assetPath) async {
-  final data = await rootBundle.load(assetPath);
-  final dir = Directory('${Directory.systemTemp.path}/mpv_studio_models');
-  await dir.create(recursive: true);
-  final file = File('${dir.path}/${assetPath.split('/').last}');
-  await file.writeAsBytes(
-    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-    flush: true,
-  );
-  return file.path;
-}
-
-/// Applies [preset] to stage [id] and switches it on.
-Future<void> applyPreset(
-  RackController rack,
-  int id,
-  FilterDescriptor d,
-  FilterPreset preset,
-) async {
-  var values = preset.values;
-  final fp = d.fileParam;
-  if (d.fileBacked && fp != null && values[fp] != null) {
-    values = {fp: await materializeAsset(values[fp]!)};
-  }
-  final stage = rack.chain.stage(id);
-  if (stage == null) return;
-  var e = stage.effect;
-  for (final p in d.params.whereType<StringParam>()) {
-    final v = values[p.name];
-    if (v != null) e = p.set(e, v);
-  }
-  rack.edit(id, d.setEnabled(e, true));
-}
 
 /// The open body of one stage: its before and after meters, then the
 /// editor that fits it (a featured graphic editor, presets and text
@@ -117,7 +66,7 @@ class StageEditor extends StatelessWidget {
     } else if (isMeterStage(e)) {
       children.add(
         Padding(
-          padding: EdgeInsets.symmetric(vertical: Tokens.s8),
+          padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
           child: Text(
             'Feeds the live loudness meter. It measures the audio at this '
             'point of the chain and leaves it unchanged.',
@@ -132,34 +81,22 @@ class StageEditor extends StatelessWidget {
         onEnd: rack.flush,
         tapInstance: instance ?? 0,
         live: granted,
+        loudness: rack.meterOn
+            ? RackEnvironment.maybeOf(context)?.loudness
+            : null,
       );
       if (featured != null) {
-        Widget graphic = featured.graphic;
-        if (e is LoudnormEffect) {
-          // The target gauge with the live reading on it.
-          final env = RackEnvironment.maybeOf(context);
-          graphic = StreamBuilder<Loudness>(
-            stream: rack.meterOn ? env?.loudness : null,
-            builder: (context, snap) => LoudnessGauge(
-              reading: snap.data,
-              target: e.i,
-              range: e.lra,
-              truePeak: e.tp,
-              enabled: e.enabled,
-            ),
-          );
-        }
         children
-          ..add(graphic)
+          ..add(featured.graphic)
           ..add(const SizedBox(height: Tokens.s8))
           ..addAll(featured.controls)
-          ..add(_AllParams(d: d, e: e, rack: rack, id: id));
+          ..add(AllParams(d: d, e: e, rack: rack, id: id));
       } else {
         if (d.presets.isNotEmpty) {
-          children.add(_Presets(d: d, e: e, rack: rack, id: id));
+          children.add(PresetChips(d: d, e: e, rack: rack, id: id));
         }
         if (d.fileBacked) {
-          children.add(_FilePicker(d: d, e: e, rack: rack, id: id));
+          children.add(ModelFilePicker(d: d, e: e, rack: rack, id: id));
         }
         for (final p in d.params) {
           if (d.fileBacked && p.name == d.fileParam) continue;
@@ -170,7 +107,7 @@ class StageEditor extends StatelessWidget {
         if (d.params.isEmpty) {
           children.add(
             Padding(
-              padding: EdgeInsets.symmetric(vertical: Tokens.s8),
+              padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
               child: Text('No adjustable parameters.', style: Tokens.caption),
             ),
           );
@@ -197,194 +134,6 @@ class StageEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: children,
-    );
-  }
-}
-
-/// Every parameter of a featured stage, folded under its graphic editor.
-class _AllParams extends StatefulWidget {
-  final FilterDescriptor d;
-  final AudioEffect e;
-  final RackController rack;
-  final int id;
-  const _AllParams({
-    required this.d,
-    required this.e,
-    required this.rack,
-    required this.id,
-  });
-
-  @override
-  State<_AllParams> createState() => _AllParamsState();
-}
-
-class _AllParamsState extends State<_AllParams> {
-  bool _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => setState(() => _open = !_open),
-            icon: Icon(
-              _open ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-              size: 16,
-            ),
-            label: Text(_open ? 'Fewer parameters' : 'All parameters'),
-            style: TextButton.styleFrom(
-              foregroundColor: Tokens.fgDim,
-              textStyle: Tokens.label,
-            ),
-          ),
-        ),
-        if (_open)
-          for (final p in widget.d.params)
-            buildParamControl(
-              p,
-              widget.e,
-              onChange: (next, {live = false}) =>
-                  widget.rack.edit(widget.id, next, live: live),
-              onEnd: widget.rack.flush,
-            ),
-      ],
-    );
-  }
-}
-
-/// The curated presets of a filter with mandatory options.
-class _Presets extends StatelessWidget {
-  final FilterDescriptor d;
-  final AudioEffect e;
-  final RackController rack;
-  final int id;
-  const _Presets({
-    required this.d,
-    required this.e,
-    required this.rack,
-    required this.id,
-  });
-
-  bool _active(FilterPreset preset) {
-    if (!e.enabled) return false;
-    return preset.values.entries.every((kv) {
-      final p = d.params
-          .whereType<StringParam>()
-          .where((p) => p.name == kv.key)
-          .firstOrNull;
-      if (p == null) return false;
-      final cur = p.get(e);
-      // A file preset plays from a temp copy: compare file names.
-      return d.fileBacked
-          ? cur.split('/').last == kv.value.split('/').last
-          : cur == kv.value;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            d.fileBacked ? 'Bundled models' : 'Presets',
-            style: Tokens.label,
-          ),
-          const SizedBox(height: Tokens.s8),
-          Wrap(
-            spacing: Tokens.s8,
-            runSpacing: Tokens.s8,
-            children: [
-              for (final preset in d.presets)
-                _Chip(
-                  label: preset.name,
-                  active: _active(preset),
-                  onTap: () => applyPreset(rack, id, d, preset),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A model file of the user's own, for a file-backed filter.
-class _FilePicker extends StatelessWidget {
-  final FilterDescriptor d;
-  final AudioEffect e;
-  final RackController rack;
-  final int id;
-  const _FilePicker({
-    required this.d,
-    required this.e,
-    required this.rack,
-    required this.id,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = d.params
-        .whereType<StringParam>()
-        .where((p) => p.name == d.fileParam)
-        .firstOrNull;
-    if (p == null) return const SizedBox.shrink();
-    final cur = p.get(e);
-    return SettingTile(
-      title: 'Model file',
-      description: cur.isEmpty ? 'No file selected' : cur.split('/').last,
-      trailing: TextButton.icon(
-        onPressed: () async {
-          final file = await openFile();
-          if (file == null) return;
-          rack.edit(id, d.setEnabled(p.set(e, file.path), true));
-        },
-        icon: const Icon(Icons.folder_open_rounded, size: 16),
-        label: const Text('Choose'),
-        style: TextButton.styleFrom(
-          foregroundColor: Tokens.accent,
-          textStyle: Tokens.label,
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _Chip({required this.label, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: Tokens.squircle(Tokens.rSm),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Tokens.s12,
-            vertical: Tokens.s8,
-          ),
-          decoration: ShapeDecoration(
-            color: active ? Tokens.accent : Tokens.surface2,
-            shape: Tokens.squircle(Tokens.rSm),
-          ),
-          child: Text(
-            label,
-            style: Tokens.label.copyWith(
-              color: active ? Tokens.onAccent : Tokens.fgDim,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

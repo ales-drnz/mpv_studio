@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../layout/layout_scope.dart';
 import '../tokens.dart';
 
 /// The uniform settings row: a title, an optional description, and then the
@@ -403,9 +404,7 @@ class AppSlider extends StatelessWidget {
     this.onChangeEnd,
   });
 
-  static const double _thumb = 16;
   static const double _track = 6;
-  static const double _height = 24;
 
   double _snap(double v) {
     final c = v.clamp(min, max);
@@ -416,16 +415,20 @@ class AppSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // On touch the thumb and the grab band grow to fit a finger.
+    final touch = context.layout.isTouch;
+    final thumb = touch ? 22.0 : 16.0;
+    final height = touch ? 44.0 : 24.0;
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
-        final span = (w - _thumb).clamp(1.0, double.infinity);
+        final span = (w - thumb).clamp(1.0, double.infinity);
         final frac = max <= min
             ? 0.0
             : ((value - min) / (max - min)).clamp(0.0, 1.0);
 
         double valueAt(double dx) {
-          final t = ((dx - _thumb / 2) / span).clamp(0.0, 1.0);
+          final t = ((dx - thumb / 2) / span).clamp(0.0, 1.0);
           return _snap(min + t * (max - min));
         }
 
@@ -444,7 +447,7 @@ class AppSlider extends StatelessWidget {
               ? (_) => onChangeEnd!(value)
               : null,
           child: SizedBox(
-            height: _height,
+            height: height,
             width: double.infinity,
             child: Stack(
               alignment: Alignment.centerLeft,
@@ -460,7 +463,7 @@ class AppSlider extends StatelessWidget {
                 // Accent fill up to the thumb centre.
                 Container(
                   height: _track,
-                  width: _thumb / 2 + frac * span,
+                  width: thumb / 2 + frac * span,
                   decoration: ShapeDecoration(
                     color: enabled ? fill : Tokens.fgFaint,
                     shape: Tokens.squircle(Tokens.rPill),
@@ -470,11 +473,11 @@ class AppSlider extends StatelessWidget {
                 Positioned(
                   left: frac * span,
                   child: Container(
-                    width: _thumb,
-                    height: _thumb,
+                    width: thumb,
+                    height: thumb,
                     decoration: ShapeDecoration(
                       color: enabled ? Tokens.fg : Tokens.fgFaint,
-                      shape: Tokens.squircle(8),
+                      shape: Tokens.squircle(thumb / 2),
                     ),
                   ),
                 ),

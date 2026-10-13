@@ -154,7 +154,7 @@ void main() {
     });
   });
 
-  test('taps go to the first open, enabled stages within the budget', () {
+  test('taps go to the stages opened last, within the budget', () {
     final engine = FakeEngine([
       for (var i = 0; i < 5; i++) BassEffect(gain: i.toDouble()),
       const RawAudioEffect('lavfi-anull'),
@@ -164,15 +164,42 @@ void main() {
     for (final id in ids) {
       rack.toggleExpanded(id);
     }
-    rack.setEnabled(ids[1], false);
+    rack.setEnabled(ids[3], false);
     expect(
       [for (final id in ids) rack.tapGranted(id)],
-      [true, false, true, true, false, false],
+      [false, true, true, false, true, false],
     );
-    expect(rack.tapDenied(ids[4]), isTrue);
+    expect(rack.tapDenied(ids[0]), isTrue);
     expect(rack.tapDenied(ids[5]), isFalse, reason: 'raw: never tapped');
+    // Opening a stage again moves it to the front of the budget.
+    rack.open(ids[0]);
+    expect(rack.tapGranted(ids[0]), isTrue);
+    expect(rack.tapGranted(ids[1]), isFalse);
     rack.setBypass(true);
     expect(ids.any(rack.tapGranted), isFalse);
+    rack.dispose();
+  });
+
+  test('focus follows the stage opened last', () {
+    final engine = FakeEngine([bass, comp, const BassEffect(gain: 1)]);
+    final rack = RackController(engine);
+    final ids = [for (final s in rack.chain.stages) s.id];
+    expect(rack.focused, isNull);
+    rack.open(ids[0]);
+    rack.open(ids[2]);
+    expect(rack.focused, ids[2]);
+    rack.open(ids[0]);
+    expect(rack.focused, ids[0]);
+    expect(rack.isExpanded(ids[2]), isTrue);
+    rack.open(ids[1], only: true);
+    expect([for (final id in ids) rack.isExpanded(id)], [false, true, false]);
+    rack.remove(ids[1]);
+    expect(rack.focused, isNull);
+    rack.open(ids[2]);
+    rack.closeAll();
+    expect(rack.focused, isNull);
+    rack.reportError('No model file');
+    expect(rack.error, 'No model file');
     rack.dispose();
   });
 }

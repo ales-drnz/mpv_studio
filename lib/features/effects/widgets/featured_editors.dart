@@ -25,14 +25,14 @@ class FeaturedEditor {
   ///
   /// [tapInstance] and [live] let the compressor curve follow the right
   /// stage, only while the rack grants it a tap. [loudness] is the live
-  /// meter reading, for the loudnorm gauge.
+  /// loudness meter, for the loudnorm gauge (null while the meter is off).
   static FeaturedEditor? of(
     AudioEffect e, {
     required StageChange onChange,
     required VoidCallback onEnd,
     int tapInstance = 0,
     bool live = false,
-    Loudness? loudness,
+    Stream<Loudness>? loudness,
   }) {
     Widget slider(
       String label,
@@ -143,6 +143,9 @@ class FeaturedEditor {
             response: BiquadResponse.lowShelf(b.frequency, b.gain),
             markerHz: b.frequency,
             enabled: b.enabled,
+            description:
+                '${b.gain.toStringAsFixed(1)} dB below '
+                '${b.frequency.round()} Hz',
           ),
           [
             slider(
@@ -171,6 +174,9 @@ class FeaturedEditor {
             response: BiquadResponse.highShelf(t.frequency, t.gain),
             markerHz: t.frequency,
             enabled: t.enabled,
+            description:
+                '${t.gain.toStringAsFixed(1)} dB above '
+                '${t.frequency.round()} Hz',
           ),
           [
             slider(
@@ -201,6 +207,9 @@ class FeaturedEditor {
               amplitudeToDb(sb.boost),
             ),
             markerHz: sb.cutoff,
+            description:
+                'boost ${sb.boost.toStringAsFixed(1)} below '
+                '${sb.cutoff.round()} Hz',
             enabled: sb.enabled,
           ),
           [
@@ -299,12 +308,15 @@ class FeaturedEditor {
         );
       case LoudnormEffect ln:
         return FeaturedEditor(
-          LoudnessGauge(
-            reading: loudness,
-            target: ln.i,
-            range: ln.lra,
-            truePeak: ln.tp,
-            enabled: ln.enabled,
+          StreamBuilder<Loudness>(
+            stream: loudness,
+            builder: (context, snap) => LoudnessGauge(
+              reading: snap.data,
+              target: ln.i,
+              range: ln.lra,
+              truePeak: ln.tp,
+              enabled: ln.enabled,
+            ),
           ),
           [
             slider(

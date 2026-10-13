@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -5,10 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../audio/pcm_analysis.dart';
-import '../../../studio/player_scope.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
-import '../../../util/reactive.dart';
+import '../rack_environment.dart';
 
 /// A stereo vectorscope (goniometer) — the live picture of the stereo
 /// image. Each L/R sample pair is rotated into mid/side and scattered in
@@ -17,7 +17,7 @@ import '../../../util/reactive.dart';
 /// out of phase. A phase-correlation bar underneath puts a number on it
 /// (+1 mono → −1 inverted).
 ///
-/// Fed by the master PCM tap so it reflects whatever the width control is
+/// Fed by the chain's output ([RackEnvironment.pcm]) so it reflects whatever the width control is
 /// doing to the output. Flat house style; scales to fit any width.
 class StereoScope extends StatefulWidget {
   final bool enabled;
@@ -27,8 +27,7 @@ class StereoScope extends StatefulWidget {
   State<StereoScope> createState() => _StereoScopeState();
 }
 
-class _StereoScopeState extends State<StereoScope>
-    with StreamListenerState<StereoScope> {
+class _StereoScopeState extends State<StereoScope> {
   static const int _capacity = 900;
   final Float32List _xs = Float32List(_capacity);
   final Float32List _ys = Float32List(_capacity);
@@ -37,9 +36,17 @@ class _StereoScopeState extends State<StereoScope>
   final _corr = ValueNotifier<double>(0);
   final _tick = ValueNotifier<int>(0);
 
+  Stream<PcmFrame>? _pcm;
+  StreamSubscription<PcmFrame>? _sub;
+
   @override
-  void onSubscribe() {
-    listen(PlayerScope.of(context).stream.pcm, _onFrame);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final pcm = RackEnvironment.maybeOf(context)?.pcm;
+    if (pcm == _pcm) return;
+    _pcm = pcm;
+    _sub?.cancel();
+    _sub = pcm?.listen(_onFrame);
   }
 
   void _onFrame(PcmFrame f) {
@@ -68,6 +75,7 @@ class _StereoScopeState extends State<StereoScope>
 
   @override
   void dispose() {
+    _sub?.cancel();
     _corr.dispose();
     _tick.dispose();
     super.dispose();
@@ -75,21 +83,25 @@ class _StereoScopeState extends State<StereoScope>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 188,
-      width: double.infinity,
-      child: RepaintBoundary(
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: _ScopePainter(
-            xs: _xs,
-            ys: _ys,
-            count: () => _count,
-            head: () => _head,
-            capacity: _capacity,
-            corr: _corr,
-            tick: _tick,
-            enabled: widget.enabled,
+    return Semantics(
+      label: 'Stereo vectorscope with phase correlation',
+      value: widget.enabled ? null : 'Stage is off',
+      child: SizedBox(
+        height: 188,
+        width: double.infinity,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _ScopePainter(
+              xs: _xs,
+              ys: _ys,
+              count: () => _count,
+              head: () => _head,
+              capacity: _capacity,
+              corr: _corr,
+              tick: _tick,
+              enabled: widget.enabled,
+            ),
           ),
         ),
       ),

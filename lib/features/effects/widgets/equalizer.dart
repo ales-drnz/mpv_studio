@@ -76,8 +76,6 @@ class _EqualizerState extends State<Equalizer> {
   static const double _bottomGutter = 16;
   static const double _topPad = 8;
 
-  static const double _height = 188;
-
   Rect _plot(Size s) => Rect.fromLTRB(
     2,
     _topPad,
@@ -105,53 +103,73 @@ class _EqualizerState extends State<Equalizer> {
     return (t * (n - 1)).round().clamp(0, n - 1);
   }
 
+  /// The bands away from 0 dB, for screen readers.
+  String _describe() {
+    final moved = [
+      for (final b in kEqBands)
+        if ((widget.bandsDb[b.key] ?? 0).abs() >= 0.5)
+          '${b.label} Hz ${_signed(widget.bandsDb[b.key]!)} dB',
+    ];
+    return moved.isEmpty ? 'Flat' : moved.join(', ');
+  }
+
+  static String _signed(double db) =>
+      '${db > 0 ? '+' : ''}${db.toStringAsFixed(1)}';
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: _height,
-      width: double.infinity,
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final size = Size(c.maxWidth, _height);
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onPanStart: widget.enabled
-                ? (d) => _shapeAt(d.localPosition, size)
-                : null,
-            onPanUpdate: widget.enabled
-                ? (d) => _shapeAt(d.localPosition, size)
-                : null,
-            onPanEnd: widget.enabled
-                ? (_) {
-                    setState(() => _active = null);
-                    widget.onChangeEnd();
-                  }
-                : null,
-            onTapDown: widget.enabled
-                ? (d) => setState(
-                    () => _active = _nearestBand(d.localPosition, size),
-                  )
-                : null,
-            onTapUp: widget.enabled ? (_) => widget.onChangeEnd() : null,
-            onDoubleTapDown: widget.enabled
-                ? (d) {
-                    final i = _nearestBand(d.localPosition, size);
-                    widget.onChanged(kEqBands[i].key, 0);
-                    widget.onChangeEnd();
-                  }
-                : null,
-            child: CustomPaint(
-              size: size,
-              painter: _EqPainter(
-                bandsDb: widget.bandsDb,
-                active: _active,
-                enabled: widget.enabled,
-                plot: _plot,
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Taller on wide editors so the curve keeps its shape.
+        final height = (c.maxWidth * 0.32).clamp(168.0, 260.0);
+        final size = Size(c.maxWidth, height);
+        return Semantics(
+          label: '18-band equalizer curve',
+          value: _describe(),
+          hint: 'Each band is also a slider under All parameters',
+          child: SizedBox(
+            height: height,
+            width: double.infinity,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanStart: widget.enabled
+                  ? (d) => _shapeAt(d.localPosition, size)
+                  : null,
+              onPanUpdate: widget.enabled
+                  ? (d) => _shapeAt(d.localPosition, size)
+                  : null,
+              onPanEnd: widget.enabled
+                  ? (_) {
+                      setState(() => _active = null);
+                      widget.onChangeEnd();
+                    }
+                  : null,
+              onTapDown: widget.enabled
+                  ? (d) => setState(
+                      () => _active = _nearestBand(d.localPosition, size),
+                    )
+                  : null,
+              onTapUp: widget.enabled ? (_) => widget.onChangeEnd() : null,
+              onDoubleTapDown: widget.enabled
+                  ? (d) {
+                      final i = _nearestBand(d.localPosition, size);
+                      widget.onChanged(kEqBands[i].key, 0);
+                      widget.onChangeEnd();
+                    }
+                  : null,
+              child: CustomPaint(
+                size: size,
+                painter: _EqPainter(
+                  bandsDb: widget.bandsDb,
+                  active: _active,
+                  enabled: widget.enabled,
+                  plot: _plot,
+                ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

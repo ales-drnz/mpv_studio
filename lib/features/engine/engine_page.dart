@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../effects/rack_controller.dart';
 import '../../studio/player_scope.dart';
-import '../../ui/tokens.dart';
+import '../../ui/layout/layout.dart';
 import 'engine_snapshot.dart';
 import 'widgets/analysis_view.dart';
 import 'widgets/cache_view.dart';
@@ -152,60 +153,67 @@ class _EnginePanelState extends State<EnginePanel> {
     final output = OutputView(snapshot: snap);
     final chain = ChainView(snapshot: snap);
 
-    return LayoutBuilder(
-      builder: (context, c) {
-        final wide = c.maxWidth >= 960;
-        const gap = SizedBox(height: Tokens.s12, width: Tokens.s12);
-        final Widget body;
-        if (wide) {
-          body = Row(
+    final layout = context.layout;
+    return PageFrame(
+      title: 'Engine',
+      maxWidth: Breakpoints.wide,
+      body: LayoutBuilder(
+        builder: (context, c) {
+          // One column on phones, two up to desktop, three on big screens;
+          // never narrower than a card reads well.
+          final wanted = switch (layout.width) {
+            WidthClass.compact => 1,
+            WidthClass.xlarge => 3,
+            _ => 2,
+          };
+          final columns = math.min(
+            wanted,
+            ResponsiveGrid.columnsFor(
+              c.maxWidth,
+              minTileWidth: _minCardWidth,
+              spacing: layout.gap,
+            ),
+          );
+          // Cards of unequal height stack per column, balanced by hand so
+          // the columns end near each other.
+          final List<List<Widget>> split = switch (columns) {
+            1 => [
+              [status, cache, prefetch, analysis, output, chain],
+            ],
+            2 => [
+              [status, cache, prefetch],
+              [output, analysis, chain],
+            ],
+            _ => [
+              [status, output],
+              [cache, chain],
+              [analysis, prefetch],
+            ],
+          };
+          return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [status, gap, cache, gap, prefetch],
+              for (final (i, cards) in split.indexed) ...[
+                if (i > 0) SizedBox(width: layout.gap),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final (k, card) in cards.indexed) ...[
+                        if (k > 0) SizedBox(height: layout.gap),
+                        card,
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              gap,
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [output, gap, analysis, gap, chain],
-                ),
-              ),
+              ],
             ],
           );
-        } else {
-          body = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              status,
-              gap,
-              cache,
-              gap,
-              prefetch,
-              gap,
-              analysis,
-              gap,
-              output,
-              gap,
-              chain,
-            ],
-          );
-        }
-        return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            wide ? Tokens.s20 : Tokens.s12,
-            Tokens.s16,
-            wide ? Tokens.s20 : Tokens.s12,
-            Tokens.s32,
-          ),
-          child: body,
-        );
-      },
+        },
+      ),
     );
   }
 }
+
+/// The narrowest an Engine card reads well.
+const double _minCardWidth = 300;

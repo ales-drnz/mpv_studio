@@ -23,12 +23,20 @@ class CrystalizerWaveform extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 110,
-      width: double.infinity,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _CrystalPainter(intensity: intensity, enabled: enabled),
+    return Semantics(
+      label: 'Clarity sketch',
+      value:
+          '${intensity >= 0 ? 'sharpens' : 'smooths'} transients, '
+          'intensity ${intensity.toStringAsFixed(1)}',
+      child: LayoutBuilder(
+        builder: (context, c) => SizedBox(
+          height: (c.maxWidth * 0.2).clamp(110.0, 170.0),
+          width: double.infinity,
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _CrystalPainter(intensity: intensity, enabled: enabled),
+          ),
+        ),
       ),
     );
   }
