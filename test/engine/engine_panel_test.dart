@@ -7,6 +7,7 @@ import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/engine/engine_page.dart';
 import 'package:mpv_studio/features/engine/widgets/analysis_view.dart';
 import 'package:mpv_studio/features/engine/widgets/chain_view.dart';
+import 'package:mpv_studio/features/engine/widgets/status_view.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/theme.dart';
 
@@ -209,6 +210,15 @@ void main() {
     player.emit((s) => s.copyWith(playWhenReady: true));
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.byKey(const ValueKey('engine-intent-note')), findsNothing);
+  });
+
+  test('the waiting note needs something to wait for', () {
+    const asked = PlayerState(playWhenReady: true);
+    expect(StatusView.mismatch(asked, MpvPlaybackState.idle), isNull);
+    expect(StatusView.mismatch(asked, MpvPlaybackState.buffering), isNotNull);
+    expect(StatusView.mismatch(asked, MpvPlaybackState.loading), isNotNull);
+    const raw = PlayerState(playing: true);
+    expect(StatusView.mismatch(raw, MpvPlaybackState.playing), isNotNull);
   });
 
   test('waveform phases', () {
