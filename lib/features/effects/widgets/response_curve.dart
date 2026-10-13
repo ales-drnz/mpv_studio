@@ -6,7 +6,7 @@ import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 import 'graphic_height.dart';
 
-/// A magnitude-vs-frequency plot — the response any tone control draws on
+/// A magnitude-vs-frequency plot: the response any tone control draws on
 /// the signal, sketched in the flat house style over a log-frequency
 /// lattice (the same 20 Hz … 20 kHz decades a spectrum analyzer uses).
 ///

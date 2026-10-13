@@ -11,7 +11,7 @@ import '../../../ui/tokens.dart';
 import 'graphic_height.dart';
 import '../rack_environment.dart';
 
-/// A stereo vectorscope (goniometer) — the live picture of the stereo
+/// A stereo vectorscope (goniometer): the live picture of the stereo
 /// image. Each L/R sample pair is rotated into mid/side and scattered in
 /// the plane: a vertical pencil means mono, a wide cloud means a broad
 /// stereo field, and a horizontal smear means the channels are drifting
@@ -188,7 +188,7 @@ class _ScopePainter extends CustomPainter {
       Tokens.fgFaint,
     );
 
-    // Scatter — newest points brightest. Draw as tiny dots.
+    // Scatter: newest points brightest. Draw as tiny dots.
     final n = count();
     if (enabled && n > 0) {
       final h = head();

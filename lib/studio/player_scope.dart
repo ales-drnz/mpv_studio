@@ -11,8 +11,8 @@ import 'loudness_normalizer.dart';
 import 'mpv_studio.dart';
 import 'playback_issues.dart';
 
-/// Exposes the running [MpvStudio] — the single [Player] and the app's
-/// services — to the whole widget tree. MPV Studio is a single-player app, so
+/// Exposes the running [MpvStudio], the single [Player] and the app's
+/// services, to the whole widget tree. MPV Studio is a single-player app, so
 /// one studio lives at the root and everything reads from here.
 ///
 /// Pages don't reach for the whole studio; the typed accessors below

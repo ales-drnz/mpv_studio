@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 /// RBJ-cookbook biquad magnitude responses, returned as `dB at Hz`
-/// closures for the tone-control response curves. [fs] defaults to 48 kHz —
+/// closures for the tone-control response curves. [fs] defaults to 48 kHz,
 /// the shape is essentially sample-rate independent across the audible
 /// band.
 class BiquadResponse {

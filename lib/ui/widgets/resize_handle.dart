@@ -6,7 +6,7 @@ import '../tokens.dart';
 /// faint hairline; the affordance is a short **pill grip** centred on it
 /// that brightens on hover and lights up [Tokens.accent] while grabbed.
 ///
-/// Only the **grip** is interactive (plus a small margin around it) — the rest
+/// Only the **grip** is interactive (plus a small margin around it): the rest
 /// of the seam ignores pointers, so it never steals drags from a control that
 /// shares the same strip (e.g. the waveform's scrollbar that the meter's
 /// bottom resize line overlaps).
@@ -59,7 +59,7 @@ class _ResizeHandleState extends State<ResizeHandle> {
       ),
     );
 
-    // Full-length seam behind the grip — purely visual. IgnorePointer so it
+    // Full-length seam behind the grip: purely visual. IgnorePointer so it
     // never captures: pointers anywhere but the grip fall through to whatever
     // shares this strip (the waveform scrollbar, the panel body).
     final seam = IgnorePointer(
@@ -95,7 +95,7 @@ class _ResizeHandleState extends State<ResizeHandle> {
             ? null
             : (d) => widget.onDelta(d.delta.dx),
         child: SizedBox(
-          // Localized grab box around the grip — generous enough to catch, but
+          // Localized grab box around the grip: generous enough to catch, but
           // far short of the full seam so the strip stays free elsewhere.
           width: horizontal ? _gripLong + 24 : widget.hitThickness,
           height: horizontal ? widget.hitThickness : _gripLong + 24,

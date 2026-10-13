@@ -39,7 +39,7 @@ double eqLinearToDb(double linear) =>
 double eqDbToLinear(double db) => math.pow(10, db / 20).toDouble();
 
 /// An interactive 18-band graphic EQ rendered as a single continuous
-/// curve over a dB grid — the band gains are the control points of a
+/// curve over a dB grid: the band gains are the control points of a
 /// Catmull-Rom spline. Drag anywhere to shape the nearest band; sweep
 /// horizontally to paint a contour across several bands at once. Double-
 /// tap flattens the touched band back to 0 dB.
@@ -301,7 +301,7 @@ class _EqPainter extends CustomPainter {
   }
 
   /// Builds a smooth open Catmull-Rom spline through [pts] as a cubic
-  /// Bézier path — the band dots become the spline's interpolation
+  /// Bézier path: the band dots become the spline's interpolation
   /// points, so the curve passes exactly through each gain.
   Path _catmullRom(List<Offset> pts) {
     final path = Path()..moveTo(pts.first.dx, pts.first.dy);
