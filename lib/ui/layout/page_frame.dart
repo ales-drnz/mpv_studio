@@ -58,6 +58,7 @@ class PageFrame extends StatelessWidget {
   const PageFrame({
     super.key,
     this.title,
+    this.subtitle,
     this.onBack,
     this.actions = const [],
     this.bottom,
@@ -71,6 +72,10 @@ class PageFrame extends StatelessWidget {
   /// The page title; null for no title row (unless [onBack] or [actions]
   /// are given).
   final String? title;
+
+  /// A one line caption under the title, lined up with it (past the back
+  /// chevron on a pushed page).
+  final String? subtitle;
 
   /// Shows a back chevron that calls this (a pushed detail page).
   final VoidCallback? onBack;
@@ -101,7 +106,11 @@ class PageFrame extends StatelessWidget {
     final layout = context.layout;
     final pad = padding ?? layout.pagePadding;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    final hasHeader = title != null || onBack != null || actions.isNotEmpty;
+    final hasHeader =
+        title != null ||
+        subtitle != null ||
+        onBack != null ||
+        actions.isNotEmpty;
 
     // Header, tabs and body share the same padding and width cap, so the
     // title lines up with the content at every width.
@@ -115,7 +124,12 @@ class PageFrame extends StatelessWidget {
             ),
             child: ReadableWidth(
               maxWidth: maxWidth,
-              child: PageHeader(title: title, onBack: onBack, actions: actions),
+              child: PageHeader(
+                title: title,
+                subtitle: subtitle,
+                onBack: onBack,
+                actions: actions,
+              ),
             ),
           )
         : null;
@@ -165,16 +179,19 @@ class PageFrame extends StatelessWidget {
 }
 
 /// The header row of a [PageFrame]: back chevron, title and actions, at
-/// least one tap target tall. Usable on its own above custom bodies.
+/// least one tap target tall, and an optional [subtitle] under the title,
+/// starting where the title starts. Usable on its own above custom bodies.
 class PageHeader extends StatelessWidget {
   const PageHeader({
     super.key,
     this.title,
+    this.subtitle,
     this.onBack,
     this.actions = const [],
   });
 
   final String? title;
+  final String? subtitle;
   final VoidCallback? onBack;
   final List<Widget> actions;
 
@@ -188,7 +205,7 @@ class PageHeader extends StatelessWidget {
         : layout.isCompact
         ? Tokens.title.copyWith(fontSize: 24, height: 32 / 24)
         : Tokens.title;
-    return ConstrainedBox(
+    final row = ConstrainedBox(
       constraints: BoxConstraints(minHeight: layout.minTap),
       child: Row(
         children: [
@@ -215,6 +232,29 @@ class PageHeader extends StatelessWidget {
           ...actions,
         ],
       ),
+    );
+    final subtitle = this.subtitle;
+    if (subtitle == null) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row,
+        Padding(
+          // The back chevron is one tap target wide (the theme's button
+          // size); the caption starts under the title, past it.
+          padding: EdgeInsetsDirectional.only(
+            start: onBack != null ? layout.minTap : 0,
+            bottom: Tokens.s4,
+          ),
+          child: Text(
+            subtitle,
+            style: Tokens.caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

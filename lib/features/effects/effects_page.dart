@@ -383,19 +383,11 @@ class _SignalChainViewState extends State<SignalChainView> {
                       ),
                     ],
               // A low window gives the editor every line it can.
-              bottom: covering && layout.isShort
+              subtitle: covering && layout.isShort
                   ? null
-                  : Padding(
-                      padding: const EdgeInsets.only(bottom: Tokens.s4),
-                      child: Text(
-                        covering
-                            ? stagePlace(rack, focus)
-                            : chainSummary(rack, layout),
-                        style: Tokens.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                  : covering
+                  ? stagePlace(rack, focus)
+                  : chainSummary(rack, layout),
               scrollable: false,
               maxWidth: mode == RackMode.split
                   ? Breakpoints.wide
