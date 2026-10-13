@@ -6,17 +6,20 @@ import 'sections.dart';
 
 /// Desktop chrome: a resizable text sidebar on the left and the section
 /// body filling the stage. Flat throughout — hierarchy via surface
-/// colour, not shadow.
+/// colour, not shadow. [miniPlayer], when given, runs along the bottom
+/// under both.
 class DesktopShell extends StatefulWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
   final Widget body;
+  final Widget? miniPlayer;
 
   const DesktopShell({
     super.key,
     required this.section,
     required this.onSelect,
     required this.body,
+    this.miniPlayer,
   });
 
   @override
@@ -33,7 +36,7 @@ class _DesktopShellState extends State<DesktopShell> {
     final body = widget.body;
     // Panels touch flush; the resize line is overlaid exactly on the
     // seam so there are no gap pixels between sidebar and stage.
-    return Stack(
+    final panels = Stack(
       children: [
         Row(
           children: [
@@ -63,6 +66,12 @@ class _DesktopShellState extends State<DesktopShell> {
           ),
         ),
       ],
+    );
+    final mini = widget.miniPlayer;
+    if (mini == null) return panels;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [Expanded(child: panels), mini],
     );
   }
 }
@@ -123,12 +132,16 @@ class _Sidebar extends StatelessWidget {
                 ),
               ),
             ),
-            for (final s in Section.values)
+            for (final s in Section.values) ...[
+              // A gap sets the tools (Engine, Settings, Console) apart
+              // from the listening sections.
+              if (s == Section.more.first) const SizedBox(height: Tokens.s16),
               _NavItem(
                 section: s,
                 active: s == section,
                 onTap: () => onSelect(s),
               ),
+            ],
           ],
         ),
       ),
@@ -151,40 +164,44 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rSm),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOut,
-            decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Colors.transparent,
-              shape: Tokens.squircle(Tokens.rSm),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Tokens.s12,
-                vertical: 10,
+      child: Semantics(
+        selected: active,
+        button: true,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.squircle(Tokens.rSm),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOut,
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accent : Colors.transparent,
+                shape: Tokens.squircle(Tokens.rSm),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    section.icon,
-                    size: 18,
-                    color: active ? Tokens.onAccent : Tokens.fgDim,
-                  ),
-                  const SizedBox(width: Tokens.s12),
-                  Text(
-                    section.title,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Tokens.s12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      section.icon,
+                      size: 18,
                       color: active ? Tokens.onAccent : Tokens.fgDim,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: Tokens.s12),
+                    Text(
+                      section.title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                        color: active ? Tokens.onAccent : Tokens.fgDim,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -10,16 +10,22 @@ import 'sections.dart';
 /// up — only the body content lifts above the keyboard, so a focused text field
 /// (e.g. the Console input) stays visible. The root [Scaffold] sets
 /// `resizeToAvoidBottomInset: false`, so this widget owns the keyboard inset.
+///
+/// The bar has a tab per [Section.tabs] and a More tab that opens a sheet
+/// with the [Section.more] sections. [miniPlayer], when given, sits right
+/// above the bar and moves with it.
 class MobileShell extends StatefulWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
   final Widget body;
+  final Widget? miniPlayer;
 
   const MobileShell({
     super.key,
     required this.section,
     required this.onSelect,
     required this.body,
+    this.miniPlayer,
   });
 
   @override
@@ -28,7 +34,8 @@ class MobileShell extends StatefulWidget {
 
 class _MobileShellState extends State<MobileShell> {
   final GlobalKey _tabBarKey = GlobalKey();
-  // Measured tab-bar height (includes the home-indicator inset). The body
+  // Measured height of the tab bar and the mini-player above it (includes
+  // the home-indicator inset). The body
   // reserves this much at the bottom when the keyboard is down; the keyboard
   // inset takes over when it's up — so the content clears whichever is taller.
   double _tabBarHeight = 0;
@@ -76,10 +83,14 @@ class _MobileShellState extends State<MobileShell> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _TabBar(
+            child: Column(
               key: _tabBarKey,
-              section: widget.section,
-              onSelect: widget.onSelect,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.miniPlayer != null) widget.miniPlayer!,
+                _TabBar(section: widget.section, onSelect: widget.onSelect),
+              ],
             ),
           ),
         ],
@@ -91,7 +102,19 @@ class _MobileShellState extends State<MobileShell> {
 class _TabBar extends StatelessWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
-  const _TabBar({super.key, required this.section, required this.onSelect});
+  const _TabBar({required this.section, required this.onSelect});
+
+  Future<void> _openMore(BuildContext context) async {
+    final picked = await showModalBottomSheet<Section>(
+      context: context,
+      backgroundColor: Tokens.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Tokens.rLg)),
+      ),
+      builder: (context) => _MoreSheet(current: section),
+    );
+    if (picked != null) onSelect(picked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,14 +132,27 @@ class _TabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          for (final s in Section.values)
+          for (final s in Section.tabs)
             Expanded(
               child: _Tab(
-                section: s,
+                icon: s.icon,
+                label: s.shortLabel,
+                tooltip: s.title,
                 active: s == section,
                 onTap: () => onSelect(s),
               ),
             ),
+          Expanded(
+            child: _Tab(
+              // On a More section the tab carries that section's icon, so
+              // the bar still says where you are.
+              icon: section.tab ? Icons.more_horiz_rounded : section.icon,
+              label: 'More',
+              tooltip: 'More sections',
+              active: !section.tab,
+              onTap: () => _openMore(context),
+            ),
+          ),
         ],
       ),
     );
@@ -124,11 +160,18 @@ class _TabBar extends StatelessWidget {
 }
 
 class _Tab extends StatelessWidget {
-  final Section section;
+  final IconData icon;
+  final String label;
+  final String tooltip;
   final bool active;
   final VoidCallback onTap;
-  const _Tab(
-      {required this.section, required this.active, required this.onTap});
+  const _Tab({
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+    required this.active,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -140,33 +183,141 @@ class _Tab extends StatelessWidget {
     // pill — a margin inside the InkWell would make the highlight overshoot.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s4),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rSm),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-            decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Colors.transparent,
-              shape: Tokens.squircle(Tokens.rSm),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(section.icon, size: 22, color: color),
-                const SizedBox(height: 3),
-                Text(
-                  section.shortLabel,
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                    color: color,
-                  ),
+      child: Semantics(
+        selected: active,
+        button: true,
+        child: Tooltip(
+          message: tooltip,
+          excludeFromSemantics: true,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              customBorder: Tokens.squircle(Tokens.rSm),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
+                decoration: ShapeDecoration(
+                  color: active ? Tokens.accent : Colors.transparent,
+                  shape: Tokens.squircle(Tokens.rSm),
                 ),
-              ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 22, color: color),
+                    const SizedBox(height: 3),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The More menu: the sections without a tab of their own.
+class _MoreSheet extends StatelessWidget {
+  final Section current;
+  const _MoreSheet({required this.current});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Tokens.s12,
+          Tokens.s12,
+          Tokens.s12,
+          Tokens.s8,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: Tokens.s12),
+                decoration: const BoxDecoration(
+                  color: Tokens.line2,
+                  borderRadius: BorderRadius.all(Radius.circular(2)),
+                ),
+              ),
+            ),
+            for (final s in Section.more)
+              _MoreItem(
+                section: s,
+                active: s == current,
+                onTap: () => Navigator.of(context).pop(s),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreItem extends StatelessWidget {
+  final Section section;
+  final bool active;
+  final VoidCallback onTap;
+  const _MoreItem({
+    required this.section,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? Tokens.onAccent : Tokens.fg;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Tokens.s4),
+      child: Semantics(
+        selected: active,
+        button: true,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.squircle(Tokens.rSm),
+            child: Ink(
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accent : Colors.transparent,
+                shape: Tokens.squircle(Tokens.rSm),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Tokens.s16,
+                vertical: Tokens.s12,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    section.icon,
+                    size: 20,
+                    color: active ? Tokens.onAccent : Tokens.fgDim,
+                  ),
+                  const SizedBox(width: Tokens.s16),
+                  Text(
+                    section.title,
+                    style: Tokens.body.copyWith(
+                      color: color,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
