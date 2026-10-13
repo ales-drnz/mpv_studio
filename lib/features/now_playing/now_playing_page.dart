@@ -290,6 +290,12 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     );
   }
 
+  /// The least waveform meter height: on touch its bottom row (the
+  /// scrollbar and the zoom pill) is a touch target tall, so the meter
+  /// grows by as much to keep the same wave.
+  static double _leastMeter(BuildContext context) =>
+      context.layout.isTouch ? 128 : 96;
+
   /// Phones in portrait, tall tablets: one column, the spectrum filling
   /// what is left, scrolling when the content does not fit.
   Widget _columnLayout(BuildContext context) {
@@ -297,8 +303,9 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       builder: (context, c) {
         final h = c.maxHeight;
         final cover = math.min(c.maxWidth * 0.62, h * 0.27).clamp(120.0, 320.0);
+        final least = _leastMeter(context);
         final meter = (_meterHeight ?? h * 0.16)
-            .clamp(96.0, math.max(96.0, h * 0.4))
+            .clamp(least, math.max(least, h * 0.4))
             .toDouble();
         return CustomScrollView(
           slivers: [
@@ -403,7 +410,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
         final rowH = math.max(cover, 160.0 + tap);
         return _resizable(
           initial: h * 0.28,
-          min: 96,
+          min: _leastMeter(context),
           max: h - rowH - 160,
           below: _fillBelow([
             const PositionBar(),
