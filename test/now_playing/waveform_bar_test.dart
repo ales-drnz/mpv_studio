@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mpv_studio/features/now_playing/widgets/waveform_meter.dart';
+import 'package:mpv_studio/features/now_playing/widgets/waveform/waveform_painter.dart';
 
 void main() {
   test('without RMS the bar is the peaks only, as before', () {

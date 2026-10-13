@@ -1,9 +1,10 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../studio/player_scope.dart';
 import '../../../ui/tokens.dart';
+import '../playback_scope.dart';
 
 /// Flat real-time spectrum drawn as a smooth curve (not bars). Subscribes
 /// to `player.stream.fft` and renders one continuous accent line through
@@ -16,12 +17,17 @@ class SpectrumCurve extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final player = PlayerScope.of(context);
-    final paint = StreamBuilder<FftFrame>(
-      stream: player.stream.fft,
-      builder: (context, snap) => CustomPaint(
-        size: Size.infinite,
-        painter: _CurvePainter(snap.data?.bands),
+    final player = PlaybackScope.of(context).player;
+    final paint = Semantics(
+      image: true,
+      label: 'Spectrum analyser',
+      excludeSemantics: true,
+      child: StreamBuilder<FftFrame>(
+        stream: player.stream.fft,
+        builder: (context, snap) => CustomPaint(
+          size: Size.infinite,
+          painter: _CurvePainter(snap.data?.bands, Tokens.palette),
+        ),
       ),
     );
     if (height == null) return SizedBox.expand(child: paint);
@@ -31,7 +37,8 @@ class SpectrumCurve extends StatelessWidget {
 
 class _CurvePainter extends CustomPainter {
   final Float32List? bands;
-  _CurvePainter(this.bands);
+  final Palette palette;
+  _CurvePainter(this.bands, this.palette);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -44,7 +51,7 @@ class _CurvePainter extends CustomPainter {
 
     // Baseline always drawn so the visualizer reads even when silent.
     final baseline = Paint()
-      ..color = Tokens.line
+      ..color = palette.line
       ..strokeWidth = 1;
     canvas.drawLine(Offset(0, h - 1), Offset(w, h - 1), baseline);
 
@@ -66,12 +73,12 @@ class _CurvePainter extends CustomPainter {
       ..lineTo(w, h)
       ..lineTo(0, h)
       ..close();
-    canvas.drawPath(fill, Paint()..color = Tokens.accentWash);
+    canvas.drawPath(fill, Paint()..color = palette.accentWash);
 
     canvas.drawPath(
       top,
       Paint()
-        ..color = Tokens.accent
+        ..color = palette.accent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
         ..strokeJoin = StrokeJoin.round
@@ -80,7 +87,9 @@ class _CurvePainter extends CustomPainter {
   }
 
   @override
-  // The stream hands us a fresh Float32List per frame, so identity tracks
-  // "new data". Repaint only then — not on unrelated parent rebuilds.
-  bool shouldRepaint(_CurvePainter old) => !identical(old.bands, bands);
+  // The stream hands over a fresh Float32List per frame, so identity tracks
+  // new data. Repaint only then (or on a theme change), not on unrelated
+  // parent rebuilds.
+  bool shouldRepaint(_CurvePainter old) =>
+      !identical(old.bands, bands) || old.palette != palette;
 }

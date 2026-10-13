@@ -6,17 +6,18 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../audio/level_follower.dart';
 import '../../../audio/pcm_analysis.dart';
-import '../../../studio/player_scope.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 import '../../../util/reactive.dart';
+import '../playback_scope.dart';
 
 /// A stereo peak meter fed by `player.stream.pcm`. Two bars (L / R) with
 /// pro PPM ballistics — fast attack, slow release, a latched peak-hold
 /// marker — and flat green/amber/red zones. The ballistics live in
 /// [LevelFollower]; this widget just pushes frame peaks, ticks, and paints.
-/// Subscribing arms the PCM tap (shared with the spectrum); it disarms on
-/// unmount.
+/// It only ticks while there is something to show: frames arriving or bars
+/// still falling. Subscribing arms the PCM tap (shared with the spectrum);
+/// it disarms on unmount.
 ///
 /// [axis] picks horizontal bars (default) or vertical bars (for a slim
 /// meter beside the transport).
@@ -36,35 +37,46 @@ class _VuMeterState extends State<VuMeter>
   final _left = LevelFollower(minDb: _minDb);
   final _right = LevelFollower(minDb: _minDb);
 
-  late final Ticker _ticker;
+  late final Ticker _ticker = createTicker(_onTick);
   Duration _lastTick = Duration.zero;
 
   @override
-  void initState() {
-    super.initState();
-    _ticker = createTicker(_onTick)..start();
-  }
-
-  @override
   void onSubscribe() {
-    listen(PlayerScope.of(context).stream.pcm, _onFrame);
+    listen(PlaybackScope.of(context).player.stream.pcm, _onFrame);
   }
 
   void _onFrame(PcmFrame f) {
     final peaks = channelPeaks(f);
     _left.push(peaks.left);
     _right.push(peaks.right);
+    if (!_ticker.isActive) {
+      _lastTick = Duration.zero;
+      _ticker.start();
+    }
   }
 
+  bool get _resting =>
+      _left.db <= _minDb &&
+      _right.db <= _minDb &&
+      _left.holdDb <= _minDb &&
+      _right.holdDb <= _minDb;
+
   void _onTick(Duration elapsed) {
-    final dtMs = (elapsed - _lastTick).inMicroseconds / 1000.0;
+    final dtS = (elapsed - _lastTick).inMicroseconds / 1e6;
     _lastTick = elapsed;
-    if (dtMs <= 0) return;
-    final dtS = dtMs / 1000.0;
+    if (dtS <= 0) return;
     _left.tick(dtS, elapsed);
     _right.tick(dtS, elapsed);
+    // Silence and the bars back at the floor: nothing moves until the
+    // next frame, so stop asking for frames.
+    if (_resting) _ticker.stop();
     setState(() {});
   }
+
+  /// A level for screen readers, in 6 dB steps so the value does not
+  /// change on every frame.
+  static String _level(double db) =>
+      db <= _minDb ? 'silent' : '${(db / 6).round() * 6} dB';
 
   @override
   void dispose() {
@@ -82,16 +94,18 @@ class _VuMeterState extends State<VuMeter>
       holdR: _right.holdDb.clamp(_minDb, _maxDb),
       minDb: _minDb,
       maxDb: _maxDb,
+      palette: Tokens.palette,
     );
-    if (widget.axis == Axis.vertical) {
-      return SizedBox(
-        width: 40,
+    final vertical = widget.axis == Axis.vertical;
+    return Semantics(
+      label: 'Output level',
+      value: 'left ${_level(_left.db)}, right ${_level(_right.db)}',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: vertical ? 40 : null,
+        height: vertical ? null : 30,
         child: CustomPaint(size: Size.infinite, painter: painter),
-      );
-    }
-    return SizedBox(
-      height: 30,
-      child: CustomPaint(size: Size.infinite, painter: painter),
+      ),
     );
   }
 }
@@ -99,6 +113,7 @@ class _VuMeterState extends State<VuMeter>
 class _VuPainter extends CustomPainter {
   final Axis axis;
   final double dbL, dbR, holdL, holdR, minDb, maxDb;
+  final Palette palette;
   static const double _amberDb = -18;
   static const double _redDb = -6;
 
@@ -110,19 +125,20 @@ class _VuPainter extends CustomPainter {
     required this.holdR,
     required this.minDb,
     required this.maxDb,
+    required this.palette,
   });
 
   double _t(double db) => ((db - minDb) / (maxDb - minDb)).clamp(0.0, 1.0);
 
   Color _holdColor(double db) => db >= _redDb
-      ? Tokens.red
+      ? palette.red
       : db >= _amberDb
-      ? Tokens.amber
-      : Tokens.green;
+      ? palette.amber
+      : palette.green;
 
   void _barH(Canvas canvas, Rect r, double db, double hold) {
     final rrect = RRect.fromRectAndRadius(r, const Radius.circular(3));
-    canvas.drawRRect(rrect, Paint()..color = Tokens.surface2);
+    canvas.drawRRect(rrect, Paint()..color = palette.surface2);
     canvas.save();
     canvas.clipRRect(rrect);
     final litW = _t(db) * r.width;
@@ -139,9 +155,9 @@ class _VuPainter extends CustomPainter {
       }
     }
 
-    seg(0, amberX, Tokens.green);
-    seg(amberX, redX, Tokens.amber);
-    seg(redX, r.width, Tokens.red);
+    seg(0, amberX, palette.green);
+    seg(amberX, redX, palette.amber);
+    seg(redX, r.width, palette.red);
     canvas.restore();
     if (hold > minDb) {
       final hx = r.left + _t(hold) * r.width;
@@ -157,7 +173,7 @@ class _VuPainter extends CustomPainter {
 
   void _barV(Canvas canvas, Rect r, double db, double hold) {
     final rrect = RRect.fromRectAndRadius(r, const Radius.circular(3));
-    canvas.drawRRect(rrect, Paint()..color = Tokens.surface2);
+    canvas.drawRRect(rrect, Paint()..color = palette.surface2);
     canvas.save();
     canvas.clipRRect(rrect);
     final litTopY = r.bottom - _t(db) * r.height;
@@ -174,9 +190,9 @@ class _VuPainter extends CustomPainter {
       }
     }
 
-    seg(amberY, r.bottom, Tokens.green);
-    seg(redY, amberY, Tokens.amber);
-    seg(r.top, redY, Tokens.red);
+    seg(amberY, r.bottom, palette.green);
+    seg(redY, amberY, palette.amber);
+    seg(r.top, redY, palette.red);
     canvas.restore();
     if (hold > minDb) {
       final hy = r.bottom - _t(hold) * r.height;
@@ -206,14 +222,14 @@ class _VuPainter extends CustomPainter {
         canvas,
         'L',
         Offset(0, lRect.center.dy - 6),
-        Tokens.fgFaint,
+        palette.fgFaint,
         fontSize: 10,
       );
       paintChartLabel(
         canvas,
         'R',
         Offset(0, rRect.center.dy - 6),
-        Tokens.fgFaint,
+        palette.fgFaint,
         fontSize: 10,
       );
       _barH(canvas, lRect, dbL, holdL);
@@ -231,14 +247,14 @@ class _VuPainter extends CustomPainter {
         canvas,
         'L',
         Offset(lRect.center.dx - 3, barsH + 1),
-        Tokens.fgFaint,
+        palette.fgFaint,
         fontSize: 10,
       );
       paintChartLabel(
         canvas,
         'R',
         Offset(rRect.center.dx - 3, barsH + 1),
-        Tokens.fgFaint,
+        palette.fgFaint,
         fontSize: 10,
       );
     }
@@ -250,5 +266,6 @@ class _VuPainter extends CustomPainter {
       old.dbL != dbL ||
       old.dbR != dbR ||
       old.holdL != holdL ||
-      old.holdR != holdR;
+      old.holdR != holdR ||
+      old.palette != palette;
 }

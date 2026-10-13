@@ -1,83 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../studio/player_scope.dart';
 import '../../../ui/tokens.dart';
+import '../../../util/reactive.dart';
+import '../track_identity.dart';
 
-/// Square album art. Prefers embedded cover bytes from
-/// `player.stream.coverArt`; when a track carries none (e.g. a transcoded
-/// server stream) it falls back to the network artwork URL the queue item
-/// stored in `extras['art']`, and finally to a flat placeholder.
+/// Square album art of the current track: the embedded cover from
+/// `stream.coverArt`, else the artwork URL the queue entry carries in
+/// `extras['art']` (server tracks), else a flat placeholder. Shared by the
+/// Playback page and the mini-player.
 class CoverArtView extends StatelessWidget {
-  final double size;
-  const CoverArtView({super.key, required this.size});
+  const CoverArtView({
+    super.key,
+    required this.player,
+    required this.size,
+    this.radius = Tokens.rLg,
+  });
 
-  static String? _artUrl(Playlist? pl) {
-    if (pl == null ||
-        pl.items.isEmpty ||
-        pl.index < 0 ||
-        pl.index >= pl.items.length) {
-      return null;
-    }
-    final v = pl.items[pl.index].extras?['art'];
-    return (v is String && v.isNotEmpty) ? v : null;
-  }
+  final PlayerApi player;
+  final double size;
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
-    final player = PlayerScope.of(context);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: StreamBuilder<Playlist>(
-        stream: player.stream.playlist,
-        initialData: player.state.playlist,
-        builder: (context, plSnap) {
-          final artUrl = _artUrl(plSnap.data);
-          return StreamBuilder<CoverArt?>(
+    final placeholder = ColoredBox(
+      color: Tokens.surface2,
+      child: Center(
+        child: Icon(
+          Icons.music_note_rounded,
+          size: (size * 0.45).clamp(20.0, 48.0),
+          color: Tokens.fgFaint,
+        ),
+      ),
+    );
+    return SizedBox.square(
+      dimension: size,
+      child: ClipPath(
+        clipper: ShapeBorderClipper(shape: Tokens.squircle(radius)),
+        child: Live<Playlist>(
+          stream: player.stream.playlist,
+          initial: player.state.playlist,
+          builder: (context, pl) => Live<CoverArt?>(
             stream: player.stream.coverArt,
-            initialData: player.state.coverArt,
-            builder: (context, snap) {
-              final art = snap.data;
-              final Widget child;
+            initial: player.state.coverArt,
+            builder: (context, art) {
+              final hasArt = art != null || currentExtra(pl, 'art') != null;
+              final Widget image;
               if (art != null) {
-                child = Image.memory(
+                image = Image.memory(
                   art.bytes,
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
-                  errorBuilder: (_, _, _) => const _Placeholder(),
+                  errorBuilder: (_, _, _) => placeholder,
                 );
-              } else if (artUrl != null) {
-                child = Image.network(
-                  artUrl,
+              } else if (currentExtra(pl, 'art') case final url?) {
+                image = Image.network(
+                  url,
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
-                  errorBuilder: (_, _, _) => const _Placeholder(),
+                  errorBuilder: (_, _, _) => placeholder,
                 );
               } else {
-                child = const _Placeholder();
+                image = placeholder;
               }
-              return ClipPath(
-                clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rLg)),
-                child: child,
+              return Semantics(
+                image: true,
+                label: hasArt ? 'Cover art' : 'No cover art',
+                excludeSemantics: true,
+                child: image,
               );
             },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Tokens.surface2,
-      child: Center(
-        child: Icon(Icons.music_note_rounded, size: 44, color: Tokens.fgFaint),
+          ),
+        ),
       ),
     );
   }

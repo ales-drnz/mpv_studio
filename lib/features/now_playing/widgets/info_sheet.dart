@@ -1,145 +1,101 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../studio/player_scope.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../../../util/reactive.dart';
+import '../playback_scope.dart';
+import '../track_identity.dart';
 
-/// Slides up a compact bottom sheet with the read-only diagnostics for the
-/// current track and playback — container, codec, bitrate, bit depth,
-/// channels, the output format, source paths and timing. The technical
-/// signal facts are laid out as a grid of small stat cells; paths and timing
-/// are dense key/value rows. Dismiss by dragging down or tapping outside.
-void showInfoSheet(BuildContext context) {
-  final player = PlayerScope.of(context);
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black54,
-    isScrollControlled: true,
-    builder: (context) => _InfoSheet(player: player),
+/// Shows the read-only diagnostics of the current track and playback:
+/// container, codec, bitrate, bit depth, channels, loudness, the output
+/// format, the source paths and the timing. The signal facts are a grid
+/// of small stat cells; paths and timing are dense key and value rows. A
+/// bottom sheet on touch and phones, a dialog with a pointer.
+Future<void> showInfoSheet(BuildContext context) {
+  final scope = PlaybackScope.of(context);
+  final body = _InfoBody(
+    player: scope.player,
+    loudnessSeed: scope.loudnessSeed?.call(),
+  );
+  if (context.layout.prefersSheets) {
+    return showStudioSheet<void>(context, builder: (_) => body);
+  }
+  return showStudioDialog<void>(
+    context,
+    title: 'Track info',
+    maxWidth: 560,
+    builder: (_) => body,
+    actions: (context) => [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Close'),
+      ),
+    ],
   );
 }
 
-class _InfoSheet extends StatelessWidget {
-  final Player player;
-  const _InfoSheet({required this.player});
+class _InfoBody extends StatelessWidget {
+  final PlayerApi player;
+  final LoudnessScan? loudnessSeed;
+  const _InfoBody({required this.player, this.loudnessSeed});
 
   @override
   Widget build(BuildContext context) {
-    final maxH = MediaQuery.sizeOf(context).height * 0.85;
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxH),
-      decoration: ShapeDecoration(
-        color: Tokens.surface,
-        shape: ContinuousRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Tokens.s4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: Tokens.s8),
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: ShapeDecoration(
-                color: Tokens.line2,
-                shape: Tokens.squircle(Tokens.rPill),
-              ),
-            ),
-          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Tokens.s20,
-              Tokens.s12,
-              Tokens.s20,
-              Tokens.s12,
-            ),
+            padding: const EdgeInsets.only(bottom: Tokens.s16),
             child: _identity(),
           ),
-          Flexible(
-            child: SingleChildScrollView(
-              // Clamp the overscroll: the bouncing physics at the top edge
-              // fights the modal sheet's drag-to-dismiss, which reads as the
-              // whole sheet juddering when you scroll up into the top.
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.s16,
-                Tokens.s16,
-                Tokens.s16,
-                Tokens.s8,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _source(),
-                  // Seed the loudness section from the normalizer's cached
-                  // scan: `stream.loudnessScan` replays the current result to
-                  // every listener, but only after the first frame, and
-                  // `player.state` has no loudness field to seed from.
-                  _loudness(PlayerScope.normalizerOf(context).lastScan),
-                  _output(),
-                  _stream(),
-                  _playback(),
-                ],
-              ),
-            ),
-          ),
-          const SafeArea(top: false, child: SizedBox(height: Tokens.s4)),
+          _source(),
+          // `stream.loudnessScan` replays the current result to every
+          // listener, but only after the first frame, and `player.state`
+          // has no loudness field: the seed fills that first frame.
+          _loudness(loudnessSeed),
+          _output(),
+          _stream(),
+          _playback(),
         ],
       ),
     );
   }
 
-  // ── Header: title + artist · album (metadata, extras fallback) ──────
+  // ── Header: title, artist and album ─────────────────────────────────
 
   Widget _identity() {
-    return Live<Playlist>(
-      stream: player.stream.playlist,
-      initial: player.state.playlist,
-      builder: (context, pl) => Live<Map<String, String>>(
-        stream: player.stream.metadata,
-        initial: player.state.metadata,
-        builder: (context, meta) => Live<String>(
-          stream: player.stream.mediaTitle,
-          initial: player.state.mediaTitle,
-          builder: (context, mediaTitle) {
-            final title =
-                _lookup(meta, 'title') ??
-                _extra(pl, 'title') ??
-                (mediaTitle.isNotEmpty ? mediaTitle : 'Nothing playing');
-            final artist = _lookup(meta, 'artist') ?? _extra(pl, 'artist');
-            final album = _lookup(meta, 'album') ?? _extra(pl, 'album');
-            final sub = [artist, album].whereType<String>().join('  ·  ');
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Tokens.heading,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (sub.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    sub,
-                    style: Tokens.caption,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
-      ),
+    return LiveTrackIdentity(
+      player: player,
+      builder: (context, id) {
+        final sub = id.subtitle(separator: '  ·  ');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              id.displayTitle,
+              style: Tokens.heading,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (sub != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                sub,
+                style: Tokens.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -395,22 +351,7 @@ class _InfoSheet extends StatelessWidget {
 
   // ── Formatters ──────────────────────────────────────────────────────
 
-  static String? _lookup(Map<String, String> m, String key) {
-    for (final e in m.entries) {
-      if (e.key.toLowerCase() == key) return e.value;
-    }
-    return null;
-  }
-
-  static String? _extra(Playlist pl, String key) {
-    if (pl.items.isEmpty || pl.index < 0 || pl.index >= pl.items.length) {
-      return null;
-    }
-    final v = pl.items[pl.index].extras?[key];
-    return (v is String && v.isNotEmpty) ? v : null;
-  }
-
-  String? _currentExtra(String key) => _extra(player.state.playlist, key);
+  String? _currentExtra(String key) => currentExtra(player.state.playlist, key);
 
   /// Friendly label for mpv's `file-format` (the demuxer name). For
   /// adaptive streams this is the protocol (HLS/DASH); for direct files
