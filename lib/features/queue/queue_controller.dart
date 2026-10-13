@@ -48,6 +48,13 @@ class QueueController {
   /// How many picked files are still being added to the queue.
   ValueListenable<int> get adding => _adding;
   final _adding = ValueNotifier<int>(0);
+  bool _disposed = false;
+
+  /// Sets [adding], unless the controller was disposed mid-add (the
+  /// player changed under the page).
+  void _setAdding(int value) {
+    if (!_disposed) _adding.value = value;
+  }
 
   List<Media> get _items => player.state.playlist.items;
 
@@ -58,7 +65,7 @@ class QueueController {
   /// when it is empty, else they are appended.
   Future<void> enqueue(List<String> paths) async {
     if (paths.isEmpty) return;
-    _adding.value += paths.length;
+    _setAdding(_adding.value + paths.length);
     try {
       final medias = [for (final p in paths) mediaFor(p)];
       if (_items.isEmpty) {
@@ -70,11 +77,11 @@ class QueueController {
           await player.add(m);
           return true;
         });
-        _adding.value--;
+        _setAdding(_adding.value - 1);
         if (ok == null) break;
       }
     } finally {
-      _adding.value = 0;
+      _setAdding(0);
     }
   }
 
@@ -150,5 +157,8 @@ class QueueController {
   /// The reverse of [nextPlaylist].
   Future<bool?> previousPlaylist() => guard(player.previousPlaylist);
 
-  void dispose() => _adding.dispose();
+  void dispose() {
+    _disposed = true;
+    _adding.dispose();
+  }
 }

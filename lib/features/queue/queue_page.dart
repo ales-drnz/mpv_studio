@@ -333,8 +333,7 @@ class _QueueViewState extends State<QueueView> {
                   body: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (items.isNotEmpty || _queue.adding.value > 0)
-                        _summary(playlist),
+                      _summary(playlist),
                       Live<String>(
                         stream: player.stream.playlistPath,
                         initial: player.state.playlistPath,
@@ -395,6 +394,9 @@ class _QueueViewState extends State<QueueView> {
   Widget _summary(Playlist playlist) => ListenableBuilder(
     listenable: Listenable.merge([widget.details.details, _queue.adding]),
     builder: (context, _) {
+      if (playlist.items.isEmpty && _queue.adding.value == 0) {
+        return const SizedBox.shrink();
+      }
       var known = Duration.zero;
       var unknown = 0;
       for (final m in playlist.items) {
