@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../tokens.dart';
@@ -105,22 +103,27 @@ class PageFrame extends StatelessWidget {
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final hasHeader = title != null || onBack != null || actions.isNotEmpty;
 
+    // Header, tabs and body share the same padding and width cap, so the
+    // title lines up with the content at every width.
     final header = hasHeader
         ? Padding(
             padding: EdgeInsets.fromLTRB(
-              onBack != null ? math.max(pad.left - Tokens.s12, 0) : pad.left,
+              pad.left,
               layout.isShort ? Tokens.s4 : Tokens.s12,
-              math.max(pad.right - Tokens.s8, 0),
+              pad.right,
               Tokens.s4,
             ),
-            child: PageHeader(title: title, onBack: onBack, actions: actions),
+            child: ReadableWidth(
+              maxWidth: maxWidth,
+              child: PageHeader(title: title, onBack: onBack, actions: actions),
+            ),
           )
         : null;
     final tabs = bottom == null
         ? null
         : Padding(
-            padding: EdgeInsets.symmetric(horizontal: pad.left),
-            child: bottom,
+            padding: EdgeInsets.only(left: pad.left, right: pad.right),
+            child: ReadableWidth(maxWidth: maxWidth, child: bottom!),
           );
 
     final Widget content = scrollable
@@ -147,9 +150,8 @@ class PageFrame extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (header != null)
-                ReadableWidth(maxWidth: maxWidth, child: header),
-              if (tabs != null) ReadableWidth(maxWidth: maxWidth, child: tabs),
+              ?header,
+              ?tabs,
               Expanded(child: content),
             ],
           ),
