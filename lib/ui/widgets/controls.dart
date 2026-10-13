@@ -56,10 +56,7 @@ class SettingTile extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) ...[
-          const SizedBox(width: Tokens.s12),
-          trailing!,
-        ],
+        if (trailing != null) ...[const SizedBox(width: Tokens.s12), trailing!],
       ],
     );
 
@@ -239,8 +236,9 @@ class TextRow extends StatefulWidget {
 }
 
 class _TextRowState extends State<TextRow> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
   final FocusNode _focus = FocusNode();
 
   @override
@@ -355,10 +353,12 @@ class AppSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final track =
-        enabled ? (value ? Tokens.accent : Tokens.surface3) : Tokens.surface2;
-    final knob =
-        enabled ? (value ? Tokens.onAccent : Tokens.fgDim) : Tokens.fgFaint;
+    final track = enabled
+        ? (value ? Tokens.accent : Tokens.surface3)
+        : Tokens.surface2;
+    final knob = enabled
+        ? (value ? Tokens.onAccent : Tokens.fgDim)
+        : Tokens.fgFaint;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       curve: Curves.easeOut,
@@ -420,8 +420,9 @@ class AppSlider extends StatelessWidget {
       builder: (context, c) {
         final w = c.maxWidth;
         final span = (w - _thumb).clamp(1.0, double.infinity);
-        final frac =
-            max <= min ? 0.0 : ((value - min) / (max - min)).clamp(0.0, 1.0);
+        final frac = max <= min
+            ? 0.0
+            : ((value - min) / (max - min)).clamp(0.0, 1.0);
 
         double valueAt(double dx) {
           final t = ((dx - _thumb / 2) / span).clamp(0.0, 1.0);
@@ -433,10 +434,12 @@ class AppSlider extends StatelessWidget {
 
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown:
-              enabled ? (d) => onChanged(valueAt(d.localPosition.dx)) : null,
-          onHorizontalDragUpdate:
-              enabled ? (d) => onChanged(valueAt(d.localPosition.dx)) : null,
+          onTapDown: enabled
+              ? (d) => onChanged(valueAt(d.localPosition.dx))
+              : null,
+          onHorizontalDragUpdate: enabled
+              ? (d) => onChanged(valueAt(d.localPosition.dx))
+              : null,
           onHorizontalDragEnd: enabled && onChangeEnd != null
               ? (_) => onChangeEnd!(value)
               : null,
@@ -782,8 +785,8 @@ class _MenuItem extends StatelessWidget {
     final color = !enabled
         ? Tokens.fgFaint
         : active
-            ? Tokens.accent
-            : Tokens.fg;
+        ? Tokens.accent
+        : Tokens.fg;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(

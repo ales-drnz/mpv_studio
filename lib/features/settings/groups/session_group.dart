@@ -44,22 +44,22 @@ class _SessionGroupState extends State<SessionGroup> {
   /// Advertised actions the running OS actually renders — the only ones in the
   /// reorderable "Shown controls" list (advertised order preserved).
   List<MediaAction> get _shownSupported => [
-        for (final a in _shown)
-          if (!_unsupported.contains(a)) a
-      ];
+    for (final a in _shown)
+      if (!_unsupported.contains(a)) a,
+  ];
 
   /// Not-yet-advertised actions the OS renders — the "More actions" pool.
   List<MediaAction> get _availableSupported => [
-        for (final a in MediaAction.values)
-          if (!_shown.contains(a) && !_unsupported.contains(a)) a
-      ];
+    for (final a in MediaAction.values)
+      if (!_shown.contains(a) && !_unsupported.contains(a)) a,
+  ];
 
   /// Every action the OS won't render here, advertised or not — grouped on its
   /// own (toggling one just adds/removes it from the advertised set).
   List<MediaAction> get _allUnsupported => [
-        for (final a in MediaAction.values)
-          if (_unsupported.contains(a)) a
-      ];
+    for (final a in MediaAction.values)
+      if (_unsupported.contains(a)) a,
+  ];
 
   /// Push the current selection to the live player and persist it.
   void _apply() {
@@ -109,7 +109,7 @@ class _SessionGroupState extends State<SessionGroup> {
       _shown = [
         ...sup,
         for (final a in _shown)
-          if (_unsupported.contains(a)) a
+          if (_unsupported.contains(a)) a,
       ];
     });
     _apply();
@@ -164,7 +164,7 @@ class _SessionGroupState extends State<SessionGroup> {
                       description: _interruptionSupported
                           ? 'How playback reacts to a call, Siri or an alarm'
                           : 'Only on iOS and Android. $_platform leaves audio '
-                              'routing to the OS',
+                                'routing to the OS',
                       below: AppDropdown<InterruptionPolicy>(
                         enabled: _interruptionSupported,
                         value: _interruption,
@@ -192,7 +192,11 @@ class _SessionGroupState extends State<SessionGroup> {
                 const SectionHeader('Shown controls'),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      Tokens.s4, 0, Tokens.s4, Tokens.s12),
+                    Tokens.s4,
+                    0,
+                    Tokens.s4,
+                    Tokens.s12,
+                  ),
                   child: Text(
                     'Capabilities advertised to the system. Drag to reorder; '
                     'each OS decides how many to show and where.',
@@ -222,7 +226,11 @@ class _SessionGroupState extends State<SessionGroup> {
                   SectionHeader("Not shown on $_platform"),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        Tokens.s4, 0, Tokens.s4, Tokens.s12),
+                      Tokens.s4,
+                      0,
+                      Tokens.s4,
+                      Tokens.s12,
+                    ),
                     child: Text(
                       "$_platform's media UI won't draw these, but you can still "
                       'advertise them anyway; they may appear on your other '
@@ -263,8 +271,10 @@ class _SessionGroupState extends State<SessionGroup> {
           color: Tokens.surface,
           shape: Tokens.squircle(Tokens.rMd),
         ),
-        child: const Text('No controls yet. Add some below.',
-            style: Tokens.caption),
+        child: const Text(
+          'No controls yet. Add some below.',
+          style: Tokens.caption,
+        ),
       );
     }
     return ReorderableListView(
@@ -326,10 +336,7 @@ Set<MediaAction> _unsupportedForPlatform() {
     // custom notification buttons for the skip intervals, repeat, shuffle and
     // the favourite heart. Only stop and the rate picker have no rendered
     // control.
-    return const {
-      MediaAction.stop,
-      MediaAction.setPlaybackRate,
-    };
+    return const {MediaAction.stop, MediaAction.setPlaybackRate};
   }
   if (Platform.isWindows) {
     // SMTC draws transport + seek; repeat/shuffle are properties the native
@@ -383,38 +390,32 @@ int _nearestSkipIndex(int secs) {
 
 /// Icon + label for a [MediaAction] as shown in the editor.
 ({IconData icon, String label}) _meta(MediaAction a) => switch (a) {
-      MediaAction.play => (icon: Icons.play_arrow_rounded, label: 'Play'),
-      MediaAction.pause => (icon: Icons.pause_rounded, label: 'Pause'),
-      MediaAction.playPause => (
-          icon: Icons.play_circle_outline_rounded,
-          label: 'Play-pause'
-        ),
-      MediaAction.stop => (icon: Icons.stop_rounded, label: 'Stop'),
-      MediaAction.next => (icon: Icons.skip_next_rounded, label: 'Next'),
-      MediaAction.previous => (
-          icon: Icons.skip_previous_rounded,
-          label: 'Previous'
-        ),
-      MediaAction.seek => (icon: Icons.linear_scale_rounded, label: 'Scrubber'),
-      MediaAction.fastForward => (
-          icon: Icons.fast_forward_rounded,
-          label: 'Skip forward'
-        ),
-      MediaAction.rewind => (
-          icon: Icons.fast_rewind_rounded,
-          label: 'Skip back'
-        ),
-      MediaAction.setRepeatMode => (
-          icon: Icons.repeat_rounded,
-          label: 'Repeat'
-        ),
-      MediaAction.setShuffle => (icon: Icons.shuffle_rounded, label: 'Shuffle'),
-      MediaAction.setPlaybackRate => (
-          icon: Icons.speed_rounded,
-          label: 'Playback speed'
-        ),
-      MediaAction.like => (icon: Icons.star_rounded, label: 'Favorite'),
-    };
+  MediaAction.play => (icon: Icons.play_arrow_rounded, label: 'Play'),
+  MediaAction.pause => (icon: Icons.pause_rounded, label: 'Pause'),
+  MediaAction.playPause => (
+    icon: Icons.play_circle_outline_rounded,
+    label: 'Play-pause',
+  ),
+  MediaAction.stop => (icon: Icons.stop_rounded, label: 'Stop'),
+  MediaAction.next => (icon: Icons.skip_next_rounded, label: 'Next'),
+  MediaAction.previous => (
+    icon: Icons.skip_previous_rounded,
+    label: 'Previous',
+  ),
+  MediaAction.seek => (icon: Icons.linear_scale_rounded, label: 'Scrubber'),
+  MediaAction.fastForward => (
+    icon: Icons.fast_forward_rounded,
+    label: 'Skip forward',
+  ),
+  MediaAction.rewind => (icon: Icons.fast_rewind_rounded, label: 'Skip back'),
+  MediaAction.setRepeatMode => (icon: Icons.repeat_rounded, label: 'Repeat'),
+  MediaAction.setShuffle => (icon: Icons.shuffle_rounded, label: 'Shuffle'),
+  MediaAction.setPlaybackRate => (
+    icon: Icons.speed_rounded,
+    label: 'Playback speed',
+  ),
+  MediaAction.like => (icon: Icons.star_rounded, label: 'Favorite'),
+};
 
 /// One draggable row in the "Shown controls" list. For the skip-interval
 /// actions it carries an inline interval slider beneath the row.
@@ -451,8 +452,11 @@ class _ShownTile extends StatelessWidget {
                   index: index,
                   child: const Padding(
                     padding: EdgeInsets.all(Tokens.s12),
-                    child: Icon(Icons.drag_indicator_rounded,
-                        size: 18, color: Tokens.fgFaint),
+                    child: Icon(
+                      Icons.drag_indicator_rounded,
+                      size: 18,
+                      color: Tokens.fgFaint,
+                    ),
                   ),
                 ),
                 Icon(m.icon, size: 18, color: Tokens.accent),
@@ -460,8 +464,10 @@ class _ShownTile extends StatelessWidget {
                 Expanded(child: Text(m.label, style: Tokens.body)),
                 IconButton(
                   onPressed: onRemove,
-                  icon:
-                      const Icon(Icons.remove_circle_outline_rounded, size: 18),
+                  icon: const Icon(
+                    Icons.remove_circle_outline_rounded,
+                    size: 18,
+                  ),
                   color: Tokens.fgDim,
                   splashRadius: 18,
                   tooltip: 'Remove',
@@ -469,38 +475,46 @@ class _ShownTile extends StatelessWidget {
               ],
             ),
             if (intervalSecs != null && onInterval != null)
-              Builder(builder: (context) {
-                // Snap to the OS-renderable values: the slider scrubs an index
-                // into [_skipIntervals], not a free second count.
-                final idx = _nearestSkipIndex(intervalSecs!);
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      Tokens.s12, 0, Tokens.s12, Tokens.s8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AppSlider(
-                          value: idx.toDouble(),
-                          min: 0,
-                          max: (_skipIntervals.length - 1).toDouble(),
-                          divisions: _skipIntervals.length - 1,
-                          onChanged: (v) =>
-                              onInterval!(_skipIntervals[v.round()]),
+              Builder(
+                builder: (context) {
+                  // Snap to the OS-renderable values: the slider scrubs an index
+                  // into [_skipIntervals], not a free second count.
+                  final idx = _nearestSkipIndex(intervalSecs!);
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Tokens.s12,
+                      0,
+                      Tokens.s12,
+                      Tokens.s8,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppSlider(
+                            value: idx.toDouble(),
+                            min: 0,
+                            max: (_skipIntervals.length - 1).toDouble(),
+                            divisions: _skipIntervals.length - 1,
+                            onChanged: (v) =>
+                                onInterval!(_skipIntervals[v.round()]),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: Tokens.s12),
-                      SizedBox(
-                        width: 36,
-                        child: Text(
-                          '${_skipIntervals[idx]}s',
-                          textAlign: TextAlign.end,
-                          style: Tokens.numeric.copyWith(color: Tokens.accent),
+                        const SizedBox(width: Tokens.s12),
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '${_skipIntervals[idx]}s',
+                            textAlign: TextAlign.end,
+                            style: Tokens.numeric.copyWith(
+                              color: Tokens.accent,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
+                      ],
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -536,7 +550,9 @@ class _AddChip extends StatelessWidget {
         customBorder: Tokens.squircle(Tokens.rSm),
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s12, vertical: Tokens.s8),
+            horizontal: Tokens.s12,
+            vertical: Tokens.s8,
+          ),
           decoration: ShapeDecoration(
             color: advertised ? Tokens.surface3 : Tokens.surface2,
             shape: Tokens.squircle(Tokens.rSm),
@@ -544,14 +560,20 @@ class _AddChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(m.icon,
-                  size: 16, color: dim ? Tokens.fgFaint : Tokens.fgDim),
+              Icon(
+                m.icon,
+                size: 16,
+                color: dim ? Tokens.fgFaint : Tokens.fgDim,
+              ),
               const SizedBox(width: Tokens.s8),
-              Text(m.label,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: dim ? Tokens.fgFaint : Tokens.fg)),
+              Text(
+                m.label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: dim ? Tokens.fgFaint : Tokens.fg,
+                ),
+              ),
               const SizedBox(width: Tokens.s8),
               Icon(
                 advertised

@@ -85,8 +85,7 @@ class _ModuleCardState extends State<ModuleCard> {
                     ),
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          widget.onEnabledChanged(!widget.enabled),
+                      onTap: () => widget.onEnabledChanged(!widget.enabled),
                       child: AppSwitch(value: widget.enabled),
                     ),
                     const SizedBox(width: Tokens.s8),
@@ -131,8 +130,10 @@ class _ModuleCardState extends State<ModuleCard> {
                             alignment: Alignment.centerRight,
                             child: TextButton.icon(
                               onPressed: widget.onReset,
-                              icon: const Icon(Icons.restart_alt_rounded,
-                                  size: 16),
+                              icon: const Icon(
+                                Icons.restart_alt_rounded,
+                                size: 16,
+                              ),
                               label: const Text('Reset'),
                               style: TextButton.styleFrom(
                                 foregroundColor: Tokens.fgDim,

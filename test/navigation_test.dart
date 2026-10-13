@@ -64,8 +64,9 @@ void main() {
   group('mobile', () {
     const phone = Size(390, 844);
 
-    testWidgets('the tab bar has Play, Queue, Stream, FX and More',
-        (tester) async {
+    testWidgets('the tab bar has Play, Queue, Stream, FX and More', (
+      tester,
+    ) async {
       await _pump(tester, const _Host(desktop: false), phone);
       for (final label in ['Play', 'Queue', 'Stream', 'FX', 'More']) {
         expect(find.text(label), findsOneWidget, reason: label);
@@ -98,8 +99,9 @@ void main() {
       expect(find.text('page queue'), findsOneWidget);
     });
 
-    testWidgets('the mini-player sits above the tab bar off Playback',
-        (tester) async {
+    testWidgets('the mini-player sits above the tab bar off Playback', (
+      tester,
+    ) async {
       await _pump(tester, const _Host(desktop: false), phone);
       expect(find.byKey(const ValueKey('mini')), findsNothing);
 
@@ -135,8 +137,9 @@ void main() {
   group('desktop', () {
     const desktop = Size(1280, 800);
 
-    testWidgets('the sidebar lists every section, Engine included',
-        (tester) async {
+    testWidgets('the sidebar lists every section, Engine included', (
+      tester,
+    ) async {
       await _pump(tester, const _Host(desktop: true), desktop);
       for (final s in Section.values) {
         expect(find.text(s.title), findsOneWidget, reason: s.title);
@@ -146,8 +149,9 @@ void main() {
       expect(find.text('page engine'), findsOneWidget);
     });
 
-    testWidgets('the mini-player runs along the bottom off Playback',
-        (tester) async {
+    testWidgets('the mini-player runs along the bottom off Playback', (
+      tester,
+    ) async {
       await _pump(tester, const _Host(desktop: true), desktop);
       expect(find.byKey(const ValueKey('mini')), findsNothing);
 

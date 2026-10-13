@@ -117,8 +117,8 @@ class _VuPainter extends CustomPainter {
   Color _holdColor(double db) => db >= _redDb
       ? Tokens.red
       : db >= _amberDb
-          ? Tokens.amber
-          : Tokens.green;
+      ? Tokens.amber
+      : Tokens.green;
 
   void _barH(Canvas canvas, Rect r, double db, double hold) {
     final rrect = RRect.fromRectAndRadius(r, const Radius.circular(3));
@@ -132,8 +132,10 @@ class _VuPainter extends CustomPainter {
       final a = x0.clamp(0.0, litW);
       final b = x1.clamp(0.0, litW);
       if (b > a) {
-        canvas.drawRect(Rect.fromLTRB(r.left + a, r.top, r.left + b, r.bottom),
-            Paint()..color = c);
+        canvas.drawRect(
+          Rect.fromLTRB(r.left + a, r.top, r.left + b, r.bottom),
+          Paint()..color = c,
+        );
       }
     }
 
@@ -144,11 +146,12 @@ class _VuPainter extends CustomPainter {
     if (hold > minDb) {
       final hx = r.left + _t(hold) * r.width;
       canvas.drawLine(
-          Offset(hx, r.top),
-          Offset(hx, r.bottom),
-          Paint()
-            ..color = _holdColor(hold)
-            ..strokeWidth = 1.5);
+        Offset(hx, r.top),
+        Offset(hx, r.bottom),
+        Paint()
+          ..color = _holdColor(hold)
+          ..strokeWidth = 1.5,
+      );
     }
   }
 
@@ -165,7 +168,9 @@ class _VuPainter extends CustomPainter {
       final b = yBottom;
       if (b > a) {
         canvas.drawRect(
-            Rect.fromLTRB(r.left, a, r.right, b), Paint()..color = c);
+          Rect.fromLTRB(r.left, a, r.right, b),
+          Paint()..color = c,
+        );
       }
     }
 
@@ -176,11 +181,12 @@ class _VuPainter extends CustomPainter {
     if (hold > minDb) {
       final hy = r.bottom - _t(hold) * r.height;
       canvas.drawLine(
-          Offset(r.left, hy),
-          Offset(r.right, hy),
-          Paint()
-            ..color = _holdColor(hold)
-            ..strokeWidth = 1.5);
+        Offset(r.left, hy),
+        Offset(r.right, hy),
+        Paint()
+          ..color = _holdColor(hold)
+          ..strokeWidth = 1.5,
+      );
     }
   }
 
@@ -196,10 +202,20 @@ class _VuPainter extends CustomPainter {
       final topY = (h - (barH * 2 + gap)) / 2;
       final lRect = Rect.fromLTWH(barLeft, topY, barW, barH);
       final rRect = Rect.fromLTWH(barLeft, topY + barH + gap, barW, barH);
-      paintChartLabel(canvas, 'L', Offset(0, lRect.center.dy - 6),
-          Tokens.fgFaint, fontSize: 10);
-      paintChartLabel(canvas, 'R', Offset(0, rRect.center.dy - 6),
-          Tokens.fgFaint, fontSize: 10);
+      paintChartLabel(
+        canvas,
+        'L',
+        Offset(0, lRect.center.dy - 6),
+        Tokens.fgFaint,
+        fontSize: 10,
+      );
+      paintChartLabel(
+        canvas,
+        'R',
+        Offset(0, rRect.center.dy - 6),
+        Tokens.fgFaint,
+        fontSize: 10,
+      );
       _barH(canvas, lRect, dbL, holdL);
       _barH(canvas, rRect, dbR, holdR);
     } else {
@@ -211,10 +227,20 @@ class _VuPainter extends CustomPainter {
       final rRect = Rect.fromLTWH(left + barW + gap, 0, barW, barsH);
       _barV(canvas, lRect, dbL, holdL);
       _barV(canvas, rRect, dbR, holdR);
-      paintChartLabel(canvas, 'L', Offset(lRect.center.dx - 3, barsH + 1),
-          Tokens.fgFaint, fontSize: 10);
-      paintChartLabel(canvas, 'R', Offset(rRect.center.dx - 3, barsH + 1),
-          Tokens.fgFaint, fontSize: 10);
+      paintChartLabel(
+        canvas,
+        'L',
+        Offset(lRect.center.dx - 3, barsH + 1),
+        Tokens.fgFaint,
+        fontSize: 10,
+      );
+      paintChartLabel(
+        canvas,
+        'R',
+        Offset(rRect.center.dx - 3, barsH + 1),
+        Tokens.fgFaint,
+        fontSize: 10,
+      );
     }
   }
 

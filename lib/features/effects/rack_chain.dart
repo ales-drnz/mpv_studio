@@ -39,8 +39,8 @@ class RackChain {
 
   /// A chain of [effects], each with a fresh id.
   factory RackChain.of(List<AudioEffect> effects) => RackChain._(
-        List.unmodifiable([for (final e in effects) RackStage(_newId(), e)]),
-      );
+    List.unmodifiable([for (final e in effects) RackStage(_newId(), e)]),
+  );
 
   static const empty = RackChain._([]);
 
@@ -74,7 +74,8 @@ class RackChain {
     }
 
     // Same shape, position by position: an edit of values only.
-    final sameShape = effects.length == stages.length &&
+    final sameShape =
+        effects.length == stages.length &&
         [
           for (var i = 0; i < effects.length; i++)
             _sameKind(effects[i], stages[i].effect),
@@ -89,9 +90,7 @@ class RackChain {
     return _with([
       for (var i = 0; i < effects.length; i++)
         RackStage(
-          ids[i] ??
-              take((s) => _sameKind(s.effect, effects[i])) ??
-              _newId(),
+          ids[i] ?? take((s) => _sameKind(s.effect, effects[i])) ?? _newId(),
           effects[i],
         ),
     ]);
@@ -104,15 +103,18 @@ class RackChain {
   /// the new stage's id.
   (RackChain, int) insert(AudioEffect e, {int? index}) {
     final id = _newId();
-    final next = [...stages]..insert(
-        (index ?? stages.length).clamp(0, stages.length), RackStage(id, e));
+    final next = [...stages]
+      ..insert(
+        (index ?? stages.length).clamp(0, stages.length),
+        RackStage(id, e),
+      );
     return (_with(next), id);
   }
 
   RackChain remove(int id) => _with([
-        for (final s in stages)
-          if (s.id != id) s,
-      ]);
+    for (final s in stages)
+      if (s.id != id) s,
+  ]);
 
   /// A copy of stage [id] right after it. Returns the copy's id too.
   (RackChain, int)? duplicate(int id) {
@@ -132,9 +134,8 @@ class RackChain {
     return _with(next);
   }
 
-  RackChain replace(int id, AudioEffect e) => _with([
-        for (final s in stages) s.id == id ? s.withEffect(e) : s,
-      ]);
+  RackChain replace(int id, AudioEffect e) =>
+      _with([for (final s in stages) s.id == id ? s.withEffect(e) : s]);
 
   RackChain setEnabled(int id, bool on) {
     final s = stage(id);
@@ -161,9 +162,9 @@ class RackChain {
   /// the audio unchanged: the "before" side of the global bypass. The
   /// list keeps its shape, so taps keep their instances.
   List<AudioEffect> get bypassed => [
-        for (final s in stages)
-          isMeterStage(s.effect) ? s.effect : withEnabled(s.effect, false),
-      ];
+    for (final s in stages)
+      isMeterStage(s.effect) ? s.effect : withEnabled(s.effect, false),
+  ];
 
   /// Whether a loudness meter stage is on.
   bool get meterOn =>
@@ -181,7 +182,9 @@ class RackChain {
     if (stages.any((s) => isMeterStage(s.effect))) {
       return _with([
         for (final s in stages)
-          isMeterStage(s.effect) ? s.withEffect(withEnabled(s.effect, true)) : s,
+          isMeterStage(s.effect)
+              ? s.withEffect(withEnabled(s.effect, true))
+              : s,
       ]);
     }
     return insert(kMeterStage).$1;

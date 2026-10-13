@@ -9,11 +9,8 @@ import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 
 /// The samples on one side of one stage: `player.stream.tap`.
-typedef TapSource = Stream<PcmFrame> Function(
-  AudioFilter filter,
-  int instance,
-  TapSide side,
-);
+typedef TapSource =
+    Stream<PcmFrame> Function(AudioFilter filter, int instance, TapSide side);
 
 /// What the rack's meters read, handed down the tree so the rack can be
 /// built without a player in tests.
@@ -37,9 +34,7 @@ class RackEnvironment extends InheritedWidget {
 
   @override
   bool updateShouldNotify(RackEnvironment old) =>
-      old.taps != taps ||
-      old.spectrum != spectrum ||
-      old.loudness != loudness;
+      old.taps != taps || old.spectrum != spectrum || old.loudness != loudness;
 }
 
 /// A stage's before and after view: the input spectrum as a faint line,
@@ -190,21 +185,33 @@ class _MetersPainter extends CustomPainter {
     final x = size.width - _readoutW + 8;
     final inDb = pre.rmsDb;
     final outDb = post.rmsDb;
-    paintChartLabel(canvas, 'IN  ${_db(inDb)}', Offset(x, 12), Tokens.fgDim,
-        fontSize: 10);
-    paintChartLabel(canvas, 'OUT ${_db(outDb)}', Offset(x, 30), Tokens.accent,
-        fontSize: 10);
+    paintChartLabel(
+      canvas,
+      'IN  ${_db(inDb)}',
+      Offset(x, 12),
+      Tokens.fgDim,
+      fontSize: 10,
+    );
+    paintChartLabel(
+      canvas,
+      'OUT ${_db(outDb)}',
+      Offset(x, 30),
+      Tokens.accent,
+      fontSize: 10,
+    );
     final silent = inDb <= _floor + 1 && outDb <= _floor + 1;
     final delta = outDb - inDb;
     paintChartLabel(
       canvas,
-      silent ? 'no signal' : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} dB',
+      silent
+          ? 'no signal'
+          : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} dB',
       Offset(x, 48),
       silent
           ? Tokens.fgFaint
           : delta.abs() < 0.5
-              ? Tokens.fgDim
-              : (delta > 0 ? Tokens.amber : Tokens.green),
+          ? Tokens.fgDim
+          : (delta > 0 ? Tokens.amber : Tokens.green),
       fontSize: 10,
     );
   }
@@ -227,24 +234,27 @@ class _MetersPainter extends CustomPainter {
         ..lineTo(r.left, r.bottom)
         ..close();
       canvas.drawPath(
-          area, Paint()..color = Tokens.accent.withValues(alpha: 0.18));
+        area,
+        Paint()..color = Tokens.accent.withValues(alpha: 0.18),
+      );
       canvas.drawPath(
-          path,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.4
-            ..color = Tokens.accent);
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = Tokens.accent,
+      );
     } else {
       canvas.drawPath(
-          path,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1
-            ..color = Tokens.fgDim.withValues(alpha: 0.7));
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Tokens.fgDim.withValues(alpha: 0.7),
+      );
     }
   }
 
   @override
-  bool shouldRepaint(_MetersPainter old) =>
-      old.pre != pre || old.post != post;
+  bool shouldRepaint(_MetersPainter old) => old.pre != pre || old.post != post;
 }

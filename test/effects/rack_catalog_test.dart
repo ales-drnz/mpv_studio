@@ -10,8 +10,11 @@ void main() {
         if (descriptorOf(f) == null) f.name,
     ];
     expect(missing, isEmpty);
-    expect(kRackCatalog.map((d) => d.filter).toSet().length,
-        kRackCatalog.length, reason: 'one descriptor per filter');
+    expect(
+      kRackCatalog.map((d) => d.filter).toSet().length,
+      kRackCatalog.length,
+      reason: 'one descriptor per filter',
+    );
   });
 
   test('descriptors create and switch their own stage', () {
@@ -41,7 +44,9 @@ void main() {
     expect(stageTitle(kMeterStage), 'Loudness meter');
     expect(stageTitle(const RawAudioEffect('lavfi-anull')), 'Raw lavfi');
     expect(stageTitle(const BassEffect()), 'Bass');
-    expect(withEnabled(const RawAudioEffect('lavfi-anull'), false).enabled,
-        isFalse);
+    expect(
+      withEnabled(const RawAudioEffect('lavfi-anull'), false).enabled,
+      isFalse,
+    );
   });
 }

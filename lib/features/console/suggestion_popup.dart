@@ -67,10 +67,10 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
   }
 
   Color _accent(SuggestionKind kind) => switch (kind) {
-        SuggestionKind.command => Tokens.accent,
-        SuggestionKind.property => Tokens.green,
-        SuggestionKind.value => Tokens.amber,
-      };
+    SuggestionKind.command => Tokens.accent,
+    SuggestionKind.property => Tokens.green,
+    SuggestionKind.value => Tokens.amber,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +173,11 @@ class _Label extends StatelessWidget {
   final String match;
   final bool active;
 
-  const _Label({required this.label, required this.match, required this.active});
+  const _Label({
+    required this.label,
+    required this.match,
+    required this.active,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -186,8 +190,12 @@ class _Label extends StatelessWidget {
         ? -1
         : label.toLowerCase().indexOf(match.toLowerCase());
     if (i < 0) {
-      return Text(label,
-          style: base, maxLines: 1, overflow: TextOverflow.ellipsis);
+      return Text(
+        label,
+        style: base,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     }
     return Text.rich(
       TextSpan(

@@ -17,12 +17,12 @@ class PrefetchView extends StatelessWidget {
   const PrefetchView({super.key, required this.snapshot});
 
   static Color colorOf(PrefetchState s) => switch (s) {
-        PrefetchState.idle => Tokens.fgFaint,
-        PrefetchState.loading => Tokens.accent,
-        PrefetchState.ready => Tokens.accent,
-        PrefetchState.used => Tokens.green,
-        PrefetchState.failed => Tokens.red,
-      };
+    PrefetchState.idle => Tokens.fgFaint,
+    PrefetchState.loading => Tokens.accent,
+    PrefetchState.ready => Tokens.accent,
+    PrefetchState.used => Tokens.green,
+    PrefetchState.failed => Tokens.red,
+  };
 
   static String? _nextTitle(Playlist pl) {
     final i = pl.index + 1;
@@ -43,8 +43,9 @@ class PrefetchView extends StatelessWidget {
     final secs = s.cache.secs;
     // cache-secs is the prefetch target; its default is effectively
     // unbounded, so fall back to a readable scale.
-    final target =
-        secs > const Duration(minutes: 10) ? const Duration(seconds: 30) : secs;
+    final target = secs > const Duration(minutes: 10)
+        ? const Duration(seconds: 30)
+        : secs;
     final next = _nextTitle(s.playlist);
 
     return EngineCard(
@@ -65,11 +66,7 @@ class PrefetchView extends StatelessWidget {
             runSpacing: Tokens.s6,
             children: [
               for (final p in PrefetchState.values)
-                StatePill(
-                  p.mpvValue,
-                  color: colorOf(p),
-                  strong: p == current,
-                ),
+                StatePill(p.mpvValue, color: colorOf(p), strong: p == current),
             ],
           ),
           const SizedBox(height: Tokens.s12),
@@ -196,10 +193,7 @@ class PrefetchTimelinePainter extends CustomPainter {
           Paint()..color = Tokens.green.withValues(alpha: 0.45),
         );
       case PrefetchState.failed:
-        canvas.drawRect(
-          r,
-          Paint()..color = Tokens.red.withValues(alpha: 0.35),
-        );
+        canvas.drawRect(r, Paint()..color = Tokens.red.withValues(alpha: 0.35));
     }
     if (r.width > 44) {
       paintChartLabel(

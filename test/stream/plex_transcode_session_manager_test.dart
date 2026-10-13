@@ -12,13 +12,15 @@ class _FakePlex extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (options.path.contains('/transcode/universal/decision')) {
       decisions++;
-      handler.resolve(Response(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'MediaContainer': <String, dynamic>{'generalDecisionCode': 1001},
-        },
-      ));
+      handler.resolve(
+        Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'MediaContainer': <String, dynamic>{'generalDecisionCode': 1001},
+          },
+        ),
+      );
       return;
     }
     handler.reject(DioException(requestOptions: options, message: 'offline'));
@@ -56,10 +58,14 @@ void main() {
   tearDown(() => manager.dispose());
 
   test('leaves entries that are not Plex markers alone', () async {
-    expect(await manager.resolveSource(_request('https://example.com/a.mp3')),
-        isNull);
-    expect(await manager.resolveSource(_request('plex-transcode://unknown')),
-        isNull);
+    expect(
+      await manager.resolveSource(_request('https://example.com/a.mp3')),
+      isNull,
+    );
+    expect(
+      await manager.resolveSource(_request('plex-transcode://unknown')),
+      isNull,
+    );
     expect(fake.decisions, 0);
   });
 
@@ -84,26 +90,28 @@ void main() {
     );
     final first = (await manager.resolveSource(_request(marker)))!;
     // On a retry the entry is still the marker; the uri is the failed URL.
-    final retry = (await manager.resolveSource(SourceResolveRequest(
-      media: Media(marker),
-      uri: first,
-      isRetry: true,
-    )))!;
+    final retry = (await manager.resolveSource(
+      SourceResolveRequest(media: Media(marker), uri: first, isRetry: true),
+    ))!;
     expect(retry, isNot(first));
     expect(_session(retry), isNot(_session(first)));
     expect(fake.decisions, 2);
   });
 
-  test('direct play falls back to the given URL when the part is unknown',
-      () async {
-    final marker = manager.register(
-      ratingKey: '42',
-      codec: 'aac',
-      fallbackUrl: 'http://plex.test/fallback',
-      transcode: false,
-    );
-    expect(await manager.resolveSource(_request(marker)),
-        'http://plex.test/fallback');
-    expect(fake.decisions, 0);
-  });
+  test(
+    'direct play falls back to the given URL when the part is unknown',
+    () async {
+      final marker = manager.register(
+        ratingKey: '42',
+        codec: 'aac',
+        fallbackUrl: 'http://plex.test/fallback',
+        transcode: false,
+      );
+      expect(
+        await manager.resolveSource(_request(marker)),
+        'http://plex.test/fallback',
+      );
+      expect(fake.decisions, 0);
+    },
+  );
 }

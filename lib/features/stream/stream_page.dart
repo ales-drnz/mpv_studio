@@ -33,73 +33,88 @@ class StreamCategory {
 /// engine's network + demuxer paths. Tap to play, or queue with the
 /// add button.
 const _streamCategories = <StreamCategory>[
-  StreamCategory(name: 'MP3 reference', items: [
-    StreamItem(
-      label: 'MP3 128k Stereo (standard)',
-      url: 'https://streams.radiomast.io/ref-128k-mp3-stereo',
-    ),
-    StreamItem(
-      label: 'MP3 128k Stereo (with preroll)',
-      url: 'https://streams.radiomast.io/ref-128k-mp3-stereo-preroll',
-    ),
-    StreamItem(
-      label: 'MP3 32k Mono (low-bandwidth)',
-      url: 'https://streams.radiomast.io/ref-32k-mp3-mono',
-    ),
-  ]),
-  StreamCategory(name: 'AAC reference', items: [
-    StreamItem(
-      label: 'AAC-LC 128k Stereo',
-      url: 'https://streams.radiomast.io/ref-128k-aaclc-stereo',
-    ),
-    StreamItem(
-      label: 'HE-AAC v1 64k Stereo (SBR)',
-      url: 'https://streams.radiomast.io/ref-64k-heaacv1-stereo',
-    ),
-    StreamItem(
-      label: 'HE-AAC v2 64k Stereo (SBR+PS)',
-      url: 'https://streams.radiomast.io/ref-64k-heaacv2-stereo',
-    ),
-    StreamItem(
-      label: 'HE-AAC v1 24k Mono',
-      url: 'https://streams.radiomast.io/ref-24k-heaacv1-mono',
-    ),
-  ]),
-  StreamCategory(name: 'Ogg and open formats', items: [
-    StreamItem(
-      label: 'Ogg Vorbis 64k Stereo',
-      url: 'https://streams.radiomast.io/ref-64k-ogg-vorbis-stereo',
-    ),
-    StreamItem(
-      label: 'Ogg Opus 64k Stereo',
-      url: 'https://streams.radiomast.io/ref-64k-ogg-opus-stereo',
-    ),
-  ]),
-  StreamCategory(name: 'Lossless & hi-fi', items: [
-    StreamItem(
-      label: 'Ogg FLAC (16-bit lossless)',
-      url: 'https://streams.radiomast.io/ref-lossless-ogg-flac-stereo',
-    ),
-    StreamItem(
-      label: 'Radio Paradise (main mix FLAC)',
-      url: 'http://stream.radioparadise.com/flacm',
-    ),
-  ]),
-  StreamCategory(name: 'HLS (HTTP Live Streaming)', items: [
-    StreamItem(
-      label: 'MP3 128k HLS adaptive',
-      url: 'https://streams.radiomast.io/ref-128k-mp3-stereo/hls.m3u8',
-    ),
-    StreamItem(
-      label: 'AAC-LC 128k HLS adaptive',
-      url: 'https://streams.radiomast.io/ref-128k-aaclc-stereo/hls.m3u8',
-    ),
-    StreamItem(
-      label: 'Apple BipBop (HLS audio)',
-      url:
-          'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear0/prog_index.m3u8',
-    ),
-  ]),
+  StreamCategory(
+    name: 'MP3 reference',
+    items: [
+      StreamItem(
+        label: 'MP3 128k Stereo (standard)',
+        url: 'https://streams.radiomast.io/ref-128k-mp3-stereo',
+      ),
+      StreamItem(
+        label: 'MP3 128k Stereo (with preroll)',
+        url: 'https://streams.radiomast.io/ref-128k-mp3-stereo-preroll',
+      ),
+      StreamItem(
+        label: 'MP3 32k Mono (low-bandwidth)',
+        url: 'https://streams.radiomast.io/ref-32k-mp3-mono',
+      ),
+    ],
+  ),
+  StreamCategory(
+    name: 'AAC reference',
+    items: [
+      StreamItem(
+        label: 'AAC-LC 128k Stereo',
+        url: 'https://streams.radiomast.io/ref-128k-aaclc-stereo',
+      ),
+      StreamItem(
+        label: 'HE-AAC v1 64k Stereo (SBR)',
+        url: 'https://streams.radiomast.io/ref-64k-heaacv1-stereo',
+      ),
+      StreamItem(
+        label: 'HE-AAC v2 64k Stereo (SBR+PS)',
+        url: 'https://streams.radiomast.io/ref-64k-heaacv2-stereo',
+      ),
+      StreamItem(
+        label: 'HE-AAC v1 24k Mono',
+        url: 'https://streams.radiomast.io/ref-24k-heaacv1-mono',
+      ),
+    ],
+  ),
+  StreamCategory(
+    name: 'Ogg and open formats',
+    items: [
+      StreamItem(
+        label: 'Ogg Vorbis 64k Stereo',
+        url: 'https://streams.radiomast.io/ref-64k-ogg-vorbis-stereo',
+      ),
+      StreamItem(
+        label: 'Ogg Opus 64k Stereo',
+        url: 'https://streams.radiomast.io/ref-64k-ogg-opus-stereo',
+      ),
+    ],
+  ),
+  StreamCategory(
+    name: 'Lossless & hi-fi',
+    items: [
+      StreamItem(
+        label: 'Ogg FLAC (16-bit lossless)',
+        url: 'https://streams.radiomast.io/ref-lossless-ogg-flac-stereo',
+      ),
+      StreamItem(
+        label: 'Radio Paradise (main mix FLAC)',
+        url: 'http://stream.radioparadise.com/flacm',
+      ),
+    ],
+  ),
+  StreamCategory(
+    name: 'HLS (HTTP Live Streaming)',
+    items: [
+      StreamItem(
+        label: 'MP3 128k HLS adaptive',
+        url: 'https://streams.radiomast.io/ref-128k-mp3-stereo/hls.m3u8',
+      ),
+      StreamItem(
+        label: 'AAC-LC 128k HLS adaptive',
+        url: 'https://streams.radiomast.io/ref-128k-aaclc-stereo/hls.m3u8',
+      ),
+      StreamItem(
+        label: 'Apple BipBop (HLS audio)',
+        url:
+            'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear0/prog_index.m3u8',
+      ),
+    ],
+  ),
 ];
 
 /// Per-request range cap for the YouTube tab: 8 MiB. Some CDNs — notably
@@ -146,21 +161,25 @@ const _youtubeExamples = <_YtExample>[
 /// path (and the [ChapterScrubber]) without needing a network resolver. Stable,
 /// non-expiring, royalty-free / public-domain.
 const _chapterCategories = <StreamCategory>[
-  StreamCategory(name: 'Embedded chapters', items: [
-    StreamItem(
-      label: 'Auphonic demo · 8 chapters (MP4, m4a)',
-      url: 'https://auphonic.com/media/blog/auphonic_chapters_demo.m4a',
-    ),
-    StreamItem(
-      label: 'Auphonic demo · 8 chapters (MP3, ID3 CHAP)',
-      url: 'https://auphonic.com/media/blog/auphonic_chapters_demo.mp3',
-    ),
-    StreamItem(
-      label: 'LibriVox · Saga of Grettir the Strong (long M4B, many chapters)',
-      url:
-          'https://ia800905.us.archive.org/17/items/sagaofgrettirthestrong_2507_librivox/SagaGrettir_LibriVox.m4b',
-    ),
-  ]),
+  StreamCategory(
+    name: 'Embedded chapters',
+    items: [
+      StreamItem(
+        label: 'Auphonic demo · 8 chapters (MP4, m4a)',
+        url: 'https://auphonic.com/media/blog/auphonic_chapters_demo.m4a',
+      ),
+      StreamItem(
+        label: 'Auphonic demo · 8 chapters (MP3, ID3 CHAP)',
+        url: 'https://auphonic.com/media/blog/auphonic_chapters_demo.mp3',
+      ),
+      StreamItem(
+        label:
+            'LibriVox · Saga of Grettir the Strong (long M4B, many chapters)',
+        url:
+            'https://ia800905.us.archive.org/17/items/sagaofgrettirthestrong_2507_librivox/SagaGrettir_LibriVox.m4b',
+      ),
+    ],
+  ),
 ];
 
 /// The Stream surface: six windowed tabs — **Lab** (reference network
@@ -246,16 +265,17 @@ class _ChromeTabBar extends StatelessWidget {
     return Container(
       color: Tokens.surface,
       padding: const EdgeInsets.only(
-          top: Tokens.s6, left: Tokens.s8, right: Tokens.s8),
+        top: Tokens.s6,
+        left: Tokens.s8,
+        right: Tokens.s8,
+      ),
       // Left-aligned tab strip; scrolls horizontally if the tabs ever exceed
       // the width (e.g. on a phone).
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var i = 0; i < tabs.length; i++) _tab(i),
-          ],
+          children: [for (var i = 0; i < tabs.length; i++) _tab(i)],
         ),
       ),
     );
@@ -290,7 +310,11 @@ class _ChromeTabBar extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        Tokens.s16, Tokens.s6, Tokens.s16, Tokens.s12),
+                      Tokens.s16,
+                      Tokens.s6,
+                      Tokens.s16,
+                      Tokens.s12,
+                    ),
                     child: Text(
                       tabs[i],
                       style: TextStyle(
@@ -432,7 +456,11 @@ class _YouTubeTabState extends State<_YouTubeTab> {
           // s16 horizontal matches the Jellyfin/Plex/Samba tabs so the content
           // edge doesn't shift when switching stream tabs.
           padding: const EdgeInsets.fromLTRB(
-              Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s32),
+            Tokens.s16,
+            Tokens.s8,
+            Tokens.s16,
+            Tokens.s32,
+          ),
           children: [
             CustomUrlBar(onPlay: _play),
             if (_error != null) ...[
@@ -473,9 +501,9 @@ class _ChaptersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const _ReferenceTab(
-        categories: _chapterCategories,
-        nowPlayingChapters: true,
-      );
+    categories: _chapterCategories,
+    nowPlayingChapters: true,
+  );
 }
 
 /// The now-playing chapters card: the current track's title over a
@@ -506,19 +534,27 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
     _position = s.position;
     _duration = s.duration;
     final st = widget.player.stream;
-    _subs.add(st.playlist.listen((pl) {
-      final t = _titleOf(pl);
-      if (mounted && t != _title) setState(() => _title = t);
-    }));
-    _subs.add(st.chapters.listen((c) {
-      if (mounted) setState(() => _chapters = c);
-    }));
-    _subs.add(st.position.listen((p) {
-      if (mounted) setState(() => _position = p);
-    }));
-    _subs.add(st.duration.listen((d) {
-      if (mounted) setState(() => _duration = d);
-    }));
+    _subs.add(
+      st.playlist.listen((pl) {
+        final t = _titleOf(pl);
+        if (mounted && t != _title) setState(() => _title = t);
+      }),
+    );
+    _subs.add(
+      st.chapters.listen((c) {
+        if (mounted) setState(() => _chapters = c);
+      }),
+    );
+    _subs.add(
+      st.position.listen((p) {
+        if (mounted) setState(() => _position = p);
+      }),
+    );
+    _subs.add(
+      st.duration.listen((d) {
+        if (mounted) setState(() => _duration = d);
+      }),
+    );
   }
 
   static String _titleOf(Playlist pl) {
@@ -545,7 +581,11 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
     return Container(
       margin: const EdgeInsets.only(top: Tokens.s12),
       padding: const EdgeInsets.fromLTRB(
-          Tokens.s16, Tokens.s12, Tokens.s16, Tokens.s12),
+        Tokens.s16,
+        Tokens.s12,
+        Tokens.s16,
+        Tokens.s12,
+      ),
       decoration: ShapeDecoration(
         color: Tokens.surface,
         shape: Tokens.squircle(Tokens.rMd),
@@ -555,8 +595,11 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
         children: [
           Row(
             children: [
-              const Icon(Icons.music_note_rounded,
-                  size: 16, color: Tokens.accent),
+              const Icon(
+                Icons.music_note_rounded,
+                size: 16,
+                color: Tokens.accent,
+              ),
               const SizedBox(width: Tokens.s8),
               Expanded(
                 child: Text(
@@ -623,7 +666,11 @@ class _YtExampleTile extends StatelessWidget {
           customBorder: Tokens.squircle(Tokens.rMd),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
-                Tokens.s16, Tokens.s12, Tokens.s8, Tokens.s12),
+              Tokens.s16,
+              Tokens.s12,
+              Tokens.s8,
+              Tokens.s12,
+            ),
             child: Row(
               children: [
                 // Leading slot: a spinner while the raw URL resolves, or the
@@ -636,9 +683,14 @@ class _YtExampleTile extends StatelessWidget {
                     height: 18,
                     child: resolving
                         ? const CircularProgressIndicator(
-                            strokeWidth: 2, color: Tokens.accent)
-                        : const Icon(Icons.volume_up_rounded,
-                            size: 18, color: Tokens.accent),
+                            strokeWidth: 2,
+                            color: Tokens.accent,
+                          )
+                        : const Icon(
+                            Icons.volume_up_rounded,
+                            size: 18,
+                            color: Tokens.accent,
+                          ),
                   ),
                   const SizedBox(width: Tokens.s12),
                 ],
@@ -650,8 +702,9 @@ class _YtExampleTile extends StatelessWidget {
                         example.label,
                         style: Tokens.body.copyWith(
                           color: current ? Tokens.accent : Tokens.fg,
-                          fontWeight:
-                              current ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: current
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -734,7 +787,11 @@ class _ReferenceTab extends StatelessWidget {
           // s16 horizontal matches the Jellyfin/Plex/Samba tabs so the content
           // edge doesn't shift when switching stream tabs.
           padding: const EdgeInsets.fromLTRB(
-              Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s32),
+            Tokens.s16,
+            Tokens.s8,
+            Tokens.s16,
+            Tokens.s32,
+          ),
           children: [
             CustomUrlBar(onPlay: play),
             if (nowPlayingChapters) _NowPlayingChapters(player: player),
@@ -773,8 +830,9 @@ class _StreamTile extends StatelessWidget {
   Media get _media =>
       Media(item.url, extras: {'title': item.label, 'artist': 'Stream'});
 
-  Future<void> _play(BuildContext context) => PlayerScope.issuesOf(context)
-      .guard(() => player.open(_media, play: true));
+  Future<void> _play(BuildContext context) => PlayerScope.issuesOf(
+    context,
+  ).guard(() => player.open(_media, play: true));
 
   Future<void> _enqueue(BuildContext context) =>
       PlayerScope.issuesOf(context).guard(() {
@@ -807,8 +865,11 @@ class _StreamTile extends StatelessWidget {
             child: Row(
               children: [
                 if (current) ...[
-                  const Icon(Icons.volume_up_rounded,
-                      size: 16, color: Tokens.accent),
+                  const Icon(
+                    Icons.volume_up_rounded,
+                    size: 16,
+                    color: Tokens.accent,
+                  ),
                   const SizedBox(width: Tokens.s12),
                 ],
                 Expanded(
@@ -819,8 +880,9 @@ class _StreamTile extends StatelessWidget {
                         item.label,
                         style: Tokens.body.copyWith(
                           color: current ? Tokens.accent : Tokens.fg,
-                          fontWeight:
-                              current ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: current
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

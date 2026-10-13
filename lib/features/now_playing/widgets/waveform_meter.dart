@@ -234,15 +234,19 @@ class _WaveformMeterState extends State<WaveformMeter>
       // Just change the window width; the user's absolute anchor is
       // preserved and re-clamped on the next build.
       setState(() {
-        _windowSeconds =
-            (_windowSeconds * factor).clamp(_minWindow, _timelineSecs);
+        _windowSeconds = (_windowSeconds * factor).clamp(
+          _minWindow,
+          _timelineSecs,
+        );
       });
       return;
     }
     final center = _viewStart + _visibleSecs / 2;
     setState(() {
-      _windowSeconds =
-          (_windowSeconds * factor).clamp(_minWindow, _timelineSecs);
+      _windowSeconds = (_windowSeconds * factor).clamp(
+        _minWindow,
+        _timelineSecs,
+      );
       _viewStart = (center - _visibleSecs / 2).clamp(0, _maxStart);
     });
   }
@@ -278,8 +282,9 @@ class _WaveformMeterState extends State<WaveformMeter>
     });
     // Sample-accurate landing — this is a precise waveform editor, exactly
     // where exact (vs keyframe) seeking matters.
-    PlayerScope.issuesOf(context)
-        .guard(() => _player.seek(target, exact: true));
+    PlayerScope.issuesOf(
+      context,
+    ).guard(() => _player.seek(target, exact: true));
   }
 
   void _seekToX(double localX, double width) =>
@@ -295,18 +300,35 @@ class _WaveformMeterState extends State<WaveformMeter>
     final cur = _player.state.currentChapter ?? 0;
     final entries = <_MenuEntry>[
       _MenuEntry(
-          'a', Icons.flag_outlined, 'Set loop A here', formatDuration(time)),
+        'a',
+        Icons.flag_outlined,
+        'Set loop A here',
+        formatDuration(time),
+      ),
       _MenuEntry(
-          'b', Icons.flag_rounded, 'Set loop B here', formatDuration(time)),
+        'b',
+        Icons.flag_rounded,
+        'Set loop B here',
+        formatDuration(time),
+      ),
       if (hasLoop)
         _MenuEntry('clear', Icons.layers_clear_rounded, 'Clear A-B loop', null),
       if (chapters.isNotEmpty) ...[
         _MenuEntry.divider,
         _MenuEntry(
-            'prevch', Icons.skip_previous_rounded, 'Previous chapter', null,
-            enabled: cur > 0),
-        _MenuEntry('nextch', Icons.skip_next_rounded, 'Next chapter', null,
-            enabled: cur < chapters.length - 1),
+          'prevch',
+          Icons.skip_previous_rounded,
+          'Previous chapter',
+          null,
+          enabled: cur > 0,
+        ),
+        _MenuEntry(
+          'nextch',
+          Icons.skip_next_rounded,
+          'Next chapter',
+          null,
+          enabled: cur < chapters.length - 1,
+        ),
       ],
     ];
 
@@ -314,8 +336,10 @@ class _WaveformMeterState extends State<WaveformMeter>
     // space of `globalPos`. (The page sits in a branch navigator whose overlay
     // is offset by the sidebar/header — pushing there would place the menu far
     // from the cursor.)
-    final choice = await Navigator.of(context, rootNavigator: true)
-        .push<String>(_InstantMenuRoute(position: globalPos, entries: entries));
+    final choice = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<String>(_InstantMenuRoute(position: globalPos, entries: entries));
     if (!mounted) return;
     // The chapter list can change while the menu is open, and a setter
     // throws on a stale index: show it instead of losing it.
@@ -373,8 +397,9 @@ class _WaveformMeterState extends State<WaveformMeter>
     if (_maxStart <= 0 || width <= 0 || _visibleSecs <= 0) return;
     // Trackpad pan follows finger movement — the opposite sign to the wheel's
     // content-scroll convention — so negate to match _onScroll's direction.
-    final comp =
-        e.panDelta.dx.abs() >= e.panDelta.dy.abs() ? e.panDelta.dx : e.panDelta.dy;
+    final comp = e.panDelta.dx.abs() >= e.panDelta.dy.abs()
+        ? e.panDelta.dx
+        : e.panDelta.dy;
     if (_lastPanTs != null) {
       final dt = (e.timeStamp - _lastPanTs!).inMicroseconds / 1e6;
       if (dt > 1e-4) _flickVel = -comp / dt;
@@ -400,8 +425,10 @@ class _WaveformMeterState extends State<WaveformMeter>
         _stopFlick();
         return;
       }
-      final next = (_leftRel + (vel * 0.016) / (width / _visibleSecs))
-          .clamp(0.0, _maxStart);
+      final next = (_leftRel + (vel * 0.016) / (width / _visibleSecs)).clamp(
+        0.0,
+        _maxStart,
+      );
       if (next == _leftRel) {
         _stopFlick(); // hit an edge
         return;
@@ -479,11 +506,17 @@ class _WaveformMeterState extends State<WaveformMeter>
                           // A-B loop + seek + chapter context menu.
                           onSecondaryTapDown: canSeek
                               ? (d) => _openMenu(
-                                  d.globalPosition, d.localPosition.dx, w)
+                                  d.globalPosition,
+                                  d.localPosition.dx,
+                                  w,
+                                )
                               : null,
                           onLongPressStart: canSeek
                               ? (d) => _openMenu(
-                                  d.globalPosition, d.localPosition.dx, w)
+                                  d.globalPosition,
+                                  d.localPosition.dx,
+                                  w,
+                                )
                               : null,
                           onHorizontalDragStart: canSeek
                               ? (d) {
@@ -625,7 +658,9 @@ class _ScanIndicator extends StatelessWidget {
         curve: Curves.easeOut,
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s8, vertical: Tokens.s4),
+            horizontal: Tokens.s8,
+            vertical: Tokens.s4,
+          ),
           decoration: ShapeDecoration(
             color: Tokens.surface2,
             shape: Tokens.squircle(Tokens.rSm),
@@ -749,10 +784,11 @@ class _HScrollBarState extends State<_HScrollBar> {
       child: LayoutBuilder(
         builder: (context, c) {
           final w = c.maxWidth;
-          final frac = (widget.durSecs <= 0
-                  ? 1.0
-                  : widget.windowSeconds / widget.durSecs)
-              .clamp(0.06, 1.0);
+          final frac =
+              (widget.durSecs <= 0
+                      ? 1.0
+                      : widget.windowSeconds / widget.durSecs)
+                  .clamp(0.06, 1.0);
           final thumbW = (w * frac).clamp(28.0, w);
           final avail = w - thumbW;
           final thumbX = widget.maxStart > 0
@@ -770,8 +806,8 @@ class _HScrollBarState extends State<_HScrollBar> {
           final thumbColour = !widget.enabled
               ? Tokens.surface2
               : _hoverThumb
-                  ? Tokens.accent
-                  : Tokens.surface3;
+              ? Tokens.accent
+              : Tokens.surface3;
 
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -839,11 +875,7 @@ class _HScrollBarState extends State<_HScrollBar> {
     bodyTop = (centreY - 0.5).clamp(top, bottom - 1);
     bodyBottom = bodyTop + 1;
   }
-  return (
-    top: top,
-    bottom: bottom,
-    body: (top: bodyTop, bottom: bodyBottom),
-  );
+  return (top: top, bottom: bottom, body: (top: bodyTop, bottom: bodyBottom));
 }
 
 class _MeterPainter extends CustomPainter {
@@ -1084,8 +1116,12 @@ class _MeterPainter extends CustomPainter {
       )..layout();
       var bx = hx + 4;
       if (bx + tp.width + 6 > w) bx = hx - 4 - tp.width - 6;
-      final bubble =
-          Rect.fromLTWH(bx, rulerHeight + 3, tp.width + 6, tp.height + 3);
+      final bubble = Rect.fromLTWH(
+        bx,
+        rulerHeight + 3,
+        tp.width + 6,
+        tp.height + 3,
+      );
       canvas.drawRRect(
         RRect.fromRectAndRadius(bubble, const Radius.circular(3)),
         Paint()..color = Tokens.surface3,
@@ -1131,17 +1167,21 @@ class _MenuEntry {
   final bool enabled;
   final bool isDivider;
 
-  const _MenuEntry(this.value, this.icon, this.label, this.trailing,
-      {this.enabled = true})
-      : isDivider = false;
+  const _MenuEntry(
+    this.value,
+    this.icon,
+    this.label,
+    this.trailing, {
+    this.enabled = true,
+  }) : isDivider = false;
 
   const _MenuEntry._divider()
-      : value = null,
-        icon = null,
-        label = null,
-        trailing = null,
-        enabled = false,
-        isDivider = true;
+    : value = null,
+      icon = null,
+      label = null,
+      trailing = null,
+      enabled = false,
+      isDivider = true;
 
   static const divider = _MenuEntry._divider();
 }
@@ -1168,7 +1208,10 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
 
   @override
   Widget buildPage(
-      BuildContext context, Animation<double> a, Animation<double> s) {
+    BuildContext context,
+    Animation<double> a,
+    Animation<double> s,
+  ) {
     return CustomSingleChildLayout(
       delegate: _MenuLayoutDelegate(position),
       child: _InstantMenu(entries: entries),
@@ -1227,8 +1270,11 @@ class _InstantMenu extends StatelessWidget {
                 if (e.isDivider)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: Tokens.s4),
-                    child:
-                        Divider(height: 1, thickness: 1, color: Tokens.line2),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Tokens.line2,
+                    ),
                   )
                 else
                   _MenuRow(entry: e),
@@ -1252,17 +1298,23 @@ class _MenuRow extends StatelessWidget {
       onTap: enabled ? () => Navigator.of(context).pop(entry.value) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: Tokens.s12, vertical: Tokens.s8),
+          horizontal: Tokens.s12,
+          vertical: Tokens.s8,
+        ),
         child: Row(
           children: [
-            Icon(entry.icon,
-                size: 16, color: enabled ? Tokens.fgDim : Tokens.fgFaint),
+            Icon(
+              entry.icon,
+              size: 16,
+              color: enabled ? Tokens.fgDim : Tokens.fgFaint,
+            ),
             const SizedBox(width: Tokens.s12),
             Expanded(
               child: Text(
                 entry.label!,
-                style: Tokens.body
-                    .copyWith(color: enabled ? Tokens.fg : Tokens.fgFaint),
+                style: Tokens.body.copyWith(
+                  color: enabled ? Tokens.fg : Tokens.fgFaint,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

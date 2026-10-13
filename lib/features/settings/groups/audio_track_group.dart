@@ -49,14 +49,12 @@ class AudioTrackGroup extends StatelessWidget {
               for (final t in audioTracks)
                 DropdownMenuItem(
                   value: t.id,
-                  child: Text(
-                    _trackLabel(t),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text(_trackLabel(t), overflow: TextOverflow.ellipsis),
                 ),
             ];
-            final selected =
-                items.any((i) => i.value == currentId) ? currentId : -1;
+            final selected = items.any((i) => i.value == currentId)
+                ? currentId
+                : -1;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,8 +74,9 @@ class AudioTrackGroup extends StatelessWidget {
                           -2 => Track.off,
                           _ => Track.id(v),
                         };
-                        PlayerScope.issuesOf(context)
-                            .guard(() => player.setAudioTrack(mode));
+                        PlayerScope.issuesOf(
+                          context,
+                        ).guard(() => player.setAudioTrack(mode));
                       },
                     ),
                     InfoRow(
@@ -85,7 +84,7 @@ class AudioTrackGroup extends StatelessWidget {
                       value: current == null
                           ? 'no audio'
                           : 'aid=${current.id}'
-                              '${current.lang != null ? ' (${current.lang})' : ''}',
+                                '${current.lang != null ? ' (${current.lang})' : ''}',
                     ),
                     if (current != null) ...[
                       InfoRow(

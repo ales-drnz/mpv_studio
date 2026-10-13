@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 /// mobile tab bar shows the [tab] ones and keeps the rest in its More
 /// menu. Only the shell chrome differs.
 enum Section {
-  nowPlaying('Playback', 'Play', Icons.play_circle_outline_rounded, '/',
-      tab: true),
+  nowPlaying(
+    'Playback',
+    'Play',
+    Icons.play_circle_outline_rounded,
+    '/',
+    tab: true,
+  ),
   queue('Queue', 'Queue', Icons.queue_music_rounded, '/queue', tab: true),
   stream('Stream', 'Stream', Icons.podcasts_rounded, '/stream', tab: true),
   effects('Effects', 'FX', Icons.graphic_eq_rounded, '/effects', tab: true),
@@ -40,13 +45,13 @@ enum Section {
 
   /// The sections with a mobile tab, in order.
   static List<Section> get tabs => [
-        for (final s in values)
-          if (s.tab) s,
-      ];
+    for (final s in values)
+      if (s.tab) s,
+  ];
 
   /// The sections in the mobile More menu, in order.
   static List<Section> get more => [
-        for (final s in values)
-          if (!s.tab) s,
-      ];
+    for (final s in values)
+      if (!s.tab) s,
+  ];
 }

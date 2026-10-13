@@ -39,9 +39,10 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
 
   // Single cached teardown future so repeat lifecycle signals all await the
   // same shutdown; bounded so a wedged shutdown can never itself block quit.
-  Future<void> _teardown() => _inFlight ??= widget.studio
-      .shutdown()
-      .timeout(const Duration(seconds: 3), onTimeout: () {});
+  Future<void> _teardown() => _inFlight ??= widget.studio.shutdown().timeout(
+    const Duration(seconds: 3),
+    onTimeout: () {},
+  );
 
   // onExitRequested is a DECISION point, not a teardown hook: return
   // AppExitResponse.exit promptly so the engine answers the OS quit Apple
@@ -87,11 +88,11 @@ class _DragScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => const {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.invertedStylus,
-        PointerDeviceKind.unknown,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.invertedStylus,
+    PointerDeviceKind.unknown,
+  };
 }

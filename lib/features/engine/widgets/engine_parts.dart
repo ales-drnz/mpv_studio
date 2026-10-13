@@ -111,8 +111,12 @@ class StatePill extends StatelessWidget {
   final Color color;
   final bool strong;
 
-  const StatePill(this.text,
-      {super.key, required this.color, this.strong = true});
+  const StatePill(
+    this.text, {
+    super.key,
+    required this.color,
+    this.strong = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +183,10 @@ class ReadoutGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final perRow =
-            (c.maxWidth / minCellWidth).floor().clamp(1, children.length);
+        final perRow = (c.maxWidth / minCellWidth).floor().clamp(
+          1,
+          children.length,
+        );
         final cellWidth = c.maxWidth / perRow;
         return Wrap(
           runSpacing: Tokens.s12,

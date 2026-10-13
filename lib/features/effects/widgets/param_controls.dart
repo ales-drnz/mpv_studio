@@ -38,8 +38,10 @@ Widget buildParamControl(
     case IntParam d:
       return SliderRow(
         label: d.name,
-        value:
-            d.get(stage).toDouble().clamp(d.min.toDouble(), d.max.toDouble()),
+        value: d
+            .get(stage)
+            .toDouble()
+            .clamp(d.min.toDouble(), d.max.toDouble()),
         min: d.min.toDouble(),
         max: d.max.toDouble(),
         divisions: (d.max - d.min) > 0 && (d.max - d.min) <= 64
@@ -119,8 +121,9 @@ class SubmitTextRow extends StatefulWidget {
 }
 
 class _SubmitTextRowState extends State<SubmitTextRow> {
-  late final TextEditingController _text =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _text = TextEditingController(
+    text: widget.value,
+  );
 
   bool get _dirty => _text.text != widget.value;
 
@@ -175,8 +178,7 @@ class _SubmitTextRowState extends State<SubmitTextRow> {
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: Tokens.s8),
+                contentPadding: const EdgeInsets.symmetric(vertical: Tokens.s8),
                 hintText: widget.hint,
                 hintStyle: Tokens.caption,
               ),

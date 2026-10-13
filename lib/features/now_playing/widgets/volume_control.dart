@@ -20,10 +20,10 @@ class VolumeControl extends StatelessWidget {
   IconData _icon(bool muted, double vol, double max) => muted
       ? Icons.volume_off_rounded
       : vol <= 0
-          ? Icons.volume_mute_rounded
-          : vol < max * 0.5
-              ? Icons.volume_down_rounded
-              : Icons.volume_up_rounded;
+      ? Icons.volume_mute_rounded
+      : vol < max * 0.5
+      ? Icons.volume_down_rounded
+      : Icons.volume_up_rounded;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +140,8 @@ class _FlatSlider extends StatelessWidget {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: (d) => onChanged(valueAt(d.localPosition.dx)),
-            onHorizontalDragUpdate: (d) => onChanged(valueAt(d.localPosition.dx)),
+            onHorizontalDragUpdate: (d) =>
+                onChanged(valueAt(d.localPosition.dx)),
             child: SizedBox(
               height: _cross,
               width: double.infinity,
@@ -151,9 +152,10 @@ class _FlatSlider extends StatelessWidget {
                   // main axis (the long dimension).
                   Container(height: _track, decoration: emptyShape),
                   Container(
-                      width: _thumb / 2 + frac * span,
-                      height: _track,
-                      decoration: fillShape),
+                    width: _thumb / 2 + frac * span,
+                    height: _track,
+                    decoration: fillShape,
+                  ),
                   Positioned(left: frac * span, child: thumb),
                 ],
               ),
@@ -176,9 +178,10 @@ class _FlatSlider extends StatelessWidget {
               children: [
                 Container(width: _track, decoration: emptyShape),
                 Container(
-                    width: _track,
-                    height: _thumb / 2 + frac * span,
-                    decoration: fillShape),
+                  width: _track,
+                  height: _thumb / 2 + frac * span,
+                  decoration: fillShape,
+                ),
                 Positioned(bottom: frac * span, child: thumb),
               ],
             ),

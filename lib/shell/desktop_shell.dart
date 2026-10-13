@@ -42,7 +42,10 @@ class _DesktopShellState extends State<DesktopShell> {
         Row(
           children: [
             _Sidebar(
-                section: section, onSelect: onSelect, width: _sidebarWidth),
+              section: section,
+              onSelect: onSelect,
+              width: _sidebarWidth,
+            ),
             Expanded(
               // Clip the stage to its own bounds: a full-bleed meter's
               // CustomPaint paints unclipped by default, so without this a
@@ -72,7 +75,10 @@ class _DesktopShellState extends State<DesktopShell> {
     if (mini == null) return panels;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [Expanded(child: panels), mini],
+      children: [
+        Expanded(child: panels),
+        mini,
+      ],
     );
   }
 }

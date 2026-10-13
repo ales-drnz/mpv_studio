@@ -7,17 +7,27 @@ import 'dart:math' as math;
 class BiquadResponse {
   BiquadResponse._();
 
-  static double Function(double) lowShelf(double f0, double gainDb,
-          {double fs = 48000, double slope = 0.7}) =>
-      _shelf(f0, gainDb, fs, slope, low: true);
+  static double Function(double) lowShelf(
+    double f0,
+    double gainDb, {
+    double fs = 48000,
+    double slope = 0.7,
+  }) => _shelf(f0, gainDb, fs, slope, low: true);
 
-  static double Function(double) highShelf(double f0, double gainDb,
-          {double fs = 48000, double slope = 0.7}) =>
-      _shelf(f0, gainDb, fs, slope, low: false);
+  static double Function(double) highShelf(
+    double f0,
+    double gainDb, {
+    double fs = 48000,
+    double slope = 0.7,
+  }) => _shelf(f0, gainDb, fs, slope, low: false);
 
   static double Function(double) _shelf(
-      double f0, double gainDb, double fs, double slope,
-      {required bool low}) {
+    double f0,
+    double gainDb,
+    double fs,
+    double slope, {
+    required bool low,
+  }) {
     final a = math.pow(10, gainDb / 40).toDouble();
     final w0 = 2 * math.pi * f0 / fs;
     final cw = math.cos(w0);

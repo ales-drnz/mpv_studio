@@ -71,7 +71,11 @@ class StageTile extends StatelessWidget {
 
     final header = Padding(
       padding: const EdgeInsets.fromLTRB(
-          Tokens.s4, Tokens.s8, Tokens.s4, Tokens.s8),
+        Tokens.s4,
+        Tokens.s8,
+        Tokens.s4,
+        Tokens.s8,
+      ),
       child: Row(
         children: [
           ReorderableDragStartListener(
@@ -80,8 +84,11 @@ class StageTile extends StatelessWidget {
               cursor: SystemMouseCursors.grab,
               child: Padding(
                 padding: EdgeInsets.all(Tokens.s8),
-                child: Icon(Icons.drag_indicator_rounded,
-                    size: 18, color: Tokens.fgFaint),
+                child: Icon(
+                  Icons.drag_indicator_rounded,
+                  size: 18,
+                  color: Tokens.fgFaint,
+                ),
               ),
             ),
           ),
@@ -95,8 +102,11 @@ class StageTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Tokens.s8),
-          Icon(stageIcon(e),
-              size: 18, color: live ? Tokens.accent : Tokens.fgFaint),
+          Icon(
+            stageIcon(e),
+            size: 18,
+            color: live ? Tokens.accent : Tokens.fgFaint,
+          ),
           const SizedBox(width: Tokens.s12),
           Expanded(
             child: Column(
@@ -141,21 +151,32 @@ class StageTile extends StatelessWidget {
           PopupMenuButton<StageAction>(
             key: ValueKey('stage-menu-$id'),
             tooltip: 'Stage actions',
-            icon: const Icon(Icons.more_vert_rounded,
-                size: 18, color: Tokens.fgDim),
+            icon: const Icon(
+              Icons.more_vert_rounded,
+              size: 18,
+              color: Tokens.fgDim,
+            ),
             color: Tokens.surface3,
             onSelected: _onAction,
             itemBuilder: (_) => [
               const PopupMenuItem(
-                  value: StageAction.duplicate, child: Text('Duplicate')),
+                value: StageAction.duplicate,
+                child: Text('Duplicate'),
+              ),
               if (index > 0)
                 const PopupMenuItem(
-                    value: StageAction.moveUp, child: Text('Move up')),
+                  value: StageAction.moveUp,
+                  child: Text('Move up'),
+                ),
               if (!last)
                 const PopupMenuItem(
-                    value: StageAction.moveDown, child: Text('Move down')),
+                  value: StageAction.moveDown,
+                  child: Text('Move down'),
+                ),
               const PopupMenuItem(
-                  value: StageAction.remove, child: Text('Remove')),
+                value: StageAction.remove,
+                child: Text('Remove'),
+              ),
             ],
           ),
           Icon(
@@ -204,7 +225,11 @@ class StageTile extends StatelessWidget {
                 if (open)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        Tokens.s16, 0, Tokens.s16, Tokens.s12),
+                      Tokens.s16,
+                      0,
+                      Tokens.s16,
+                      Tokens.s12,
+                    ),
                     child: StageEditor(rack: rack, id: id),
                   ),
               ],
@@ -229,12 +254,14 @@ class _Tag extends StatelessWidget {
         color: Tokens.surface3,
         shape: Tokens.squircle(4),
       ),
-      child: Text(text,
-          style: Tokens.caption.copyWith(
-            fontSize: 9.5,
-            letterSpacing: 0.6,
-            color: Tokens.fgDim,
-          )),
+      child: Text(
+        text,
+        style: Tokens.caption.copyWith(
+          fontSize: 9.5,
+          letterSpacing: 0.6,
+          color: Tokens.fgDim,
+        ),
+      ),
     );
   }
 }
@@ -284,7 +311,10 @@ class _AddStageSheetState extends State<AddStageSheet> {
               .where((d) => d.category == c.slug && !d.advanced && match(d))
               .toList(),
         ),
-      (_advancedTitle, kFilterCatalog.where((d) => d.advanced && match(d)).toList()),
+      (
+        _advancedTitle,
+        kFilterCatalog.where((d) => d.advanced && match(d)).toList(),
+      ),
     ];
     return [
       for (final g in out)
@@ -295,12 +325,17 @@ class _AddStageSheetState extends State<AddStageSheet> {
   @override
   Widget build(BuildContext context) {
     final groups = _groups();
-    final showRaw = _query.isEmpty || 'raw lavfi'.contains(_query.toLowerCase());
+    final showRaw =
+        _query.isEmpty || 'raw lavfi'.contains(_query.toLowerCase());
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              Tokens.s20, Tokens.s16, Tokens.s20, Tokens.s8),
+            Tokens.s20,
+            Tokens.s16,
+            Tokens.s20,
+            Tokens.s8,
+          ),
           child: Row(
             children: [
               const Text('Add stage', style: Tokens.heading),
@@ -315,8 +350,11 @@ class _AddStageSheetState extends State<AddStageSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search_rounded,
-                          size: 16, color: Tokens.fgFaint),
+                      const Icon(
+                        Icons.search_rounded,
+                        size: 16,
+                        color: Tokens.fgFaint,
+                      ),
                       const SizedBox(width: Tokens.s8),
                       Expanded(
                         child: TextField(
@@ -343,7 +381,11 @@ class _AddStageSheetState extends State<AddStageSheet> {
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
-                Tokens.s12, 0, Tokens.s12, Tokens.s24),
+              Tokens.s12,
+              0,
+              Tokens.s12,
+              Tokens.s24,
+            ),
             children: [
               if (showRaw)
                 _Entry(
@@ -351,13 +393,18 @@ class _AddStageSheetState extends State<AddStageSheet> {
                   icon: Icons.code_rounded,
                   title: 'Raw lavfi',
                   subtitle: 'Any lavfi filter, written by hand',
-                  onTap: () => Navigator.of(context)
-                      .pop(const RawAudioEffect('lavfi-anull')),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).pop(const RawAudioEffect('lavfi-anull')),
                 ),
               for (final (title, list) in groups) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      Tokens.s8, Tokens.s16, Tokens.s8, Tokens.s4),
+                    Tokens.s8,
+                    Tokens.s16,
+                    Tokens.s8,
+                    Tokens.s4,
+                  ),
                   child: Text(title.toUpperCase(), style: Tokens.caption),
                 ),
                 for (final d in list)
@@ -369,8 +416,9 @@ class _AddStageSheetState extends State<AddStageSheet> {
                     onTap: () {
                       final e = d.create();
                       // Not ready to play yet: added off, to fill in.
-                      Navigator.of(context)
-                          .pop(stageReady(e) ? e : d.setEnabled(e, false));
+                      Navigator.of(
+                        context,
+                      ).pop(stageReady(e) ? e : d.setEnabled(e, false));
                     },
                   ),
               ],
@@ -406,7 +454,9 @@ class _Entry extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s8, vertical: Tokens.s8),
+            horizontal: Tokens.s8,
+            vertical: Tokens.s8,
+          ),
           child: Row(
             children: [
               Icon(icon, size: 18, color: Tokens.accent),
@@ -414,11 +464,13 @@ class _Entry extends StatelessWidget {
               Expanded(child: Text(title, style: Tokens.body)),
               const SizedBox(width: Tokens.s8),
               Flexible(
-                child: Text(subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: Tokens.caption),
+                child: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: Tokens.caption,
+                ),
               ),
             ],
           ),

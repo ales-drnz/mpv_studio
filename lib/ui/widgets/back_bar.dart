@@ -26,8 +26,11 @@ class BackBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
             child: Row(
               children: [
-                const Icon(Icons.chevron_left_rounded,
-                    size: 22, color: Tokens.fgDim),
+                const Icon(
+                  Icons.chevron_left_rounded,
+                  size: 22,
+                  color: Tokens.fgDim,
+                ),
                 const SizedBox(width: Tokens.s4),
                 Text(title, style: Tokens.heading),
               ],

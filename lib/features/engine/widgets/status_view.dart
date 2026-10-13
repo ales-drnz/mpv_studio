@@ -14,13 +14,13 @@ class StatusView extends StatelessWidget {
   const StatusView({super.key, required this.snapshot});
 
   static Color colorOf(MpvPlaybackState s) => switch (s) {
-        MpvPlaybackState.idle => Tokens.fgFaint,
-        MpvPlaybackState.loading => Tokens.amber,
-        MpvPlaybackState.buffering => Tokens.amber,
-        MpvPlaybackState.playing => Tokens.green,
-        MpvPlaybackState.paused => Tokens.accent,
-        MpvPlaybackState.completed => Tokens.fgDim,
-      };
+    MpvPlaybackState.idle => Tokens.fgFaint,
+    MpvPlaybackState.loading => Tokens.amber,
+    MpvPlaybackState.buffering => Tokens.amber,
+    MpvPlaybackState.playing => Tokens.green,
+    MpvPlaybackState.paused => Tokens.accent,
+    MpvPlaybackState.completed => Tokens.fgDim,
+  };
 
   @override
   Widget build(BuildContext context) {

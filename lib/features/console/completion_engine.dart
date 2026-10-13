@@ -194,29 +194,35 @@ class CompletionEngine {
     return _rank(items, prefix);
   }
 
-  List<Suggestion> _propsAndOptions(String prefix,
-      {required bool includeOptions}) {
+  List<Suggestion> _propsAndOptions(
+    String prefix, {
+    required bool includeOptions,
+  }) {
     final seen = <String>{};
     final items = <Suggestion>[];
     for (final p in _properties) {
       if (seen.add(p)) {
-        items.add(Suggestion(
-          label: p,
-          insertText: p,
-          detail: 'property',
-          kind: SuggestionKind.property,
-        ));
+        items.add(
+          Suggestion(
+            label: p,
+            insertText: p,
+            detail: 'property',
+            kind: SuggestionKind.property,
+          ),
+        );
       }
     }
     if (includeOptions) {
       for (final o in _options) {
         if (seen.add(o)) {
-          items.add(Suggestion(
-            label: o,
-            insertText: o,
-            detail: 'option',
-            kind: SuggestionKind.property,
-          ));
+          items.add(
+            Suggestion(
+              label: o,
+              insertText: o,
+              detail: 'option',
+              kind: SuggestionKind.property,
+            ),
+          );
         }
       }
     }
@@ -247,7 +253,9 @@ class CompletionEngine {
       try {
         final type = await player.getRawProperty('option-info/$property/type');
         if (type == 'Flag') choices = const ['yes', 'no'];
-      } catch (_) {/* leave empty */}
+      } catch (_) {
+        /* leave empty */
+      }
     }
     _choices[property] = choices;
     return choices;

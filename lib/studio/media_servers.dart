@@ -13,11 +13,13 @@ import '../features/stream/playback_reporter.dart';
 /// page. Returns the connected servers + the [FavoritesController] for the
 /// running [MpvStudio].
 Future<
-    ({
-      Map<ServerKind, MediaServer> servers,
-      FavoritesController favorites,
-      void Function() dispose,
-    })> connectMediaServers(Player player) async {
+  ({
+    Map<ServerKind, MediaServer> servers,
+    FavoritesController favorites,
+    void Function() dispose,
+  })
+>
+connectMediaServers(Player player) async {
   // Resolve the real device name (for Now Playing) and the stable per-install
   // device id (so Jellyfin doesn't invalidate the saved session) before the
   // servers build their credentials.

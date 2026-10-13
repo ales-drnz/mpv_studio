@@ -67,7 +67,8 @@ class _CompressorCurveState extends State<CompressorCurve> {
     super.didChangeDependencies();
     // The rack's tap source when inside it, the player's otherwise.
     final env = RackEnvironment.maybeOf(context);
-    final TapSource taps = env?.taps ??
+    final TapSource taps =
+        env?.taps ??
         (() {
           final player = PlayerScope.of(context);
           return (AudioFilter f, int instance, TapSide side) =>
@@ -96,33 +97,41 @@ class _CompressorCurveState extends State<CompressorCurve> {
     _grDb.value = 0;
     final taps = _taps;
     if (!widget.live || taps == null) return;
-    _subs.add(taps(AudioFilter.acompressor, widget.instance, TapSide.pre)
-        .listen((pcm) {
-      if (!mounted) return;
-      _inPeak = _smoothPeak(pcm, _inPeak);
-      _inRms = _smoothRms(pcm, _inRms);
-      _inDb.value = _inPeak;
-      _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
-    }));
-    _subs.add(taps(AudioFilter.acompressor, widget.instance, TapSide.post)
-        .listen((pcm) {
-      if (!mounted) return;
-      _outRms = _smoothRms(pcm, _outRms);
-      _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
-    }));
+    _subs.add(
+      taps(AudioFilter.acompressor, widget.instance, TapSide.pre).listen((pcm) {
+        if (!mounted) return;
+        _inPeak = _smoothPeak(pcm, _inPeak);
+        _inRms = _smoothRms(pcm, _inRms);
+        _inDb.value = _inPeak;
+        _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
+      }),
+    );
+    _subs.add(
+      taps(AudioFilter.acompressor, widget.instance, TapSide.post).listen((
+        pcm,
+      ) {
+        if (!mounted) return;
+        _outRms = _smoothRms(pcm, _outRms);
+        _grDb.value = (_inRms - _outRms).clamp(0.0, 24.0);
+      }),
+    );
   }
 
   /// Peak level in dB, snappy attack / slow release.
   double _smoothPeak(PcmFrame f, double prev) {
-    final db =
-        amplitudeToDb(framePeak(f), floorDb: _dbFloor).clamp(_dbFloor, _dbCeil);
+    final db = amplitudeToDb(
+      framePeak(f),
+      floorDb: _dbFloor,
+    ).clamp(_dbFloor, _dbCeil);
     return emaTowards(prev, db.toDouble(), db > prev ? 0.6 : 0.06);
   }
 
   /// Short-term RMS level in dB, medium smoothing.
   double _smoothRms(PcmFrame f, double prev) {
-    final db =
-        amplitudeToDb(frameRms(f), floorDb: _dbFloor).clamp(_dbFloor, _dbCeil);
+    final db = amplitudeToDb(
+      frameRms(f),
+      floorDb: _dbFloor,
+    ).clamp(_dbFloor, _dbCeil);
     return emaTowards(prev, db.toDouble(), 0.3);
   }
 
@@ -183,17 +192,21 @@ class _KneePainter extends CustomPainter {
   static const _grid = [-48.0, -36.0, -24.0, -12.0];
 
   double _kneeOut(double inDb) => compressorKneeDb(
-        inDb,
-        thresholdDb: thresholdDb,
-        ratio: ratio,
-        kneeDb: kneeDb,
-        makeupDb: makeupDb,
-      );
+    inDb,
+    thresholdDb: thresholdDb,
+    ratio: ratio,
+    kneeDb: kneeDb,
+    makeupDb: makeupDb,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
     final plot = Rect.fromLTRB(
-        2, 6, size.width - _rightGutter, size.height - _bottomGutter);
+      2,
+      6,
+      size.width - _rightGutter,
+      size.height - _bottomGutter,
+    );
     if (plot.width <= 0 || plot.height <= 0) return;
 
     final accent = enabled ? Tokens.accent : Tokens.fgFaint;
@@ -202,7 +215,9 @@ class _KneePainter extends CustomPainter {
         plot.left + ((db - _dbFloor) / (_dbCeil - _dbFloor)) * plot.width;
     double y(double db) =>
         plot.top +
-        (1 - ((db.clamp(_dbFloor, _dbCeil) - _dbFloor) / (_dbCeil - _dbFloor))) *
+        (1 -
+                ((db.clamp(_dbFloor, _dbCeil) - _dbFloor) /
+                    (_dbCeil - _dbFloor))) *
             plot.height;
 
     // Grid lattice + axis labels.
@@ -210,12 +225,29 @@ class _KneePainter extends CustomPainter {
       ..color = Tokens.line
       ..strokeWidth = 1;
     for (final db in _grid) {
-      canvas.drawLine(Offset(x(db), plot.top), Offset(x(db), plot.bottom), grid);
-      canvas.drawLine(Offset(plot.left, y(db)), Offset(plot.right, y(db)), grid);
-      paintChartLabel(canvas, '${db.toInt()}', Offset(x(db), plot.bottom + 3),
-          Tokens.fgFaint, center: true);
-      paintChartLabel(canvas, '${db.toInt()}', Offset(plot.right + 3, y(db) - 5),
-          Tokens.fgFaint);
+      canvas.drawLine(
+        Offset(x(db), plot.top),
+        Offset(x(db), plot.bottom),
+        grid,
+      );
+      canvas.drawLine(
+        Offset(plot.left, y(db)),
+        Offset(plot.right, y(db)),
+        grid,
+      );
+      paintChartLabel(
+        canvas,
+        '${db.toInt()}',
+        Offset(x(db), plot.bottom + 3),
+        Tokens.fgFaint,
+        center: true,
+      );
+      paintChartLabel(
+        canvas,
+        '${db.toInt()}',
+        Offset(plot.right + 3, y(db) - 5),
+        Tokens.fgFaint,
+      );
     }
 
     // Unity reference (no compression).
@@ -294,8 +326,12 @@ class _KneePainter extends CustomPainter {
     // GR readout — top-left chip.
     final gr = grDb.value;
     if (enabled && gr > 0.1) {
-      paintChartLabel(canvas, '−${gr.toStringAsFixed(1)} dB GR',
-          Offset(plot.left + 4, plot.top + 2), Tokens.accent);
+      paintChartLabel(
+        canvas,
+        '−${gr.toStringAsFixed(1)} dB GR',
+        Offset(plot.left + 4, plot.top + 2),
+        Tokens.accent,
+      );
     }
   }
 

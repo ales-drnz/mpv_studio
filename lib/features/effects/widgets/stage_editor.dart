@@ -86,39 +86,45 @@ class StageEditor extends StatelessWidget {
     final children = <Widget>[];
     final filter = e.filter;
     if (filter != null && instance != null) {
-      children.add(StageMeters(
-        filter: filter,
-        instance: instance,
-        active: granted,
-        idleText: !e.enabled
-            ? 'Stage is off'
-            : rack.bypass
-                ? 'Chain bypassed'
-                : rack.tapDenied(id)
-                    ? 'Meters paused: close a stage to see these'
-                    : 'Meters off',
-      ));
+      children.add(
+        StageMeters(
+          filter: filter,
+          instance: instance,
+          active: granted,
+          idleText: !e.enabled
+              ? 'Stage is off'
+              : rack.bypass
+              ? 'Chain bypassed'
+              : rack.tapDenied(id)
+              ? 'Meters paused: close a stage to see these'
+              : 'Meters off',
+        ),
+      );
       children.add(const SizedBox(height: Tokens.s12));
     }
 
     if (e is RawAudioEffect) {
-      children.add(SubmitTextRow(
-        label: 'lavfi entry',
-        description: 'Inserted as written. Enter or the check applies it.',
-        value: e.entry,
-        hint: 'lavfi-aecho=0.8:0.9:500:0.3',
-        maxLines: 3,
-        onSubmit: (v) => change(e.copyWith(entry: v)),
-      ));
-    } else if (isMeterStage(e)) {
-      children.add(const Padding(
-        padding: EdgeInsets.symmetric(vertical: Tokens.s8),
-        child: Text(
-          'Feeds the live loudness meter. It measures the audio at this '
-          'point of the chain and leaves it unchanged.',
-          style: Tokens.caption,
+      children.add(
+        SubmitTextRow(
+          label: 'lavfi entry',
+          description: 'Inserted as written. Enter or the check applies it.',
+          value: e.entry,
+          hint: 'lavfi-aecho=0.8:0.9:500:0.3',
+          maxLines: 3,
+          onSubmit: (v) => change(e.copyWith(entry: v)),
         ),
-      ));
+      );
+    } else if (isMeterStage(e)) {
+      children.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: Tokens.s8),
+          child: Text(
+            'Feeds the live loudness meter. It measures the audio at this '
+            'point of the chain and leaves it unchanged.',
+            style: Tokens.caption,
+          ),
+        ),
+      );
     } else if (d != null) {
       final featured = FeaturedEditor.of(
         e,
@@ -157,29 +163,34 @@ class StageEditor extends StatelessWidget {
         }
         for (final p in d.params) {
           if (d.fileBacked && p.name == d.fileParam) continue;
-          children.add(buildParamControl(p, e,
-              onChange: change, onEnd: rack.flush));
+          children.add(
+            buildParamControl(p, e, onChange: change, onEnd: rack.flush),
+          );
         }
         if (d.params.isEmpty) {
-          children.add(const Padding(
-            padding: EdgeInsets.symmetric(vertical: Tokens.s8),
-            child: Text('No adjustable parameters.', style: Tokens.caption),
-          ));
+          children.add(
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: Tokens.s8),
+              child: Text('No adjustable parameters.', style: Tokens.caption),
+            ),
+          );
         }
       }
       if (d.params.isNotEmpty) {
-        children.add(Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => change(d.setEnabled(d.create(), e.enabled)),
-            icon: const Icon(Icons.restart_alt_rounded, size: 16),
-            label: const Text('Reset'),
-            style: TextButton.styleFrom(
-              foregroundColor: Tokens.fgDim,
-              textStyle: Tokens.label,
+        children.add(
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => change(d.setEnabled(d.create(), e.enabled)),
+              icon: const Icon(Icons.restart_alt_rounded, size: 16),
+              label: const Text('Reset'),
+              style: TextButton.styleFrom(
+                foregroundColor: Tokens.fgDim,
+                textStyle: Tokens.label,
+              ),
             ),
           ),
-        ));
+        );
       }
     }
 
@@ -196,8 +207,12 @@ class _AllParams extends StatefulWidget {
   final AudioEffect e;
   final RackController rack;
   final int id;
-  const _AllParams(
-      {required this.d, required this.e, required this.rack, required this.id});
+  const _AllParams({
+    required this.d,
+    required this.e,
+    required this.rack,
+    required this.id,
+  });
 
   @override
   State<_AllParams> createState() => _AllParamsState();
@@ -246,8 +261,12 @@ class _Presets extends StatelessWidget {
   final AudioEffect e;
   final RackController rack;
   final int id;
-  const _Presets(
-      {required this.d, required this.e, required this.rack, required this.id});
+  const _Presets({
+    required this.d,
+    required this.e,
+    required this.rack,
+    required this.id,
+  });
 
   bool _active(FilterPreset preset) {
     if (!e.enabled) return false;
@@ -301,8 +320,12 @@ class _FilePicker extends StatelessWidget {
   final AudioEffect e;
   final RackController rack;
   final int id;
-  const _FilePicker(
-      {required this.d, required this.e, required this.rack, required this.id});
+  const _FilePicker({
+    required this.d,
+    required this.e,
+    required this.rack,
+    required this.id,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +370,9 @@ class _Chip extends StatelessWidget {
         customBorder: Tokens.squircle(Tokens.rSm),
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s12, vertical: Tokens.s8),
+            horizontal: Tokens.s12,
+            vertical: Tokens.s8,
+          ),
           decoration: ShapeDecoration(
             color: active ? Tokens.accent : Tokens.surface2,
             shape: Tokens.squircle(Tokens.rSm),

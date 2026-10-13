@@ -109,8 +109,9 @@ class MiniProgressBar extends StatelessWidget {
   static const double _hit = 14;
 
   static String _of(Duration at, Duration total) {
-    final clamped =
-        at < Duration.zero ? Duration.zero : (at > total ? total : at);
+    final clamped = at < Duration.zero
+        ? Duration.zero
+        : (at > total ? total : at);
     return '${formatDuration(clamped)} of ${formatDuration(total)}';
   }
 
@@ -148,19 +149,17 @@ class MiniProgressBar extends StatelessWidget {
                 : null,
             onIncrease: seekable
                 ? () => guard(
-                      () => player.seek(
-                        const Duration(seconds: 5),
-                        relative: true,
-                      ),
-                    )
+                    () =>
+                        player.seek(const Duration(seconds: 5), relative: true),
+                  )
                 : null,
             onDecrease: seekable
                 ? () => guard(
-                      () => player.seek(
-                        const Duration(seconds: -5),
-                        relative: true,
-                      ),
-                    )
+                    () => player.seek(
+                      const Duration(seconds: -5),
+                      relative: true,
+                    ),
+                  )
                 : null,
             child: Tooltip(
               message: seekable
@@ -292,7 +291,8 @@ class _MiniTitle extends StatelessWidget {
           stream: player.stream.mediaTitle,
           initial: player.state.mediaTitle,
           builder: (context, mediaTitle) {
-            final title = _tag(meta, 'title') ??
+            final title =
+                _tag(meta, 'title') ??
                 nowPlayingExtra(pl, 'title') ??
                 (mediaTitle.isNotEmpty ? mediaTitle : 'Nothing playing');
             final artist =
@@ -339,7 +339,8 @@ class _PlayPause extends StatelessWidget {
         stream: player.stream.playWhenReady,
         initial: player.state.playWhenReady,
         builder: (context, wants) {
-          final waiting = phase == MpvPlaybackState.loading ||
+          final waiting =
+              phase == MpvPlaybackState.loading ||
               phase == MpvPlaybackState.buffering;
           final stateLabel = switch (phase) {
             MpvPlaybackState.loading => 'Loading',
@@ -459,10 +460,11 @@ class FxBypassToggle extends StatelessWidget {
         final tip = on
             ? 'FX bypassed. Tap to restore the chain'
             : enabled
-                ? 'Bypass FX to compare before and after'
-                : 'No effects to bypass';
-        final color =
-            on ? Tokens.amber : (enabled ? Tokens.fgDim : Tokens.fgFaint);
+            ? 'Bypass FX to compare before and after'
+            : 'No effects to bypass';
+        final color = on
+            ? Tokens.amber
+            : (enabled ? Tokens.fgDim : Tokens.fgFaint);
         return Semantics(
           button: true,
           toggled: on,

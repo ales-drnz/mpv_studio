@@ -7,8 +7,8 @@ import 'package:mpv_studio/features/effects/rack_controller.dart';
 /// back to the last accepted list and throws.
 class FakeEngine implements EffectsEngine {
   FakeEngine([List<AudioEffect> initial = const []])
-      : current = initial,
-        _accepted = initial;
+    : current = initial,
+      _accepted = initial;
 
   @override
   List<AudioEffect> current;
@@ -30,7 +30,10 @@ class FakeEngine implements EffectsEngine {
       current = _accepted;
       _changes.add(_accepted);
       throw const MpvCommandException(
-          name: 'af', code: -12, message: 'invalid parameter');
+        name: 'af',
+        code: -12,
+        message: 'invalid parameter',
+      );
     }
     _accepted = effects;
   }

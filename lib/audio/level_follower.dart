@@ -14,8 +14,8 @@ class LevelFollower {
     this.releaseTau = 1.7,
     this.holdMillis = 1500,
     this.fallDbPerSecond = 12,
-  })  : _db = minDb,
-        _holdDb = minDb;
+  }) : _db = minDb,
+       _holdDb = minDb;
 
   /// Floor of the meter range; the follower never reports below this.
   final double minDb;

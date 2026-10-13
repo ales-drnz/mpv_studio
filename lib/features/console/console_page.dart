@@ -34,8 +34,12 @@ class _Line {
   final LogLevel level;
   final String prefix;
   final String text;
-  const _Line(this.kind, this.text,
-      {this.level = LogLevel.info, this.prefix = ''});
+  const _Line(
+    this.kind,
+    this.text, {
+    this.level = LogLevel.info,
+    this.prefix = '',
+  });
 }
 
 class _ConsolePageState extends State<ConsolePage>
@@ -91,12 +95,10 @@ class _ConsolePageState extends State<ConsolePage>
       );
     }
     _scheduleScrollToEnd();
-    listen(log.entries, (e) => _add(_Line(
-          _Kind.log,
-          e.text,
-          level: e.level,
-          prefix: e.prefix,
-        )));
+    listen(
+      log.entries,
+      (e) => _add(_Line(_Kind.log, e.text, level: e.level, prefix: e.prefix)),
+    );
   }
 
   @override
@@ -139,15 +141,15 @@ class _ConsolePageState extends State<ConsolePage>
 
   // Severity rank: lower = more severe.
   static int _severity(LogLevel l) => switch (l) {
-        LogLevel.fatal => 0,
-        LogLevel.error => 1,
-        LogLevel.warn => 2,
-        LogLevel.info => 4,
-        LogLevel.v => 5,
-        LogLevel.debug => 6,
-        LogLevel.trace => 7,
-        LogLevel.off => 8,
-      };
+    LogLevel.fatal => 0,
+    LogLevel.error => 1,
+    LogLevel.warn => 2,
+    LogLevel.info => 4,
+    LogLevel.v => 5,
+    LogLevel.debug => 6,
+    LogLevel.trace => 7,
+    LogLevel.off => 8,
+  };
 
   bool _visible(_Line l) {
     if (l.kind == _Kind.log && _severity(l.level) > _severity(_level)) {
@@ -228,9 +230,11 @@ class _ConsolePageState extends State<ConsolePage>
   void _copyAll() {
     final text = _lines
         .where(_visible)
-        .map((l) => l.kind == _Kind.log && l.prefix.isNotEmpty
-            ? '[${l.prefix}] ${l.text}'
-            : l.text)
+        .map(
+          (l) => l.kind == _Kind.log && l.prefix.isNotEmpty
+              ? '[${l.prefix}] ${l.text}'
+              : l.text,
+        )
         .join('\n');
     Clipboard.setData(ClipboardData(text: text));
   }
@@ -271,9 +275,11 @@ class _ConsolePageState extends State<ConsolePage>
   void _moveSelection(int delta) {
     final n = _result.suggestions.length;
     if (n == 0) return;
-    setState(() => _selected = (_selected + delta) % n < 0
-        ? (_selected + delta) % n + n
-        : (_selected + delta) % n);
+    setState(
+      () => _selected = (_selected + delta) % n < 0
+          ? (_selected + delta) % n + n
+          : (_selected + delta) % n,
+    );
   }
 
   void _accept(int index) {
@@ -447,7 +453,11 @@ class _ConsolePageState extends State<ConsolePage>
                       onTapOutside: (_) => _dismiss(),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                            Tokens.s16, 0, Tokens.s16, 0),
+                          Tokens.s16,
+                          0,
+                          Tokens.s16,
+                          0,
+                        ),
                         child: SuggestionPopup(
                           suggestions: _result.suggestions,
                           selected: _selected,
@@ -476,7 +486,11 @@ class _ConsolePageState extends State<ConsolePage>
               if (showHint)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                      Tokens.s24, 0, Tokens.s16, Tokens.s4),
+                    Tokens.s24,
+                    0,
+                    Tokens.s16,
+                    Tokens.s4,
+                  ),
                   child: Text(
                     '${activeCmd.name}  ${activeCmd.signature}',
                     style: Tokens.caption.copyWith(fontFamily: Tokens.mono),
@@ -530,7 +544,11 @@ class _ConsolePageState extends State<ConsolePage>
     return Padding(
       key: const ValueKey('console-input'),
       padding: const EdgeInsets.fromLTRB(
-          Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s12),
+        Tokens.s16,
+        Tokens.s8,
+        Tokens.s16,
+        Tokens.s12,
+      ),
       child: Container(
         height: Tokens.controlH,
         padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
@@ -540,8 +558,10 @@ class _ConsolePageState extends State<ConsolePage>
         ),
         child: Row(
           children: [
-            const Text('›',
-                style: TextStyle(color: Tokens.accent, fontSize: 16)),
+            const Text(
+              '›',
+              style: TextStyle(color: Tokens.accent, fontSize: 16),
+            ),
             const SizedBox(width: Tokens.s8),
             Expanded(
               // Content-sized so the Row centres it vertically in the pill.
@@ -644,7 +664,11 @@ class _Toolbar extends StatelessWidget {
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          Tokens.s16, Tokens.s8, Tokens.s8, Tokens.s8),
+        Tokens.s16,
+        Tokens.s8,
+        Tokens.s8,
+        Tokens.s8,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           // The 6-segment level filter + search + actions don't fit one row
@@ -738,8 +762,11 @@ class _SearchField extends StatelessWidget {
                     customBorder: const CircleBorder(),
                     child: const Padding(
                       padding: EdgeInsets.all(2),
-                      child: Icon(Icons.close_rounded,
-                          size: 14, color: Tokens.fgFaint),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 14,
+                        color: Tokens.fgFaint,
+                      ),
                     ),
                   ),
           ),
@@ -748,4 +775,3 @@ class _SearchField extends StatelessWidget {
     );
   }
 }
-

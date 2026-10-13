@@ -136,8 +136,14 @@ class _ScopePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawCircle(Offset(cx, cy), radius, guide);
-    canvas.drawCircle(Offset(cx, cy), radius * 0.5,
-        Paint()..color = Tokens.line..style = PaintingStyle.stroke..strokeWidth = 1);
+    canvas.drawCircle(
+      Offset(cx, cy),
+      radius * 0.5,
+      Paint()
+        ..color = Tokens.line
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
     final cross = Paint()
       ..color = Tokens.line
       ..strokeWidth = 1;
@@ -150,9 +156,24 @@ class _ScopePainter extends CustomPainter {
     final d = radius * 0.70710678;
     canvas.drawLine(Offset(cx - d, cy - d), Offset(cx + d, cy + d), diag);
     canvas.drawLine(Offset(cx + d, cy - d), Offset(cx - d, cy + d), diag);
-    paintChartLabel(canvas, 'L', Offset(cx - d - 10, cy - d - 10), Tokens.fgFaint);
-    paintChartLabel(canvas, 'R', Offset(cx + d + 4, cy - d - 10), Tokens.fgFaint);
-    paintChartLabel(canvas, 'M', Offset(cx + 4, cy - radius - 1), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      'L',
+      Offset(cx - d - 10, cy - d - 10),
+      Tokens.fgFaint,
+    );
+    paintChartLabel(
+      canvas,
+      'R',
+      Offset(cx + d + 4, cy - d - 10),
+      Tokens.fgFaint,
+    );
+    paintChartLabel(
+      canvas,
+      'M',
+      Offset(cx + 4, cy - radius - 1),
+      Tokens.fgFaint,
+    );
 
     // Scatter — newest points brightest. Draw as tiny dots.
     final n = count();
@@ -185,26 +206,42 @@ class _ScopePainter extends CustomPainter {
     final fillColor = c < -0.1
         ? Tokens.red
         : c < 0.35
-            ? Tokens.green
-            : Tokens.accent;
+        ? Tokens.green
+        : Tokens.accent;
     final lo = math.min(mid, fillX);
     final hi = math.max(mid, fillX);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          Rect.fromLTRB(lo, barRect.top, hi, barRect.bottom),
-          const Radius.circular(3)),
+        Rect.fromLTRB(lo, barRect.top, hi, barRect.bottom),
+        const Radius.circular(3),
+      ),
       Paint()..color = enabled ? fillColor : Tokens.fgFaint,
     );
-    canvas.drawLine(Offset(mid, barRect.top), Offset(mid, barRect.bottom),
-        Paint()..color = Tokens.fgFaint..strokeWidth = 1);
-    paintChartLabel(canvas, '−1', Offset(4, barTop + _barH - 8), Tokens.fgFaint);
+    canvas.drawLine(
+      Offset(mid, barRect.top),
+      Offset(mid, barRect.bottom),
+      Paint()
+        ..color = Tokens.fgFaint
+        ..strokeWidth = 1,
+    );
     paintChartLabel(
-        canvas,
-        enabled ? c.toStringAsFixed(2) : 'corr',
-        Offset(mid - 9, barTop + _barH - 8),
-        enabled ? fillColor : Tokens.fgFaint);
-    paintChartLabel(canvas, '+1', Offset(size.width - 14, barTop + _barH - 8),
-        Tokens.fgFaint);
+      canvas,
+      '−1',
+      Offset(4, barTop + _barH - 8),
+      Tokens.fgFaint,
+    );
+    paintChartLabel(
+      canvas,
+      enabled ? c.toStringAsFixed(2) : 'corr',
+      Offset(mid - 9, barTop + _barH - 8),
+      enabled ? fillColor : Tokens.fgFaint,
+    );
+    paintChartLabel(
+      canvas,
+      '+1',
+      Offset(size.width - 14, barTop + _barH - 8),
+      Tokens.fgFaint,
+    );
   }
 
   @override

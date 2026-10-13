@@ -58,8 +58,7 @@ class CoverArtView extends StatelessWidget {
                 child = const _Placeholder();
               }
               return ClipPath(
-                clipper:
-                    ShapeBorderClipper(shape: Tokens.squircle(Tokens.rLg)),
+                clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rLg)),
                 child: child,
               );
             },

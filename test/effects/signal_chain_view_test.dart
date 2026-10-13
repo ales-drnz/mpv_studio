@@ -29,16 +29,18 @@ Future<RackController> pumpRack(
   addTearDown(tester.view.reset);
   final rack = RackController(engine);
   addTearDown(rack.dispose);
-  await tester.pumpWidget(MaterialApp(
-    home: Scaffold(
-      body: RackEnvironment(
-        taps: (taps ?? RecordingTaps()).call,
-        spectrum: const SpectrumSettings(),
-        loudness: const Stream.empty(),
-        child: SignalChainView(rack: rack),
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: RackEnvironment(
+          taps: (taps ?? RecordingTaps()).call,
+          spectrum: const SpectrumSettings(),
+          loudness: const Stream.empty(),
+          child: SignalChainView(rack: rack),
+        ),
       ),
     ),
-  ));
+  );
   return rack;
 }
 
@@ -46,16 +48,22 @@ void main() {
   const bass = BassEffect(gain: 4);
   const comp = AcompressorEffect(ratio: 4);
 
-  testWidgets('shows the chain in order between input and output',
-      (tester) async {
+  testWidgets('shows the chain in order between input and output', (
+    tester,
+  ) async {
     await pumpRack(tester, FakeEngine([bass, comp, kMeterStage]));
     expect(find.text('INPUT'), findsOneWidget);
     expect(find.text('OUTPUT'), findsOneWidget);
     final y = [
       for (final t in ['Bass', 'Compressor', 'Loudness meter'])
-        tester.getTopLeft(find.descendant(
-            of: find.byType(SliverReorderableList),
-            matching: find.text(t))).dy,
+        tester
+            .getTopLeft(
+              find.descendant(
+                of: find.byType(SliverReorderableList),
+                matching: find.text(t),
+              ),
+            )
+            .dy,
     ];
     expect(y, orderedEquals([...y]..sort()));
     expect(find.text('METER'), findsOneWidget);
@@ -119,8 +127,9 @@ void main() {
     expect(engine.current.toSet(), {bass, comp, kMeterStage});
   });
 
-  testWidgets('add a raw lavfi stage from the sheet and edit it',
-      (tester) async {
+  testWidgets('add a raw lavfi stage from the sheet and edit it', (
+    tester,
+  ) async {
     final engine = FakeEngine([bass]);
     final rack = await pumpRack(tester, engine);
     await tester.tap(find.byKey(const ValueKey('rack-add')));
@@ -132,7 +141,9 @@ void main() {
     expect(rack.isExpanded(id), isTrue);
     expect(find.text('lavfi entry'), findsOneWidget);
     await tester.enterText(
-        find.widgetWithText(TextField, 'lavfi-anull'), 'lavfi-volume=0.5');
+      find.widgetWithText(TextField, 'lavfi-anull'),
+      'lavfi-volume=0.5',
+    );
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     expect(engine.current.last, const RawAudioEffect('lavfi-volume=0.5'));
@@ -145,7 +156,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rack-add')));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.byKey(const ValueKey('add-stage-search')), 'chorus');
+      find.byKey(const ValueKey('add-stage-search')),
+      'chorus',
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('add-acompressor')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('add-chorus')));
@@ -154,8 +167,7 @@ void main() {
     expect(engine.current.single.enabled, isTrue, reason: 'valid defaults');
   });
 
-  testWidgets('a refused chain shows an error and rolls back',
-      (tester) async {
+  testWidgets('a refused chain shows an error and rolls back', (tester) async {
     final engine = FakeEngine([bass])
       ..refuse = (fx) => fx.any((e) => e is RawAudioEffect);
     final rack = await pumpRack(tester, engine);
@@ -184,8 +196,9 @@ void main() {
     expect(engine.current, [bass, kMeterStage]);
   });
 
-  testWidgets('open stages tap their own instance, before and after',
-      (tester) async {
+  testWidgets('open stages tap their own instance, before and after', (
+    tester,
+  ) async {
     final taps = RecordingTaps();
     final engine = FakeEngine([
       const EqualizerEffect(frequency: 100, gain: 2),
@@ -193,7 +206,8 @@ void main() {
     ]);
     final rack = await pumpRack(tester, engine, taps: taps);
     await tester.tap(
-        find.byKey(ValueKey('stage-header-${rack.chain.stages[1].id}')));
+      find.byKey(ValueKey('stage-header-${rack.chain.stages[1].id}')),
+    );
     await tester.pump();
     expect(taps.opened, [
       (AudioFilter.equalizer, 1, TapSide.pre),
@@ -201,8 +215,9 @@ void main() {
     ]);
   });
 
-  testWidgets('a quick tile adds its stage and opens the editor',
-      (tester) async {
+  testWidgets('a quick tile adds its stage and opens the editor', (
+    tester,
+  ) async {
     final engine = FakeEngine([comp]);
     final rack = await pumpRack(tester, engine);
     await tester.tap(find.byKey(const ValueKey('quick-bass')));

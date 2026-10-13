@@ -44,8 +44,8 @@ class _CrystalPainter extends CustomPainter {
   /// percussive envelope, so transients are present for the law to act on.
   static double _input(double t) {
     final env = math.exp(-3.0 * (t % 0.34) / 0.34);
-    return env * (math.sin(2 * math.pi * 6 * t) +
-        0.5 * math.sin(2 * math.pi * 13 * t));
+    return env *
+        (math.sin(2 * math.pi * 6 * t) + 0.5 * math.sin(2 * math.pi * 13 * t));
   }
 
   @override
@@ -58,8 +58,13 @@ class _CrystalPainter extends CustomPainter {
     const n = 240;
 
     // Zero line.
-    canvas.drawLine(Offset(0, mid), Offset(w, mid),
-        Paint()..color = Tokens.line2..strokeWidth = 1);
+    canvas.drawLine(
+      Offset(0, mid),
+      Offset(w, mid),
+      Paint()
+        ..color = Tokens.line2
+        ..strokeWidth = 1,
+    );
 
     final xs = List<double>.generate(n, (i) => i / (n - 1));
     final inVals = xs.map(_input).toList();
@@ -101,8 +106,12 @@ class _CrystalPainter extends CustomPainter {
         ..isAntiAlias = true,
     );
 
-    paintChartLabel(canvas, intensity >= 0 ? 'sharpen' : 'smooth',
-        const Offset(4, 4), accent);
+    paintChartLabel(
+      canvas,
+      intensity >= 0 ? 'sharpen' : 'smooth',
+      const Offset(4, 4),
+      accent,
+    );
     paintChartLabel(canvas, 'input', Offset(w - 34, 4), Tokens.fgFaint);
   }
 

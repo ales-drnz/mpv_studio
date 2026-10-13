@@ -79,11 +79,11 @@ class _EqualizerState extends State<Equalizer> {
   static const double _height = 188;
 
   Rect _plot(Size s) => Rect.fromLTRB(
-        2,
-        _topPad,
-        s.width - _rightGutter,
-        s.height - _bottomGutter,
-      );
+    2,
+    _topPad,
+    s.width - _rightGutter,
+    s.height - _bottomGutter,
+  );
 
   /// Maps a pointer position to (band index, dB) and pushes the change.
   void _shapeAt(Offset local, Size size) {
@@ -115,10 +115,12 @@ class _EqualizerState extends State<Equalizer> {
           final size = Size(c.maxWidth, _height);
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onPanStart:
-                widget.enabled ? (d) => _shapeAt(d.localPosition, size) : null,
-            onPanUpdate:
-                widget.enabled ? (d) => _shapeAt(d.localPosition, size) : null,
+            onPanStart: widget.enabled
+                ? (d) => _shapeAt(d.localPosition, size)
+                : null,
+            onPanUpdate: widget.enabled
+                ? (d) => _shapeAt(d.localPosition, size)
+                : null,
             onPanEnd: widget.enabled
                 ? (_) {
                     setState(() => _active = null);
@@ -127,7 +129,8 @@ class _EqualizerState extends State<Equalizer> {
                 : null,
             onTapDown: widget.enabled
                 ? (d) => setState(
-                    () => _active = _nearestBand(d.localPosition, size))
+                    () => _active = _nearestBand(d.localPosition, size),
+                  )
                 : null,
             onTapUp: widget.enabled ? (_) => widget.onChangeEnd() : null,
             onDoubleTapDown: widget.enabled
@@ -220,8 +223,9 @@ class _EqPainter extends CustomPainter {
     canvas.drawPath(
       fill,
       Paint()
-        ..color = (enabled ? Tokens.accent : Tokens.fgFaint)
-            .withValues(alpha: 0.13),
+        ..color = (enabled ? Tokens.accent : Tokens.fgFaint).withValues(
+          alpha: 0.13,
+        ),
     );
     canvas.restore();
 
@@ -279,8 +283,14 @@ class _EqPainter extends CustomPainter {
       final p1 = pts[i];
       final p2 = pts[i + 1];
       final p3 = pts[i + 2 >= pts.length ? pts.length - 1 : i + 2];
-      final c1 = Offset(p1.dx + (p2.dx - p0.dx) / 6, p1.dy + (p2.dy - p0.dy) / 6);
-      final c2 = Offset(p2.dx - (p3.dx - p1.dx) / 6, p2.dy - (p3.dy - p1.dy) / 6);
+      final c1 = Offset(
+        p1.dx + (p2.dx - p0.dx) / 6,
+        p1.dy + (p2.dy - p0.dy) / 6,
+      );
+      final c2 = Offset(
+        p2.dx - (p3.dx - p1.dx) / 6,
+        p2.dy - (p3.dy - p1.dy) / 6,
+      );
       path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p2.dx, p2.dy);
     }
     return path;

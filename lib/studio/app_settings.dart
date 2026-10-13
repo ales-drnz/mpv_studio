@@ -146,16 +146,16 @@ class AppSettings {
   /// The build-time configuration assembled from the persisted knobs, passed
   /// to the [Player] constructor in `startAudioEngine`.
   PlayerConfiguration get playerConfiguration => PlayerConfiguration(
-        initialVolume: volume,
-        autoPlay: true,
-        logLevel: LogLevel.info,
-        resumePlayback: resumePlayback,
-        watchLaterDir: watchLaterDir.isEmpty ? null : watchLaterDir,
-        forceSeekable: forceSeekable,
-        hlsBitrate: hlsBitrate,
-        normalizeDownmix: normalizeDownmix,
-        demuxerCacheDir: demuxerCacheDir.isEmpty ? null : demuxerCacheDir,
-      );
+    initialVolume: volume,
+    autoPlay: true,
+    logLevel: LogLevel.info,
+    resumePlayback: resumePlayback,
+    watchLaterDir: watchLaterDir.isEmpty ? null : watchLaterDir,
+    forceSeekable: forceSeekable,
+    hlsBitrate: hlsBitrate,
+    normalizeDownmix: normalizeDownmix,
+    demuxerCacheDir: demuxerCacheDir.isEmpty ? null : demuxerCacheDir,
+  );
 
   Cover get coverArtAuto => _enumByName('coverArtAuto', Cover.values, Cover.no);
 
@@ -165,24 +165,24 @@ class AppSettings {
   int get specBands => _int('specBands', 64);
 
   ReplayGainSettings get replayGainSettings => ReplayGainSettings(
-        mode: rgMode,
-        preamp: rgPreamp,
-        clip: rgClip,
-        fallback: rgFallback,
-      );
+    mode: rgMode,
+    preamp: rgPreamp,
+    clip: rgClip,
+    fallback: rgFallback,
+  );
 
   CacheSettings get cacheSettings => CacheSettings(
-        mode: cacheMode,
-        secs: Duration(seconds: cacheSecs),
-        onDisk: cacheOnDisk,
-        pauseInitial: cachePauseInitial,
-      );
+    mode: cacheMode,
+    secs: Duration(seconds: cacheSecs),
+    onDisk: cacheOnDisk,
+    pauseInitial: cachePauseInitial,
+  );
 
   SpectrumSettings get spectrumSettings => SpectrumSettings(
-        window: specWindow,
-        fftSize: specFft,
-        bandCount: specBands,
-      );
+    window: specWindow,
+    fftSize: specFft,
+    bandCount: specBands,
+  );
 
   // ---- OS media session ----------------------------------------------
   // The full capability set, in the order the Session page shows them.
@@ -225,10 +225,10 @@ class AppSettings {
   /// How playback reacts to an OS audio interruption (call / Siri / alarm).
   /// Honoured on iOS & Android only (a no-op on desktop).
   InterruptionPolicy get sessionInterruption => _enumByName(
-        'sessionInterruption',
-        InterruptionPolicy.values,
-        InterruptionPolicy.pauseAndResume,
-      );
+    'sessionInterruption',
+    InterruptionPolicy.values,
+    InterruptionPolicy.pauseAndResume,
+  );
 
   /// Builds the session config the app advertises from [actions], keeping the
   /// rate ladder / identity. The skip intervals and interruption policy
@@ -240,17 +240,17 @@ class AppSettings {
     int? fastForwardSecs,
     int? rewindSecs,
     InterruptionPolicy? interruptionPolicy,
-  }) =>
-      MediaSession(
-        artwork: MediaSessionArtwork.embedded,
-        actions: actions.toSet(),
-        interruptionPolicy: interruptionPolicy ?? sessionInterruption,
-        fastForwardInterval:
-            Duration(seconds: fastForwardSecs ?? sessionFastForwardSecs),
-        rewindInterval: Duration(seconds: rewindSecs ?? sessionRewindSecs),
-        supportedPlaybackRates: const [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
-        appName: 'MPV Studio',
-      );
+  }) => MediaSession(
+    artwork: MediaSessionArtwork.embedded,
+    actions: actions.toSet(),
+    interruptionPolicy: interruptionPolicy ?? sessionInterruption,
+    fastForwardInterval: Duration(
+      seconds: fastForwardSecs ?? sessionFastForwardSecs,
+    ),
+    rewindInterval: Duration(seconds: rewindSecs ?? sessionRewindSecs),
+    supportedPlaybackRates: const [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
+    appName: 'MPV Studio',
+  );
 
   /// The session to publish on launch, or `null` when disabled.
   MediaSession? get mediaSession =>

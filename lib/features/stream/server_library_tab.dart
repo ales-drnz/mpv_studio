@@ -202,8 +202,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     final items = _paging.value.items ?? const <ServerTrack>[];
     if (index < 0 || index >= items.length) return;
     final favorites = PlayerScope.favoritesOf(context);
-    final window =
-        items.sublist(index, math.min(index + _queueMax, items.length));
+    final window = items.sublist(
+      index,
+      math.min(index + _queueMax, items.length),
+    );
     final segment = _server.segmentContainer(
       _mode,
       codec: _codec.value,
@@ -249,39 +251,40 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     ];
     final player = _player;
     if (player == null) return;
-    await PlayerScope.issuesOf(context)
-        .guard(() => player.openAll(medias, play: true, index: 0));
+    await PlayerScope.issuesOf(
+      context,
+    ).guard(() => player.openAll(medias, play: true, index: 0));
   }
 
   // ── Transcode option dropdowns (shown only in transcode mode) ────────
 
   Widget _codecDropdown() => AppDropdown<TranscodeCodec>(
-        value: _codec,
-        items: [
-          for (final c in TranscodeCodec.values)
-            DropdownMenuItem(value: c, child: Text(c.label)),
-        ],
-        onChanged: (c) {
-          if (c == null) return;
-          setState(() {
-            _codec = c;
-            // MPEG-TS survives only with MP3 — revert if the new codec
-            // forbids it, so the picker and the stream never disagree.
-            if (!mpegtsAllowed(c.value)) _transport = StreamTransport.fmp4;
-          });
-        },
-      );
+    value: _codec,
+    items: [
+      for (final c in TranscodeCodec.values)
+        DropdownMenuItem(value: c, child: Text(c.label)),
+    ],
+    onChanged: (c) {
+      if (c == null) return;
+      setState(() {
+        _codec = c;
+        // MPEG-TS survives only with MP3 — revert if the new codec
+        // forbids it, so the picker and the stream never disagree.
+        if (!mpegtsAllowed(c.value)) _transport = StreamTransport.fmp4;
+      });
+    },
+  );
 
   Widget _bitrateDropdown() => AppDropdown<int>(
-        value: _bitrateKbps,
-        items: [
-          for (final b in _bitrates)
-            DropdownMenuItem(value: b, child: Text('$b kbps')),
-        ],
-        onChanged: (b) {
-          if (b != null) setState(() => _bitrateKbps = b);
-        },
-      );
+    value: _bitrateKbps,
+    items: [
+      for (final b in _bitrates)
+        DropdownMenuItem(value: b, child: Text('$b kbps')),
+    ],
+    onChanged: (b) {
+      if (b != null) setState(() => _bitrateKbps = b);
+    },
+  );
 
   Widget _protocolDropdown() {
     // DASH is Plex-only; Jellyfin transcodes over HLS only, so it's greyed.
@@ -289,10 +292,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
     return AppDropdown<StreamProtocol>(
       value: _protocol,
       items: [
-        const DropdownMenuItem(
-          value: StreamProtocol.hls,
-          child: Text('HLS'),
-        ),
+        const DropdownMenuItem(value: StreamProtocol.hls, child: Text('HLS')),
         DropdownMenuItem(
           value: StreamProtocol.dash,
           enabled: dashOk,
@@ -335,10 +335,7 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
           enabled: tsOk,
           child: tsOk
               ? const Text('MPEG-TS')
-              : Tooltip(
-                  message: tsHint,
-                  child: const Text('MPEG-TS'),
-                ),
+              : Tooltip(message: tsHint, child: const Text('MPEG-TS')),
         ),
       ],
       onChanged: (t) {
@@ -365,8 +362,11 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Connect to ${_server.name}',
-                  style: Tokens.heading, textAlign: TextAlign.center),
+              Text(
+                'Connect to ${_server.name}',
+                style: Tokens.heading,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: Tokens.s4),
               Text(
                 _server.name == 'Plex'
@@ -385,9 +385,10 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
               ),
               const SizedBox(height: Tokens.s8),
               _Field(
-                  controller: _user,
-                  hint: 'Username',
-                  icon: Icons.person_outline_rounded),
+                controller: _user,
+                hint: 'Username',
+                icon: Icons.person_outline_rounded,
+              ),
               const SizedBox(height: Tokens.s8),
               _Field(
                 controller: _pass,
@@ -398,10 +399,12 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: Tokens.s12),
-                Text(_error!,
-                    style: Tokens.caption.copyWith(color: Tokens.red),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  _error!,
+                  style: Tokens.caption.copyWith(color: Tokens.red),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
               const SizedBox(height: Tokens.s16),
               _ConnectButton(busy: _connecting, onTap: _connect),
@@ -419,7 +422,11 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s8),
+            Tokens.s16,
+            Tokens.s8,
+            Tokens.s16,
+            Tokens.s8,
+          ),
           child: Column(
             children: [
               Row(
@@ -483,34 +490,40 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
             controller: _paging,
             builder: (context, state, fetchNextPage) =>
                 PagedListView<int, ServerTrack>(
-              state: state,
-              fetchNextPage: fetchNextPage,
-              padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s12),
-              builderDelegate: PagedChildBuilderDelegate<ServerTrack>(
-                itemBuilder: (context, track, index) => _TrackTile(
-                  track: track,
-                  current: _currentId.isNotEmpty &&
-                      track.id == _currentId &&
-                      _currentServer == _server.kind.name,
-                  kind: _server.kind,
-                  favorites: PlayerScope.favoritesOf(context),
-                  onTap: () => _play(index),
-                ),
-                firstPageProgressIndicatorBuilder: (_) => const _Spinner(),
-                newPageProgressIndicatorBuilder: (_) => const _Spinner(),
-                firstPageErrorIndicatorBuilder: (_) => _ErrorState(
-                  message: _paging.value.error?.toString() ?? 'Failed to load.',
-                  onRetry: _paging.refresh,
-                ),
-                noItemsFoundIndicatorBuilder: (_) => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(Tokens.s24),
-                    child: Text('No songs found.', style: Tokens.caption),
+                  state: state,
+                  fetchNextPage: fetchNextPage,
+                  padding: const EdgeInsets.fromLTRB(
+                    Tokens.s16,
+                    Tokens.s8,
+                    Tokens.s16,
+                    Tokens.s12,
+                  ),
+                  builderDelegate: PagedChildBuilderDelegate<ServerTrack>(
+                    itemBuilder: (context, track, index) => _TrackTile(
+                      track: track,
+                      current:
+                          _currentId.isNotEmpty &&
+                          track.id == _currentId &&
+                          _currentServer == _server.kind.name,
+                      kind: _server.kind,
+                      favorites: PlayerScope.favoritesOf(context),
+                      onTap: () => _play(index),
+                    ),
+                    firstPageProgressIndicatorBuilder: (_) => const _Spinner(),
+                    newPageProgressIndicatorBuilder: (_) => const _Spinner(),
+                    firstPageErrorIndicatorBuilder: (_) => _ErrorState(
+                      message:
+                          _paging.value.error?.toString() ?? 'Failed to load.',
+                      onRetry: _paging.refresh,
+                    ),
+                    noItemsFoundIndicatorBuilder: (_) => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(Tokens.s24),
+                        child: Text('No songs found.', style: Tokens.caption),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
           ),
         ),
       ],
@@ -545,8 +558,10 @@ class _TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sub =
-        [track.artist, track.album].where((e) => e.isNotEmpty).join('  ·  ');
+    final sub = [
+      track.artist,
+      track.album,
+    ].where((e) => e.isNotEmpty).join('  ·  ');
     return Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s6),
       child: Material(
@@ -557,7 +572,11 @@ class _TrackTile extends StatelessWidget {
           // Ink so the hover highlight shows over the card surface.
           child: Ink(
             padding: const EdgeInsets.fromLTRB(
-                Tokens.s12, Tokens.s8, Tokens.s12, Tokens.s8),
+              Tokens.s12,
+              Tokens.s8,
+              Tokens.s12,
+              Tokens.s8,
+            ),
             decoration: ShapeDecoration(
               color: current ? Tokens.accentWash : Tokens.surface,
               shape: Tokens.squircle(Tokens.rSm),
@@ -565,8 +584,11 @@ class _TrackTile extends StatelessWidget {
             child: Row(
               children: [
                 if (current) ...[
-                  const Icon(Icons.volume_up_rounded,
-                      size: 16, color: Tokens.accent),
+                  const Icon(
+                    Icons.volume_up_rounded,
+                    size: 16,
+                    color: Tokens.accent,
+                  ),
                   const SizedBox(width: Tokens.s12),
                 ],
                 Expanded(
@@ -579,16 +601,19 @@ class _TrackTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: Tokens.body.copyWith(
                           color: current ? Tokens.accent : Tokens.fg,
-                          fontWeight:
-                              current ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: current
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                       ),
                       if (sub.isNotEmpty) ...[
                         const SizedBox(height: 2),
-                        Text(sub,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Tokens.caption),
+                        Text(
+                          sub,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Tokens.caption,
+                        ),
                       ],
                     ],
                   ),
@@ -626,8 +651,10 @@ class _FavoriteStar extends StatelessWidget {
         final fav = favorites.resolved(kind, track.id, track.isFavorite);
         return IconButton(
           onPressed: () => favorites.setFavorite(kind, track.id, !fav),
-          icon: Icon(fav ? Icons.star_rounded : Icons.star_border_rounded,
-              size: 18),
+          icon: Icon(
+            fav ? Icons.star_rounded : Icons.star_border_rounded,
+            size: 18,
+          ),
           color: fav ? Tokens.accent : Tokens.fgDim,
           splashRadius: 18,
           visualDensity: VisualDensity.compact,
@@ -680,7 +707,10 @@ class _Field extends StatelessWidget {
               onChanged: onChanged,
               onSubmitted: onSubmitted,
               style: const TextStyle(
-                  fontFamily: Tokens.mono, fontSize: 12.5, color: Tokens.fg),
+                fontFamily: Tokens.mono,
+                fontSize: 12.5,
+                color: Tokens.fg,
+              ),
               cursorColor: Tokens.accent,
               decoration: InputDecoration(
                 isDense: true,
@@ -721,13 +751,18 @@ class _ConnectButton extends StatelessWidget {
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Tokens.fgDim),
+                    strokeWidth: 2,
+                    color: Tokens.fgDim,
+                  ),
                 )
-              : const Text('Connect',
+              : const Text(
+                  'Connect',
                   style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: Tokens.onAccent)),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: Tokens.onAccent,
+                  ),
+                ),
         ),
       ),
     );
@@ -738,16 +773,18 @@ class _Spinner extends StatelessWidget {
   const _Spinner();
   @override
   Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.all(Tokens.s16),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Tokens.accentDim),
-          ),
+    padding: EdgeInsets.all(Tokens.s16),
+    child: Center(
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Tokens.accentDim,
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _ErrorState extends StatelessWidget {
@@ -763,11 +800,13 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message,
-                style: Tokens.caption.copyWith(color: Tokens.red),
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis),
+            Text(
+              message,
+              style: Tokens.caption.copyWith(color: Tokens.red),
+              textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: Tokens.s12),
             TextButton(onPressed: onRetry, child: const Text('Retry')),
           ],

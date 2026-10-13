@@ -97,8 +97,8 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
             label: 'Live meter',
             subtitle: widget.meterOn
                 ? (widget.bypassed
-                    ? 'Measuring the dry signal while bypassed'
-                    : 'Measuring at the meter stage of the chain')
+                      ? 'Measuring the dry signal while bypassed'
+                      : 'Measuring at the meter stage of the chain')
                 : 'Adds a measuring stage at the end of the chain',
             value: widget.meterOn,
             onChanged: widget.onMeterChanged,
@@ -110,41 +110,43 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
             enabled: widget.meterOn,
           ),
           const SizedBox(height: Tokens.s12),
-          LayoutBuilder(builder: (context, c) {
-            final live = _Column(
-              title: 'Live',
-              rows: [
-                ('Momentary', _lufs(l?.momentary)),
-                ('Short-term', _lufs(l?.shortTerm)),
-                ('Integrated', _lufs(l?.integrated)),
-                ('Range', _lu(l?.range)),
-              ],
-            );
-            final file = _Column(title: 'This file', rows: _scanRows());
-            final norm = _Column(title: 'Normalization', rows: _normRows());
-            if (c.maxWidth < 520) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  live,
-                  const SizedBox(height: Tokens.s12),
-                  file,
-                  const SizedBox(height: Tokens.s12),
-                  norm,
+          LayoutBuilder(
+            builder: (context, c) {
+              final live = _Column(
+                title: 'Live',
+                rows: [
+                  ('Momentary', _lufs(l?.momentary)),
+                  ('Short-term', _lufs(l?.shortTerm)),
+                  ('Integrated', _lufs(l?.integrated)),
+                  ('Range', _lu(l?.range)),
                 ],
               );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: live),
-                const SizedBox(width: Tokens.s16),
-                Expanded(child: file),
-                const SizedBox(width: Tokens.s16),
-                Expanded(child: norm),
-              ],
-            );
-          }),
+              final file = _Column(title: 'This file', rows: _scanRows());
+              final norm = _Column(title: 'Normalization', rows: _normRows());
+              if (c.maxWidth < 520) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    live,
+                    const SizedBox(height: Tokens.s12),
+                    file,
+                    const SizedBox(height: Tokens.s12),
+                    norm,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: live),
+                  const SizedBox(width: Tokens.s16),
+                  Expanded(child: file),
+                  const SizedBox(width: Tokens.s16),
+                  Expanded(child: norm),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -158,7 +160,9 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
         return [('Scan', 'Waiting for a track')];
       case LoudnessScanState.scanning:
         final p = s!.progress;
-        return [('Scan', p == null ? 'Scanning' : 'Scanning ${(p * 100).round()}%')];
+        return [
+          ('Scan', p == null ? 'Scanning' : 'Scanning ${(p * 100).round()}%'),
+        ];
       case LoudnessScanState.unavailable:
         return [('Scan', 'Not measurable ahead')];
       case LoudnessScanState.failed:
@@ -168,8 +172,10 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
         return [
           ('Integrated', _lufs(s.integrated)),
           ('Range', _lu(s.range)),
-          ('True peak',
-              tp == null ? '--' : '${amplitudeToDb(tp).toStringAsFixed(1)} dBTP'),
+          (
+            'True peak',
+            tp == null ? '--' : '${amplitudeToDb(tp).toStringAsFixed(1)} dBTP',
+          ),
         ];
     }
   }

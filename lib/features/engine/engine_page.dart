@@ -81,10 +81,12 @@ class _EnginePanelState extends State<EnginePanel> {
     _prefetchHistory.add((t: 0, state: _prefetch));
     _subs.addAll([
       s.playbackState.listen((v) => _update(() => _playbackState = v)),
-      s.prefetchState.listen((v) => _update(() {
-            if (v != _prefetch) _prefetchHistory.add((t: _now, state: v));
-            _prefetch = v;
-          })),
+      s.prefetchState.listen(
+        (v) => _update(() {
+          if (v != _prefetch) _prefetchHistory.add((t: _now, state: v));
+          _prefetch = v;
+        }),
+      ),
       s.prefetchCacheDuration.listen((v) => _update(() => _prefetchCached = v)),
       s.waveform.listen((v) => _update(() => _waveform = v)),
       s.loudnessScan.listen((v) => _update(() => _scan = v)),

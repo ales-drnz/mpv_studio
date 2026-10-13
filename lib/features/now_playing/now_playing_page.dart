@@ -54,8 +54,10 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
           final w = c.maxWidth;
           final maxMeter = (h * 0.62).clamp(160.0, 520.0);
           final meterH = _meterHeight.clamp(110.0, maxMeter);
-          final cover =
-              math.min(w * 0.5, h * 0.26).clamp(120.0, 200.0).toDouble();
+          final cover = math
+              .min(w * 0.5, h * 0.26)
+              .clamp(120.0, 200.0)
+              .toDouble();
           return _MobileLayout(
             waveformKey: _waveformKey,
             meterHeight: meterH,
@@ -201,10 +203,7 @@ class _MobileLayout extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: spectrumH,
-                        child: const SpectrumCurve(),
-                      ),
+                      SizedBox(height: spectrumH, child: const SpectrumCurve()),
                     ],
                   );
                 },

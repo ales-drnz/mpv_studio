@@ -56,7 +56,11 @@ class _InfoSheet extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                Tokens.s20, Tokens.s12, Tokens.s20, Tokens.s12),
+              Tokens.s20,
+              Tokens.s12,
+              Tokens.s20,
+              Tokens.s12,
+            ),
             child: _identity(),
           ),
           Flexible(
@@ -66,7 +70,11 @@ class _InfoSheet extends StatelessWidget {
               // whole sheet juddering when you scroll up into the top.
               physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16, Tokens.s16, Tokens.s16, Tokens.s8),
+                Tokens.s16,
+                Tokens.s16,
+                Tokens.s16,
+                Tokens.s8,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -102,7 +110,8 @@ class _InfoSheet extends StatelessWidget {
           stream: player.stream.mediaTitle,
           initial: player.state.mediaTitle,
           builder: (context, mediaTitle) {
-            final title = _lookup(meta, 'title') ??
+            final title =
+                _lookup(meta, 'title') ??
                 _extra(pl, 'title') ??
                 (mediaTitle.isNotEmpty ? mediaTitle : 'Nothing playing');
             final artist = _lookup(meta, 'artist') ?? _extra(pl, 'artist');
@@ -111,16 +120,20 @@ class _InfoSheet extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: Tokens.heading,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  title,
+                  style: Tokens.heading,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (sub.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(sub,
-                      style: Tokens.caption,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    sub,
+                    style: Tokens.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ],
             );
@@ -147,15 +160,18 @@ class _InfoSheet extends StatelessWidget {
             // the true segment container (fMP4) is something only the app
             // knows, passed through the queue item's extras.
             final segment = _currentExtra('segment');
-            return _section('Source', _statGrid([
-              ('Container', _friendlyContainer(container)),
-              if (segment != null) ('Segment', segment),
-              ('Codec', _codec(p)),
-              ('Bitrate', _bitrate(bitrate)),
-              ('Sample rate', _sampleRate(p.sampleRate)),
-              ('Bit depth', _bitDepth(p.format)),
-              ('Channels', _channels(p)),
-            ]));
+            return _section(
+              'Source',
+              _statGrid([
+                ('Container', _friendlyContainer(container)),
+                if (segment != null) ('Segment', segment),
+                ('Codec', _codec(p)),
+                ('Bitrate', _bitrate(bitrate)),
+                ('Sample rate', _sampleRate(p.sampleRate)),
+                ('Bit depth', _bitDepth(p.format)),
+                ('Channels', _channels(p)),
+              ]),
+            );
           },
         ),
       ),
@@ -173,20 +189,26 @@ class _InfoSheet extends StatelessWidget {
         // pop in only once the scan landed, reflowing the list mid-scroll.
         // Real values when ready, a placeholder until the measurement exists.
         final s = scan?.state == LoudnessScanState.ready ? scan : null;
-        return _section('Loudness (EBU R128)', _statGrid([
-          (
-            'Integrated',
-            s?.integrated != null
-                ? '${s!.integrated!.toStringAsFixed(1)} LUFS'
-                : '-'
-          ),
-          (
-            'Range',
-            s?.range != null ? '${s!.range!.toStringAsFixed(1)} LU' : '-'
-          ),
-          ('True peak', s?.truePeak != null ? _peakDb(s!.truePeak!) : '-'),
-          ('Sample peak', s?.samplePeak != null ? _peakDb(s!.samplePeak!) : '-'),
-        ]));
+        return _section(
+          'Loudness (EBU R128)',
+          _statGrid([
+            (
+              'Integrated',
+              s?.integrated != null
+                  ? '${s!.integrated!.toStringAsFixed(1)} LUFS'
+                  : '-',
+            ),
+            (
+              'Range',
+              s?.range != null ? '${s!.range!.toStringAsFixed(1)} LU' : '-',
+            ),
+            ('True peak', s?.truePeak != null ? _peakDb(s!.truePeak!) : '-'),
+            (
+              'Sample peak',
+              s?.samplePeak != null ? _peakDb(s!.samplePeak!) : '-',
+            ),
+          ]),
+        );
       },
     );
   }
@@ -206,12 +228,15 @@ class _InfoSheet extends StatelessWidget {
       builder: (context, p) => Live<double>(
         stream: player.stream.volumeGain,
         initial: player.state.volumeGain,
-        builder: (context, gain) => _section('Output', _statGrid([
-          ('Format', _bitDepth(p.format)),
-          ('Sample rate', _sampleRate(p.sampleRate)),
-          ('Channels', _channels(p)),
-          ('Gain', '${gain.toStringAsFixed(1)} dB'),
-        ])),
+        builder: (context, gain) => _section(
+          'Output',
+          _statGrid([
+            ('Format', _bitDepth(p.format)),
+            ('Sample rate', _sampleRate(p.sampleRate)),
+            ('Channels', _channels(p)),
+            ('Gain', '${gain.toStringAsFixed(1)} dB'),
+          ]),
+        ),
       ),
     );
   }
@@ -222,13 +247,25 @@ class _InfoSheet extends StatelessWidget {
     return _section(
       'Stream',
       _card([
-        _kvLive(player.stream.streamPath, player.state.streamPath, 'Requested',
-            _orDash),
+        _kvLive(
+          player.stream.streamPath,
+          player.state.streamPath,
+          'Requested',
+          _orDash,
+        ),
         _kvLive(player.stream.path, player.state.path, 'Resolved', _orDash),
-        _kvLive(player.stream.filename, player.state.filename, 'Filename',
-            _orDash),
+        _kvLive(
+          player.stream.filename,
+          player.state.filename,
+          'Filename',
+          _orDash,
+        ),
         _kvLive<int>(
-            player.stream.fileSize, player.state.fileSize, 'Size', _bytes),
+          player.stream.fileSize,
+          player.state.fileSize,
+          'Size',
+          _bytes,
+        ),
       ]),
     );
   }
@@ -245,15 +282,35 @@ class _InfoSheet extends StatelessWidget {
               _kv('State', (s.data ?? MpvPlaybackState.idle).name),
         ),
         _kvLive<Duration>(
-            player.stream.audioPts, player.state.audioPts, 'Position', _secs),
-        _kvLive<Duration>(player.stream.timeRemaining,
-            player.state.timeRemaining, 'Remaining', _secs),
+          player.stream.audioPts,
+          player.state.audioPts,
+          'Position',
+          _secs,
+        ),
+        _kvLive<Duration>(
+          player.stream.timeRemaining,
+          player.state.timeRemaining,
+          'Remaining',
+          _secs,
+        ),
         _kvLive<bool>(
-            player.stream.seekable, player.state.seekable, 'Seekable', _yn),
-        _kvLive<bool>(player.stream.partiallySeekable,
-            player.state.partiallySeekable, 'Partial seek', _yn),
+          player.stream.seekable,
+          player.state.seekable,
+          'Seekable',
+          _yn,
+        ),
         _kvLive<bool>(
-            player.stream.eofReached, player.state.eofReached, 'EOF', _yn),
+          player.stream.partiallySeekable,
+          player.state.partiallySeekable,
+          'Partial seek',
+          _yn,
+        ),
+        _kvLive<bool>(
+          player.stream.eofReached,
+          player.state.eofReached,
+          'EOF',
+          _yn,
+        ),
       ]),
     );
   }
@@ -261,79 +318,80 @@ class _InfoSheet extends StatelessWidget {
   // ── Building blocks ─────────────────────────────────────────────────
 
   Widget _section(String label, Widget child) => Padding(
-        padding: const EdgeInsets.only(bottom: Tokens.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SectionHeader(label),
-            child,
-          ],
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: Tokens.s16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [SectionHeader(label), child],
+    ),
+  );
 
   /// Two-column grid of small stat cells.
   Widget _statGrid(List<(String, String)> stats) {
     final rows = <Widget>[];
     for (var i = 0; i < stats.length; i += 2) {
-      rows.add(Padding(
-        padding: EdgeInsets.only(
-            bottom: i + 2 < stats.length ? Tokens.s6 : 0),
-        child: Row(
-          children: [
-            Expanded(child: _StatCell(stats[i].$1, stats[i].$2)),
-            const SizedBox(width: Tokens.s6),
-            if (i + 1 < stats.length)
-              Expanded(child: _StatCell(stats[i + 1].$1, stats[i + 1].$2))
-            else
-              const Spacer(),
-          ],
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(
+            bottom: i + 2 < stats.length ? Tokens.s6 : 0,
+          ),
+          child: Row(
+            children: [
+              Expanded(child: _StatCell(stats[i].$1, stats[i].$2)),
+              const SizedBox(width: Tokens.s6),
+              if (i + 1 < stats.length)
+                Expanded(child: _StatCell(stats[i + 1].$1, stats[i + 1].$2))
+              else
+                const Spacer(),
+            ],
+          ),
         ),
-      ));
+      );
     }
     return Column(children: rows);
   }
 
   /// A flat card holding dense key/value rows.
   Widget _card(List<Widget> rows) => Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: Tokens.s12, vertical: Tokens.s4),
-        decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
-        ),
-        child: Column(children: rows),
-      );
+    padding: const EdgeInsets.symmetric(
+      horizontal: Tokens.s12,
+      vertical: Tokens.s4,
+    ),
+    decoration: ShapeDecoration(
+      color: Tokens.surface2,
+      shape: Tokens.squircle(Tokens.rSm),
+    ),
+    child: Column(children: rows),
+  );
 
   static Widget _kv(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          children: [
-            Text(label, style: Tokens.caption),
-            const SizedBox(width: Tokens.s12),
-            Expanded(
-              child: Text(
-                value,
-                textAlign: TextAlign.end,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Tokens.numeric.copyWith(color: Tokens.fg),
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      children: [
+        Text(label, style: Tokens.caption),
+        const SizedBox(width: Tokens.s12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Tokens.numeric.copyWith(color: Tokens.fg),
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   static Widget _kvLive<T>(
     Stream<T> stream,
     T initial,
     String label,
     String Function(T) format,
-  ) =>
-      Live<T>(
-        stream: stream,
-        initial: initial,
-        builder: (c, v) => _kv(label, format(v)),
-      );
+  ) => Live<T>(
+    stream: stream,
+    initial: initial,
+    builder: (c, v) => _kv(label, format(v)),
+  );
 
   // ── Formatters ──────────────────────────────────────────────────────
 
@@ -437,8 +495,10 @@ class _StatCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: Tokens.s12, vertical: Tokens.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Tokens.s12,
+        vertical: Tokens.s8,
+      ),
       decoration: ShapeDecoration(
         color: Tokens.surface2,
         shape: Tokens.squircle(Tokens.rSm),
@@ -447,10 +507,12 @@ class _StatCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: Tokens.caption.copyWith(fontSize: 10.5),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
+          Text(
+            label,
+            style: Tokens.caption.copyWith(fontSize: 10.5),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 3),
           Text(
             value,

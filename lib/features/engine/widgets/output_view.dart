@@ -13,11 +13,11 @@ class OutputView extends StatelessWidget {
   const OutputView({super.key, required this.snapshot});
 
   static Color colorOf(AudioOutputState s) => switch (s) {
-        AudioOutputState.closed => Tokens.fgFaint,
-        AudioOutputState.initializing => Tokens.amber,
-        AudioOutputState.active => Tokens.green,
-        AudioOutputState.failed => Tokens.red,
-      };
+    AudioOutputState.closed => Tokens.fgFaint,
+    AudioOutputState.initializing => Tokens.amber,
+    AudioOutputState.active => Tokens.green,
+    AudioOutputState.failed => Tokens.red,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +42,7 @@ class OutputView extends StatelessWidget {
         children: [
           ReadoutGrid(
             minCellWidth: 140,
-            children: [
-              Readout('Driver', driver),
-              Readout('Device', device),
-            ],
+            children: [Readout('Driver', driver), Readout('Device', device)],
           ),
           const SizedBox(height: Tokens.s16),
           LayoutBuilder(
@@ -127,25 +124,22 @@ class _ParamsColumn extends StatelessWidget {
   }
 
   static Widget _line(String k, String v) => Padding(
-        padding: const EdgeInsets.only(bottom: Tokens.s2),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 64,
-              child: Text(k,
-                  style: Tokens.numeric.copyWith(
-                    color: Tokens.fgFaint,
-                  )),
-            ),
-            Expanded(
-              child: Text(
-                v,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Tokens.numeric.copyWith(color: Tokens.fg),
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.only(bottom: Tokens.s2),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 64,
+          child: Text(k, style: Tokens.numeric.copyWith(color: Tokens.fgFaint)),
         ),
-      );
+        Expanded(
+          child: Text(
+            v,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Tokens.numeric.copyWith(color: Tokens.fg),
+          ),
+        ),
+      ],
+    ),
+  );
 }

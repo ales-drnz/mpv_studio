@@ -61,8 +61,9 @@ class ChapterScrubber extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalMs = duration.inMilliseconds;
-    final progress =
-        totalMs <= 0 ? 0.0 : (position.inMilliseconds / totalMs).clamp(0.0, 1.0);
+    final progress = totalMs <= 0
+        ? 0.0
+        : (position.inMilliseconds / totalMs).clamp(0.0, 1.0);
 
     // No usable chapters: fall back to a plain progress bar so the surface
     // still reads as "now playing".
@@ -140,39 +141,43 @@ class ChapterScrubber extends StatelessWidget {
           for (var i = 0; i < chapters.length; i++) {
             // Dot centre, kept fully on the bar; the (wider) hit box around it
             // may overflow the edges harmlessly (Stack is Clip.none).
-            final cx =
-                (fracOf(chapters[i].time) * w).clamp(_dot / 2, w - _dot / 2);
+            final cx = (fracOf(chapters[i].time) * w).clamp(
+              _dot / 2,
+              w - _dot / 2,
+            );
             final passed = position >= chapters[i].time;
-            children.add(Positioned(
-              left: cx - _hit / 2,
-              top: 0,
-              bottom: 0,
-              width: _hit,
-              child: Tooltip(
-                message: '${_titleOf(i)}  ·  ${_fmt(chapters[i].time)}',
-                preferBelow: false,
-                child: MouseRegion(
-                  cursor: interactive
-                      ? SystemMouseCursors.click
-                      : MouseCursor.defer,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: interactive ? () => onSeekChapter!(i) : null,
-                    child: Center(
-                      child: Container(
-                        width: _dot,
-                        height: _dot,
-                        decoration: BoxDecoration(
-                          color: passed ? Tokens.accent : Tokens.fgFaint,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Tokens.bg, width: 1.5),
+            children.add(
+              Positioned(
+                left: cx - _hit / 2,
+                top: 0,
+                bottom: 0,
+                width: _hit,
+                child: Tooltip(
+                  message: '${_titleOf(i)}  ·  ${_fmt(chapters[i].time)}',
+                  preferBelow: false,
+                  child: MouseRegion(
+                    cursor: interactive
+                        ? SystemMouseCursors.click
+                        : MouseCursor.defer,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: interactive ? () => onSeekChapter!(i) : null,
+                      child: Center(
+                        child: Container(
+                          width: _dot,
+                          height: _dot,
+                          decoration: BoxDecoration(
+                            color: passed ? Tokens.accent : Tokens.fgFaint,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Tokens.bg, width: 1.5),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ));
+            );
           }
         }
 

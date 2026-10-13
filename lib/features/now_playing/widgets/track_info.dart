@@ -43,7 +43,8 @@ class TrackInfo extends StatelessWidget {
           stream: player.stream.mediaTitle,
           initial: player.state.mediaTitle,
           builder: (context, mediaTitle) {
-            final title = _lookup(meta, 'title') ??
+            final title =
+                _lookup(meta, 'title') ??
                 _extra(pl, 'title') ??
                 (mediaTitle.isNotEmpty ? mediaTitle : 'Nothing playing');
             final artist = _lookup(meta, 'artist') ?? _extra(pl, 'artist');

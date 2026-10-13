@@ -29,8 +29,9 @@ class GridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Squircle (superellipse) corners — the same flat surface as the rest.
-    final shape =
-        ContinuousRectangleBorder(borderRadius: BorderRadius.circular(40));
+    final shape = ContinuousRectangleBorder(
+      borderRadius: BorderRadius.circular(40),
+    );
     return Material(
       type: MaterialType.transparency,
       child: InkWell(

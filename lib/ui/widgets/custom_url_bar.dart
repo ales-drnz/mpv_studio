@@ -60,7 +60,10 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
               autocorrect: false,
               enableSuggestions: false,
               style: const TextStyle(
-                  fontFamily: Tokens.mono, fontSize: 12.5, color: Tokens.fg),
+                fontFamily: Tokens.mono,
+                fontSize: 12.5,
+                color: Tokens.fg,
+              ),
               cursorColor: Tokens.accent,
               decoration: InputDecoration(
                 isDense: true,

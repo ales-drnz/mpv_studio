@@ -85,13 +85,15 @@ class _ResizeHandleState extends State<ResizeHandle> {
         onVerticalDragStart: horizontal ? (_) => setDragging(true) : null,
         onVerticalDragEnd: horizontal ? (_) => setDragging(false) : null,
         onVerticalDragCancel: horizontal ? () => setDragging(false) : null,
-        onVerticalDragUpdate:
-            horizontal ? (d) => widget.onDelta(d.delta.dy) : null,
+        onVerticalDragUpdate: horizontal
+            ? (d) => widget.onDelta(d.delta.dy)
+            : null,
         onHorizontalDragStart: horizontal ? null : (_) => setDragging(true),
         onHorizontalDragEnd: horizontal ? null : (_) => setDragging(false),
         onHorizontalDragCancel: horizontal ? null : () => setDragging(false),
-        onHorizontalDragUpdate:
-            horizontal ? null : (d) => widget.onDelta(d.delta.dx),
+        onHorizontalDragUpdate: horizontal
+            ? null
+            : (d) => widget.onDelta(d.delta.dx),
         child: SizedBox(
           // Localized grab box around the grip — generous enough to catch, but
           // far short of the full seam so the strip stays free elsewhere.
@@ -105,10 +107,7 @@ class _ResizeHandleState extends State<ResizeHandle> {
     return SizedBox(
       width: horizontal ? double.infinity : widget.hitThickness,
       height: horizontal ? widget.hitThickness : double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [seam, gripHit],
-      ),
+      child: Stack(alignment: Alignment.center, children: [seam, gripHit]),
     );
   }
 }

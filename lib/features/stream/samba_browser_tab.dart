@@ -220,14 +220,20 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
     });
     try {
       final all = await pool.listDirectory(path);
-      final dirs = all
-          .where((e) => e.isDirectory && e.name != '.' && e.name != '..')
-          .toList()
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-      final files = all
-          .where((e) => e.isFile && _audioExts.contains(_ext(e.name)))
-          .toList()
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      final dirs =
+          all
+              .where((e) => e.isDirectory && e.name != '.' && e.name != '..')
+              .toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+      final files =
+          all
+              .where((e) => e.isFile && _audioExts.contains(_ext(e.name)))
+              .toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
       if (!mounted) return;
       setState(() {
         _path = path;
@@ -276,8 +282,8 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
     final auth = _connUser.isEmpty
         ? ''
         : (_connPass.isEmpty
-            ? '$dom${enc(_connUser)}@'
-            : '$dom${enc(_connUser)}:${enc(_connPass)}@');
+              ? '$dom${enc(_connUser)}@'
+              : '$dom${enc(_connUser)}:${enc(_connPass)}@');
     return 'smb2://$auth$_connHost/${encPath(_connShare)}/${encPath(filePath)}';
   }
 
@@ -287,8 +293,10 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
     final files = _entries.where((e) => e.isFile).toList();
     final start = files.indexOf(tapped);
     if (start < 0) return;
-    final window =
-        files.sublist(start, math.min(start + _queueMax, files.length));
+    final window = files.sublist(
+      start,
+      math.min(start + _queueMax, files.length),
+    );
     final album = _path.isEmpty
         ? _connShare
         : _path.substring(_path.lastIndexOf('/') + 1);
@@ -296,16 +304,14 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
       for (final f in window)
         Media(
           _smbUrl(_join(_path, f.name)),
-          extras: {
-            'title': _stripExt(f.name),
-            'album': album,
-          },
+          extras: {'title': _stripExt(f.name), 'album': album},
         ),
     ];
     final player = _player;
     if (player == null) return;
-    await PlayerScope.issuesOf(context)
-        .guard(() => player.openAll(medias, play: true, index: 0));
+    await PlayerScope.issuesOf(
+      context,
+    ).guard(() => player.openAll(medias, play: true, index: 0));
   }
 
   static String _stripExt(String name) {
@@ -331,26 +337,35 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Connect to Samba',
-                  style: Tokens.heading, textAlign: TextAlign.center),
+              Text(
+                'Connect to Samba',
+                style: Tokens.heading,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: Tokens.s4),
-              Text('Enter the host, share, and credentials',
-                  style: Tokens.caption, textAlign: TextAlign.center),
+              Text(
+                'Enter the host, share, and credentials',
+                style: Tokens.caption,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: Tokens.s20),
               _Field(
-                  controller: _host,
-                  hint: '192.168.1.10',
-                  icon: Icons.dns_outlined),
+                controller: _host,
+                hint: '192.168.1.10',
+                icon: Icons.dns_outlined,
+              ),
               const SizedBox(height: Tokens.s8),
               _Field(
-                  controller: _share,
-                  hint: 'Share (e.g. Music)',
-                  icon: Icons.folder_shared_outlined),
+                controller: _share,
+                hint: 'Share (e.g. Music)',
+                icon: Icons.folder_shared_outlined,
+              ),
               const SizedBox(height: Tokens.s8),
               _Field(
-                  controller: _user,
-                  hint: 'Username',
-                  icon: Icons.person_outline_rounded),
+                controller: _user,
+                hint: 'Username',
+                icon: Icons.person_outline_rounded,
+              ),
               const SizedBox(height: Tokens.s8),
               _Field(
                 controller: _pass,
@@ -361,15 +376,18 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
               ),
               const SizedBox(height: Tokens.s8),
               _Field(
-                  controller: _domain,
-                  hint: 'Domain (optional)',
-                  icon: Icons.workspaces_outline),
+                controller: _domain,
+                hint: 'Domain (optional)',
+                icon: Icons.workspaces_outline,
+              ),
               if (_error != null) ...[
                 const SizedBox(height: Tokens.s12),
-                Text(_error!,
-                    style: Tokens.caption.copyWith(color: Tokens.red),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  _error!,
+                  style: Tokens.caption.copyWith(color: Tokens.red),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
               const SizedBox(height: Tokens.s16),
               _ConnectButton(busy: _connecting, onTap: _connect),
@@ -388,7 +406,11 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
         // Path bar: up button + breadcrumb + disconnect.
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s8),
+            Tokens.s16,
+            Tokens.s8,
+            Tokens.s16,
+            Tokens.s8,
+          ),
           child: Row(
             children: [
               IconButton(
@@ -420,40 +442,47 @@ class _SambaBrowserTabState extends State<SambaBrowserTab> {
           child: _loading
               ? const _Spinner()
               : _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(Tokens.s24),
-                        child: Text(_error!,
-                            style: Tokens.caption.copyWith(color: Tokens.red),
-                            textAlign: TextAlign.center,
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                    )
-                  : _entries.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(Tokens.s24),
-                            child: Text('Empty folder.', style: Tokens.caption),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(
-                              Tokens.s16, Tokens.s8, Tokens.s16, Tokens.s12),
-                          itemCount: _entries.length,
-                          itemBuilder: (context, i) {
-                            final e = _entries[i];
-                            return _EntryTile(
-                              entry: e,
-                              current: !e.isDirectory &&
-                                  _currentUri.isNotEmpty &&
-                                  _smbUrl(_join(_path, e.name)) == _currentUri,
-                              onTap: () => e.isDirectory
-                                  ? _open(_join(_path, e.name))
-                                  : _play(e),
-                            );
-                          },
-                        ),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(Tokens.s24),
+                    child: Text(
+                      _error!,
+                      style: Tokens.caption.copyWith(color: Tokens.red),
+                      textAlign: TextAlign.center,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+              : _entries.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(Tokens.s24),
+                    child: Text('Empty folder.', style: Tokens.caption),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    Tokens.s16,
+                    Tokens.s8,
+                    Tokens.s16,
+                    Tokens.s12,
+                  ),
+                  itemCount: _entries.length,
+                  itemBuilder: (context, i) {
+                    final e = _entries[i];
+                    return _EntryTile(
+                      entry: e,
+                      current:
+                          !e.isDirectory &&
+                          _currentUri.isNotEmpty &&
+                          _smbUrl(_join(_path, e.name)) == _currentUri,
+                      onTap: () => e.isDirectory
+                          ? _open(_join(_path, e.name))
+                          : _play(e),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -493,10 +522,8 @@ class _EntryTile extends StatelessWidget {
     final Widget leading = dir
         ? const Icon(Icons.folder_rounded, size: 18, color: Tokens.accent)
         : current
-            ? const Icon(Icons.volume_up_rounded,
-                size: 18, color: Tokens.accent)
-            : const Icon(Icons.music_note_rounded,
-                size: 18, color: Tokens.fgFaint);
+        ? const Icon(Icons.volume_up_rounded, size: 18, color: Tokens.accent)
+        : const Icon(Icons.music_note_rounded, size: 18, color: Tokens.fgFaint);
     return Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s6),
       child: Material(
@@ -506,7 +533,11 @@ class _EntryTile extends StatelessWidget {
           customBorder: Tokens.squircle(Tokens.rSm),
           child: Ink(
             padding: const EdgeInsets.fromLTRB(
-                Tokens.s12, Tokens.s8, Tokens.s12, Tokens.s8),
+              Tokens.s12,
+              Tokens.s8,
+              Tokens.s12,
+              Tokens.s8,
+            ),
             decoration: ShapeDecoration(
               color: current ? Tokens.accentWash : Tokens.surface,
               shape: Tokens.squircle(Tokens.rSm),
@@ -531,8 +562,11 @@ class _EntryTile extends StatelessWidget {
                 const SizedBox(width: Tokens.s8),
                 Text(dir ? '' : _size(entry.size), style: Tokens.numeric),
                 if (dir)
-                  const Icon(Icons.chevron_right_rounded,
-                      size: 18, color: Tokens.fgFaint),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: Tokens.fgFaint,
+                  ),
               ],
             ),
           ),
@@ -578,7 +612,10 @@ class _Field extends StatelessWidget {
               obscureText: obscure,
               onSubmitted: onSubmitted,
               style: const TextStyle(
-                  fontFamily: Tokens.mono, fontSize: 12.5, color: Tokens.fg),
+                fontFamily: Tokens.mono,
+                fontSize: 12.5,
+                color: Tokens.fg,
+              ),
               cursorColor: Tokens.accent,
               decoration: InputDecoration(
                 isDense: true,
@@ -619,13 +656,18 @@ class _ConnectButton extends StatelessWidget {
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Tokens.fgDim),
+                    strokeWidth: 2,
+                    color: Tokens.fgDim,
+                  ),
                 )
-              : const Text('Connect',
+              : const Text(
+                  'Connect',
                   style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: Tokens.onAccent)),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: Tokens.onAccent,
+                  ),
+                ),
         ),
       ),
     );
@@ -636,14 +678,16 @@ class _Spinner extends StatelessWidget {
   const _Spinner();
   @override
   Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.all(Tokens.s16),
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Tokens.accentDim),
-          ),
+    padding: EdgeInsets.all(Tokens.s16),
+    child: Center(
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Tokens.accentDim,
         ),
-      );
+      ),
+    ),
+  );
 }

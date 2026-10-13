@@ -32,29 +32,30 @@ class EngineFormat {
 
   /// Format, rate and channels of [p] as separate readouts.
   static ({String codec, String format, String rate, String channels}) params(
-          AudioParams p) =>
-      (
-        codec: p.codecName ?? p.codec ?? 'n/a',
-        format: p.format?.mpvValue ?? 'n/a',
-        rate: sampleRate(p.sampleRate),
-        channels: p.hrChannels ??
-            p.channels?.mpvValue ??
-            (p.channelCount != null ? '${p.channelCount} ch' : 'n/a'),
-      );
+    AudioParams p,
+  ) => (
+    codec: p.codecName ?? p.codec ?? 'n/a',
+    format: p.format?.mpvValue ?? 'n/a',
+    rate: sampleRate(p.sampleRate),
+    channels:
+        p.hrChannels ??
+        p.channels?.mpvValue ??
+        (p.channelCount != null ? '${p.channelCount} ch' : 'n/a'),
+  );
 
   static String playbackState(MpvPlaybackState s) => switch (s) {
-        MpvPlaybackState.idle => 'Idle',
-        MpvPlaybackState.loading => 'Loading',
-        MpvPlaybackState.buffering => 'Buffering',
-        MpvPlaybackState.playing => 'Playing',
-        MpvPlaybackState.paused => 'Paused',
-        MpvPlaybackState.completed => 'Completed',
-      };
+    MpvPlaybackState.idle => 'Idle',
+    MpvPlaybackState.loading => 'Loading',
+    MpvPlaybackState.buffering => 'Buffering',
+    MpvPlaybackState.playing => 'Playing',
+    MpvPlaybackState.paused => 'Paused',
+    MpvPlaybackState.completed => 'Completed',
+  };
 
   static String outputState(AudioOutputState s) => switch (s) {
-        AudioOutputState.closed => 'Closed',
-        AudioOutputState.initializing => 'Opening',
-        AudioOutputState.active => 'Active',
-        AudioOutputState.failed => 'Failed',
-      };
+    AudioOutputState.closed => 'Closed',
+    AudioOutputState.initializing => 'Opening',
+    AudioOutputState.active => 'Active',
+    AudioOutputState.failed => 'Failed',
+  };
 }

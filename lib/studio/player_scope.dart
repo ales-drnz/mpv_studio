@@ -20,11 +20,7 @@ import 'playback_issues.dart';
 class PlayerScope extends InheritedWidget {
   final MpvStudio studio;
 
-  const PlayerScope({
-    super.key,
-    required this.studio,
-    required super.child,
-  });
+  const PlayerScope({super.key, required this.studio, required super.child});
 
   static MpvStudio _scope(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<PlayerScope>();
@@ -70,6 +66,5 @@ class PlayerScope extends InheritedWidget {
       _scope(context).favorites;
 
   @override
-  bool updateShouldNotify(PlayerScope oldWidget) =>
-      oldWidget.studio != studio;
+  bool updateShouldNotify(PlayerScope oldWidget) => oldWidget.studio != studio;
 }

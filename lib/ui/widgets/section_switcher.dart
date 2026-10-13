@@ -11,8 +11,10 @@ Widget _navTransition(Animation<double> animation, Widget child) {
   return FadeTransition(
     opacity: animation,
     child: SlideTransition(
-      position: Tween<Offset>(begin: kNavSlideOffset, end: Offset.zero)
-          .animate(animation),
+      position: Tween<Offset>(
+        begin: kNavSlideOffset,
+        end: Offset.zero,
+      ).animate(animation),
       child: child,
     ),
   );
@@ -29,9 +31,9 @@ Route<T> fadeSlidePageRoute<T>(Widget page) {
     pageBuilder: (context, animation, secondary) => page,
     transitionsBuilder: (context, animation, secondary, child) =>
         _navTransition(
-      CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-      child,
-    ),
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          child,
+        ),
   );
 }
 

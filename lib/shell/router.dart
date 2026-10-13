@@ -33,10 +33,10 @@ GoRouter createAppRouter() {
             AppShell(navigationShell: navigationShell),
         navigatorContainerBuilder: (context, navigationShell, children) =>
             IndexedStack(
-          index: navigationShell.currentIndex,
-          sizing: StackFit.expand,
-          children: children,
-        ),
+              index: navigationShell.currentIndex,
+              sizing: StackFit.expand,
+              children: children,
+            ),
         branches: [
           for (final section in Section.values)
             StatefulShellBranch(

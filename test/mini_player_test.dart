@@ -24,7 +24,8 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
     MaterialApp(
       theme: AppTheme.dark,
       home: Scaffold(
-          body: Align(alignment: Alignment.bottomCenter, child: child)),
+        body: Align(alignment: Alignment.bottomCenter, child: child),
+      ),
     ),
   );
   await tester.pump();
@@ -79,8 +80,9 @@ void main() {
     expect(player.calls, ['seek 60000']);
   });
 
-  testWidgets('a spinner rings the button while loading or buffering',
-      (tester) async {
+  testWidgets('a spinner rings the button while loading or buffering', (
+    tester,
+  ) async {
     await _pump(tester, MiniPlayer(player: player));
     final ring = find.byKey(const ValueKey('mini-waiting'));
     expect(ring, findsNothing);
@@ -123,11 +125,10 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('the FX toggle bypasses the chain and restores it',
-      (tester) async {
-    player.emit(
-      (s) => s.copyWith(audioEffects: const [BassEffect(gain: 5)]),
-    );
+  testWidgets('the FX toggle bypasses the chain and restores it', (
+    tester,
+  ) async {
+    player.emit((s) => s.copyWith(audioEffects: const [BassEffect(gain: 5)]));
     final rack = RackController(PlayerEffectsEngine(player));
     addTearDown(rack.dispose);
     await _pump(tester, MiniPlayer(player: player, rack: rack));
@@ -152,8 +153,9 @@ void main() {
     expect(find.text('FX'), findsOneWidget);
   });
 
-  testWidgets('the FX toggle ignores the loudness meter and keeps it on',
-      (tester) async {
+  testWidgets('the FX toggle ignores the loudness meter and keeps it on', (
+    tester,
+  ) async {
     player.emit((s) => s.copyWith(audioEffects: [kMeterStage]));
     final rack = RackController(PlayerEffectsEngine(player));
     addTearDown(rack.dispose);
@@ -161,9 +163,7 @@ void main() {
     expect(find.byTooltip('No effects to bypass'), findsOneWidget);
 
     player.emit(
-      (s) => s.copyWith(
-        audioEffects: [const BassEffect(gain: 5), kMeterStage],
-      ),
+      (s) => s.copyWith(audioEffects: [const BassEffect(gain: 5), kMeterStage]),
     );
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 10)),

@@ -35,20 +35,20 @@ class AnalysisView extends StatelessWidget {
   const AnalysisView({super.key, required this.snapshot});
 
   static Color _phaseColor(WaveformPhase p) => switch (p) {
-        WaveformPhase.waiting => Tokens.fgFaint,
-        WaveformPhase.decoding => Tokens.accent,
-        WaveformPhase.progressive => Tokens.amber,
-        WaveformPhase.live => Tokens.accent,
-        WaveformPhase.ready => Tokens.green,
-      };
+    WaveformPhase.waiting => Tokens.fgFaint,
+    WaveformPhase.decoding => Tokens.accent,
+    WaveformPhase.progressive => Tokens.amber,
+    WaveformPhase.live => Tokens.accent,
+    WaveformPhase.ready => Tokens.green,
+  };
 
   static Color _scanColor(LoudnessScanState? s) => switch (s) {
-        null || LoudnessScanState.idle => Tokens.fgFaint,
-        LoudnessScanState.scanning => Tokens.accent,
-        LoudnessScanState.ready => Tokens.green,
-        LoudnessScanState.failed => Tokens.red,
-        LoudnessScanState.unavailable => Tokens.amber,
-      };
+    null || LoudnessScanState.idle => Tokens.fgFaint,
+    LoudnessScanState.scanning => Tokens.accent,
+    LoudnessScanState.ready => Tokens.green,
+    LoudnessScanState.failed => Tokens.red,
+    LoudnessScanState.unavailable => Tokens.amber,
+  };
 
   static String _num(double? v, String unit) =>
       v == null || !v.isFinite ? 'n/a' : '${v.toStringAsFixed(1)} $unit';
@@ -63,7 +63,8 @@ class AnalysisView extends StatelessWidget {
 
     return EngineCard(
       title: 'Analysis',
-      caption: 'Waveform and loudness scan of the current track. '
+      caption:
+          'Waveform and loudness scan of the current track. '
           'Watching this panel starts the scan.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

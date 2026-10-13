@@ -161,8 +161,8 @@ class PlexTranscodeSessionManager {
     final bitrate = params['maxAudioBitrate'] as int?;
     final bitrateLimit = bitrate != null
         ? '+add-limitation(scope=musicCodec&scopeName=$codec'
-            '&type=upperBound&name=audio.bitrate&value=$bitrate'
-            '&isRequired=false&reason=)'
+              '&type=upperBound&name=audio.bitrate&value=$bitrate'
+              '&isRequired=false&reason=)'
         : '';
     // Override the global client profile so Plex emits the codec/container
     // we want instead of the profile's first target.
@@ -184,8 +184,10 @@ class PlexTranscodeSessionManager {
       // genuinely non-playable decision (an error code) falls through to
       // the direct part URL.
       if (!decision.isPlayable) {
-        debugPrint('PlexTranscode: decision=${decision.code} not playable '
-            '→ direct play');
+        debugPrint(
+          'PlexTranscode: decision=${decision.code} not playable '
+          '→ direct play',
+        );
         final direct = await _directPlayUrl(
           params['path'] as String,
           pending.fallbackUrl,
@@ -199,8 +201,10 @@ class PlexTranscodeSessionManager {
       // identity + profile in the query string — otherwise Plex returns
       // 400 "Unable to find client profile for device".
       final queryString = params.entries
-          .map((e) =>
-              '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value.toString())}')
+          .map(
+            (e) =>
+                '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value.toString())}',
+          )
           .join('&');
       final creds = _client.credentials;
       final manifestUrl =
@@ -212,7 +216,9 @@ class PlexTranscodeSessionManager {
           '&X-Plex-Device-Name=${Uri.encodeQueryComponent(creds.deviceName)}'
           '&X-Plex-Product=${Uri.encodeQueryComponent(creds.product)}'
           '&X-Plex-Version=${Uri.encodeQueryComponent(creds.version)}';
-      debugPrint('PlexTranscode: resolved $session (decision=${decision.code})');
+      debugPrint(
+        'PlexTranscode: resolved $session (decision=${decision.code})',
+      );
       return pending.resolved = manifestUrl;
     } catch (e) {
       // Network/auth failure: degrade to direct play and memoise so we
@@ -239,17 +245,21 @@ class PlexTranscodeSessionManager {
     final ratingKey = metadataPath.split('/').last;
     try {
       final meta = await _client.library.item(ratingKey);
-      final media =
-          (meta?.media.isNotEmpty ?? false) ? meta!.media.first : null;
-      final part =
-          (media?.parts.isNotEmpty ?? false) ? media!.parts.first : null;
+      final media = (meta?.media.isNotEmpty ?? false)
+          ? meta!.media.first
+          : null;
+      final part = (media?.parts.isNotEmpty ?? false)
+          ? media!.parts.first
+          : null;
       final partKey = part?.key;
       if (partKey == null) return lastResort;
       final token = _client.token ?? '';
       return '${_client.baseUrl}$partKey?download=0'
           '&X-Plex-Token=${Uri.encodeQueryComponent(token)}';
     } catch (e) {
-      debugPrint('PlexTranscode: directPlayUrl fetch failed for $ratingKey: $e');
+      debugPrint(
+        'PlexTranscode: directPlayUrl fetch failed for $ratingKey: $e',
+      );
       return lastResort;
     }
   }
@@ -329,11 +339,11 @@ class _PendingTranscode {
 
   /// [params] with this entry's session identifiers.
   Map<String, dynamic> sessionParams(String clientId) => {
-        ...params,
-        'session': session,
-        'X-Plex-Client-Identifier': clientId,
-        'X-Plex-Session-Identifier': session,
-      };
+    ...params,
+    'session': session,
+    'X-Plex-Client-Identifier': clientId,
+    'X-Plex-Session-Identifier': session,
+  };
 
   /// Switches to a fresh Plex session and drops the memoised URL, so the
   /// next resolution runs `/decision` again.

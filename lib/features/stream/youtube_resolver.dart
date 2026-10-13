@@ -65,8 +65,10 @@ class YoutubeResolver {
     Object? lastError;
     for (final client in _clients) {
       try {
-        final manifest = await _yt.videos.streamsClient
-            .getManifest(urlOrId, ytClients: [client]);
+        final manifest = await _yt.videos.streamsClient.getManifest(
+          urlOrId,
+          ytClients: [client],
+        );
         final audio = manifest.audioOnly.withHighestBitrate();
         return ResolvedYoutube(
           streamUrl: audio.url.toString(),

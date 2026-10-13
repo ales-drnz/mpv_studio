@@ -28,10 +28,7 @@ class SectionBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: padding,
-      child: Column(
-        crossAxisAlignment: crossAxisAlignment,
-        children: children,
-      ),
+      child: Column(crossAxisAlignment: crossAxisAlignment, children: children),
     );
   }
 }
@@ -43,11 +40,7 @@ class SettingsGroup extends StatelessWidget {
   final String label;
   final List<Widget> children;
 
-  const SettingsGroup({
-    super.key,
-    required this.label,
-    required this.children,
-  });
+  const SettingsGroup({super.key, required this.label, required this.children});
 
   @override
   Widget build(BuildContext context) {

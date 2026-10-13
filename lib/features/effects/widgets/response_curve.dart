@@ -81,7 +81,11 @@ class _ResponsePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final plot = Rect.fromLTRB(
-        2, 6, size.width - _rightGutter, size.height - _bottomGutter);
+      2,
+      6,
+      size.width - _rightGutter,
+      size.height - _bottomGutter,
+    );
     if (plot.width <= 0 || plot.height <= 0) return;
 
     final accent = enabled ? Tokens.accent : Tokens.fgFaint;
@@ -89,8 +93,7 @@ class _ResponsePainter extends CustomPainter {
     final logMax = math.log(_fMax);
 
     double xOf(double hz) =>
-        plot.left +
-        ((math.log(hz) - logMin) / (logMax - logMin)) * plot.width;
+        plot.left + ((math.log(hz) - logMin) / (logMax - logMin)) * plot.width;
     double yOf(double db) =>
         plot.top + (1 - (db + maxDb) / (2 * maxDb)) * plot.height;
 
@@ -101,25 +104,44 @@ class _ResponsePainter extends CustomPainter {
       grid.color = db == 0 ? Tokens.line2 : Tokens.line;
       canvas.drawLine(Offset(plot.left, yy), Offset(plot.right, yy), grid);
     }
-    paintChartLabel(canvas, '+${maxDb.toInt()}', Offset(plot.right + 3, yOf(maxDb) - 5),
-        Tokens.fgFaint);
-    paintChartLabel(canvas, '${(-maxDb).toInt()}',
-        Offset(plot.right + 3, yOf(-maxDb) - 5), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      '+${maxDb.toInt()}',
+      Offset(plot.right + 3, yOf(maxDb) - 5),
+      Tokens.fgFaint,
+    );
+    paintChartLabel(
+      canvas,
+      '${(-maxDb).toInt()}',
+      Offset(plot.right + 3, yOf(-maxDb) - 5),
+      Tokens.fgFaint,
+    );
 
     // Frequency decade lines + labels.
     for (final d in _decades) {
       final xx = xOf(d.$1);
-      canvas.drawLine(Offset(xx, plot.top), Offset(xx, plot.bottom),
-          Paint()..color = Tokens.line);
-      paintChartLabel(canvas, d.$2, Offset(xx, plot.bottom + 2), Tokens.fgFaint,
-          center: true);
+      canvas.drawLine(
+        Offset(xx, plot.top),
+        Offset(xx, plot.bottom),
+        Paint()..color = Tokens.line,
+      );
+      paintChartLabel(
+        canvas,
+        d.$2,
+        Offset(xx, plot.bottom + 2),
+        Tokens.fgFaint,
+        center: true,
+      );
     }
 
     // Corner-frequency marker.
     if (markerHz != null && markerHz! >= _fMin && markerHz! <= _fMax) {
       final mx = xOf(markerHz!);
-      canvas.drawLine(Offset(mx, plot.top), Offset(mx, plot.bottom),
-          Paint()..color = Tokens.accentDim);
+      canvas.drawLine(
+        Offset(mx, plot.top),
+        Offset(mx, plot.bottom),
+        Paint()..color = Tokens.accentDim,
+      );
     }
 
     // Sample the analytic response across the plotted decades.

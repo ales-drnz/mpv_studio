@@ -127,10 +127,7 @@ class _TabBar extends StatelessWidget {
         color: Tokens.surface,
         border: Border(top: BorderSide(color: Tokens.line)),
       ),
-      padding: EdgeInsets.only(
-        top: Tokens.s8,
-        bottom: Tokens.s8 + bottomInset,
-      ),
+      padding: EdgeInsets.only(top: Tokens.s8, bottom: Tokens.s8 + bottomInset),
       child: Row(
         children: [
           for (final s in Section.tabs)

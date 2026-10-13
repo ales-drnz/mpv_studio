@@ -87,7 +87,9 @@ class _CrossfeedPainter extends CustomPainter {
     // Crossed paths — arc over (L→right ear) and under (R→left ear),
     // their presence scaling with strength.
     final crossPaint = Paint()
-      ..color = accent.withValues(alpha: enabled ? (0.2 + 0.8 * strength) : 0.25)
+      ..color = accent.withValues(
+        alpha: enabled ? (0.2 + 0.8 * strength) : 0.25,
+      )
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1 + 2.5 * strength
       ..strokeCap = StrokeCap.round;
@@ -110,8 +112,15 @@ class _CrossfeedPainter extends CustomPainter {
         ),
         Paint()..color = Tokens.surface2,
       );
-      paintChartLabel(canvas, label, at.translate(0, -5), accent,
-          fontSize: 9.5, center: true, middle: true);
+      paintChartLabel(
+        canvas,
+        label,
+        at.translate(0, -5),
+        accent,
+        fontSize: 9.5,
+        center: true,
+        middle: true,
+      );
     }
 
     node(lSrc, 'L');
@@ -131,7 +140,5 @@ class _CrossfeedPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CrossfeedPainter old) =>
-      old.strength != strength ||
-      old.range != range ||
-      old.enabled != enabled;
+      old.strength != strength || old.range != range || old.enabled != enabled;
 }

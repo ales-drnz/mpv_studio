@@ -42,18 +42,17 @@ class FeaturedEditor {
       AudioEffect Function(double v) apply, {
       required String Function(double v) format,
       double? resetTo,
-    }) =>
-        SliderRow(
-          label: label,
-          value: value.clamp(min, max),
-          min: min,
-          max: max,
-          format: format,
-          resetTo: resetTo,
-          enabled: e.enabled,
-          onChanged: (v) => onChange(apply(v), live: true),
-          onChangeEnd: (_) => onEnd(),
-        );
+    }) => SliderRow(
+      label: label,
+      value: value.clamp(min, max),
+      min: min,
+      max: max,
+      format: format,
+      resetTo: resetTo,
+      enabled: e.enabled,
+      onChanged: (v) => onChange(apply(v), live: true),
+      onChangeEnd: (_) => onEnd(),
+    );
     String pct(double v) => '${(v * 100).round()}%';
 
     switch (e) {
@@ -91,29 +90,51 @@ class FeaturedEditor {
           ),
           [
             slider(
-                'Threshold',
-                eqLinearToDb(c.threshold),
-                -60,
-                0,
-                (v) => c.copyWith(
-                    threshold: eqDbToLinear(v).clamp(0.000977, 1.0)),
-                format: (v) => '${v.round()} dB',
-                resetTo: -18),
-            slider('Ratio', c.ratio, 1, 20, (v) => c.copyWith(ratio: v),
-                format: (v) => '${v.toStringAsFixed(1)}:1', resetTo: 2),
-            slider('Attack', c.attack, 1, 200, (v) => c.copyWith(attack: v),
-                format: (v) => '${v.round()} ms', resetTo: 20),
-            slider('Release', c.release, 20, 2000,
-                (v) => c.copyWith(release: v),
-                format: (v) => '${v.round()} ms', resetTo: 250),
+              'Threshold',
+              eqLinearToDb(c.threshold),
+              -60,
+              0,
+              (v) =>
+                  c.copyWith(threshold: eqDbToLinear(v).clamp(0.000977, 1.0)),
+              format: (v) => '${v.round()} dB',
+              resetTo: -18,
+            ),
             slider(
-                'Make-up gain',
-                eqLinearToDb(c.makeup),
-                0,
-                24,
-                (v) => c.copyWith(makeup: eqDbToLinear(v).clamp(1.0, 64.0)),
-                format: (v) => '+${v.round()} dB',
-                resetTo: 0),
+              'Ratio',
+              c.ratio,
+              1,
+              20,
+              (v) => c.copyWith(ratio: v),
+              format: (v) => '${v.toStringAsFixed(1)}:1',
+              resetTo: 2,
+            ),
+            slider(
+              'Attack',
+              c.attack,
+              1,
+              200,
+              (v) => c.copyWith(attack: v),
+              format: (v) => '${v.round()} ms',
+              resetTo: 20,
+            ),
+            slider(
+              'Release',
+              c.release,
+              20,
+              2000,
+              (v) => c.copyWith(release: v),
+              format: (v) => '${v.round()} ms',
+              resetTo: 250,
+            ),
+            slider(
+              'Make-up gain',
+              eqLinearToDb(c.makeup),
+              0,
+              24,
+              (v) => c.copyWith(makeup: eqDbToLinear(v).clamp(1.0, 64.0)),
+              format: (v) => '+${v.round()} dB',
+              resetTo: 0,
+            ),
           ],
         );
       case BassEffect b:
@@ -124,11 +145,24 @@ class FeaturedEditor {
             enabled: b.enabled,
           ),
           [
-            slider('Gain', b.gain, -24, 24, (v) => b.copyWith(gain: v),
-                format: (v) => '${v.toStringAsFixed(1)} dB', resetTo: 0),
-            slider('Frequency', b.frequency, 20, 500,
-                (v) => b.copyWith(frequency: v),
-                format: (v) => '${v.round()} Hz', resetTo: 100),
+            slider(
+              'Gain',
+              b.gain,
+              -24,
+              24,
+              (v) => b.copyWith(gain: v),
+              format: (v) => '${v.toStringAsFixed(1)} dB',
+              resetTo: 0,
+            ),
+            slider(
+              'Frequency',
+              b.frequency,
+              20,
+              500,
+              (v) => b.copyWith(frequency: v),
+              format: (v) => '${v.round()} Hz',
+              resetTo: 100,
+            ),
           ],
         );
       case TrebleEffect t:
@@ -139,41 +173,87 @@ class FeaturedEditor {
             enabled: t.enabled,
           ),
           [
-            slider('Gain', t.gain, -24, 24, (v) => t.copyWith(gain: v),
-                format: (v) => '${v.toStringAsFixed(1)} dB', resetTo: 0),
-            slider('Frequency', t.frequency, 1000, 16000,
-                (v) => t.copyWith(frequency: v),
-                format: (v) => '${(v / 1000).toStringAsFixed(1)}k Hz',
-                resetTo: 3000),
+            slider(
+              'Gain',
+              t.gain,
+              -24,
+              24,
+              (v) => t.copyWith(gain: v),
+              format: (v) => '${v.toStringAsFixed(1)} dB',
+              resetTo: 0,
+            ),
+            slider(
+              'Frequency',
+              t.frequency,
+              1000,
+              16000,
+              (v) => t.copyWith(frequency: v),
+              format: (v) => '${(v / 1000).toStringAsFixed(1)}k Hz',
+              resetTo: 3000,
+            ),
           ],
         );
       case AsubboostEffect sb:
         return FeaturedEditor(
           ResponseCurve(
-            response:
-                BiquadResponse.lowShelf(sb.cutoff, amplitudeToDb(sb.boost)),
+            response: BiquadResponse.lowShelf(
+              sb.cutoff,
+              amplitudeToDb(sb.boost),
+            ),
             markerHz: sb.cutoff,
             enabled: sb.enabled,
           ),
           [
-            slider('Boost', sb.boost, 1, 12, (v) => sb.copyWith(boost: v),
-                format: (v) => v.toStringAsFixed(1), resetTo: 2),
-            slider('Cutoff', sb.cutoff, 50, 900, (v) => sb.copyWith(cutoff: v),
-                format: (v) => '${v.round()} Hz', resetTo: 100),
-            slider('Wet', sb.wet, 0, 1, (v) => sb.copyWith(wet: v),
-                format: pct, resetTo: 1),
-            slider('Dry', sb.dry, 0, 1, (v) => sb.copyWith(dry: v),
-                format: pct, resetTo: 1),
+            slider(
+              'Boost',
+              sb.boost,
+              1,
+              12,
+              (v) => sb.copyWith(boost: v),
+              format: (v) => v.toStringAsFixed(1),
+              resetTo: 2,
+            ),
+            slider(
+              'Cutoff',
+              sb.cutoff,
+              50,
+              900,
+              (v) => sb.copyWith(cutoff: v),
+              format: (v) => '${v.round()} Hz',
+              resetTo: 100,
+            ),
+            slider(
+              'Wet',
+              sb.wet,
+              0,
+              1,
+              (v) => sb.copyWith(wet: v),
+              format: pct,
+              resetTo: 1,
+            ),
+            slider(
+              'Dry',
+              sb.dry,
+              0,
+              1,
+              (v) => sb.copyWith(dry: v),
+              format: pct,
+              resetTo: 1,
+            ),
           ],
         );
       case ExtrastereoEffect st:
-        return FeaturedEditor(
-          StereoScope(enabled: st.enabled),
-          [
-            slider('Amount', st.m, 0, 8, (v) => st.copyWith(m: v),
-                format: (v) => v.toStringAsFixed(1), resetTo: 2.5),
-          ],
-        );
+        return FeaturedEditor(StereoScope(enabled: st.enabled), [
+          slider(
+            'Amount',
+            st.m,
+            0,
+            8,
+            (v) => st.copyWith(m: v),
+            format: (v) => v.toStringAsFixed(1),
+            resetTo: 2.5,
+          ),
+        ]);
       case CrossfeedEffect cf:
         return FeaturedEditor(
           CrossfeedDiagram(
@@ -182,19 +262,39 @@ class FeaturedEditor {
             enabled: cf.enabled,
           ),
           [
-            slider('Strength', cf.strength, 0, 1,
-                (v) => cf.copyWith(strength: v),
-                format: pct, resetTo: 0.2),
-            slider('Range', cf.range, 0, 1, (v) => cf.copyWith(range: v),
-                format: pct, resetTo: 0.5),
+            slider(
+              'Strength',
+              cf.strength,
+              0,
+              1,
+              (v) => cf.copyWith(strength: v),
+              format: pct,
+              resetTo: 0.2,
+            ),
+            slider(
+              'Range',
+              cf.range,
+              0,
+              1,
+              (v) => cf.copyWith(range: v),
+              format: pct,
+              resetTo: 0.5,
+            ),
           ],
         );
       case CrystalizerEffect cr:
         return FeaturedEditor(
           CrystalizerWaveform(intensity: cr.i, enabled: cr.enabled),
           [
-            slider('Intensity', cr.i, -10, 10, (v) => cr.copyWith(i: v),
-                format: (v) => v.toStringAsFixed(1), resetTo: 2),
+            slider(
+              'Intensity',
+              cr.i,
+              -10,
+              10,
+              (v) => cr.copyWith(i: v),
+              format: (v) => v.toStringAsFixed(1),
+              resetTo: 2,
+            ),
           ],
         );
       case LoudnormEffect ln:
@@ -207,12 +307,33 @@ class FeaturedEditor {
             enabled: ln.enabled,
           ),
           [
-            slider('Target', ln.i, -70, -5, (v) => ln.copyWith(i: v),
-                format: (v) => '${v.round()} LUFS', resetTo: -24),
-            slider('Range', ln.lra, 1, 50, (v) => ln.copyWith(lra: v),
-                format: (v) => '${v.round()} LU', resetTo: 7),
-            slider('True peak', ln.tp, -9, 0, (v) => ln.copyWith(tp: v),
-                format: (v) => '${v.toStringAsFixed(1)} dB', resetTo: -2),
+            slider(
+              'Target',
+              ln.i,
+              -70,
+              -5,
+              (v) => ln.copyWith(i: v),
+              format: (v) => '${v.round()} LUFS',
+              resetTo: -24,
+            ),
+            slider(
+              'Range',
+              ln.lra,
+              1,
+              50,
+              (v) => ln.copyWith(lra: v),
+              format: (v) => '${v.round()} LU',
+              resetTo: 7,
+            ),
+            slider(
+              'True peak',
+              ln.tp,
+              -9,
+              0,
+              (v) => ln.copyWith(tp: v),
+              format: (v) => '${v.toStringAsFixed(1)} dB',
+              resetTo: -2,
+            ),
           ],
         );
       default:

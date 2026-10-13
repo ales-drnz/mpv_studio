@@ -26,7 +26,7 @@ class ChainView extends StatelessWidget {
     final chain = bypassed ?? snapshot.state.audioEffects;
     final active = [
       for (final e in chain)
-        if (e.enabled) e
+        if (e.enabled) e,
     ];
     final off = chain.length - active.length;
 
@@ -35,8 +35,8 @@ class ChainView extends StatelessWidget {
       caption: bypassed != null
           ? 'Bypassed: the audio plays dry until the bypass is released.'
           : (off > 0
-              ? '$off more stage${off == 1 ? '' : 's'} switched off.'
-              : null),
+                ? '$off more stage${off == 1 ? '' : 's'} switched off.'
+                : null),
       trailing: bypassed != null
           ? const StatePill('Bypass', color: Tokens.amber)
           : StatePill(
@@ -87,10 +87,10 @@ class _Stage extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('$index',
-                style: Tokens.numeric.copyWith(
-                  color: Tokens.accent,
-                )),
+            Text(
+              '$index',
+              style: Tokens.numeric.copyWith(color: Tokens.accent),
+            ),
             const SizedBox(width: Tokens.s6),
             Text(title, style: Tokens.body.copyWith(fontSize: 12.5)),
           ],
@@ -106,25 +106,22 @@ class _End extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Tokens.s8,
-          vertical: Tokens.s6,
-        ),
-        decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
-        ),
-        child: Text(label, style: Tokens.numeric),
-      );
+    padding: const EdgeInsets.symmetric(
+      horizontal: Tokens.s8,
+      vertical: Tokens.s6,
+    ),
+    decoration: ShapeDecoration(
+      color: Tokens.surface2,
+      shape: Tokens.squircle(Tokens.rSm),
+    ),
+    child: Text(label, style: Tokens.numeric),
+  );
 }
 
 class _Arrow extends StatelessWidget {
   const _Arrow();
 
   @override
-  Widget build(BuildContext context) => const Icon(
-        Icons.arrow_forward_rounded,
-        size: 14,
-        color: Tokens.fgFaint,
-      );
+  Widget build(BuildContext context) =>
+      const Icon(Icons.arrow_forward_rounded, size: 14, color: Tokens.fgFaint);
 }

@@ -88,7 +88,9 @@ class _GaugePainter extends CustomPainter {
     // Rail.
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-          Rect.fromLTWH(left, barTop, w, barH), const Radius.circular(4)),
+        Rect.fromLTWH(left, barTop, w, barH),
+        const Radius.circular(4),
+      ),
       Paint()..color = Tokens.surface2,
     );
 
@@ -103,11 +105,17 @@ class _GaugePainter extends CustomPainter {
         ),
         Paint()..color = accent.withValues(alpha: 0.14),
       );
-      canvas.drawRect(Rect.fromLTWH(x(t) - 0.5, barTop, 1, barH),
-          Paint()..color = accent.withValues(alpha: 0.6));
-      paintChartLabel(canvas, 'target ${t.round()}', Offset(x(t), 6),
-          Tokens.fgDim,
-          center: true);
+      canvas.drawRect(
+        Rect.fromLTWH(x(t) - 0.5, barTop, 1, barH),
+        Paint()..color = accent.withValues(alpha: 0.6),
+      );
+      paintChartLabel(
+        canvas,
+        'target ${t.round()}',
+        Offset(x(t), 6),
+        Tokens.fgDim,
+        center: true,
+      );
     }
 
     // Momentary bar.
@@ -125,8 +133,10 @@ class _GaugePainter extends CustomPainter {
     // Short-term tick.
     final s = r?.shortTerm;
     if (s != null && s > _luMin) {
-      canvas.drawRect(Rect.fromLTWH(x(s) - 1.5, barTop + 2, 3, barH - 4),
-          Paint()..color = Tokens.fg);
+      canvas.drawRect(
+        Rect.fromLTWH(x(s) - 1.5, barTop + 2, 3, barH - 4),
+        Paint()..color = Tokens.fg,
+      );
     }
     // Integrated marker, below the rail.
     final i = r?.integrated;
@@ -143,18 +153,27 @@ class _GaugePainter extends CustomPainter {
     // True peak ceiling.
     final tp = truePeak;
     if (tp != null) {
-      canvas.drawRect(Rect.fromLTWH(x(tp) - 1, barTop - 2, 2, barH + 4),
-          Paint()..color = enabled ? Tokens.red : Tokens.fgFaint);
+      canvas.drawRect(
+        Rect.fromLTWH(x(tp) - 1, barTop - 2, 2, barH + 4),
+        Paint()..color = enabled ? Tokens.red : Tokens.fgFaint,
+      );
     }
 
     // Scale.
     for (final lu in _ticks) {
       final xx = x(lu.toDouble());
-      canvas.drawLine(Offset(xx, barTop + barH), Offset(xx, barTop + barH + 3),
-          Paint()..color = Tokens.fgFaint);
-      paintChartLabel(canvas, '$lu', Offset(xx, barTop + barH + 10),
-          Tokens.fgFaint,
-          center: true);
+      canvas.drawLine(
+        Offset(xx, barTop + barH),
+        Offset(xx, barTop + barH + 3),
+        Paint()..color = Tokens.fgFaint,
+      );
+      paintChartLabel(
+        canvas,
+        '$lu',
+        Offset(xx, barTop + barH + 10),
+        Tokens.fgFaint,
+        center: true,
+      );
     }
   }
 

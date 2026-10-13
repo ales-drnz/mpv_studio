@@ -46,7 +46,8 @@ class CacheView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Semantics(
-            label: 'Cache: ${EngineFormat.seconds(geometry.behind)} behind '
+            label:
+                'Cache: ${EngineFormat.seconds(geometry.behind)} behind '
                 'and ${EngineFormat.seconds(geometry.ahead)} ahead of the '
                 'playhead',
             excludeSemantics: true,
@@ -88,7 +89,7 @@ class CacheView extends StatelessWidget {
               Text(
                 pauseOn
                     ? 'pause on, resumes at '
-                        '${EngineFormat.seconds(s.cache.pauseWait)}'
+                          '${EngineFormat.seconds(s.cache.pauseWait)}'
                     : 'pause off',
                 style: Tokens.caption,
               ),

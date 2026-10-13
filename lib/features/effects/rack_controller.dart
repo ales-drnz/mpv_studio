@@ -60,8 +60,8 @@ class RackController extends ChangeNotifier {
     this.maxTappedStages = 6,
     void Function(List<AudioEffect>)? onRecord,
     void Function(bool hold)? onHold,
-  })  : _onRecord = onRecord,
-        _onHold = onHold {
+  }) : _onRecord = onRecord,
+       _onHold = onHold {
     _chain = RackChain.of(_engine.current);
     _accepted = _chain;
     _sub = _engine.changes.listen(_onEngine);
@@ -70,10 +70,7 @@ class RackController extends ChangeNotifier {
   /// The rack of [player], recording its chain in [settings] and holding
   /// that record while bypassed. The studio creates one for the life of
   /// the app, so the bypass and the open stages survive leaving the page.
-  factory RackController.forSettings(
-    PlayerApi player,
-    AppSettings settings,
-  ) =>
+  factory RackController.forSettings(PlayerApi player, AppSettings settings) =>
       RackController(
         PlayerEffectsEngine(player),
         onRecord: settings.recordEffects,
@@ -120,7 +117,8 @@ class RackController extends ChangeNotifier {
   bool isExpanded(int id) => _expanded.contains(id);
 
   /// The list the engine plays for the current state.
-  List<AudioEffect> get engineChain => _bypass ? _chain.bypassed : _chain.effects;
+  List<AudioEffect> get engineChain =>
+      _bypass ? _chain.bypassed : _chain.effects;
 
   // ---- Edits ----------------------------------------------------------
 
@@ -215,17 +213,16 @@ class RackController extends ChangeNotifier {
   bool tapGranted(int id) => _tapped().contains(id);
 
   /// Open stages that would have meters but are over the tap budget.
-  bool tapDenied(int id) =>
-      _tappable().contains(id) && !_tapped().contains(id);
+  bool tapDenied(int id) => _tappable().contains(id) && !_tapped().contains(id);
 
   List<int> _tappable() => [
-        if (!_bypass)
-          for (final s in _chain.stages)
-            if (_expanded.contains(s.id) &&
-                s.effect.enabled &&
-                s.effect.filter != null)
-              s.id,
-      ];
+    if (!_bypass)
+      for (final s in _chain.stages)
+        if (_expanded.contains(s.id) &&
+            s.effect.enabled &&
+            s.effect.filter != null)
+          s.id,
+  ];
 
   Set<int> _tapped() => _tappable().take(maxTappedStages).toSet();
 
@@ -264,35 +261,42 @@ class RackController extends ChangeNotifier {
     final sent = _chain;
     final seq = ++_seq;
     _inFlight++;
-    _engine.apply(engineChain).then((_) {
-      if (seq > _acceptedSeq) {
-        _acceptedSeq = seq;
-        _accepted = sent;
-      }
-    }, onError: (Object e) {
-      if (_disposed) return;
-      if (e is MpvCommandException) {
-        _error = 'mpv refused the chain (${e.message}). '
-            'Back to the last chain that played.';
-      } else if (e is PlayerDisposedException) {
-        return;
-      } else {
-        _error = 'The chain could not be applied: $e';
-      }
-      // A later write already replaced this one: it decides.
-      if (seq == _seq) {
-        _throttleTimer?.cancel();
-        _throttleTimer = null;
-        _dirty = false;
-        _chain = _accepted;
-        if (_bypass) _onRecord?.call(_chain.effects);
-      }
-      notifyListeners();
-    }).whenComplete(() {
-      _inFlight--;
-      if (_disposed || _inFlight > 0 || _throttleTimer != null) return;
-      _onEngine(_engine.current);
-    });
+    _engine
+        .apply(engineChain)
+        .then(
+          (_) {
+            if (seq > _acceptedSeq) {
+              _acceptedSeq = seq;
+              _accepted = sent;
+            }
+          },
+          onError: (Object e) {
+            if (_disposed) return;
+            if (e is MpvCommandException) {
+              _error =
+                  'mpv refused the chain (${e.message}). '
+                  'Back to the last chain that played.';
+            } else if (e is PlayerDisposedException) {
+              return;
+            } else {
+              _error = 'The chain could not be applied: $e';
+            }
+            // A later write already replaced this one: it decides.
+            if (seq == _seq) {
+              _throttleTimer?.cancel();
+              _throttleTimer = null;
+              _dirty = false;
+              _chain = _accepted;
+              if (_bypass) _onRecord?.call(_chain.effects);
+            }
+            notifyListeners();
+          },
+        )
+        .whenComplete(() {
+          _inFlight--;
+          if (_disposed || _inFlight > 0 || _throttleTimer != null) return;
+          _onEngine(_engine.current);
+        });
   }
 
   void _onEngine(List<AudioEffect> fx) {

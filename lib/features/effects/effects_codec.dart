@@ -26,11 +26,9 @@ class EffectsCodec {
   // ---- Encode ---------------------------------------------------------
 
   static Map<String, Object?> encode(List<AudioEffect> fx) => {
-        'version': version,
-        'chain': [
-          for (final e in fx) ?encodeStage(e),
-        ],
-      };
+    'version': version,
+    'chain': [for (final e in fx) ?encodeStage(e)],
+  };
 
   /// One stage as JSON, or `null` for a filter the catalog does not know.
   static Map<String, Object?>? encodeStage(AudioEffect e) {
@@ -45,13 +43,13 @@ class EffectsCodec {
   }
 
   static Object? _encodeParam(ParamSpec p, AudioEffect e) => switch (p) {
-        // JSON has no NaN or infinity.
-        DoubleParam d => d.get(e).isFinite ? d.get(e) : null,
-        IntParam i => i.get(e),
-        BoolParam b => b.get(e),
-        StringParam s => s.get(e),
-        EnumParam en => _enumLabel(en, en.get(e)),
-      };
+    // JSON has no NaN or infinity.
+    DoubleParam d => d.get(e).isFinite ? d.get(e) : null,
+    IntParam i => i.get(e),
+    BoolParam b => b.get(e),
+    StringParam s => s.get(e),
+    EnumParam en => _enumLabel(en, en.get(e)),
+  };
 
   static String? _enumLabel(EnumParam p, Object? value) {
     if (value == null) return null;
@@ -71,9 +69,7 @@ class EffectsCodec {
     final json = blob.cast<String, Object?>();
     final chain = json['chain'];
     if (chain is List) {
-      return [
-        for (final s in chain) ?decodeStage(s),
-      ];
+      return [for (final s in chain) ?decodeStage(s)];
     }
     return decodeLegacy(json);
   }
@@ -211,7 +207,8 @@ class EffectsCodec {
     ];
     return [
       for (final e in all)
-        if (e.enabled || e != withEnabled(descriptorOf(e.filter)!.create(), false))
+        if (e.enabled ||
+            e != withEnabled(descriptorOf(e.filter)!.create(), false))
           e,
     ];
   }

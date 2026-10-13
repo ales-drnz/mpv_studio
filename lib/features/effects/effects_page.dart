@@ -83,21 +83,28 @@ class SignalChainView extends StatelessWidget {
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                  Tokens.s20, Tokens.s8, Tokens.s20, 0),
-              sliver: SliverList.list(children: [
-                const SectionHeader('Quick editors'),
-                _QuickTiles(rack: rack),
-                const SizedBox(height: Tokens.s24),
-                _RackHeader(rack: rack, onAdd: () => _add(context)),
-                if (rack.error != null) _ErrorBanner(rack: rack),
-                const _Node(label: 'INPUT', detail: 'Decoded audio'),
-              ]),
+                Tokens.s20,
+                Tokens.s8,
+                Tokens.s20,
+                0,
+              ),
+              sliver: SliverList.list(
+                children: [
+                  const SectionHeader('Quick editors'),
+                  _QuickTiles(rack: rack),
+                  const SizedBox(height: Tokens.s24),
+                  _RackHeader(rack: rack, onAdd: () => _add(context)),
+                  if (rack.error != null) _ErrorBanner(rack: rack),
+                  const _Node(label: 'INPUT', detail: 'Decoded audio'),
+                ],
+              ),
             ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: Tokens.s20),
               sliver: stages.isEmpty
                   ? SliverToBoxAdapter(
-                      child: _EmptyRack(onAdd: () => _add(context)))
+                      child: _EmptyRack(onAdd: () => _add(context)),
+                    )
                   : SliverReorderableList(
                       itemCount: stages.length,
                       onReorderItem: rack.move,
@@ -115,16 +122,24 @@ class SignalChainView extends StatelessWidget {
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                  Tokens.s20, 0, Tokens.s20, Tokens.s32),
-              sliver: SliverList.list(children: [
-                const _Node(
-                    label: 'OUTPUT', detail: 'Then volume and the device'),
-                if (footer != null) ...[
-                  const SizedBox(height: Tokens.s24),
-                  const SectionHeader('Loudness'),
-                  footer!,
+                Tokens.s20,
+                0,
+                Tokens.s20,
+                Tokens.s32,
+              ),
+              sliver: SliverList.list(
+                children: [
+                  const _Node(
+                    label: 'OUTPUT',
+                    detail: 'Then volume and the device',
+                  ),
+                  if (footer != null) ...[
+                    const SizedBox(height: Tokens.s24),
+                    const SectionHeader('Loudness'),
+                    footer!,
+                  ],
                 ],
-              ]),
+              ),
             ),
           ],
         );
@@ -156,7 +171,7 @@ class _RackHeader extends StatelessWidget {
                   n == 0
                       ? 'No stages'
                       : '$n ${n == 1 ? 'stage' : 'stages'}, $on on. '
-                          'Drag to reorder.',
+                            'Drag to reorder.',
                   style: Tokens.caption,
                 ),
               ],
@@ -238,7 +253,11 @@ class _ErrorBanner extends StatelessWidget {
       key: const ValueKey('rack-error'),
       margin: const EdgeInsets.only(bottom: Tokens.s8),
       padding: const EdgeInsets.fromLTRB(
-          Tokens.s12, Tokens.s8, Tokens.s4, Tokens.s8),
+        Tokens.s12,
+        Tokens.s8,
+        Tokens.s4,
+        Tokens.s8,
+      ),
       decoration: ShapeDecoration(
         color: Tokens.red.withValues(alpha: 0.14),
         shape: Tokens.squircle(Tokens.rSm),
@@ -252,8 +271,11 @@ class _ErrorBanner extends StatelessWidget {
             tooltip: 'Dismiss',
             visualDensity: VisualDensity.compact,
             onPressed: rack.clearError,
-            icon: const Icon(Icons.close_rounded,
-                size: 16, color: Tokens.fgDim),
+            icon: const Icon(
+              Icons.close_rounded,
+              size: 16,
+              color: Tokens.fgDim,
+            ),
           ),
         ],
       ),
@@ -283,11 +305,13 @@ class _Node extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Tokens.s12),
-          Text(label,
-              style: Tokens.caption.copyWith(
-                letterSpacing: 1.2,
-                color: Tokens.fgDim,
-              )),
+          Text(
+            label,
+            style: Tokens.caption.copyWith(
+              letterSpacing: 1.2,
+              color: Tokens.fgDim,
+            ),
+          ),
           const SizedBox(width: Tokens.s8),
           Text(detail, style: Tokens.caption),
         ],
@@ -306,15 +330,19 @@ class _EmptyRack extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
       padding: const EdgeInsets.all(Tokens.s20),
       decoration: ShapeDecoration(
-        shape: Tokens.squircle(Tokens.rMd,
-            side: const BorderSide(color: Tokens.line2)),
+        shape: Tokens.squircle(
+          Tokens.rMd,
+          side: const BorderSide(color: Tokens.line2),
+        ),
       ),
       child: Column(
         children: [
           const Text('The audio plays as decoded.', style: Tokens.body),
           const SizedBox(height: Tokens.s4),
-          const Text('Add a stage, or open a quick editor above.',
-              style: Tokens.caption),
+          const Text(
+            'Add a stage, or open a quick editor above.',
+            style: Tokens.caption,
+          ),
           const SizedBox(height: Tokens.s12),
           TextButton.icon(
             onPressed: onAdd,
@@ -375,7 +403,8 @@ void openQuickEditor(
   AudioFilter filter,
 ) {
   final d = descriptorOf(filter)!;
-  final id = rack.chain.stages
+  final id =
+      rack.chain.stages
           .where((s) => s.effect.filter == filter)
           .firstOrNull
           ?.id ??
@@ -384,14 +413,18 @@ void openQuickEditor(
   if (!rack.isExpanded(id)) rack.toggleExpanded(id);
   final env = RackEnvironment.maybeOf(context);
   final screen = QuickEditorScreen(rack: rack, id: id);
-  Navigator.of(context).push(fadeSlidePageRoute(env == null
-      ? screen
-      : RackEnvironment(
-          taps: env.taps,
-          spectrum: env.spectrum,
-          loudness: env.loudness,
-          child: screen,
-        )));
+  Navigator.of(context).push(
+    fadeSlidePageRoute(
+      env == null
+          ? screen
+          : RackEnvironment(
+              taps: env.taps,
+              spectrum: env.spectrum,
+              loudness: env.loudness,
+              child: screen,
+            ),
+    ),
+  );
 }
 
 /// A featured stage on its own page: power, the stage editor, and where
@@ -420,23 +453,32 @@ class QuickEditorScreen extends StatelessWidget {
                 Expanded(
                   child: stage == null
                       ? const Center(
-                          child: Text('This stage is no longer in the chain.',
-                              style: Tokens.caption))
-                      : SectionBody(children: [
-                          _Card(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: Tokens.s16),
-                            child: SwitchRow(
-                              label: 'Effect',
-                              subtitle: 'Stage ${rack.chain.indexOf(id) + 1} '
-                                  'of ${rack.chain.length}. '
-                                  '${stageSubtitle(stage.effect)}',
-                              value: stage.effect.enabled,
-                              onChanged: (on) => rack.setEnabled(id, on),
-                            ),
+                          child: Text(
+                            'This stage is no longer in the chain.',
+                            style: Tokens.caption,
                           ),
-                          _Card(child: StageEditor(rack: rack, id: id)),
-                        ]),
+                        )
+                      : SectionBody(
+                          children: [
+                            _Card(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: Tokens.s16,
+                              ),
+                              child: SwitchRow(
+                                label: 'Effect',
+                                subtitle:
+                                    'Stage ${rack.chain.indexOf(id) + 1} '
+                                    'of ${rack.chain.length}. '
+                                    '${stageSubtitle(stage.effect)}',
+                                value: stage.effect.enabled,
+                                onChanged: (on) => rack.setEnabled(id, on),
+                              ),
+                            ),
+                            _Card(
+                              child: StageEditor(rack: rack, id: id),
+                            ),
+                          ],
+                        ),
                 ),
               ],
             );

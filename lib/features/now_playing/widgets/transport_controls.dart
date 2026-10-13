@@ -145,10 +145,10 @@ class TransportControls extends StatelessWidget {
   }
 
   static Loop _nextLoop(Loop l) => switch (l) {
-        Loop.off => Loop.file,
-        Loop.file => Loop.playlist,
-        Loop.playlist => Loop.off,
-      };
+    Loop.off => Loop.file,
+    Loop.file => Loop.playlist,
+    Loop.playlist => Loop.off,
+  };
 }
 
 class _PlayButton extends StatelessWidget {

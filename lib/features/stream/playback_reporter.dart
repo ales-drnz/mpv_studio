@@ -42,9 +42,11 @@ class PlaybackReporter {
     // paused→resumed pair to Jellyfin/Plex on every scrub, since `playing`
     // toggles transiently false→true while mpv reinitializes after a seek.
     _subs.add(_player.stream.playWhenReady.listen(_onIntent));
-    _subs.add(_player.stream.completed.listen((done) {
-      if (done) _reportStop();
-    }));
+    _subs.add(
+      _player.stream.completed.listen((done) {
+        if (done) _reportStop();
+      }),
+    );
     // OS lock-screen "like" → toggle the current server track's favourite.
     _subs.add(_player.stream.mediaSessionCommands.listen(_onSessionCommand));
     // Keep the lock-screen star in sync with in-app favourite toggles.
@@ -151,8 +153,10 @@ class PlaybackReporter {
 
   void _reportStop() {
     if (!_started || _itemId == null) return;
-    debugPrint('PlaybackReporter: stop ${_kind!.name} $_itemId '
-        '@ ${_player.state.position}');
+    debugPrint(
+      'PlaybackReporter: stop ${_kind!.name} $_itemId '
+      '@ ${_player.state.position}',
+    );
     _servers[_kind]?.reportStopped(_itemId!, position: _player.state.position);
     _started = false;
     _progressTimer?.cancel();

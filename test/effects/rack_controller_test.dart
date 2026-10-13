@@ -70,8 +70,11 @@ void main() {
       final engine = FakeEngine([bass, comp, kMeterStage]);
       final recorded = <List<AudioEffect>>[];
       final holds = <bool>[];
-      final rack = RackController(engine,
-          onRecord: recorded.add, onHold: holds.add);
+      final rack = RackController(
+        engine,
+        onRecord: recorded.add,
+        onHold: holds.add,
+      );
       rack.setBypass(true);
       async.flushMicrotasks();
       expect(engine.current, [
@@ -105,8 +108,11 @@ void main() {
       rack.setBypass(true);
       async.flushMicrotasks();
       rack.setEnabled(rack.chain.stages.first.id, false);
-      expect(rack.canBypass, isTrue,
-          reason: 'the bypass can still be released');
+      expect(
+        rack.canBypass,
+        isTrue,
+        reason: 'the bypass can still be released',
+      );
       rack.dispose();
     });
   });
@@ -159,8 +165,10 @@ void main() {
       rack.toggleExpanded(id);
     }
     rack.setEnabled(ids[1], false);
-    expect([for (final id in ids) rack.tapGranted(id)],
-        [true, false, true, true, false, false]);
+    expect(
+      [for (final id in ids) rack.tapGranted(id)],
+      [true, false, true, true, false, false],
+    );
     expect(rack.tapDenied(ids[4]), isTrue);
     expect(rack.tapDenied(ids[5]), isFalse, reason: 'raw: never tapped');
     rack.setBypass(true);

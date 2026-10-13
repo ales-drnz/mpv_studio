@@ -92,9 +92,9 @@ enum ServerKind { jellyfin, plex }
 
 extension PlaybackModeLabel on PlaybackMode {
   String get label => switch (this) {
-        PlaybackMode.direct => 'Direct',
-        PlaybackMode.transcode => 'Transcode',
-      };
+    PlaybackMode.direct => 'Direct',
+    PlaybackMode.transcode => 'Transcode',
+  };
 }
 
 /// Output audio codec for a server-side transcode. [value] is the wire
@@ -314,11 +314,11 @@ class JellyfinServer implements MediaServer {
   // is the app (shown as the Jellyfin "Client"); `device` is the machine
   // name (shown as the "Device").
   JellyfinCredentials get _credentials => JellyfinCredentials(
-        client: 'MPV Studio',
-        device: _deviceName,
-        deviceId: _deviceId,
-        version: '0.1.0',
-      );
+    client: 'MPV Studio',
+    device: _deviceName,
+    deviceId: _deviceId,
+    version: '0.1.0',
+  );
 
   static const _kBase = 'jellyfin.base';
   static const _kToken = 'jellyfin.token';
@@ -350,8 +350,10 @@ class JellyfinServer implements MediaServer {
   }) async {
     final base = _normalizeBase(host, 8096);
     final client = JellyfinClient(baseUrl: base, credentials: _credentials);
-    final auth = await client.user
-        .authenticateByName(username: username, password: password);
+    final auth = await client.user.authenticateByName(
+      username: username,
+      password: password,
+    );
     client.setSession(token: auth.accessToken, userId: auth.user.id);
     _client = client;
     final p = await SharedPreferences.getInstance();
@@ -443,8 +445,11 @@ class JellyfinServer implements MediaServer {
   // legacy authorization is on, which it no longer is by default. A 404
   // (no art) just falls through to the placeholder in the UI.
   String _imageUrl(String itemId, String token) {
-    final u = _client!.images
-        .url(itemId: itemId, fillWidth: 400, fillHeight: 400);
+    final u = _client!.images.url(
+      itemId: itemId,
+      fillWidth: 400,
+      fillHeight: 400,
+    );
     return u.contains('?') ? '$u&ApiKey=$token' : '$u?ApiKey=$token';
   }
 
@@ -496,10 +501,9 @@ class JellyfinServer implements MediaServer {
     String codec = 'aac',
     StreamTransport transport = StreamTransport.fmp4,
     StreamProtocol protocol = StreamProtocol.hls,
-  }) =>
-      mode == PlaybackMode.transcode
-          ? effectiveTransport(transport, codec).label
-          : null;
+  }) => mode == PlaybackMode.transcode
+      ? effectiveTransport(transport, codec).label
+      : null;
 
   // `seg_max_retry=5` on the HLS demuxer (via mpv `demuxer-lavf-o`). libav
   // defaults it to 0 — a single segment error aborts the whole open. A live
@@ -515,8 +519,7 @@ class JellyfinServer implements MediaServer {
     String codec = 'aac',
     StreamTransport transport = StreamTransport.fmp4,
     StreamProtocol protocol = StreamProtocol.hls,
-  }) =>
-      mode == PlaybackMode.transcode ? const {'seg_max_retry': '5'} : null;
+  }) => mode == PlaybackMode.transcode ? const {'seg_max_retry': '5'} : null;
 
   @override
   ServerKind get kind => ServerKind.jellyfin;
@@ -526,8 +529,10 @@ class JellyfinServer implements MediaServer {
     final c = _client;
     if (c == null) return;
     try {
-      await c.playback
-          .start(itemId: itemId, playSessionId: _playSessionByItem[itemId]);
+      await c.playback.start(
+        itemId: itemId,
+        playSessionId: _playSessionByItem[itemId],
+      );
     } catch (e) {
       debugPrint('JellyfinServer: reportStart failed: $e');
     }
@@ -554,7 +559,10 @@ class JellyfinServer implements MediaServer {
   }
 
   @override
-  Future<void> reportStopped(String itemId, {required Duration position}) async {
+  Future<void> reportStopped(
+    String itemId, {
+    required Duration position,
+  }) async {
     final c = _client;
     if (c == null) return;
     try {
@@ -582,25 +590,25 @@ class PlexServer implements MediaServer {
   // `deviceName` are the machine name (shown in Now Playing); `platform` is
   // a SEPARATE field — the transcode-profile selector (see [_platform]).
   PlexCredentials get _credentials => PlexCredentials(
-        clientIdentifier: _deviceId,
-        product: 'MPV Studio',
-        version: '0.1.0',
-        device: _deviceName,
-        deviceName: _deviceName,
-        // Plex selects a base transcode profile by X-Plex-Platform; an
-        // unrecognised value 400s the /decision with "Unable to find
-        // client profile for device". So map the real OS to a
-        // Plex-recognised platform name (see [_platform]).
-        platform: _platform,
-        // Seed a base musicProfile transcode target. The per-track
-        // add-transcode-target in PlexTranscodeSessionManager.resolve only
-        // *extends* an existing music profile — without this seed there is
-        // no musicProfile context to extend, so Plex ignores our audioCodec
-        // and the transcode never starts.
-        clientProfileExtra:
-            'add-transcode-target(type=musicProfile&context=streaming'
-            '&protocol=hls&container=mpegts&audioCodec=aac,mp3)',
-      );
+    clientIdentifier: _deviceId,
+    product: 'MPV Studio',
+    version: '0.1.0',
+    device: _deviceName,
+    deviceName: _deviceName,
+    // Plex selects a base transcode profile by X-Plex-Platform; an
+    // unrecognised value 400s the /decision with "Unable to find
+    // client profile for device". So map the real OS to a
+    // Plex-recognised platform name (see [_platform]).
+    platform: _platform,
+    // Seed a base musicProfile transcode target. The per-track
+    // add-transcode-target in PlexTranscodeSessionManager.resolve only
+    // *extends* an existing music profile — without this seed there is
+    // no musicProfile context to extend, so Plex ignores our audioCodec
+    // and the transcode never starts.
+    clientProfileExtra:
+        'add-transcode-target(type=musicProfile&context=streaming'
+        '&protocol=hls&container=mpegts&audioCodec=aac,mp3)',
+  );
 
   // X-Plex-Platform value Plex uses to pick the transcode client profile.
   // An unrecognised value makes /transcode/universal/decision return 400
@@ -637,8 +645,10 @@ class PlexServer implements MediaServer {
     final base = _normalizeBase(host, 32400);
     final client = PlexClient(credentials: _credentials);
     // Account auth goes to plex.tv; the token then authorises the local PMS.
-    final user = await client.account
-        .signInWithPassword(username: username, password: password);
+    final user = await client.account.signInWithPassword(
+      username: username,
+      password: password,
+    );
     client.setToken(user.authToken);
     client.connect(base, accessToken: user.authToken);
     final sections = await client.library.sections();
@@ -716,9 +726,7 @@ class PlexServer implements MediaServer {
       sort: 'titleSort',
       // Substring title match — the typed form of the old `title:` argument
       // (dart_plex 0.1.1 folded it into the `filters` list).
-      filters: [
-        if (query.isNotEmpty) PlexFilter.titleContains(query),
-      ],
+      filters: [if (query.isNotEmpty) PlexFilter.titleContains(query)],
     );
     final tracks = [
       for (final m in res.items)
@@ -749,8 +757,11 @@ class PlexServer implements MediaServer {
   // Album/artist thumbnail through Plex's photo transcoder (token embedded).
   String? _imageUrl(String? sourcePath) {
     if (sourcePath == null || sourcePath.isEmpty) return null;
-    return _client!.images
-        .transcodeUrl(sourcePath: sourcePath, width: 400, height: 400);
+    return _client!.images.transcodeUrl(
+      sourcePath: sourcePath,
+      width: 400,
+      height: 400,
+    );
   }
 
   @override
@@ -798,10 +809,9 @@ class PlexServer implements MediaServer {
     String codec = 'aac',
     StreamTransport transport = StreamTransport.fmp4,
     StreamProtocol protocol = StreamProtocol.dash,
-  }) =>
-      mode == PlaybackMode.transcode
-          ? effectiveTransport(transport, codec, protocol: protocol).label
-          : null;
+  }) => mode == PlaybackMode.transcode
+      ? effectiveTransport(transport, codec, protocol: protocol).label
+      : null;
 
   // Plex needs no demuxer override: its DASH/HLS segmenter is exactly what the
   // bundled ffmpeg `advanced_editlist` patch targets, so the patched path is
@@ -813,8 +823,7 @@ class PlexServer implements MediaServer {
     String codec = 'aac',
     StreamTransport transport = StreamTransport.fmp4,
     StreamProtocol protocol = StreamProtocol.dash,
-  }) =>
-      null;
+  }) => null;
 
   @override
   ServerKind get kind => ServerKind.plex;
@@ -828,20 +837,23 @@ class PlexServer implements MediaServer {
     String itemId, {
     required Duration position,
     required bool paused,
-  }) =>
-      _timeline(
-        itemId,
-        paused ? PlexPlaybackApi.statePaused : PlexPlaybackApi.statePlaying,
-        position,
-      );
+  }) => _timeline(
+    itemId,
+    paused ? PlexPlaybackApi.statePaused : PlexPlaybackApi.statePlaying,
+    position,
+  );
 
   @override
   Future<void> reportStopped(String itemId, {required Duration position}) =>
       // `continuing: true` mirrors Plex Web's track-transition report so the
       // server doesn't reap the (still-warm) transcode session when the next
       // track starts.
-      _timeline(itemId, PlexPlaybackApi.stateStopped, position,
-          continuing: true);
+      _timeline(
+        itemId,
+        PlexPlaybackApi.stateStopped,
+        position,
+        continuing: true,
+      );
 
   Future<void> _timeline(
     String ratingKey,

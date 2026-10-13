@@ -12,49 +12,47 @@ import 'package:mpv_studio/ui/theme.dart';
 import 'support/fake_player.dart';
 
 PlayerState _streaming() => PlayerState(
-      playWhenReady: true,
-      position: const Duration(seconds: 40),
-      duration: const Duration(minutes: 4),
-      demuxerViaNetwork: true,
-      demuxerCacheState: const DemuxerCacheState(
-        seekableRanges: [
-          CacheRange(Duration(seconds: 20), Duration(seconds: 75)),
-        ],
-      ),
-      bufferDuration: const Duration(seconds: 35),
-      cacheSpeed: 1.8e6,
-      cache: const CacheSettings(
-        secs: Duration(seconds: 60),
-        pause: true,
-        pauseWait: Duration(seconds: 3),
-      ),
-      prefetchPlaylist: true,
-      playlist: const Playlist([
-        Media('https://example.test/a.flac'),
-        Media('https://example.test/b.flac', extras: {'title': 'Track B'}),
-      ]),
-      audioOutputState: AudioOutputState.active,
-      currentAo: 'pipewire',
-      audioDevice: const Device(name: 'pipewire', description: 'Speakers'),
-      audioParams: const AudioParams(
-        codecName: 'flac',
-        format: Format.s32,
-        sampleRate: 96000,
-        hrChannels: 'stereo',
-      ),
-      audioOutParams: const AudioParams(
-        format: Format.float32Planar,
-        sampleRate: 48000,
-        hrChannels: 'stereo',
-      ),
-      audioEffects: const [
-        BassEffect(gain: 4),
-        TrebleEffect(enabled: false),
-        LoudnormEffect(),
-      ],
-      mpvVersion: 'mpv v0.41.0+r16',
-      ffmpegVersion: '8.1.1',
-    );
+  playWhenReady: true,
+  position: const Duration(seconds: 40),
+  duration: const Duration(minutes: 4),
+  demuxerViaNetwork: true,
+  demuxerCacheState: const DemuxerCacheState(
+    seekableRanges: [CacheRange(Duration(seconds: 20), Duration(seconds: 75))],
+  ),
+  bufferDuration: const Duration(seconds: 35),
+  cacheSpeed: 1.8e6,
+  cache: const CacheSettings(
+    secs: Duration(seconds: 60),
+    pause: true,
+    pauseWait: Duration(seconds: 3),
+  ),
+  prefetchPlaylist: true,
+  playlist: const Playlist([
+    Media('https://example.test/a.flac'),
+    Media('https://example.test/b.flac', extras: {'title': 'Track B'}),
+  ]),
+  audioOutputState: AudioOutputState.active,
+  currentAo: 'pipewire',
+  audioDevice: const Device(name: 'pipewire', description: 'Speakers'),
+  audioParams: const AudioParams(
+    codecName: 'flac',
+    format: Format.s32,
+    sampleRate: 96000,
+    hrChannels: 'stereo',
+  ),
+  audioOutParams: const AudioParams(
+    format: Format.float32Planar,
+    sampleRate: 48000,
+    hrChannels: 'stereo',
+  ),
+  audioEffects: const [
+    BassEffect(gain: 4),
+    TrebleEffect(enabled: false),
+    LoudnormEffect(),
+  ],
+  mpvVersion: 'mpv v0.41.0+r16',
+  ffmpegVersion: '8.1.1',
+);
 
 WaveformData _halfWave() {
   const n = 64;
@@ -72,7 +70,10 @@ Future<void> _pump(WidgetTester tester, Widget child, Size size) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-    MaterialApp(theme: AppTheme.dark, home: Scaffold(body: child)),
+    MaterialApp(
+      theme: AppTheme.dark,
+      home: Scaffold(body: child),
+    ),
   );
   await tester.pump();
 }
@@ -135,8 +136,9 @@ void main() {
     expect(find.text('used'), findsNWidgets(2));
   });
 
-  testWidgets('shows the saved chain while the FX bypass is on',
-      (tester) async {
+  testWidgets('shows the saved chain while the FX bypass is on', (
+    tester,
+  ) async {
     final rack = RackController(PlayerEffectsEngine(player));
     addTearDown(rack.dispose);
     await _pump(

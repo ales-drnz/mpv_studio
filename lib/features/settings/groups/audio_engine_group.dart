@@ -70,10 +70,7 @@ class _AudioEngineGroupState extends State<AudioEngineGroup> {
               initial: player.state.audioDriver,
               builder: (context, raw) {
                 final val = raw.isEmpty ? 'auto' : raw;
-                final options = [
-                  ..._drivers,
-                  if (!_drivers.contains(val)) val,
-                ];
+                final options = [..._drivers, if (!_drivers.contains(val)) val];
                 return DropdownRow<String>(
                   label: 'Driver',
                   description: 'Backend mpv uses to reach the audio device',
@@ -313,8 +310,9 @@ class _ClientNameField extends StatefulWidget {
 }
 
 class _ClientNameFieldState extends State<_ClientNameField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
 
   @override
   void didUpdateWidget(_ClientNameField old) {

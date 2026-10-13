@@ -89,8 +89,9 @@ class _DemuxerGroupState extends State<DemuxerGroup> {
                 max: 1024,
                 resetTo: 50,
                 format: (x) => '${x.round()} MiB',
-                onChanged: (x) => player
-                    .setDemuxer(d.copyWith(maxBackBytes: (x * _mib).round())),
+                onChanged: (x) => player.setDemuxer(
+                  d.copyWith(maxBackBytes: (x * _mib).round()),
+                ),
               ),
             ),
           ],
@@ -163,8 +164,8 @@ class _DemuxerGroupState extends State<DemuxerGroup> {
                 value: cache.seekableRanges.isEmpty
                     ? '-'
                     : cache.seekableRanges
-                        .map((r) => '${_fmt(r.start)}–${_fmt(r.end)}')
-                        .join(', '),
+                          .map((r) => '${_fmt(r.start)}–${_fmt(r.end)}')
+                          .join(', '),
               ),
               InfoRow(
                 label: 'Raw input rate',
@@ -174,13 +175,11 @@ class _DemuxerGroupState extends State<DemuxerGroup> {
               ),
               InfoRow(
                 label: 'Cached at ends',
-                value: 'EOF ${cache.eofCached ? 'yes' : 'no'}, '
+                value:
+                    'EOF ${cache.eofCached ? 'yes' : 'no'}, '
                     'BOF ${cache.bofCached ? 'yes' : 'no'}',
               ),
-              InfoRow(
-                label: 'Underrun',
-                value: cache.underrun ? 'yes' : 'no',
-              ),
+              InfoRow(label: 'Underrun', value: cache.underrun ? 'yes' : 'no'),
             ],
           ),
         ),

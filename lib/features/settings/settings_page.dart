@@ -42,20 +42,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   List<_Category> get _categories => const [
-        _Category('Playback', Icons.play_arrow_rounded, _playback),
-        _Category('Resume', Icons.bookmark_outline_rounded, _resume),
-        _Category('Audio output', Icons.speaker_rounded, _output),
-        _Category('Audio engine', Icons.tune_rounded, _engine),
-        _Category('Audio track', Icons.audiotrack_rounded, _track),
-        _Category('Normalization', Icons.equalizer_rounded, _normalization),
-        _Category('Cache & network', Icons.cloud_outlined, _cache),
-        _Category('Demuxer', Icons.dns_outlined, _demuxer),
-        _Category('Streaming', Icons.podcasts_rounded, _streaming),
-        _Category('Session', Icons.lock_outline_rounded, _session),
-        _Category('Visualizer', Icons.graphic_eq_rounded, _visualizer),
-        _Category('Cover art', Icons.image_outlined, _coverArt),
-        _Category('About', Icons.info_outline_rounded, _about),
-      ];
+    _Category('Playback', Icons.play_arrow_rounded, _playback),
+    _Category('Resume', Icons.bookmark_outline_rounded, _resume),
+    _Category('Audio output', Icons.speaker_rounded, _output),
+    _Category('Audio engine', Icons.tune_rounded, _engine),
+    _Category('Audio track', Icons.audiotrack_rounded, _track),
+    _Category('Normalization', Icons.equalizer_rounded, _normalization),
+    _Category('Cache & network', Icons.cloud_outlined, _cache),
+    _Category('Demuxer', Icons.dns_outlined, _demuxer),
+    _Category('Streaming', Icons.podcasts_rounded, _streaming),
+    _Category('Session', Icons.lock_outline_rounded, _session),
+    _Category('Visualizer', Icons.graphic_eq_rounded, _visualizer),
+    _Category('Cover art', Icons.image_outlined, _coverArt),
+    _Category('About', Icons.info_outline_rounded, _about),
+  ];
 
   static Widget _playback(BuildContext c) => _PlaybackGroup(PlayerScope.of(c));
   static Widget _resume(BuildContext c) =>
@@ -399,7 +399,8 @@ class _ResumeGroupState extends State<_ResumeGroup> {
           children: [
             SwitchRow(
               label: 'Resume from last position',
-              subtitle: 'Restore position, speed, volume and track on reopen, '
+              subtitle:
+                  'Restore position, speed, volume and track on reopen, '
                   'ideal for audiobooks and podcasts',
               value: _resume,
               onChanged: (v) {
@@ -544,9 +545,13 @@ class _OutputGroup extends StatelessWidget {
                 DropdownMenuItem(value: Format.s32, child: Text('32-bit int')),
                 DropdownMenuItem(value: Format.s64, child: Text('64-bit int')),
                 DropdownMenuItem(
-                    value: Format.float32, child: Text('32-bit float')),
+                  value: Format.float32,
+                  child: Text('32-bit float'),
+                ),
                 DropdownMenuItem(
-                    value: Format.float64, child: Text('64-bit float')),
+                  value: Format.float64,
+                  child: Text('64-bit float'),
+                ),
               ],
               onChanged: (f) {
                 if (f != null) player.setAudioFormat(f);
@@ -593,9 +598,9 @@ class _OutputGroup extends StatelessWidget {
                 for (final r in rates)
                   DropdownMenuItem(
                     value: r,
-                    child: Text(r == 0
-                        ? 'Auto'
-                        : '${r ~/ 1000}.${(r % 1000) ~/ 100} kHz'),
+                    child: Text(
+                      r == 0 ? 'Auto' : '${r ~/ 1000}.${(r % 1000) ~/ 100} kHz',
+                    ),
                   ),
               ],
               onChanged: (r) {
@@ -689,27 +694,30 @@ class _NormalizationGroupState extends State<_NormalizationGroup> {
                 // is the real scan state.
                 final scan = normalizer.lastScan;
                 final scanState = switch (scan?.state) {
-                  LoudnessScanState.scanning => scan!.progress != null
-                      ? 'scanning ${(scan.progress! * 100).round()}%'
-                      : 'scanning',
+                  LoudnessScanState.scanning =>
+                    scan!.progress != null
+                        ? 'scanning ${(scan.progress! * 100).round()}%'
+                        : 'scanning',
                   LoudnessScanState.ready => 'ready',
                   LoudnessScanState.failed => 'failed',
                   LoudnessScanState.unavailable => 'unavailable',
                   _ => 'idle',
                 };
                 final g = normalizer.appliedGainDb;
-                final isReady = scan?.state == LoudnessScanState.ready &&
+                final isReady =
+                    scan?.state == LoudnessScanState.ready &&
                     scan?.integrated != null;
                 final measured = !isReady
                     ? '-'
                     : '${scan!.integrated!.toStringAsFixed(1)} LUFS'
-                        '${normalizer.enabled ? ' · gain ${g >= 0 ? '+' : ''}${g.toStringAsFixed(1)} dB' : ''}';
+                          '${normalizer.enabled ? ' · gain ${g >= 0 ? '+' : ''}${g.toStringAsFixed(1)} dB' : ''}';
                 return SettingsGroup(
                   label: 'Loudness normalization (EBU R128)',
                   children: [
                     SwitchRow(
                       label: 'Normalize volume',
-                      subtitle: 'Measure each track on load and steer it to '
+                      subtitle:
+                          'Measure each track on load and steer it to '
                           'the target loudness. Works without ReplayGain tags.',
                       value: normalizer.enabled,
                       onChanged: normalizer.setEnabled,
@@ -788,7 +796,8 @@ class _NormalizationGroupState extends State<_NormalizationGroup> {
               children: [
                 SwitchRow(
                   label: 'Normalize downmix',
-                  subtitle: 'Loudness-normalize surround downmixed to fewer '
+                  subtitle:
+                      'Loudness-normalize surround downmixed to fewer '
                       'channels, avoiding clipping when 5.1 becomes stereo',
                   value: _normalizeDownmix,
                   onChanged: (v) {
@@ -841,8 +850,9 @@ class _CacheGroup extends StatelessWidget {
               min: 30,
               max: 7200,
               format: (x) => '${(x / 60).round()} min',
-              onChanged: (x) => player
-                  .setCache(cache.copyWith(secs: Duration(seconds: x.round()))),
+              onChanged: (x) => player.setCache(
+                cache.copyWith(secs: Duration(seconds: x.round())),
+              ),
             ),
             SwitchRow(
               label: 'Cache on disk',
