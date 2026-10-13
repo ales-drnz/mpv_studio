@@ -182,25 +182,31 @@ class _GroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ink = selected ? Tokens.onAccentContainer : null;
     return Semantics(
       selected: selected,
       button: true,
       child: Material(
-        color: selected ? Tokens.accentWash : Tokens.surface,
-        shape: Tokens.shape(Tokens.rMd),
+        color: selected ? Tokens.accentContainer : Tokens.surface,
+        shape: Tokens.shape(Tokens.rLg),
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.shape(Tokens.rMd),
+          customBorder: Tokens.shape(Tokens.rLg),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: context.layout.minTap + 16),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Tokens.s16,
-                vertical: Tokens.s12,
-              ),
+              padding: const EdgeInsets.all(Tokens.s16),
               child: Row(
                 children: [
-                  Icon(group.icon, size: 22, color: Tokens.accent),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: ShapeDecoration(
+                      color: Tokens.surface3,
+                      shape: const CircleBorder(),
+                    ),
+                    child: Icon(group.icon, size: 20, color: Tokens.fg),
+                  ),
                   const SizedBox(width: Tokens.s16),
                   Expanded(
                     child: Column(
@@ -209,20 +215,22 @@ class _GroupTile extends StatelessWidget {
                       children: [
                         Text(
                           group.title,
-                          style: Tokens.heading.copyWith(
-                            color: selected ? Tokens.accent : Tokens.fg,
-                          ),
+                          style: Tokens.heading.copyWith(color: ink),
                         ),
-                        const SizedBox(height: 2),
                         Text(
                           group.summary,
-                          style: Tokens.label.copyWith(color: Tokens.fgDim),
+                          style: Tokens.label.copyWith(
+                            color: ink ?? Tokens.fgDim,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   if (pushes)
-                    Icon(Icons.chevron_right_rounded, color: Tokens.fgFaint),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: ink ?? Tokens.fgFaint,
+                    ),
                 ],
               ),
             ),
@@ -252,11 +260,12 @@ class _GroupDetail extends StatelessWidget {
           children: [
             if (heading)
               Padding(
+                // Inset like the rows of the cards below.
                 padding: const EdgeInsets.fromLTRB(
-                  Tokens.s4,
-                  Tokens.s4,
-                  Tokens.s4,
                   Tokens.s16,
+                  Tokens.s8,
+                  Tokens.s16,
+                  Tokens.s8,
                 ),
                 child: Semantics(
                   header: true,
