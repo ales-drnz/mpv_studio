@@ -1,26 +1,49 @@
 ## [0.3.0] - unreleased
 
 ### Added
+- A new design built on the logo's colours: graphite, ring grey and white, with tonal surfaces, pill controls and round buttons.
+- A light theme next to the dark one, plus a System choice. The theme switches live and is saved.
+- A layout that adapts to every window: bottom tabs on phones, a navigation rail on tablets and phones in landscape, a sidebar on desktop that collapses to a rail.
+- A welcome screen on first launch to open files, play a demo stream or connect a server. Settings can show it again.
 - A Signal chain rack on the Effects page: stages in play order that you can drag, switch on and off, duplicate, remove and add from the catalog or as raw lavfi.
 - Live editing in the rack, with before and after meters on the open stages and a readable message when mpv refuses a chain.
 - A global FX bypass to compare the chain on and off. It keeps the loudness meter on and saves your chain, not the muted copy.
 - A live loudness gauge and panel with momentary, short-term and integrated loudness, LRA, the track scan and the applied normalization gain.
 - An Engine section with playback state, demuxer cache, prefetch, waveform and loudness scan, audio output, effects chain and library builds.
-- A mini-player on every section but Playback, with cover, title, play and pause, next, a seekable progress bar and the FX bypass toggle.
-- Keyboard shortcuts on desktop: Space plays and pauses, Left and Right seek 5 seconds, M mutes, N and P skip.
-- Readable toasts for failed tracks and player calls, with an action that opens the Console log.
-- A badge with the count of new mpv errors on the Console entry.
-- Queue rows show title, artist, source, length and cover, and mark the tracks that failed to play.
+- A mini-player on every section but Playback, with previous, next, swipes on phones and a context menu on desktop.
+- A Resolver tab that shows `setSourceResolver` renewing a signed link that expired, with a live log of every call.
+- HTTP options for a URL in the Lab tab: user agent, custom headers and chunk size.
+- Network settings for a TLS CA file, an HTTP proxy, cookies and a global user agent.
+- Settings grouped by purpose (Listening, Output, Network, Advanced) with a search that jumps to the setting.
+- A Restart player action for the settings the player only reads at startup. The queue, track and position come back.
+- An A-B loop repeat count with the loops left, and chapter titles with previous and next chapter.
+- Feedback when next or previous has nowhere to go, at the ends of the queue.
+- Album views for Jellyfin and Plex, and states for wrong credentials, an unreachable server, an expired session and an empty library.
+- Keyboard shortcuts on desktop for playback, volume, chapters, A-B loop and speed, listed with ? or F1.
+- Right-click menus on desktop and long-press sheets on touch for queue rows, stream rows and rack stages.
+- The Android back button closes sheets and details first, then returns to Playback.
+- Screen reader labels and values on the waveform, meters, curves and queue rows.
+- Readable toasts for failed tracks and player calls, and a badge with the count of new mpv errors on the Console entry.
+- Queue rows show title, artist, source, length and cover, mark the tracks that played, were skipped or failed, and a details pane on wide windows.
+- A GitHub Actions workflow that analyzes, tests and builds the app without publishing anything.
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.5.0`.
+- The YouTube tab is removed. The Resolver tab shows how any resolver, a YouTube one included, plugs into the library.
+- The Samba password is kept in the system keychain. A password saved by an older version moves there on first launch.
+- Console commands that change what plays, such as `loadfile` and `pause`, go through the Player API, so the play button stays right.
+- The Console reads quotes, escapes and comments like mpv, and expands `${property}` in `print-text` and `show-text`.
+- Sliders on effect options that mpv cannot change live apply on release instead of rebuilding the chain while you drag.
+- In low windows an open effect fills the page under a compact header, with its first controls on screen.
 - The whole effects chain is saved in order, raw stages and duplicates included. Settings from version 0.2 are read and converted.
-- On mobile the tab bar keeps Play, Queue, Stream and FX, and Engine, Settings and Console move to a More menu.
-- The waveform draws its body from the RMS level with a lighter peak outline.
-- Plex transcoded streams open through the player's source resolver.
-- Building the app requires Flutter 3.38 and Dart 3.10.
+- The waveform draws its body from the RMS level with a lighter peak outline and starts on the whole track.
+- Plex transcoded streams open through the player's source resolver and survive a player restart.
+- Building the app requires Flutter 3.38 and Dart 3.10. Linux builds need libsecret.
 
 ### Fixed
+- A server address typed with `https://` got the default port added.
+- Signing out of Samba with a dead connection left the login saved.
+- A damaged settings value no longer blocks the launch, and a failed launch no longer leaves a player running.
 - Player calls that fail, such as a seek with nothing loaded, show a message instead of failing silently.
 
 ## [0.2.18] - 24-09-2026
