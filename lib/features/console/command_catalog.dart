@@ -2,8 +2,11 @@
 // All rights reserved.
 //
 // AUTO-GENERATED from mpv's DOCS/man/input.rst (command reference) and the
-// mp_cmds[] table in player/command.c — do not edit by hand. mpv input
-// commands change rarely; regenerate against a newer mpv if needed.
+// mp_cmds[] table in player/command.c. Do not edit by hand, with one
+// exception: the generator is not in this repository, so four docs were
+// edited after it to read in the app's prose (no slashes as separators:
+// ab-loop-align-cache, drop-buffers, osd-overlay, run). Redo those edits
+// after a regeneration against a newer mpv.
 
 /// One mpv input command: its [name], the argument [signature] as written
 /// in mpv's manual (e.g. `<target> [<flags>]`), and a one-line [doc].
@@ -24,7 +27,7 @@ const List<MpvCommand> kMpvCommands = [
   MpvCommand(
     'ab-loop-align-cache',
     '',
-    'Re-adjust the A/B loop points to the start and end within the cache the',
+    'Re-adjust the A-B loop points to the start and end within the cache the',
   ),
   MpvCommand(
     'ab-loop-dump-cache',
@@ -115,7 +118,7 @@ const List<MpvCommand> kMpvCommands = [
   MpvCommand(
     'drop-buffers',
     '',
-    'Drop audio/video/demuxer buffers, and restart from fresh. Might help with',
+    'Drop audio, video and demuxer buffers, and restart from fresh. Might help with',
   ),
   MpvCommand(
     'dump-cache',
@@ -219,7 +222,7 @@ const List<MpvCommand> kMpvCommands = [
     'Return a canonical representation of the path filename by converting it',
   ),
   MpvCommand('notify-property', '', ''),
-  MpvCommand('osd-overlay', '', 'Add/update/remove an OSD overlay.'),
+  MpvCommand('osd-overlay', '', 'Add, update or remove an OSD overlay.'),
   MpvCommand(
     'overlay-add',
     '<id> <x> <y> <file> <offset> <fmt> <w> <h> <stride> <dw> <dh>',
@@ -308,7 +311,7 @@ const List<MpvCommand> kMpvCommands = [
   MpvCommand(
     'run',
     '<command> [<arg1> [<arg2> [...]]]',
-    'Run the given command. Unlike in MPlayer/mplayer2 and earlier versions of',
+    'Run the given command. Unlike in MPlayer, mplayer2 and earlier versions of',
   ),
   MpvCommand('screenshot', '[<flags>]', 'Take a screenshot.'),
   MpvCommand(
