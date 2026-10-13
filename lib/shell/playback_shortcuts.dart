@@ -14,8 +14,9 @@ import '../ui/tokens.dart';
 /// Keys are left alone while a text field has focus, while a menu, dialog
 /// or sheet is open, when a modifier is held (so system and app shortcuts
 /// keep working; Shift is allowed for the ?) and when [enabled] is false.
-/// A focused button still gets its own Space: it handles the key before
-/// it bubbles up here. The player calls run through [guard]; what the
+/// Space goes to a focused button, switch or other control that
+/// activates (it has an enabled `ActivateIntent`), and plays or pauses
+/// only otherwise. The player calls run through [guard]; what the
 /// user should know (the end of the queue, a new speed) shows as a toast.
 class PlaybackShortcuts extends StatelessWidget {
   final PlayerApi player;
@@ -170,6 +171,11 @@ KeyEventResult handlePlaybackKey(
 
   final action = _pressActions[key];
   if (action == null) return KeyEventResult.ignored;
+  // The app's Shortcuts map Space to ActivateIntent above this handler,
+  // so a focused control would never see it: leave it to the control.
+  if (key == LogicalKeyboardKey.space && _focusActivates()) {
+    return KeyEventResult.ignored;
+  }
   // The other keys act once per press, not on auto-repeat.
   if (event is! KeyRepeatEvent) action(player, guard, notify);
   return KeyEventResult.handled;
@@ -207,4 +213,13 @@ bool _focusElsewhere() {
     return true;
   }
   return ModalRoute.of(focused) is PopupRoute;
+}
+
+/// Whether the focused widget is a control that Space activates.
+bool _focusActivates() {
+  final focused = FocusManager.instance.primaryFocus?.context;
+  if (focused == null) return false;
+  const intent = ActivateIntent();
+  final action = Actions.maybeFind<ActivateIntent>(focused, intent: intent);
+  return action != null && action.isEnabled(intent);
 }
