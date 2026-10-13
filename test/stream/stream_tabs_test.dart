@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/http_options.dart';
+import 'package:mpv_studio/features/stream/lab_tab.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
@@ -40,6 +41,30 @@ void main() {
   setUp(() {
     HttpOptions.lastUsed = const HttpOptions();
     SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('a tab is built on its first visit only', (tester) async {
+    var sambaBuilt = 0;
+    await pumpAt(
+      tester,
+      streamView(
+        player: StreamPlayer(),
+        samba: Builder(
+          builder: (_) {
+            sambaBuilt++;
+            return const Text('samba body');
+          },
+        ),
+      ),
+      '1440x900',
+    );
+    expect(sambaBuilt, 0);
+    await tester.tap(find.text('Samba'));
+    await tester.pumpAndSettle();
+    expect(find.text('samba body'), findsOneWidget);
+    await tester.tap(find.text('Lab'));
+    await tester.pumpAndSettle();
+    expect(find.text('samba body', skipOffstage: false), findsOneWidget);
   });
 
   group('Resolver tab', () {
@@ -118,6 +143,39 @@ void main() {
         'studio-signed://https://streams.radiomast.io/ref-128k-mp3-stereo',
       );
     });
+
+    testWidgets('refuses to sign a URL without a scheme', (tester) async {
+      final player = StreamPlayer();
+      await pumpAt(
+        tester,
+        streamView(player: player, tab: StreamTab.resolver),
+        '1440x900',
+      );
+      final field = find.widgetWithText(
+        TextField,
+        'URL to sign, e.g. http://localhost:8000/a.flac',
+      );
+      await tester.enterText(field, 'localhost:8000/a.flac');
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(player.loaded, isEmpty);
+      expect(
+        find.textContaining('Enter a full http or https URL'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(field, 'http://localhost:8000/a.flac');
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(
+        player.loaded.single.uri,
+        'studio-signed://http://localhost:8000/a.flac',
+      );
+      expect(
+        find.textContaining('Enter a full http or https URL'),
+        findsNothing,
+      );
+    });
   });
 
   group('Lab URL entry', () {
@@ -182,6 +240,39 @@ void main() {
       await tester.pump();
       expect(player.loaded, isEmpty);
       expect(find.text('Accept: commas are not allowed.'), findsOneWidget);
+    });
+
+    testWidgets('a browser user agent is sent to Settings, Network', (
+      tester,
+    ) async {
+      final player = StreamPlayer();
+      await pumpAt(
+        tester,
+        Scaffold(
+          body: LabTab(
+            actions: actionsFor(player),
+            hasGlobalUserAgent: () => true,
+          ),
+        ),
+        '1440x900',
+      );
+      await openOptions(tester);
+      expect(find.text('Default (Settings, Network)'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'User agent'),
+        'Mozilla/5.0 (KHTML, like Gecko)',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Paste a URL'),
+        'http://localhost:8000/a.flac',
+      );
+      await tester.tap(find.byTooltip('Play').first);
+      await tester.pump();
+      expect(player.loaded, isEmpty);
+      expect(
+        find.textContaining('A user agent with commas goes in Settings'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a bare URL plays with no options', (tester) async {
@@ -291,6 +382,24 @@ void main() {
       expect(first.extras?['serverId'], 't1');
       expect(first.extras?['server'], 'jellyfin');
       expect(first.uri, 'https://jellyfin.test/t1?mode=transcode');
+    });
+
+    testWidgets('a song that cannot be built returns to the sign-in form', (
+      tester,
+    ) async {
+      final player = StreamPlayer();
+      final server = FakeServer(connected: true, tracks: [_track1])
+        ..streamError = const NotConnectedException('Jellyfin');
+      await pumpAt(
+        tester,
+        streamView(player: player, jellyfin: server, tab: StreamTab.jellyfin),
+        '1440x900',
+      );
+      await tester.tap(find.text('First light'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(player.loaded, isEmpty);
+      expect(find.text('Connect to Jellyfin'), findsOneWidget);
     });
 
     testWidgets('a network failure offers a retry', (tester) async {

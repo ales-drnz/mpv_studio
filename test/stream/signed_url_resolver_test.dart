@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/stream/resolver_tab.dart';
 import 'package:mpv_studio/features/stream/signed_url_resolver.dart';
 
 const _target = 'http://localhost:8000/02_swell.mp3';
@@ -81,5 +82,13 @@ void main() {
     resolver.clearLog();
     expect(resolver.log, isEmpty);
     expect(notified, 2);
+  });
+
+  test('the log shows URLs without credentials', () {
+    expect(
+      withoutCredentials('studio-signed://http://me:secret@nas:8000/a.flac'),
+      'studio-signed://http://nas:8000/a.flac',
+    );
+    expect(withoutCredentials('http://nas/a.flac'), 'http://nas/a.flac');
   });
 }

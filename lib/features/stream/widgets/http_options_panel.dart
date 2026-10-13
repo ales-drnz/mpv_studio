@@ -14,10 +14,15 @@ class HttpOptionsPanel extends StatefulWidget {
     super.key,
     required this.initial,
     required this.onChanged,
+    this.globalUserAgent = false,
   });
 
   final HttpOptions initial;
   final ValueChanged<HttpOptions> onChanged;
+
+  /// Whether Settings, Network sets a user agent for every stream (the one
+  /// used when this one is empty).
+  final bool globalUserAgent;
 
   @override
   State<HttpOptionsPanel> createState() => _HttpOptionsPanelState();
@@ -103,7 +108,9 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
             decoration: streamFieldDecoration(
               context,
               label: 'User agent',
-              hint: 'Default (libmpv)',
+              hint: widget.globalUserAgent
+                  ? 'Default (Settings, Network)'
+                  : 'Default (libmpv)',
               icon: Icons.badge_outlined,
             ),
           ),

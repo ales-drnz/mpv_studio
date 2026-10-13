@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/stream/http_options.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/features/stream/signed_url_resolver.dart';
 import 'package:mpv_studio/features/stream/stream_page.dart';
@@ -14,6 +15,12 @@ import 'stream_fakes.dart';
 SignedUrlResolver _resolverWithLog() {
   final resolver = SignedUrlResolver(
     clock: () => DateTime(2026, 10, 13, 18, 42, 7),
+    // A real stopwatch reads 1 ms now and then (a cold first call), which
+    // changed the log text between runs.
+    timer: (work) {
+      work();
+      return const Duration(microseconds: 300);
+    },
   );
   final entry = SignedUrlResolver.wrap('http://localhost:8000/01_pulse.flac');
   final expired =
@@ -45,6 +52,7 @@ SignedUrlResolver _resolverWithLog() {
 /// desktop window.
 void main() {
   setUpAll(loadStudioFonts);
+  setUp(() => HttpOptions.lastUsed = const HttpOptions());
 
   Future<void> golden(
     WidgetTester tester,

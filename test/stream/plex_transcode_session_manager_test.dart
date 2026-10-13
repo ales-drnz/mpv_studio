@@ -35,11 +35,12 @@ String? _session(String url) => Uri.parse(url).queryParameters['session'];
 void main() {
   late _FakePlex fake;
   late PlexTranscodeSessionManager manager;
+  late PlexClient client;
 
   setUp(() {
     fake = _FakePlex();
     final dio = Dio()..interceptors.add(fake);
-    final client = PlexClient(
+    client = PlexClient(
       credentials: const PlexCredentials(
         clientIdentifier: 'test-client',
         product: 'MPV Studio',
@@ -114,4 +115,36 @@ void main() {
       expect(fake.decisions, 0);
     },
   );
+
+  test('a marker from an earlier manager resolves from its extras', () async {
+    // The in-app player restart builds a new Plex server and session
+    // manager, while the restored queue keeps the old markers.
+    final marker = manager.register(ratingKey: '42', codec: 'mp3');
+    final entry = Media(
+      marker,
+      extras: {
+        PlexTranscodeSessionManager.extrasKey:
+            PlexTranscodeSessionManager.sessionExtras(
+              ratingKey: '42',
+              codec: 'mp3',
+              bitrateKbps: 128,
+              protocol: 'hls',
+              container: 'mpegts',
+            ),
+      },
+    );
+    final fresh = PlexTranscodeSessionManager(client);
+    addTearDown(fresh.dispose);
+    final url = await fresh.resolveSource(
+      SourceResolveRequest(media: entry, uri: marker, isRetry: false),
+    );
+    expect(url, contains('/music/:/transcode/universal/start.m3u8'));
+    expect(url, contains('audioCodec=mp3'));
+    expect(url, contains('maxAudioBitrate=128'));
+    expect(fake.decisions, 1);
+
+    // Without the extras there is nothing to rebuild.
+    final bare = manager.register(ratingKey: '7', codec: 'aac');
+    expect(await fresh.resolveSource(_request(bare)), isNull);
+  });
 }

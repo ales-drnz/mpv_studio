@@ -16,6 +16,7 @@ class ServerPlayback {
     required this.actions,
     required this.favorites,
     required this.options,
+    required this.onFailure,
   });
 
   final MediaServer server;
@@ -23,25 +24,39 @@ class ServerPlayback {
   final FavoritesController favorites;
   final StreamOptions options;
 
+  /// Gets what stopped the queue entries from being built (no session,
+  /// most often); nothing reaches the player then.
+  final ValueChanged<Object> onFailure;
+
   /// How many tracks a tap queues, from the tapped one on.
   static const queueWindow = 100;
 
-  List<Media> _medias(Iterable<ServerTrack> tracks) => [
-    for (final t in tracks)
-      serverMedia(
-        server,
-        t,
-        options,
-        isFavorite: favorites.resolved(server.kind, t.id, t.isFavorite),
-      ),
-  ];
+  /// The queue entries for [tracks], or null (after [onFailure]) when the
+  /// server cannot build them.
+  List<Media>? _medias(Iterable<ServerTrack> tracks) {
+    try {
+      return [
+        for (final t in tracks)
+          serverMedia(
+            server,
+            t,
+            options,
+            isFavorite: favorites.resolved(server.kind, t.id, t.isFavorite),
+          ),
+      ];
+    } catch (e) {
+      onFailure(e);
+      return null;
+    }
+  }
 
   /// Replaces the queue with up to [queueWindow] of [tracks] starting at
   /// [index], and plays the first.
   Future<void> playFrom(List<ServerTrack> tracks, int index) {
     if (index < 0 || index >= tracks.length) return Future.value();
     final end = math.min(index + queueWindow, tracks.length);
-    return actions.playAll(_medias(tracks.sublist(index, end)));
+    final medias = _medias(tracks.sublist(index, end));
+    return medias == null ? Future.value() : actions.playAll(medias);
   }
 
   /// Runs [action] on [tracks] from a row's menu or star. A favourite the
@@ -69,7 +84,8 @@ class ServerPlayback {
           }
         }
       default:
-        await actions.run(action, _medias(tracks));
+        final medias = _medias(tracks);
+        if (medias != null) await actions.run(action, medias);
     }
   }
 }

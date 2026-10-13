@@ -260,6 +260,11 @@ abstract class MediaServer {
   String? segmentContainer(StreamOptions options) =>
       options.transcodes ? options.effectiveTransport.label : null;
 
+  /// Extra [Media.extras] the entry for [track] needs to stay playable on
+  /// its own, beyond the tags; none by default.
+  Map<String, Object?> mediaExtras(ServerTrack track, StreamOptions options) =>
+      const {};
+
   /// Per-track libavformat demuxer options, handed to mpv as the file-local
   /// `demuxer-lavf-o` (through `Media.demuxerLavfOptions`) so they scope to
   /// exactly this stream. Null when none are needed, the common case.
@@ -300,14 +305,17 @@ class NotConnectedException implements Exception {
   String toString() => 'Not connected to $server.';
 }
 
-/// Adds a scheme (http) and [defaultPort] when the user typed a bare IP or
-/// host, and trims trailing slashes. Leaves an explicit scheme and port
-/// alone.
+/// The server base URL for what the user typed in [host]. A bare host or
+/// IP (no scheme) gets `http://` and [defaultPort] unless it names a port;
+/// a full URL is kept as typed, so `https://jf.example.com` stays on 443
+/// behind a reverse proxy. Trailing slashes go.
 String normalizeServerBase(String host, int defaultPort) {
   var h = host.trim();
   if (h.isEmpty) return h;
-  if (!h.contains('://')) h = 'http://$h';
-  var uri = Uri.parse(h);
-  if (!uri.hasPort) uri = uri.replace(port: defaultPort);
-  return uri.toString().replaceAll(RegExp(r'/+$'), '');
+  if (!h.contains('://')) {
+    var uri = Uri.parse('http://$h');
+    if (!uri.hasPort) uri = uri.replace(port: defaultPort);
+    h = uri.toString();
+  }
+  return h.replaceAll(RegExp(r'/+$'), '');
 }

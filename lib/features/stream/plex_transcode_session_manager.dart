@@ -55,8 +55,9 @@ class PlexTranscodeSessionManager {
 
   /// Register a transcode session for [ratingKey] and return the
   /// `plex-transcode://{id}` marker URL to hand to mpv. The real
-  /// `/decision` call is deferred to [resolveSource]. [fallbackUrl] is used
-  /// if the decision fails (direct play). [protocol] (`dash` → start.mpd,
+  /// `/decision` call is deferred to [resolveSource]. [fallbackUrl] (Plex's
+  /// universal direct-play URL when null) is the last resort if the media
+  /// Part cannot be found. [protocol] (`dash` → start.mpd,
   /// `hls` → start.m3u8) defaults to DASH; [container]
   /// (`mp4` → fMP4, `mpegts`) defaults to the protocol's natural one
   /// (DASH→mp4, HLS→mpegts). Both are captured per-session so different
@@ -64,13 +65,78 @@ class PlexTranscodeSessionManager {
   String register({
     required String ratingKey,
     required String codec,
-    required String fallbackUrl,
+    String? fallbackUrl,
     int? bitrateKbps,
     bool transcode = true,
     String? protocol,
     String? container,
   }) {
     final marker = _newSessionId();
+    _add(
+      marker,
+      ratingKey: ratingKey,
+      codec: codec,
+      fallbackUrl: fallbackUrl,
+      bitrateKbps: bitrateKbps,
+      transcode: transcode,
+      protocol: protocol,
+      container: container,
+    );
+    return '$_markerPrefix$marker';
+  }
+
+  /// The [Media.extras] key under which a Plex entry carries what
+  /// [register] was given (see [sessionExtras]), so a session manager that
+  /// never saw the marker (a new one, after the in-app player restart
+  /// rebuilt the Plex client) can rebuild the session.
+  static const extrasKey = 'plexSession';
+
+  /// The extras value describing a [register] call, for [extrasKey].
+  static Map<String, Object?> sessionExtras({
+    required String ratingKey,
+    required String codec,
+    int? bitrateKbps,
+    bool transcode = true,
+    String? protocol,
+    String? container,
+  }) => {
+    'ratingKey': ratingKey,
+    'codec': codec,
+    'bitrateKbps': ?bitrateKbps,
+    'transcode': transcode,
+    'protocol': ?protocol,
+    'container': ?container,
+  };
+
+  /// Registers [marker] from the [sessionExtras] in [extras]; null when they
+  /// do not describe a session.
+  _PendingTranscode? _restore(String marker, Map<String, Object?>? extras) {
+    final e = extras?[extrasKey];
+    if (e is! Map) return null;
+    final ratingKey = e['ratingKey'], codec = e['codec'];
+    if (ratingKey is! String || codec is! String) return null;
+    debugPrint('PlexTranscode: rebuilding session $marker from its entry');
+    return _add(
+      marker,
+      ratingKey: ratingKey,
+      codec: codec,
+      bitrateKbps: e['bitrateKbps'] as int?,
+      transcode: e['transcode'] as bool? ?? true,
+      protocol: e['protocol'] as String?,
+      container: e['container'] as String?,
+    );
+  }
+
+  _PendingTranscode _add(
+    String marker, {
+    required String ratingKey,
+    required String codec,
+    String? fallbackUrl,
+    int? bitrateKbps,
+    required bool transcode,
+    String? protocol,
+    String? container,
+  }) {
     final sessionProtocol = protocol ?? _defaultProtocol;
     final sessionContainer =
         container ?? (sessionProtocol == 'hls' ? 'mpegts' : 'mp4');
@@ -92,13 +158,23 @@ class PlexTranscodeSessionManager {
           'musicBitrate': bitrateKbps,
         },
       },
-      fallbackUrl: fallbackUrl,
+      fallbackUrl: fallbackUrl ?? _fallbackFor(ratingKey),
     );
+    final pending = _pending[marker]!;
     if (_pending.length > 200) {
       _pending.remove(_pending.keys.first);
     }
-    return '$_markerPrefix$marker';
+    return pending;
   }
+
+  /// Plex's universal direct-play URL for [ratingKey]: the last resort when
+  /// the media Part cannot be found.
+  String _fallbackFor(String ratingKey) => _client.streaming.universalAudioUrl(
+    ratingKey: ratingKey,
+    protocol: 'http',
+    directPlay: true,
+    directStream: true,
+  );
 
   // ─── Source resolver ─────────────────────────────────────────────────
 
@@ -112,7 +188,7 @@ class PlexTranscodeSessionManager {
   Future<String?> resolveSource(SourceResolveRequest request) async {
     final marker = extractMarker(request.media.uri);
     if (marker == null) return null;
-    final pending = _pending[marker];
+    final pending = _pending[marker] ?? _restore(marker, request.media.extras);
     if (pending == null) {
       StudioLog.write(
         'PlexTranscode: no pending session for $marker',

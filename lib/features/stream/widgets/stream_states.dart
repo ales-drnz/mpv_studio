@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 
+/// The widest a sign-in card or a state message gets: a comfortable form
+/// width, well under the narrowest medium window (`Breakpoints.medium`), so
+/// it reads as one column at every size.
+const double streamCardWidth = 400;
+
 /// A centred spinner with an optional [label], for a tab or list that is
 /// loading.
 class StreamLoading extends StatelessWidget {
@@ -75,7 +80,7 @@ class StreamMessage extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(Tokens.s24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: streamCardWidth),
           child: Semantics(
             liveRegion: error,
             child: Column(

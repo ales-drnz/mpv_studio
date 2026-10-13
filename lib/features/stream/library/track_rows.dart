@@ -11,7 +11,8 @@ import '../widgets/stream_row.dart';
 /// carry the tags the queue shows before the stream's own load, the
 /// segment container mpv cannot report, and the `serverId` and `server`
 /// keys the app-level PlaybackReporter routes its reports by (Now Playing,
-/// progress, scrobble, the lock-screen like).
+/// progress, scrobble, the lock-screen like), plus what the server needs to
+/// resolve the entry later ([MediaServer.mediaExtras]).
 Media serverMedia(
   MediaServer server,
   ServerTrack track,
@@ -31,6 +32,7 @@ Media serverMedia(
     'serverId': track.id,
     'server': server.kind.name,
     'isFavorite': isFavorite,
+    ...server.mediaExtras(track, options),
   },
 );
 
