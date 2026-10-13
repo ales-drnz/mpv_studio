@@ -55,11 +55,15 @@ class _DesktopShellState extends State<DesktopShell> {
               // CustomPaint paints unclipped by default, so without this a
               // painter drawing past its left edge (e.g. during a resize
               // frame) would bleed over the sidebar.
-              child: SafeArea(
-                left: false,
-                bottom: widget.miniPlayer == null,
-                child: ClipRect(
-                  child: Material(type: MaterialType.transparency, child: body),
+              child: withoutLeftInset(
+                SafeArea(
+                  bottom: widget.miniPlayer == null,
+                  child: ClipRect(
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: body,
+                    ),
+                  ),
                 ),
               ),
             ),

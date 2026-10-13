@@ -144,16 +144,19 @@ class PageFrame extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(bottom: keyboard),
-        child: MediaQuery.removeViewInsets(
-          context: context,
-          removeBottom: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ?header,
-              ?tabs,
-              Expanded(child: content),
-            ],
+        // Read below the SafeArea, so its insets stay consumed.
+        child: Builder(
+          builder: (inner) => MediaQuery.removeViewInsets(
+            context: inner,
+            removeBottom: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ?header,
+                ?tabs,
+                Expanded(child: content),
+              ],
+            ),
           ),
         ),
       ),

@@ -70,20 +70,31 @@ class _StudioShellState extends State<StudioShell> {
   Widget build(BuildContext context) {
     final section = _section;
     final mini = widget.miniPlayer;
-    return BackButtonListener(
-      onBackButtonPressed: _onBack,
-      // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars
-      // on (the shells themselves are custom, not Scaffolds). The shells
-      // handle the soft keyboard themselves, so it must not resize.
-      child: Scaffold(
-        backgroundColor: Tokens.bg,
-        resizeToAvoidBottomInset: false,
-        body: ShellFrame(
-          section: section,
-          onSelect: _select,
-          body: _shell,
-          // Playback already shows the full transport.
-          miniPlayer: section == Section.nowPlaying ? null : mini,
+    // Android's predictive back only reaches the app when the framework
+    // has told the system it handles back; otherwise the system closes the
+    // app at once. Off Playback the shell always handles it (back goes to
+    // Playback), so this scope blocks the pop there, which is what reports
+    // it. Sheets and pushed details report themselves.
+    return PopScope(
+      canPop: section == Section.nowPlaying,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: BackButtonListener(
+        onBackButtonPressed: _onBack,
+        // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars
+        // on (the shells themselves are custom, not Scaffolds). The shells
+        // handle the soft keyboard themselves, so it must not resize.
+        child: Scaffold(
+          backgroundColor: Tokens.bg,
+          resizeToAvoidBottomInset: false,
+          body: ShellFrame(
+            section: section,
+            onSelect: _select,
+            body: _shell,
+            // Playback already shows the full transport.
+            miniPlayer: section == Section.nowPlaying ? null : mini,
+          ),
         ),
       ),
     );

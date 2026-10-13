@@ -105,3 +105,12 @@ Widget liftAboveKeyboard(BuildContext context, Widget child) {
     ),
   );
 }
+
+/// Hides the left safe-area inset from [child]: content to the right of
+/// the rail or the sidebar, which already cover that inset themselves.
+Widget withoutLeftInset(Widget child) => Builder(
+  builder: (context) => MediaQuery(
+    data: MediaQuery.of(context).removePadding(removeLeft: true),
+    child: child,
+  ),
+);

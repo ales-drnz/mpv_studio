@@ -202,6 +202,7 @@ Future<ShellHarness> pumpShell(
   double textScale = 1,
   EdgeInsets padding = EdgeInsets.zero,
   FakePlayer? player,
+  Widget Function(Section section)? page,
 }) async {
   setStudioView(tester, size, padding: padding);
   addTearDown(() => Palette.activate(Palette.dark));
@@ -224,7 +225,7 @@ Future<ShellHarness> pumpShell(
         ),
       ),
     ),
-    page: (section) => DemoPage(section: section),
+    page: page ?? (section) => DemoPage(section: section),
   );
   addTearDown(router.dispose);
   await tester.pumpWidget(

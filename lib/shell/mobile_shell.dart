@@ -8,10 +8,11 @@ import 'section_badge.dart';
 import 'sections.dart';
 import 'shell_tools.dart';
 
-/// The bottom bar chrome (compact windows): the section body with a bottom tab bar that stays **pinned**
-/// to the screen edge. The soft keyboard overlays the bar instead of pushing it
-/// up — only the body content lifts above the keyboard, so a focused text field
-/// (e.g. the Console input) stays visible. The root [Scaffold] sets
+/// The bottom bar chrome (compact windows): the section body with a bottom
+/// tab bar that stays **pinned** to the screen edge. The soft keyboard
+/// overlays the bar instead of pushing it up: only the body content lifts
+/// above the keyboard, so a focused text field (such as the Console input)
+/// stays visible. The root [Scaffold] sets
 /// `resizeToAvoidBottomInset: false`, so this widget owns the keyboard inset.
 ///
 /// The bar has a tab per [Section.tabs] and a More tab that opens a sheet
@@ -38,9 +39,9 @@ class MobileShell extends StatefulWidget {
 class _MobileShellState extends State<MobileShell> {
   final GlobalKey _tabBarKey = GlobalKey();
   // Measured height of the tab bar and the mini-player above it (includes
-  // the home-indicator inset). The body
-  // reserves this much at the bottom when the keyboard is down; the keyboard
-  // inset takes over when it's up — so the content clears whichever is taller.
+  // the home-indicator inset). The body reserves this much at the bottom
+  // when the keyboard is down; the keyboard inset takes over when it's up,
+  // so the content clears whichever is taller.
   double _tabBarHeight = 0;
 
   void _measureTabBar() {
@@ -52,8 +53,9 @@ class _MobileShellState extends State<MobileShell> {
 
   @override
   Widget build(BuildContext context) {
-    // The bar height is stable after layout; re-measure post-frame (guarded so
-    // it only commits on a real change — e.g. an orientation / inset change).
+    // The bar height is stable after layout; re-measure post-frame (guarded
+    // so it only commits on a real change, such as an orientation or inset
+    // change).
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureTabBar());
 
     final keyboard = MediaQuery.of(context).viewInsets.bottom;
@@ -61,30 +63,36 @@ class _MobileShellState extends State<MobileShell> {
     // whichever is taller, so the body content is never hidden behind either.
     final bottomReserve = math.max(keyboard, _tabBarHeight);
 
-    // Top/sides are inset normally, but NOT the bottom: the tab bar itself
+    // The top and sides are inset normally, but NOT the bottom: the tab bar itself
     // fills the bottom inset (home indicator) with its own surface so it reads
     // as continuous to the screen edge.
     return SafeArea(
       bottom: false,
       child: Stack(
         children: [
-          // Body fills the whole area, reserving the bottom for the keyboard /
-          // tab bar so a bottom-anchored input lifts above the keyboard while
-          // the bar below stays put.
+          // Body fills the whole area, reserving the bottom for the keyboard
+          // or the tab bar so a bottom-anchored input lifts above the
+          // keyboard while the bar below stays put.
           Positioned.fill(
             child: Padding(
               padding: EdgeInsets.only(bottom: bottomReserve),
-              child: MediaQuery.removeViewInsets(
-                context: context,
-                removeBottom: true,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: widget.body,
+              // Read below the SafeArea, so the consumed top and side
+              // insets stay consumed; the bottom inset belongs to the tab
+              // bar and the keyboard to this shell, so the body sees neither.
+              child: Builder(
+                builder: (inner) => MediaQuery(
+                  data: MediaQuery.of(inner)
+                      .removePadding(removeBottom: true)
+                      .removeViewInsets(removeBottom: true),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: widget.body,
+                  ),
                 ),
               ),
             ),
           ),
-          // Tab bar pinned to the screen bottom — the keyboard overlays it
+          // Tab bar pinned to the screen bottom: the keyboard overlays it
           // instead of pushing it up.
           Positioned(
             left: 0,
@@ -184,9 +192,10 @@ class _Tab extends StatelessWidget {
     // Mirror the desktop sidebar's _NavItem: a solid-accent squircle pill for
     // the active tab with onAccent contents, inactive tabs in fgDim.
     final color = active ? Tokens.onAccent : Tokens.fgDim;
-    // The inter-pill gap is a Padding OUTSIDE the InkWell so the ink/hover
-    // area (clipped to the same squircle) lines up exactly with the visible
-    // pill — a margin inside the InkWell would make the highlight overshoot.
+    // The inter-pill gap is a Padding OUTSIDE the InkWell so the ink and
+    // hover area (clipped to the same squircle) lines up exactly with the
+    // visible pill: a margin inside the InkWell would make the highlight
+    // overshoot.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s4),
       child: Semantics(

@@ -10,7 +10,7 @@ import 'layout_scope.dart';
 /// ResponsiveGrid(
 ///   minTileWidth: 150,
 ///   tileAspectRatio: 1,
-///   children: [for (final c in categories) GridCard(...)],
+///   children: [for (final c in categories) CategoryTile(c)],
 /// )
 /// ```
 class ResponsiveGrid extends StatelessWidget {
