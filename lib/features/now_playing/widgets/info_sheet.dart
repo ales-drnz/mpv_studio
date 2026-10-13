@@ -45,26 +45,29 @@ class _InfoBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: Tokens.s16),
-            child: _identity(),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Inset like the group labels and the text in the boxes below.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Tokens.s16,
+            0,
+            Tokens.s16,
+            Tokens.s8,
           ),
-          _source(),
-          // `stream.loudnessScan` replays the current result to every
-          // listener, but only after the first frame, and `player.state`
-          // has no loudness field: the seed fills that first frame.
-          _loudness(loudnessSeed),
-          _output(),
-          _stream(),
-          _playback(),
-        ],
-      ),
+          child: _identity(),
+        ),
+        _source(),
+        // `stream.loudnessScan` replays the current result to every
+        // listener, but only after the first frame, and `player.state`
+        // has no loudness field: the seed fills that first frame.
+        _loudness(loudnessSeed),
+        _output(),
+        _stream(),
+        _playback(),
+      ],
     );
   }
 
@@ -85,10 +88,10 @@ class _InfoBody extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             if (sub != null) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: Tokens.s4),
               Text(
                 sub,
-                style: Tokens.caption,
+                style: Tokens.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -288,12 +291,12 @@ class _InfoBody extends StatelessWidget {
       rows.add(
         Padding(
           padding: EdgeInsets.only(
-            bottom: i + 2 < stats.length ? Tokens.s6 : 0,
+            bottom: i + 2 < stats.length ? Tokens.s8 : 0,
           ),
           child: Row(
             children: [
               Expanded(child: _StatCell(stats[i].$1, stats[i].$2)),
-              const SizedBox(width: Tokens.s6),
+              const SizedBox(width: Tokens.s8),
               if (i + 1 < stats.length)
                 Expanded(child: _StatCell(stats[i + 1].$1, stats[i + 1].$2))
               else
@@ -306,21 +309,21 @@ class _InfoBody extends StatelessWidget {
     return Column(children: rows);
   }
 
-  /// A flat card holding dense key/value rows.
+  /// A card tone box holding dense key and value rows.
   Widget _card(List<Widget> rows) => Container(
     padding: const EdgeInsets.symmetric(
-      horizontal: Tokens.s12,
-      vertical: Tokens.s4,
+      horizontal: Tokens.s16,
+      vertical: Tokens.s8,
     ),
     decoration: ShapeDecoration(
-      color: Tokens.surface2,
+      color: Tokens.surface,
       shape: Tokens.shape(Tokens.rSm),
     ),
     child: Column(children: rows),
   );
 
   static Widget _kv(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
+    padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
     child: Row(
       children: [
         Text(label, style: Tokens.caption),
@@ -427,7 +430,8 @@ class _InfoBody extends StatelessWidget {
   }
 }
 
-/// A small stat cell: dim label over a mono value, on a raised rounded.
+/// A small stat cell: a caption label over a numeric value, in a card
+/// tone box (it reads on the sheet and dialog chrome in both themes).
 class _StatCell extends StatelessWidget {
   final String label;
   final String value;
@@ -437,11 +441,11 @@ class _StatCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: Tokens.s12,
+        horizontal: Tokens.s16,
         vertical: Tokens.s8,
       ),
       decoration: ShapeDecoration(
-        color: Tokens.surface2,
+        color: Tokens.surface,
         shape: Tokens.shape(Tokens.rSm),
       ),
       child: Column(
@@ -450,20 +454,19 @@ class _StatCell extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Tokens.caption.copyWith(fontSize: 10.5),
+            style: Tokens.caption,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: Tokens.s4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: Tokens.mono,
+            style: Tokens.numeric.copyWith(
               fontSize: 13,
               color: Tokens.fg,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
