@@ -29,47 +29,14 @@ class PlaybackNotice {
   String toString() => 'PlaybackNotice($message${isError ? '' : ', info'})';
 }
 
-/// How a queue entry last stopped playing, from the engine's end of file.
-enum EndReason {
-  /// It played to its end. mpv reports a dropped network stream the same
-  /// way, so for a stream this means "the data ran out".
-  finished,
-
-  /// Something moved on before its end: next, previous, a jump, a stop.
-  stopped,
-
-  /// It ended on an error (see [EntryEnd.error]).
-  failed,
-}
-
-/// The last end of a queue entry: why, and the mpv error code when it
-/// [EndReason.failed] (0 otherwise).
-@immutable
-class EntryEnd {
-  const EntryEnd(this.reason, {this.error = 0});
-
-  final EndReason reason;
-  final int error;
-
-  @override
-  bool operator ==(Object other) =>
-      other is EntryEnd && other.reason == reason && other.error == error;
-
-  @override
-  int get hashCode => Object.hash(reason, error);
-
-  @override
-  String toString() => 'EntryEnd(${reason.name}, $error)';
-}
-
 /// Turns the engine's errors into what the app shows:
 ///
 /// * a [PlaybackNotice] for a track that stopped on an error
 ///   ([EndFileError]) and for a player call that threw ([guard]);
 /// * a count of mpv error lines ([LogError]) not yet seen in the Console,
 ///   for the badge on its navigation entry;
-/// * the queue entries that failed to play ([failed]) and how every entry
-///   last ended ([ended]), for their rows in the Queue;
+/// * the queue entries that failed to play ([failed]), for the Playback
+///   page's failed-track banner;
 /// * app-level notices ([notify]), such as settings the player refused on
 ///   launch or an uncaught error.
 ///
@@ -136,13 +103,6 @@ class PlaybackIssues {
   ValueListenable<Set<Media>> get failed => _failed;
   final _failed = ValueNotifier<Set<Media>>(const {});
 
-  /// How each queue entry last ended, for the entries that have ended
-  /// since they were added. An entry leaves the map once it loads again
-  /// (it is playing), or once it leaves the queue. The player quitting and
-  /// a playlist redirect are not recorded.
-  ValueListenable<Map<Media, EntryEnd>> get ended => _ended;
-  final _ended = ValueNotifier<Map<Media, EntryEnd>>(const {});
-
   bool _consoleVisible = false;
 
   /// Whether the Console is on screen. While it is, mpv errors are seen as
@@ -166,33 +126,11 @@ class PlaybackIssues {
       final kept = _failed.value.where(pl.items.contains).toSet();
       if (kept.length != _failed.value.length) _failed.value = kept;
     }
-    if (_ended.value.isNotEmpty) {
-      final kept = {
-        for (final e in _ended.value.entries)
-          if (pl.items.contains(e.key)) e.key: e.value,
-      };
-      if (kept.length != _ended.value.length) _ended.value = kept;
-    }
   }
 
   void _onEndFile(MpvFileEndedEvent event) {
     final entry = _current;
-    final reason = switch (event.reason) {
-      MpvEndFileReason.eof => EndReason.finished,
-      MpvEndFileReason.stop => EndReason.stopped,
-      MpvEndFileReason.error => EndReason.failed,
-      MpvEndFileReason.quit || MpvEndFileReason.redirect => null,
-    };
-    if (entry != null && reason != null) {
-      final end = EntryEnd(
-        reason,
-        error: reason == EndReason.failed ? event.error : 0,
-      );
-      if (_ended.value[entry] != end) {
-        _ended.value = {..._ended.value, entry: end};
-      }
-    }
-    if (reason != EndReason.failed) return;
+    if (event.reason != MpvEndFileReason.error) return;
     _lastFailed = entry;
     if (entry != null && !_failed.value.contains(entry)) {
       _failed.value = {..._failed.value, entry};
@@ -204,9 +142,6 @@ class PlaybackIssues {
     if (entry == null) return;
     if (_failed.value.contains(entry)) {
       _failed.value = {..._failed.value}..remove(entry);
-    }
-    if (_ended.value.containsKey(entry)) {
-      _ended.value = {..._ended.value}..remove(entry);
     }
   }
 
@@ -268,7 +203,6 @@ class PlaybackIssues {
     _notices.close();
     _unseenLogErrors.dispose();
     _failed.dispose();
-    _ended.dispose();
   }
 }
 
