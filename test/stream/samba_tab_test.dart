@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/stream/samba/samba_login_store.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,13 +22,17 @@ void main() {
     'Rock': const [SambaEntry(name: 'loud.mp3', isDirectory: false)],
   };
 
+  late SambaLoginStore store;
+  late FakeSecretStore secrets;
+
   Future<FakeShare> pumpSaved(WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({
       'samba.host': 'nas.local',
       'samba.share': 'Music',
       'samba.user': 'alex',
-      'samba.pass': 'secret',
     });
+    secrets = FakeSecretStore()..values[SambaLoginStore.passwordKey] = 'secret';
+    store = SambaLoginStore(secrets: secrets);
     final share = FakeShare(tree);
     await pumpAt(
       tester,
@@ -35,6 +40,7 @@ void main() {
         body: SambaTab(
           actions: actionsFor(StreamPlayer()),
           connector: (_) async => share,
+          store: store,
         ),
       ),
       '1440x900',
@@ -52,7 +58,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(share.disconnected, isTrue);
     expect(find.text('Connect to Samba'), findsOneWidget);
-    expect(await SambaLogin.load(), isNull);
+    expect(await store.load(), isNull);
+    expect(secrets.values, isEmpty);
   });
 
   testWidgets('a folder that loads late does not replace a newer one', (
@@ -71,5 +78,38 @@ void main() {
     expect(find.text('Music/Rock'), findsOneWidget);
     expect(find.text('loud'), findsOneWidget);
     expect(find.text('blue'), findsNothing);
+  });
+
+  testWidgets('says when the keychain cannot keep the password', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final failing = SambaLoginStore(secrets: FakeSecretStore(failing: true));
+    await pumpAt(
+      tester,
+      Scaffold(
+        body: SambaTab(
+          actions: actionsFor(StreamPlayer()),
+          connector: (_) async => throw Exception('host down'),
+          store: failing,
+        ),
+      ),
+      '360x780',
+    );
+    expect(find.textContaining('no system keychain'), findsNothing);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Host'), 'nas');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Share'),
+      'Music',
+    );
+    await failing.save(
+      const SambaLogin(host: 'nas', share: 'Music', password: 'pw'),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Password not saved: no system keychain.'),
+      findsOneWidget,
+    );
+    expectNoOverflow(tester);
   });
 }

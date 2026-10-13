@@ -124,7 +124,7 @@ jobs:
         with:
           path: mpv_studio
       - name: Install Linux build dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
       - uses: ./mpv_studio/.github/actions/setup
         with:
           mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}

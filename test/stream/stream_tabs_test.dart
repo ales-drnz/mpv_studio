@@ -528,7 +528,7 @@ void main() {
         Scaffold(
           body: SambaTab(
             actions: actionsFor(player),
-            restore: () async => null,
+            store: NoSambaLogin(),
             connector: (login) async {
               used = login;
               return share;

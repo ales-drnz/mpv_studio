@@ -12,6 +12,7 @@ import '../widgets/stream_form.dart';
 import '../widgets/stream_row.dart';
 import '../widgets/stream_states.dart';
 import '../widgets/stream_tab_scope.dart';
+import 'samba_login_store.dart';
 import 'samba_share.dart';
 
 /// The Samba (SMB2 and SMB3) tab: a sign-in form until connected, then a
@@ -27,7 +28,7 @@ class SambaTab extends StatefulWidget {
     super.key,
     required this.actions,
     this.connector = connectSmb2,
-    this.restore = SambaLogin.load,
+    this.store,
   });
 
   final StreamActions actions;
@@ -35,8 +36,8 @@ class SambaTab extends StatefulWidget {
   /// Opens a share; the real one by default, a fake in tests.
   final SambaConnector connector;
 
-  /// Reads the saved login; null for none.
-  final Future<SambaLogin?> Function() restore;
+  /// Keeps the login across launches; [SambaLoginStore.shared] when null.
+  final SambaLoginStore? store;
 
   @override
   State<SambaTab> createState() => _SambaTabState();
@@ -55,6 +56,8 @@ class _SambaTabState extends State<SambaTab> {
 
   SambaShare? _connection;
   SambaLogin? _login;
+
+  SambaLoginStore get _store => widget.store ?? SambaLoginStore.shared;
 
   bool _restoring = true;
   bool _connecting = false;
@@ -86,7 +89,7 @@ class _SambaTabState extends State<SambaTab> {
   Future<void> _restore() async {
     SambaLogin? saved;
     try {
-      saved = await widget.restore();
+      saved = await _store.load();
     } catch (e) {
       StudioLog.write(
         'Samba: saved login unreadable: $e',
@@ -130,7 +133,7 @@ class _SambaTabState extends State<SambaTab> {
       final share = await widget.connector(login);
       if (persist) {
         try {
-          await login.save();
+          await _store.save(login);
         } catch (e) {
           StudioLog.write('Samba: login not saved: $e', level: LogLevel.warn);
         }
@@ -175,7 +178,7 @@ class _SambaTabState extends State<SambaTab> {
       StudioLog.write('Samba: disconnect failed: $e', level: LogLevel.warn);
     }
     try {
-      await SambaLogin.clear();
+      await _store.clear();
     } catch (e) {
       StudioLog.write(
         'Samba: saved login not cleared: $e',
@@ -256,51 +259,59 @@ class _SambaTabState extends State<SambaTab> {
     );
   }
 
-  Widget _signIn() => SignInCard(
-    formKey: _form,
-    title: 'Connect to Samba',
-    subtitle:
-        'The host, the share and, unless it is open to guests, your '
-        'credentials.',
-    busy: _connecting,
-    error: _signInError,
-    onSubmit: _submit,
-    fields: [
-      StreamTextField(
-        controller: _host,
-        label: 'Host',
-        hint: '192.168.1.10',
-        icon: Icons.dns_outlined,
-        keyboardType: TextInputType.url,
-        validator: requiredField('The host'),
-      ),
-      StreamTextField(
-        controller: _share,
-        label: 'Share',
-        hint: 'Music',
-        icon: Icons.folder_shared_outlined,
-        validator: requiredField('The share'),
-      ),
-      StreamTextField(
-        controller: _user,
-        label: 'Username (optional)',
-        icon: Icons.person_outline_rounded,
-        autofillHints: const [AutofillHints.username],
-      ),
-      StreamTextField(
-        controller: _pass,
-        label: 'Password (optional)',
-        icon: Icons.lock_outline_rounded,
-        obscure: true,
-      ),
-      StreamTextField(
-        controller: _domain,
-        label: 'Domain (optional)',
-        icon: Icons.workspaces_outline,
-        last: true,
-        onSubmitted: _submit,
-      ),
-    ],
+  Widget _signIn() => ValueListenableBuilder<bool>(
+    valueListenable: _store.keychainUnavailable,
+    builder: (context, _, _) => SignInCard(
+      formKey: _form,
+      title: 'Connect to Samba',
+      subtitle:
+          'The host, the share and, unless it is open to guests, your '
+          'credentials.',
+      busy: _connecting,
+      error: _signInError,
+      onSubmit: _submit,
+      fields: [
+        StreamTextField(
+          controller: _host,
+          label: 'Host',
+          hint: '192.168.1.10',
+          icon: Icons.dns_outlined,
+          keyboardType: TextInputType.url,
+          validator: requiredField('The host'),
+        ),
+        StreamTextField(
+          controller: _share,
+          label: 'Share',
+          hint: 'Music',
+          icon: Icons.folder_shared_outlined,
+          validator: requiredField('The share'),
+        ),
+        StreamTextField(
+          controller: _user,
+          label: 'Username (optional)',
+          icon: Icons.person_outline_rounded,
+          autofillHints: const [AutofillHints.username],
+        ),
+        StreamTextField(
+          controller: _pass,
+          label: 'Password (optional)',
+          icon: Icons.lock_outline_rounded,
+          obscure: true,
+        ),
+        if (_store.keychainUnavailable.value)
+          Text(
+            'Password not saved: no system keychain.',
+            style: Tokens.label.copyWith(color: Tokens.amber),
+          ),
+        StreamTextField(
+          controller: _domain,
+          label: 'Domain (optional)',
+          icon: Icons.workspaces_outline,
+          last: true,
+          onSubmitted: _submit,
+        ),
+      ],
+    ),
   );
 
   Widget _pathBar() {

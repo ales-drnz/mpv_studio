@@ -1,7 +1,6 @@
 import 'package:dart_smb2/dart_smb2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../source_failure.dart';
 
@@ -21,45 +20,6 @@ class SambaLogin {
   final String user;
   final String password;
   final String domain;
-
-  static const _kHost = 'samba.host';
-  static const _kShare = 'samba.share';
-  static const _kUser = 'samba.user';
-  static const _kPass = 'samba.pass';
-  static const _kDomain = 'samba.domain';
-
-  /// The login saved by [save], or null when there is none.
-  static Future<SambaLogin?> load() async {
-    final p = await SharedPreferences.getInstance();
-    final host = p.getString(_kHost);
-    final share = p.getString(_kShare);
-    if (host == null || share == null) return null;
-    return SambaLogin(
-      host: host,
-      share: share,
-      user: p.getString(_kUser) ?? '',
-      password: p.getString(_kPass) ?? '',
-      domain: p.getString(_kDomain) ?? '',
-    );
-  }
-
-  /// Saves this login, so the tab reconnects on the next launch.
-  Future<void> save() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString(_kHost, host);
-    await p.setString(_kShare, share);
-    await p.setString(_kUser, user);
-    await p.setString(_kPass, password);
-    await p.setString(_kDomain, domain);
-  }
-
-  /// Forgets the saved login.
-  static Future<void> clear() async {
-    final p = await SharedPreferences.getInstance();
-    for (final k in [_kHost, _kShare, _kUser, _kPass, _kDomain]) {
-      await p.remove(k);
-    }
-  }
 }
 
 /// One entry of a share folder.
