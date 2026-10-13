@@ -92,6 +92,19 @@ class _SignalChainViewState extends State<SignalChainView> {
 
   RackController get rack => widget.rack;
 
+  @override
+  void initState() {
+    super.initState();
+    // Back on the page with a stage left open: show its controls, as when
+    // it was opened.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final open = rack.focused;
+      if (mounted && open != null && _mode == RackMode.inline) {
+        _revealNow(open);
+      }
+    });
+  }
+
   /// Opens stage [id] the way the current mode shows it.
   void _open(int id) {
     if (_mode == RackMode.inline) {
@@ -152,31 +165,33 @@ class _SignalChainViewState extends State<SignalChainView> {
   /// fits, else its top, so the controls of a stage just opened are on
   /// screen instead of under the bottom edge.
   void _reveal(int id) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _tiles[id]?.currentContext;
-      if (ctx == null || !ctx.mounted) return;
-      final box = ctx.findRenderObject();
-      final scrollable = Scrollable.maybeOf(ctx);
-      if (box is! RenderBox || !box.attached || scrollable == null) return;
-      final viewport = RenderAbstractViewport.maybeOf(box);
-      if (viewport == null) return;
-      final position = scrollable.position;
-      final atTop = viewport.getOffsetToReveal(box, 0).offset;
-      final atBottom = viewport.getOffsetToReveal(box, 1).offset;
-      var target = position.pixels;
-      if (box.size.height > position.viewportDimension || target > atTop) {
-        target = atTop;
-      } else if (target < atBottom) {
-        target = atBottom;
-      }
-      target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
-      if ((target - position.pixels).abs() < 1) return;
-      position.animateTo(
-        target,
-        duration: kNavTransition,
-        curve: Curves.easeOutCubic,
-      );
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revealNow(id));
+  }
+
+  void _revealNow(int id) {
+    final ctx = _tiles[id]?.currentContext;
+    if (ctx == null || !ctx.mounted) return;
+    final box = ctx.findRenderObject();
+    final scrollable = Scrollable.maybeOf(ctx);
+    if (box is! RenderBox || !box.attached || scrollable == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null) return;
+    final position = scrollable.position;
+    final atTop = viewport.getOffsetToReveal(box, 0).offset;
+    final atBottom = viewport.getOffsetToReveal(box, 1).offset;
+    var target = position.pixels;
+    if (box.size.height > position.viewportDimension || target > atTop) {
+      target = atTop;
+    } else if (target < atBottom) {
+      target = atBottom;
+    }
+    target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    if ((target - position.pixels).abs() < 1) return;
+    position.animateTo(
+      target,
+      duration: kNavTransition,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Widget _chain({required bool inline, required bool quick, double end = 0}) {

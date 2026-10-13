@@ -13,8 +13,9 @@ enum RackMode {
   split,
 
   /// One stage at a time, covering the chain like a pushed page, with
-  /// back to close it (phones, touch, and low windows, where only a page
-  /// of its own leaves the editor enough height).
+  /// back to close it (phones, touch screens too narrow to split, and low
+  /// windows, where only a page of its own leaves the editor enough
+  /// height).
   detail;
 
   /// The chain's width when [split].
