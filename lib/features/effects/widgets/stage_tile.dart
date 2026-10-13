@@ -57,15 +57,12 @@ class StageTile extends StatelessWidget {
     final meter = isMeterStage(e);
     final title = stageTitle(e);
 
-    final handleIcon = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
-      child: SizedBox(
-        height: layout.minTap,
-        child: Icon(
-          Icons.drag_indicator_rounded,
-          size: 18,
-          color: Tokens.fgFaint,
-        ),
+    final handleIcon = SizedBox.square(
+      dimension: layout.minTap,
+      child: Icon(
+        Icons.drag_indicator_rounded,
+        size: 18,
+        color: Tokens.fgFaint,
       ),
     );
     final handle = Semantics(

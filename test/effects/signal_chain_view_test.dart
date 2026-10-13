@@ -361,6 +361,16 @@ void main() {
         final r = tester.getRect(find.byKey(key));
         expect(r.height, greaterThanOrEqualTo(48), reason: '$key');
       }
+      final handle = tester.getRect(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.drag_indicator_rounded),
+              matching: find.byType(SizedBox),
+            )
+            .first,
+      );
+      expect(handle.width, greaterThanOrEqualTo(48), reason: 'drag handle');
+      expect(handle.height, greaterThanOrEqualTo(48), reason: 'drag handle');
     });
   });
 
