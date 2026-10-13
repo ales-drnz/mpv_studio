@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -69,12 +67,13 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
     final groups = _groups();
     final q = _query.trim().toLowerCase();
     final showRaw = q.isEmpty || 'raw lavfi'.contains(q);
-    // The dialog and the sheet scroll their content as a whole; a fixed
-    // height keeps the search field in place over a list of its own.
-    final height = math.max(
-      240.0,
-      math.min(560.0, MediaQuery.sizeOf(context).height * 0.6),
-    );
+    // The dialog and the sheet scroll their content as a whole; a height
+    // that fits what the keyboard leaves (less the title, the handle and
+    // the padding around) keeps the search field in place over a list
+    // that is the only thing scrolling.
+    final mq = MediaQuery.of(context);
+    final room = (mq.size.height - mq.viewInsets.bottom) * 0.9 - 120;
+    final height = room.clamp(120.0, 560.0);
 
     final entries = <Widget>[
       if (showRaw)

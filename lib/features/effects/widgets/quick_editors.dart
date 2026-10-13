@@ -199,12 +199,19 @@ class _ScrollingRowState extends State<_ScrollingRow> {
           ],
           stops: const [0, 0.08, 0.92, 1],
         ).createShader(rect),
-        child: ListView.separated(
-          controller: _scroll,
-          scrollDirection: Axis.horizontal,
-          itemCount: widget.children.length,
-          separatorBuilder: (_, _) => const SizedBox(width: Tokens.s8),
-          itemBuilder: (_, i) => widget.children[i],
+        // A resize or rotation changes what is hidden without a scroll.
+        child: NotificationListener<ScrollMetricsNotification>(
+          onNotification: (_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+            return false;
+          },
+          child: ListView.separated(
+            controller: _scroll,
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.children.length,
+            separatorBuilder: (_, _) => const SizedBox(width: Tokens.s8),
+            itemBuilder: (_, i) => widget.children[i],
+          ),
         ),
       ),
     );
