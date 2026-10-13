@@ -62,6 +62,9 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
   late Duration _position;
   late Duration _duration;
 
+  /// The active chapter's own title tag (`chapterMetadata`), if any.
+  String? _chapterTitle;
+
   PlayerApi get _player => widget.actions.player;
 
   @override
@@ -72,6 +75,7 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
     _chapters = s.chapters;
     _position = s.position;
     _duration = s.duration;
+    _chapterTitle = _titleTag(s.chapterMetadata);
     final st = _player.stream;
     void on<T>(Stream<T> stream, void Function(T v) apply) => _subs.add(
       stream.listen((v) {
@@ -82,6 +86,16 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
     on(st.chapters, (c) => _chapters = c);
     on(st.position, (p) => _position = p);
     on(st.duration, (d) => _duration = d);
+    on(st.chapterMetadata, (m) => _chapterTitle = _titleTag(m));
+  }
+
+  static String? _titleTag(Map<String, String> tags) {
+    for (final e in tags.entries) {
+      if (e.key.toLowerCase() == 'title' && e.value.trim().isNotEmpty) {
+        return e.value.trim();
+      }
+    }
+    return null;
   }
 
   static String _titleOf(Playlist pl) {
@@ -131,8 +145,10 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
             chapters: _chapters,
             position: _position,
             duration: _duration,
+            activeTitle: _chapterTitle,
             onSeekChapter: (i) =>
                 widget.actions.guard(() => _player.setChapter(i)),
+            onSeek: (p) => widget.actions.guard(() => _player.seek(p)),
           ),
         ],
       ),

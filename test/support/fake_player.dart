@@ -141,6 +141,9 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<String> get mediaTitle => _s((s) => s.mediaTitle);
   @override
+  Stream<Map<String, String>> get chapterMetadata =>
+      _s((s) => s.chapterMetadata);
+  @override
   Stream<CoverArt?> get coverArt => _s((s) => s.coverArt);
   @override
   Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
