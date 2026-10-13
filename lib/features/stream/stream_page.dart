@@ -25,6 +25,14 @@ enum StreamTab {
 
   final String label;
   const StreamTab(this.label);
+
+  /// The tab called [name] (`lab`, `plex`...), or null for anything else.
+  static StreamTab? byName(String? name) {
+    for (final t in values) {
+      if (t.name == name) return t;
+    }
+    return null;
+  }
 }
 
 /// The Stream section: network sources, one tab each. **Lab** plays the
@@ -36,7 +44,11 @@ enum StreamTab {
 /// Reads the player, the servers and the favourites from the app's
 /// [PlayerScope]; [StreamView] is the page itself.
 class StreamPage extends StatelessWidget {
-  const StreamPage({super.key});
+  const StreamPage({super.key, this.initialTab});
+
+  /// The tab to show, from the route (`/stream?tab=jellyfin`); Lab when
+  /// null.
+  final StreamTab? initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +64,7 @@ class StreamPage extends StatelessWidget {
       plex: PlayerScope.serverOf(context, ServerKind.plex),
       favorites: PlayerScope.favoritesOf(context),
       resolver: SignedUrlResolver.shared,
+      initialTab: initialTab ?? StreamTab.lab,
     );
   }
 }
@@ -96,6 +109,16 @@ class _StreamViewState extends State<StreamView>
 
   void _onTab() {
     if (!_tabs.indexIsChanging) setState(() {});
+  }
+
+  @override
+  void didUpdateWidget(StreamView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The page stays alive, so a later route asking for another tab (the
+    // welcome screen's "Connect a server") moves to it here.
+    if (widget.initialTab != oldWidget.initialTab) {
+      _tabs.animateTo(widget.initialTab.index);
+    }
   }
 
   @override
