@@ -140,14 +140,6 @@ class AppTheme {
           visualDensity: buttonDensity,
         ),
       ),
-      chipTheme: ChipThemeData(
-        shape: const StadiumBorder(),
-        side: BorderSide.none,
-        backgroundColor: p.surface3,
-        selectedColor: p.accentContainer,
-        labelStyle: text(13, FontWeight.w500, p.fg),
-        padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
-      ),
       // A bare TextField looks like the app's field (AppTextField): a
       // field pill, a body size hint, an accent ring while focused.
       inputDecorationTheme: InputDecorationThemeData(
@@ -188,27 +180,6 @@ class AppTheme {
         textStyle: text(11, FontWeight.w700, p.onAccent),
       ),
       iconTheme: IconThemeData(color: p.fgDim, size: 22),
-      sliderTheme: SliderThemeData(
-        // Flat slider: thin track, small thumb, NO overlay or glow halo.
-        trackHeight: 8,
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 0),
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-        activeTrackColor: p.accent,
-        inactiveTrackColor: p.surface4,
-        thumbColor: p.accent,
-        overlayColor: Colors.transparent,
-        secondaryActiveTrackColor: p.accentDim,
-      ),
-      switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? p.onAccent : p.fgFaint,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? p.accent : p.surface4,
-        ),
-        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
-        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-      ),
       tooltipTheme: TooltipThemeData(
         decoration: ShapeDecoration(color: p.surface4, shape: Tokens.pill),
         padding: const EdgeInsets.symmetric(
