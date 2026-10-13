@@ -115,7 +115,10 @@ class PlexTranscodeSessionManager {
     if (e is! Map) return null;
     final ratingKey = e['ratingKey'], codec = e['codec'];
     if (ratingKey is! String || codec is! String) return null;
-    debugPrint('PlexTranscode: rebuilding session $marker from its entry');
+    StudioLog.write(
+      'PlexTranscode: rebuilding session $marker from its entry',
+      level: LogLevel.v,
+    );
     return _add(
       marker,
       ratingKey: ratingKey,

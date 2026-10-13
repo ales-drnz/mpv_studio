@@ -177,7 +177,10 @@ class _SambaTabState extends State<SambaTab> {
     try {
       await SambaLogin.clear();
     } catch (e) {
-      debugPrint('Samba: saved login not cleared: $e');
+      StudioLog.write(
+        'Samba: saved login not cleared: $e',
+        level: LogLevel.warn,
+      );
     }
   }
 
