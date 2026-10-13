@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../audio/pcm_analysis.dart';
 import '../../../ui/chart_text.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../rack_environment.dart';
 
@@ -125,7 +126,7 @@ class _StageMetersState extends State<StageMeters> {
       label: 'Stage meters, before and after',
       value: widget.active ? null : widget.idleText,
       child: Container(
-        height: 72,
+        height: context.layout.isShort ? 52 : 72,
         decoration: ShapeDecoration(
           color: Tokens.bg,
           shape: Tokens.squircle(Tokens.rSm),
@@ -163,19 +164,21 @@ class _MetersPainter extends CustomPainter {
     }
     // Readouts: IN, OUT and the change.
     final x = size.width - _readoutW + 8;
+    // Three 10 px lines spread over the height.
+    final step = (size.height - 30) / 4;
     final inDb = pre.rmsDb;
     final outDb = post.rmsDb;
     paintChartLabel(
       canvas,
       'IN  ${_db(inDb)}',
-      Offset(x, 12),
+      Offset(x, step),
       Tokens.fgDim,
       fontSize: 10,
     );
     paintChartLabel(
       canvas,
       'OUT ${_db(outDb)}',
-      Offset(x, 30),
+      Offset(x, 2 * step + 10),
       Tokens.accent,
       fontSize: 10,
     );
@@ -186,7 +189,7 @@ class _MetersPainter extends CustomPainter {
       silent
           ? 'no signal'
           : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} dB',
-      Offset(x, 48),
+      Offset(x, 3 * step + 20),
       silent
           ? Tokens.fgFaint
           : delta.abs() < 0.5

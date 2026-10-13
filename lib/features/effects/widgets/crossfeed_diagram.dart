@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 
 /// A schematic of headphone crossfeed: two channel sources feeding a
 /// listener, with the straight same-ear paths always on and the crossed
@@ -28,7 +29,7 @@ class CrossfeedDiagram extends StatelessWidget {
           'bleed ${(strength * 100).round()}%, '
           'range ${(range * 100).round()}%',
       child: SizedBox(
-        height: 132,
+        height: graphicHeight(context, 0, min: 132, max: 132),
         width: double.infinity,
         child: CustomPaint(
           size: Size.infinite,

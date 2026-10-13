@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 
 /// A before/after sketch of the crystalizer. A representative waveform is
 /// drawn faintly (the input) under the same waveform run through the
@@ -30,7 +31,13 @@ class CrystalizerWaveform extends StatelessWidget {
           'intensity ${intensity.toStringAsFixed(1)}',
       child: LayoutBuilder(
         builder: (context, c) => SizedBox(
-          height: (c.maxWidth * 0.2).clamp(110.0, 170.0),
+          height: graphicHeight(
+            context,
+            c.maxWidth,
+            ratio: 0.2,
+            min: 110,
+            max: 170,
+          ),
           width: double.infinity,
           child: CustomPaint(
             size: Size.infinite,

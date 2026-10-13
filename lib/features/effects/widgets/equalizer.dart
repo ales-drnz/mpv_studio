@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 
 /// The 18 fixed bands of ffmpeg's `superequalizer`, in order. The key is
 /// the raw ffmpeg option name (digit-prefixed, so it lives in the
@@ -121,7 +122,13 @@ class _EqualizerState extends State<Equalizer> {
     return LayoutBuilder(
       builder: (context, c) {
         // Taller on wide editors so the curve keeps its shape.
-        final height = (c.maxWidth * 0.32).clamp(168.0, 260.0);
+        final height = graphicHeight(
+          context,
+          c.maxWidth,
+          ratio: 0.32,
+          min: 168,
+          max: 260,
+        );
         final size = Size(c.maxWidth, height);
         return Semantics(
           label: '18-band equalizer curve',

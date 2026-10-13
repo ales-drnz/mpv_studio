@@ -8,6 +8,7 @@ import '../../../audio/dynamics.dart';
 import '../../../audio/pcm_analysis.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 import '../rack_environment.dart';
 
 /// The compressor's transfer curve — the universal dB-in / dB-out knee
@@ -147,7 +148,13 @@ class _CompressorCurveState extends State<CompressorCurve> {
           'make-up ${amplitudeToDb(w.makeup).round()} dB',
       child: LayoutBuilder(
         builder: (context, c) => SizedBox(
-          height: (c.maxWidth * 0.3).clamp(150.0, 240.0),
+          height: graphicHeight(
+            context,
+            c.maxWidth,
+            ratio: 0.3,
+            min: 150,
+            max: 240,
+          ),
           width: double.infinity,
           child: RepaintBoundary(
             child: CustomPaint(

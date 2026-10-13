@@ -8,6 +8,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../audio/pcm_analysis.dart';
 import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
+import 'graphic_height.dart';
 import '../rack_environment.dart';
 
 /// A stereo vectorscope (goniometer) — the live picture of the stereo
@@ -87,7 +88,7 @@ class _StereoScopeState extends State<StereoScope> {
       label: 'Stereo vectorscope with phase correlation',
       value: widget.enabled ? null : 'Stage is off',
       child: SizedBox(
-        height: 188,
+        height: graphicHeight(context, 0, min: 188, max: 188),
         width: double.infinity,
         child: RepaintBoundary(
           child: CustomPaint(
