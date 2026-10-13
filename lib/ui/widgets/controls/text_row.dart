@@ -7,7 +7,7 @@ import 'setting_tile.dart';
 /// Title (+ description) with a full-width single-line text field beneath,
 /// in the same flat squircle language as the other controls. Seeds its
 /// editing buffer from [value]; reports edits through [onChanged] and the
-/// Enter key through [onSubmitted]. The controller is reseeded only when
+/// Enter key through [onSubmitted] (give either or both). The controller is reseeded only when
 /// [value] changes from outside (e.g. a reset) and the field isn't
 /// focused, so live typing is never clobbered.
 class TextRow extends StatefulWidget {
@@ -15,7 +15,7 @@ class TextRow extends StatefulWidget {
   final String? description;
   final String value;
   final String? hint;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
   final bool enabled;
 
   /// Called with the text when the user presses Enter.
@@ -31,7 +31,7 @@ class TextRow extends StatefulWidget {
     super.key,
     required this.label,
     required this.value,
-    required this.onChanged,
+    this.onChanged,
     this.description,
     this.hint,
     this.enabled = true,

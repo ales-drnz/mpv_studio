@@ -88,7 +88,8 @@ class SliderRow extends StatelessWidget {
 /// It is focusable: the arrow keys step it (a division, or a hundredth of
 /// the range), Home and End jump to the ends. Screen readers see a slider
 /// named [semanticLabel] with the value [semanticValue] prints. On touch
-/// the hit area is a full tap target tall.
+/// the hit area is a full tap target tall and the thumb grows to fit a
+/// finger; with a pointer the slider stays dense.
 class AppSlider extends StatefulWidget {
   final double value;
   final double min;
@@ -118,7 +119,6 @@ class AppSlider extends StatefulWidget {
 }
 
 class _AppSliderState extends State<AppSlider> {
-  static const double _thumb = 16;
   static const double _track = 6;
   static const double _pointerHeight = 24;
 
@@ -179,6 +179,9 @@ class _AppSliderState extends State<AppSlider> {
   Widget build(BuildContext context) {
     final min = widget.min, max = widget.max, value = widget.value;
     final enabled = widget.enabled;
+    // On touch the thumb and the grab band grow to fit a finger.
+    final touch = context.layout.isTouch;
+    final thumb = touch ? 22.0 : 16.0;
     final height = math.max(_pointerHeight, context.layout.minTap);
     final up = _snap(value + _step), down = _snap(value - _step);
     return Semantics(
@@ -198,13 +201,13 @@ class _AppSliderState extends State<AppSlider> {
           cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
           child: LayoutBuilder(
             builder: (context, c) {
-              final span = (c.maxWidth - _thumb).clamp(1.0, double.infinity);
+              final span = (c.maxWidth - thumb).clamp(1.0, double.infinity);
               final frac = max <= min
                   ? 0.0
                   : ((value - min) / (max - min)).clamp(0.0, 1.0);
 
               double valueAt(double dx) {
-                final t = ((dx - _thumb / 2) / span).clamp(0.0, 1.0);
+                final t = ((dx - thumb / 2) / span).clamp(0.0, 1.0);
                 return _snap(min + t * (max - min));
               }
 
@@ -239,7 +242,7 @@ class _AppSliderState extends State<AppSlider> {
                       // Accent fill up to the thumb centre.
                       Container(
                         height: _track,
-                        width: _thumb / 2 + frac * span,
+                        width: thumb / 2 + frac * span,
                         decoration: ShapeDecoration(
                           color: enabled ? Tokens.accent : Tokens.fgFaint,
                           shape: Tokens.squircle(Tokens.rPill),
@@ -249,12 +252,12 @@ class _AppSliderState extends State<AppSlider> {
                       Positioned(
                         left: frac * span,
                         child: Container(
-                          width: _thumb,
-                          height: _thumb,
+                          width: thumb,
+                          height: thumb,
                           decoration: ShapeDecoration(
                             color: enabled ? Tokens.fg : Tokens.fgFaint,
                             shape: Tokens.squircle(
-                              8,
+                              thumb / 2,
                               side: _focused
                                   ? BorderSide(color: Tokens.accent, width: 2)
                                   : BorderSide.none,

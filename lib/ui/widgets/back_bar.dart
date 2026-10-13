@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import '../layout/layout_scope.dart';
 import '../tokens.dart';
 
-/// The flat in-page navigation header shown atop any pushed detail or
-/// list screen: a back chevron + title, with the whole row tappable.
-///
-/// Shared so every grid→detail view and full-page list (e.g. the effects
-/// catalog category screen) uses the *identical* bar — same height, glyph,
-/// and title type — instead of a one-off Material [AppBar].
+/// A flat back row for a pushed screen: a back chevron and a title, with
+/// the whole row tappable, at least a tap target tall. Pages built on
+/// `PageFrame` get the same affordance from its `onBack` instead.
 class BackBar extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
