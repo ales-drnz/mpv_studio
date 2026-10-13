@@ -38,7 +38,8 @@ class PlayerEffectsEngine implements EffectsEngine {
 }
 
 /// The state behind the Signal chain rack: the user's ordered chain, the
-/// global bypass, which stages are open, and the last error. The player
+/// global bypass, which stages are open (in the order they were opened),
+/// and the last error. The player
 /// stays the source of truth: the rack writes through [EffectsEngine.apply]
 /// and follows what the engine reports.
 ///
@@ -86,7 +87,7 @@ class RackController extends ChangeNotifier {
 
   /// How many open stages get their before and after meters. libmpv taps
   /// eight stages at once across the process; the rest is left to other
-  /// surfaces (the compressor curve on its quick editor, for one).
+  /// surfaces (the Now Playing visualizers, for one).
   final int maxTappedStages;
 
   late final StreamSubscription<List<AudioEffect>> _sub;
@@ -98,6 +99,8 @@ class RackController extends ChangeNotifier {
 
   bool _bypass = false;
   String? _error;
+
+  /// The open stages, oldest first (a set literal keeps insertion order).
   final Set<int> _expanded = {};
 
   Timer? _throttleTimer;
@@ -115,6 +118,10 @@ class RackController extends ChangeNotifier {
   String? get error => _error;
 
   bool isExpanded(int id) => _expanded.contains(id);
+
+  /// The stage opened last that is still open: the one a detail pane
+  /// shows when the rack edits one stage at a time.
+  int? get focused => _expanded.isEmpty ? null : _expanded.last;
 
   /// The list the engine plays for the current state.
   List<AudioEffect> get engineChain =>
@@ -199,6 +206,31 @@ class RackController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Opens stage [id] and makes it [focused]. With [only], every other
+  /// stage closes: the detail layouts edit one stage at a time.
+  void open(int id, {bool only = false}) {
+    if (_chain.stage(id) == null) return;
+    if (only) _expanded.clear();
+    _expanded
+      ..remove(id)
+      ..add(id);
+    notifyListeners();
+  }
+
+  /// Closes every open stage.
+  void closeAll() {
+    if (_expanded.isEmpty) return;
+    _expanded.clear();
+    notifyListeners();
+  }
+
+  /// Shows [message] as the rack's [error], for a failure next to the
+  /// chain (a model file that could not be copied, a file picker error).
+  void reportError(String message) {
+    _error = message;
+    notifyListeners();
+  }
+
   void clearError() {
     if (_error == null) return;
     _error = null;
@@ -208,8 +240,8 @@ class RackController extends ChangeNotifier {
   // ---- Taps -----------------------------------------------------------
 
   /// Whether stage [id] gets its before and after meters: open, switched
-  /// on, with a filter, not bypassed, and within [maxTappedStages] of the
-  /// open stages counted from the top.
+  /// on, with a filter, not bypassed, and within the [maxTappedStages]
+  /// stages opened last, so the stage just opened always gets them.
   bool tapGranted(int id) => _tapped().contains(id);
 
   /// Open stages that would have meters but are over the tap budget.
@@ -217,11 +249,10 @@ class RackController extends ChangeNotifier {
 
   List<int> _tappable() => [
     if (!_bypass)
-      for (final s in _chain.stages)
-        if (_expanded.contains(s.id) &&
-            s.effect.enabled &&
-            s.effect.filter != null)
-          s.id,
+      for (final id in _expanded.toList().reversed)
+        if (_chain.stage(id)?.effect case final e?
+            when e.enabled && e.filter != null)
+          id,
   ];
 
   Set<int> _tapped() => _tappable().take(maxTappedStages).toSet();
