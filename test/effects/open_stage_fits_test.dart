@@ -18,6 +18,8 @@ import 'rack_harness.dart';
 void main() {
   final sizes = <(String, Size, InputMode)>[
     ('715x430', const Size(715, 430), InputMode.pointer),
+    ('715x400', const Size(715, 400), InputMode.pointer),
+    ('800x560 (inline)', const Size(800, 560), InputMode.pointer),
     ('800x450', const Size(800, 450), InputMode.pointer),
     ('1280x500', const Size(1280, 500), InputMode.pointer),
     // 1280x500 with the desktop sidebar beside the page.
