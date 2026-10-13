@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/effects/rack_controller.dart';
+import '../studio/playback_issues.dart';
 import '../ui/tokens.dart';
 import '../util/duration_format.dart';
 import '../util/reactive.dart';
@@ -12,12 +13,14 @@ import '../util/reactive.dart';
 /// `playbackState`, and the FX bypass toggle of the effects [rack].
 ///
 /// [compact] trims it for the mobile shell, where it sits above the tab
-/// bar. [onOpen] (tapping the cover or the title) goes to Playback.
+/// bar. [onOpen] (tapping the cover or the title) goes to Playback. The
+/// player calls run through [guard].
 class MiniPlayer extends StatelessWidget {
   final PlayerApi player;
   final RackController? rack;
   final VoidCallback? onOpen;
   final bool compact;
+  final CallGuard guard;
 
   const MiniPlayer({
     super.key,
@@ -25,6 +28,7 @@ class MiniPlayer extends StatelessWidget {
     this.rack,
     this.onOpen,
     this.compact = false,
+    this.guard = unguarded,
   });
 
   @override
@@ -40,7 +44,7 @@ class MiniPlayer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            MiniProgressBar(player: player),
+            MiniProgressBar(player: player, guard: guard),
             Padding(
               padding: EdgeInsets.fromLTRB(
                 compact ? Tokens.s12 : Tokens.s16,
@@ -75,11 +79,11 @@ class MiniPlayer extends StatelessWidget {
                     FxBypassToggle(rack: rack!, compact: compact),
                     SizedBox(width: compact ? Tokens.s2 : Tokens.s8),
                   ],
-                  _PlayPause(player: player),
+                  _PlayPause(player: player, guard: guard),
                   _MiniGlyph(
                     icon: Icons.skip_next_rounded,
                     tooltip: 'Next',
-                    onTap: player.next,
+                    onTap: () => guard(player.next),
                   ),
                 ],
               ),
@@ -95,7 +99,12 @@ class MiniPlayer extends StatelessWidget {
 /// drag anywhere on it to seek; the hit area is taller than the line.
 class MiniProgressBar extends StatelessWidget {
   final PlayerApi player;
-  const MiniProgressBar({super.key, required this.player});
+  final CallGuard guard;
+  const MiniProgressBar({
+    super.key,
+    required this.player,
+    this.guard = unguarded,
+  });
 
   static const double _hit = 14;
 
@@ -108,7 +117,7 @@ class MiniProgressBar extends StatelessWidget {
   void _seekAt(double dx, double width, Duration duration) {
     if (width <= 0 || duration <= Duration.zero) return;
     final f = (dx / width).clamp(0.0, 1.0);
-    player.seek(duration * f);
+    guard(() => player.seek(duration * f));
   }
 
   @override
@@ -138,10 +147,20 @@ class MiniProgressBar extends StatelessWidget {
                 ? _of(position - const Duration(seconds: 5), duration)
                 : null,
             onIncrease: seekable
-                ? () => player.seek(const Duration(seconds: 5), relative: true)
+                ? () => guard(
+                      () => player.seek(
+                        const Duration(seconds: 5),
+                        relative: true,
+                      ),
+                    )
                 : null,
             onDecrease: seekable
-                ? () => player.seek(const Duration(seconds: -5), relative: true)
+                ? () => guard(
+                      () => player.seek(
+                        const Duration(seconds: -5),
+                        relative: true,
+                      ),
+                    )
                 : null,
             child: Tooltip(
               message: seekable
@@ -308,7 +327,8 @@ class _MiniTitle extends StatelessWidget {
 /// `playbackState` is loading or buffering.
 class _PlayPause extends StatelessWidget {
   final PlayerApi player;
-  const _PlayPause({required this.player});
+  final CallGuard guard;
+  const _PlayPause({required this.player, required this.guard});
 
   @override
   Widget build(BuildContext context) {
@@ -332,7 +352,7 @@ class _PlayPause extends StatelessWidget {
             label: action,
             value: stateLabel,
             excludeSemantics: true,
-            onTap: () => wants ? player.pause() : player.play(),
+            onTap: () => guard(wants ? player.pause : player.play),
             child: Tooltip(
               message: stateLabel == null ? action : '$action ($stateLabel)',
               child: SizedBox.square(
@@ -353,7 +373,7 @@ class _PlayPause extends StatelessWidget {
                     Material(
                       type: MaterialType.transparency,
                       child: InkWell(
-                        onTap: () => wants ? player.pause() : player.play(),
+                        onTap: () => guard(wants ? player.pause : player.play),
                         customBorder: const CircleBorder(),
                         child: Container(
                           width: 36,

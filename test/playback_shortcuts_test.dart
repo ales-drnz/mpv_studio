@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/shell/playback_shortcuts.dart';
+import 'package:mpv_studio/studio/playback_issues.dart';
 
 import 'support/fake_player.dart';
 
@@ -9,6 +10,7 @@ Future<void> _pump(
   WidgetTester tester,
   FakePlayer player, {
   bool enabled = true,
+  CallGuard guard = unguarded,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -16,6 +18,7 @@ Future<void> _pump(
         body: PlaybackShortcuts(
           player: player,
           enabled: enabled,
+          guard: guard,
           child: const Column(
             children: [
               TextField(key: ValueKey('field')),
@@ -53,6 +56,23 @@ void main() {
       'next',
       'previous',
     ]);
+  });
+
+  testWidgets('the calls run through the guard', (tester) async {
+    var guarded = 0;
+    await _pump(
+      tester,
+      player,
+      guard: (call) async {
+        guarded++;
+        await call();
+      },
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    expect(guarded, 3);
+    expect(player.calls, ['play', 'seek +5000', 'next']);
   });
 
   testWidgets('holding an arrow keeps seeking', (tester) async {

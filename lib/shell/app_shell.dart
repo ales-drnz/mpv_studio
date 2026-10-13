@@ -50,6 +50,7 @@ class _AppShellState extends State<AppShell> {
     final navigationShell = widget.navigationShell;
     final section = Section.values[navigationShell.currentIndex];
     final player = PlayerScope.of(context);
+    final guard = PlayerScope.issuesOf(context).guard;
     // The mini-player rides along everywhere but Playback, which already
     // shows the full transport.
     Widget? mini(bool compact) => section == Section.nowPlaying
@@ -58,6 +59,7 @@ class _AppShellState extends State<AppShell> {
             player: player,
             rack: PlayerScope.rackOf(context),
             compact: compact,
+            guard: guard,
             onOpen: () => _select(Section.nowPlaying),
           );
 
@@ -75,6 +77,7 @@ class _AppShellState extends State<AppShell> {
           return PlaybackShortcuts(
             player: player,
             enabled: desktop,
+            guard: guard,
             child: desktop
                 ? DesktopShell(
                     section: section,

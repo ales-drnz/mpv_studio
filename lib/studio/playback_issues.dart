@@ -5,6 +5,14 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../util/media_labels.dart';
 
+/// Runs a player call for a control: [PlaybackIssues.guard] in the app,
+/// so what the call throws becomes a toast.
+typedef CallGuard = Future<void> Function(FutureOr<void> Function() call);
+
+/// A [CallGuard] that only runs the call, for a control hosted without
+/// the app around it (the widget tests).
+Future<void> unguarded(FutureOr<void> Function() call) async => call();
+
 /// One readable problem for the user, shown as a toast by the shell.
 @immutable
 class PlaybackNotice {
