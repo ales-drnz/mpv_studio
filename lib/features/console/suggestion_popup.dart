@@ -5,8 +5,9 @@ import '../../ui/tokens.dart';
 import 'completion_engine.dart';
 
 /// The autocomplete popup: a flat list of [Suggestion]s that sits just
-/// above the console input and grows upward, Minecraft-style. The selected
-/// row is washed in accent and bolds the typed match.
+/// above the console input and grows upward, Minecraft-style: a tonal
+/// panel of pill rows, the selected one in the secondary selection fill.
+/// The typed match is bold.
 ///
 /// A command row shows its name with the **description underneath** and its
 /// **argument signature to the right** (the parameters that follow as you
@@ -40,7 +41,7 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
   double get _rowHeight {
     final twoLines = widget.suggestions.any((s) => s.description != null);
     final scale = MediaQuery.textScalerOf(context).scale(1);
-    final base = (twoLines ? 44.0 : 30.0) * scale.clamp(1.0, 2.0);
+    final base = (twoLines ? 48.0 : 36.0) * scale.clamp(1.0, 2.0);
     return context.layout.isTouch && base < 52 ? 52 : base;
   }
 
@@ -56,13 +57,15 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
   void _keepVisible() {
     if (!_scroll.hasClients) return;
     final h = _rowHeight;
-    final target = widget.selected * h;
+    final target = Tokens.s4 + widget.selected * h;
     final top = _scroll.offset;
     final bottom = top + _scroll.position.viewportDimension;
     if (target < top) {
-      _scroll.jumpTo(target);
+      _scroll.jumpTo(target - Tokens.s4);
     } else if (target + h > bottom) {
-      _scroll.jumpTo(target + h - _scroll.position.viewportDimension);
+      _scroll.jumpTo(
+        target + h + Tokens.s4 - _scroll.position.viewportDimension,
+      );
     }
   }
 
@@ -72,52 +75,44 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
     super.dispose();
   }
 
-  Color _accent(SuggestionKind kind) => switch (kind) {
-    SuggestionKind.command => Tokens.accent,
-    SuggestionKind.property => Tokens.green,
-    SuggestionKind.value => Tokens.amber,
-  };
-
   @override
   Widget build(BuildContext context) {
     final rowHeight = _rowHeight;
     final visibleRows = widget.suggestions.length.clamp(1, 8);
     return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s4),
-      constraints: BoxConstraints(maxHeight: visibleRows * rowHeight + 2),
+      margin: const EdgeInsets.only(bottom: Tokens.s8),
+      constraints: BoxConstraints(
+        maxHeight: visibleRows * rowHeight + 2 * Tokens.s4,
+      ),
       decoration: ShapeDecoration(
         color: Tokens.surface3,
-        shape: Tokens.shape(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       clipBehavior: Clip.antiAlias,
       child: ListView.builder(
         controller: _scroll,
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.all(Tokens.s4),
         itemExtent: rowHeight,
         shrinkWrap: true,
         itemCount: widget.suggestions.length,
         itemBuilder: (context, i) {
           final s = widget.suggestions[i];
           final active = i == widget.selected;
+          final ink = active ? Tokens.onAccentContainer : null;
           return Material(
             type: MaterialType.transparency,
             child: InkWell(
               onTap: () => widget.onTap(i),
-              child: Container(
-                color: active ? Tokens.accentWash : Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+              customBorder: Tokens.shape(Tokens.rSm),
+              child: Ink(
+                decoration: ShapeDecoration(
+                  color: active ? Tokens.accentContainer : Colors.transparent,
+                  shape: Tokens.shape(Tokens.rSm),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 3,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: active ? _accent(s.kind) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: Tokens.s8),
                     // Name + (description underneath).
                     Expanded(
                       child: Column(
@@ -131,18 +126,20 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
                           ),
                           if (s.description != null)
                             Padding(
-                              padding: const EdgeInsets.only(top: 1),
+                              padding: const EdgeInsets.only(top: 2),
                               child: Text(
                                 s.description!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Tokens.caption.copyWith(fontSize: 10),
+                                style: Tokens.caption.copyWith(
+                                  color: ink ?? Tokens.fgFaint,
+                                ),
                               ),
                             ),
                         ],
                       ),
                     ),
-                    // Parameters / type tag, to the right.
+                    // Parameters or type tag, to the right.
                     if (s.detail != null) ...[
                       const SizedBox(width: Tokens.s8),
                       ConstrainedBox(
@@ -152,12 +149,13 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.end,
-                          style: TextStyle(
-                            fontFamily: Tokens.mono,
-                            fontSize: 10.5,
-                            color: s.kind == SuggestionKind.command
-                                ? Tokens.accentDim
-                                : Tokens.fgFaint,
+                          style: Tokens.numeric.copyWith(
+                            fontSize: 11,
+                            color:
+                                ink ??
+                                (s.kind == SuggestionKind.command
+                                    ? Tokens.fgDim
+                                    : Tokens.fgFaint),
                           ),
                         ),
                       ),
@@ -187,10 +185,9 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = TextStyle(
-      fontFamily: Tokens.mono,
-      fontSize: 12.5,
-      color: active ? Tokens.fg : Tokens.fgDim,
+    final base = Tokens.numeric.copyWith(
+      fontSize: 13,
+      color: active ? Tokens.onAccentContainer : Tokens.fgDim,
     );
     final i = match.isEmpty
         ? -1
@@ -211,8 +208,8 @@ class _Label extends StatelessWidget {
           TextSpan(
             text: label.substring(i, i + match.length),
             style: base.copyWith(
-              color: Tokens.accent,
-              fontWeight: FontWeight.w700,
+              color: active ? Tokens.onAccentContainer : Tokens.accent,
+              fontWeight: FontWeight.w800,
             ),
           ),
           TextSpan(text: label.substring(i + match.length)),
