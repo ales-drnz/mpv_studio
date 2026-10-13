@@ -92,7 +92,10 @@ Future<void> setLoopA(
 }
 
 /// Sets loop point B at [at]. When [at] comes before A, the two swap, so
-/// the loop always runs forwards.
+/// the loop always runs forwards. Like mpv's own `ab-loop` command, a
+/// playhead outside the new loop goes back to its start: mpv only loops on
+/// reaching B, so a B set at or behind the playhead would otherwise never
+/// take effect.
 Future<void> setLoopB(
   PlayerApi player,
   CallGuard guard,
@@ -101,12 +104,18 @@ Future<void> setLoopB(
 }) async {
   final a = player.state.abLoopA;
   final done = await guard(() async {
+    final Duration start;
+    final Duration end;
     if (a != null && at < a) {
-      await player.setAbLoopA(at);
-      await player.setAbLoopB(a);
+      (start, end) = (at, a);
+      await player.setAbLoopA(start);
+      await player.setAbLoopB(end);
     } else {
-      await player.setAbLoopB(at);
+      (start, end) = (a ?? Duration.zero, at);
+      await player.setAbLoopB(end);
     }
+    final pos = player.state.position;
+    if (pos < start || pos >= end) await player.seek(start);
     return true;
   });
   if (done == true) notify?.call('Loop B at ${formatDuration(at)}');

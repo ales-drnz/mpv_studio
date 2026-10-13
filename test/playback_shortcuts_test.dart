@@ -144,9 +144,11 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
       await tester.pump();
+      // B at the playhead sends it back to A, as mpv's own ab-loop does.
       expect(fake.calls, [
         'setAbLoopA 123000',
         'setAbLoopB 180000',
+        'seek 123000',
         'setAbLoopA null',
         'setAbLoopB null',
       ]);
@@ -161,6 +163,8 @@ void main() {
       await tester.pump();
       expect(fake.state.abLoopA, const Duration(minutes: 2, seconds: 3));
       expect(fake.state.abLoopB, const Duration(minutes: 3));
+      // The playhead (2:03) is the loop's start, so it stays put.
+      expect(fake.calls.where((c) => c.startsWith('seek')), isEmpty);
       await settleToast(tester);
     });
 
