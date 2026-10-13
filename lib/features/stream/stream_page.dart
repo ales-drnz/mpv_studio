@@ -133,6 +133,11 @@ class _StreamViewState extends State<StreamView>
     }
   }
 
+  /// The tabs opened so far. A tab is built on its first visit and kept
+  /// alive after, so opening the page on Lab does not reconnect to Samba
+  /// or page through both server libraries.
+  final _visited = <StreamTab>{};
+
   @override
   void dispose() {
     _tabs.dispose();
@@ -163,6 +168,7 @@ class _StreamViewState extends State<StreamView>
   Widget build(BuildContext context) {
     final layout = context.layout;
     final selected = _tabs.index;
+    _visited.add(StreamTab.values[selected]);
     return PageFrame(
       title: 'Stream',
       scrollable: false,
@@ -179,7 +185,9 @@ class _StreamViewState extends State<StreamView>
               active: tab.index == selected,
               child: TickerMode(
                 enabled: tab.index == selected,
-                child: _body(tab),
+                child: _visited.contains(tab)
+                    ? _body(tab)
+                    : const SizedBox.shrink(),
               ),
             ),
         ],

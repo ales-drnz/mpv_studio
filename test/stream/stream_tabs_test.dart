@@ -42,6 +42,30 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  testWidgets('a tab is built on its first visit only', (tester) async {
+    var sambaBuilt = 0;
+    await pumpAt(
+      tester,
+      streamView(
+        player: StreamPlayer(),
+        samba: Builder(
+          builder: (_) {
+            sambaBuilt++;
+            return const Text('samba body');
+          },
+        ),
+      ),
+      '1440x900',
+    );
+    expect(sambaBuilt, 0);
+    await tester.tap(find.text('Samba'));
+    await tester.pumpAndSettle();
+    expect(find.text('samba body'), findsOneWidget);
+    await tester.tap(find.text('Lab'));
+    await tester.pumpAndSettle();
+    expect(find.text('samba body', skipOffstage: false), findsOneWidget);
+  });
+
   group('Resolver tab', () {
     testWidgets('logs every resolver call as it happens', (tester) async {
       final resolver = SignedUrlResolver();
