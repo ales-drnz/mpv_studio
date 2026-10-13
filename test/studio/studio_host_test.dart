@@ -32,7 +32,11 @@ void main() {
   late StudioRestart restart;
   final changed = <String>[];
 
-  Future<void> pump(WidgetTester tester, {Future<_Studio> Function()? launch}) {
+  Future<void> pump(
+    WidgetTester tester, {
+    Future<_Studio> Function()? launch,
+    Future<_Studio> Function(_Studio old)? restartWith,
+  }) {
     first = _Studio('one');
     next = Completer();
     changed.clear();
@@ -40,10 +44,12 @@ void main() {
       MaterialApp(
         home: StudioHost<_Studio>(
           initial: first,
-          restart: (old) {
-            old.down = true;
-            return next.future;
-          },
+          restart:
+              restartWith ??
+              (old) {
+                old.down = true;
+                return next.future;
+              },
           launch: launch ?? () async => _Studio('fresh'),
           onChanged: (s) => changed.add(s.name),
           errorBuilder: (context, error, retry) =>
@@ -106,5 +112,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('page on fresh'), findsOneWidget);
     expect(changed, ['fresh']);
+  });
+
+  testWidgets('a restart that throws at once still ends on the error', (
+    tester,
+  ) async {
+    await pump(tester, restartWith: (_) => throw StateError('no engine'));
+    await restart.run();
+    await tester.pump();
+    expect(find.textContaining('failed: Bad state: no engine'), findsOneWidget);
+    // Not stuck: retry launches.
+    await tester.tap(find.byType(TextButton));
+    await tester.pumpAndSettle();
+    expect(find.text('page on fresh'), findsOneWidget);
   });
 }
