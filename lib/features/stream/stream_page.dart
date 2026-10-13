@@ -8,7 +8,9 @@ import 'favorites_controller.dart';
 import 'lab_tab.dart';
 import 'library/server_library_tab.dart';
 import 'media_server.dart';
+import 'resolver_tab.dart';
 import 'samba/samba_tab.dart';
+import 'signed_url_resolver.dart';
 import 'stream_actions.dart';
 import 'widgets/stream_tab_scope.dart';
 
@@ -16,6 +18,7 @@ import 'widgets/stream_tab_scope.dart';
 enum StreamTab {
   lab('Lab'),
   chapters('Chapters'),
+  resolver('Resolver'),
   jellyfin('Jellyfin'),
   plex('Plex'),
   samba('Samba');
@@ -26,7 +29,8 @@ enum StreamTab {
 
 /// The Stream section: network sources, one tab each. **Lab** plays the
 /// reference streams and any URL with its own HTTP options; **Chapters**
-/// streams with embedded chapters; **Jellyfin** and **Plex** sign in to a
+/// streams with embedded chapters; **Resolver** shows a source resolver
+/// renewing links that expire; **Jellyfin** and **Plex** sign in to a
 /// server and browse its songs and albums; **Samba** walks an SMB share.
 ///
 /// Reads the player, the servers and the favourites from the app's
@@ -47,6 +51,7 @@ class StreamPage extends StatelessWidget {
       jellyfin: PlayerScope.serverOf(context, ServerKind.jellyfin),
       plex: PlayerScope.serverOf(context, ServerKind.plex),
       favorites: PlayerScope.favoritesOf(context),
+      resolver: SignedUrlResolver.shared,
     );
   }
 }
@@ -61,6 +66,7 @@ class StreamView extends StatefulWidget {
     required this.jellyfin,
     required this.plex,
     required this.favorites,
+    required this.resolver,
     this.initialTab = StreamTab.lab,
     this.samba,
   });
@@ -69,6 +75,7 @@ class StreamView extends StatefulWidget {
   final MediaServer jellyfin;
   final MediaServer plex;
   final FavoritesController favorites;
+  final SignedUrlResolver resolver;
   final StreamTab initialTab;
 
   /// The Samba tab; the real one when null (tests pass one on a fake
@@ -100,6 +107,10 @@ class _StreamViewState extends State<StreamView>
   Widget _body(StreamTab tab) => switch (tab) {
     StreamTab.lab => LabTab(actions: widget.actions),
     StreamTab.chapters => ChaptersTab(actions: widget.actions),
+    StreamTab.resolver => ResolverTab(
+      actions: widget.actions,
+      resolver: widget.resolver,
+    ),
     StreamTab.jellyfin => ServerLibraryTab(
       server: widget.jellyfin,
       actions: widget.actions,
