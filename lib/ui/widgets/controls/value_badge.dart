@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
 
-/// A read-only value, set in a small rounded chip and aligned flush to the
+/// A read-only value, set in a small pill chip and aligned flush to the
 /// trailing edge. The single way settings values are shown.
 class ValueBadge extends StatelessWidget {
   final String text;
@@ -14,11 +14,11 @@ class ValueBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 240),
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s8, vertical: 4),
-      decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.shape(Tokens.rSm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Tokens.s12,
+        vertical: Tokens.s4,
       ),
+      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
       child: Text(
         text,
         maxLines: 1,
@@ -56,8 +56,8 @@ class TileButton extends StatelessWidget {
     final color = !enabled
         ? Tokens.fgFaint
         : accent
-        ? Tokens.accent
-        : Tokens.fgDim;
+        ? Tokens.onAccentContainer
+        : Tokens.onTonal;
     final button = Semantics(
       button: true,
       enabled: enabled,
@@ -67,7 +67,7 @@ class TileButton extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onPressed,
-          customBorder: Tokens.shape(Tokens.rSm),
+          customBorder: Tokens.pill,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: context.layout.minTap,
@@ -77,12 +77,12 @@ class TileButton extends StatelessWidget {
               widthFactor: 1,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: Tokens.s12,
-                  vertical: Tokens.s6,
+                  horizontal: Tokens.s16,
+                  vertical: Tokens.s8,
                 ),
                 decoration: ShapeDecoration(
-                  color: Tokens.surface2,
-                  shape: Tokens.shape(Tokens.rSm),
+                  color: accent ? Tokens.accentContainer : Tokens.tonal,
+                  shape: Tokens.pill,
                 ),
                 child: Text(
                   label,

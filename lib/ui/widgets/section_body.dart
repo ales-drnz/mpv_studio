@@ -4,9 +4,9 @@ import '../tokens.dart';
 import 'controls.dart';
 import 'section_header.dart';
 
-/// A labelled group of settings rows inside a single flat card. The
-/// label sits above the card in caption type; rows sit flush, separated
-/// only by their own vertical rhythm.
+/// A labelled group of settings rows inside a single tonal card (radius
+/// [Tokens.rLg]). The label sits above the card, inset like the rows;
+/// rows sit flush, separated only by their own vertical rhythm.
 class SettingsGroup extends StatelessWidget {
   final String label;
   final List<Widget> children;
@@ -32,9 +32,10 @@ class SettingsGroup extends StatelessWidget {
           SectionHeader(label),
           Container(
             clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
             decoration: ShapeDecoration(
               color: Tokens.surface,
-              shape: Tokens.shape(Tokens.rMd),
+              shape: Tokens.shape(Tokens.rLg),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

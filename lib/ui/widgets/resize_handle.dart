@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 
 /// A draggable separator for resizing adjacent panes. The seam is a constant
-/// faint hairline; the affordance is a short **rounded grip** centred on it
+/// faint hairline; the affordance is a short **pill grip** centred on it
 /// that brightens on hover and lights up [Tokens.accent] while grabbed.
 ///
 /// Only the **grip** is interactive (plus a small margin around it) — the rest

@@ -81,15 +81,17 @@ class SliderRow extends StatelessWidget {
   }
 }
 
-/// A flat custom slider: rounded track, accent fill, rounded thumb.
+/// A flat custom slider in the Material 3 Expressive form: a thick pill
+/// track split by a slim upright handle, with a gap either side of the
+/// handle and a stop dot at the end of the inactive part.
 /// Tap or drag to set; reports continuously through [onChanged] and once
 /// through [onChangeEnd]. Snaps to [divisions] when given.
 ///
 /// It is focusable: the arrow keys step it (a division, or a hundredth of
 /// the range), Home and End jump to the ends. Screen readers see a slider
 /// named [semanticLabel] with the value [semanticValue] prints. On touch
-/// the hit area is a full tap target tall and the thumb grows to fit a
-/// finger; with a pointer the slider stays dense.
+/// the hit area is a full tap target tall and the track and handle grow to
+/// fit a finger; with a pointer the slider stays dense.
 class AppSlider extends StatefulWidget {
   final double value;
   final double min;
@@ -122,8 +124,8 @@ class _AppSliderState extends State<AppSlider> {
   /// The value under the finger during a drag.
   double? _dragged;
 
-  static const double _track = 6;
-  static const double _pointerHeight = 24;
+  static const double _pointerHeight = 32;
+  static const double _gap = 4;
 
   bool _focused = false;
 
@@ -182,9 +184,12 @@ class _AppSliderState extends State<AppSlider> {
   Widget build(BuildContext context) {
     final min = widget.min, max = widget.max, value = widget.value;
     final enabled = widget.enabled;
-    // On touch the thumb and the grab band grow to fit a finger.
+    // On touch the track, the handle and the grab band grow to fit a
+    // finger.
     final touch = context.layout.isTouch;
-    final thumb = touch ? 22.0 : 16.0;
+    final track = touch ? 12.0 : 8.0;
+    final thumb = touch ? 6.0 : 4.0;
+    final handleH = touch ? 40.0 : 28.0;
     final height = math.max(_pointerHeight, context.layout.minTap);
     final up = _snap(value + _step), down = _snap(value - _step);
     return Semantics(
@@ -242,35 +247,52 @@ class _AppSliderState extends State<AppSlider> {
                   child: Stack(
                     alignment: Alignment.centerLeft,
                     children: [
-                      // Empty track.
-                      Container(
-                        height: _track,
-                        decoration: ShapeDecoration(
-                          color: Tokens.surface3,
-                          shape: Tokens.shape(Tokens.rPill),
+                      // Inactive track, after the handle and its gap.
+                      Positioned(
+                        left: (frac * span + thumb + _gap).clamp(
+                          0.0,
+                          c.maxWidth,
+                        ),
+                        right: 0,
+                        child: Container(
+                          height: track,
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: track / 2 - 2),
+                          decoration: ShapeDecoration(
+                            color: Tokens.surface4,
+                            shape: Tokens.pill,
+                          ),
+                          // The stop dot marks the end of the range.
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: ShapeDecoration(
+                              color: enabled ? Tokens.accent : Tokens.fgFaint,
+                              shape: const CircleBorder(),
+                            ),
+                          ),
                         ),
                       ),
-                      // Accent fill up to the thumb centre.
+                      // Active track, up to the handle and its gap.
                       Container(
-                        height: _track,
-                        width: thumb / 2 + frac * span,
+                        height: track,
+                        width: math.max(0, frac * span - _gap),
                         decoration: ShapeDecoration(
                           color: enabled ? Tokens.accent : Tokens.fgFaint,
-                          shape: Tokens.shape(Tokens.rPill),
+                          shape: Tokens.pill,
                         ),
                       ),
-                      // Thumb, ringed in the accent while focused.
+                      // The upright handle, ringed while focused.
                       Positioned(
                         left: frac * span,
                         child: Container(
                           width: thumb,
-                          height: thumb,
+                          height: handleH,
                           decoration: ShapeDecoration(
-                            color: enabled ? Tokens.fg : Tokens.fgFaint,
-                            shape: Tokens.shape(
-                              thumb / 2,
+                            color: enabled ? Tokens.accent : Tokens.fgFaint,
+                            shape: StadiumBorder(
                               side: _focused
-                                  ? BorderSide(color: Tokens.accent, width: 2)
+                                  ? BorderSide(color: Tokens.fg, width: 1)
                                   : BorderSide.none,
                             ),
                           ),
