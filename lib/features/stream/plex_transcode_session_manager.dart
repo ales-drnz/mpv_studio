@@ -31,7 +31,7 @@ class PlexTranscodeSessionManager {
 
   /// `'dash'` → `start.mpd` + fMP4 segments (sample-accurate timestamps;
   /// the path Plex documents for audio). `'hls'` → `start.m3u8` + MPEG-TS.
-  String preferredProtocol = 'dash';
+  static const _defaultProtocol = 'dash';
 
   static const _markerPrefix = 'plex-transcode://';
 
@@ -56,7 +56,7 @@ class PlexTranscodeSessionManager {
   /// `plex-transcode://{id}` marker URL to hand to mpv. The real
   /// `/decision` call is deferred to [resolveSource]. [fallbackUrl] is used
   /// if the decision fails (direct play). [protocol] (`dash` → start.mpd,
-  /// `hls` → start.m3u8) defaults to [preferredProtocol]; [container]
+  /// `hls` → start.m3u8) defaults to DASH; [container]
   /// (`mp4` → fMP4, `mpegts`) defaults to the protocol's natural one
   /// (DASH→mp4, HLS→mpegts). Both are captured per-session so different
   /// tracks can use different transports.
@@ -70,7 +70,7 @@ class PlexTranscodeSessionManager {
     String? container,
   }) {
     final marker = _newSessionId();
-    final sessionProtocol = protocol ?? preferredProtocol;
+    final sessionProtocol = protocol ?? _defaultProtocol;
     final sessionContainer =
         container ?? (sessionProtocol == 'hls' ? 'mpegts' : 'mp4');
     _pending[marker] = _PendingTranscode(
@@ -156,7 +156,7 @@ class PlexTranscodeSessionManager {
     final container = pending.container;
     final manifestExt = isHls ? 'm3u8' : 'mpd';
 
-    // Bitrate, when requested, must be enforced via add-limitation — the
+    // Bitrate, when requested, must be enforced via add-limitation: the
     // maxAudioBitrate query param alone is ignored by Plex for music.
     final bitrate = params['maxAudioBitrate'] as int?;
     final bitrateLimit = bitrate != null
@@ -198,7 +198,7 @@ class PlexTranscodeSessionManager {
 
       // ffmpeg/lavf opens the manifest directly and does NOT inherit the
       // Dio request's X-Plex-* base headers, so we embed the full client
-      // identity + profile in the query string — otherwise Plex returns
+      // identity + profile in the query string, otherwise Plex returns
       // 400 "Unable to find client profile for device".
       final queryString = params.entries
           .map(
@@ -234,8 +234,8 @@ class PlexTranscodeSessionManager {
 
   /// Resolve a track to a *direct-play* URL mpv can actually open.
   ///
-  /// On a direct-play / direct-stream decision (or any /decision failure)
-  /// the universal-transcoder `start.*` URL is not openable by mpv — Plex
+  /// On a direct-play or direct-stream decision (or any /decision failure)
+  /// the universal-transcoder `start.*` URL is not openable by mpv: Plex
   /// serves the original file from its media Part instead. So we fetch the
   /// item metadata, take the first media Part's key and build
   /// `{baseUrl}{partKey}?download=0&X-Plex-Token=…` (the form a working Plex
@@ -278,18 +278,13 @@ class PlexTranscodeSessionManager {
     }
   }
 
-  /// Forget every session (e.g. on logout).
-  void clear() {
-    _pending.clear();
-    _activeMarker = null;
-  }
-
   /// Stops the heartbeat and forgets every session. The manager is not
   /// used again afterwards.
   void dispose() {
     _heartbeat?.cancel();
     _heartbeat = null;
-    clear();
+    _pending.clear();
+    _activeMarker = null;
   }
 
   /// Parse the marker id out of a `plex-transcode://…` URL, or null if
@@ -326,8 +321,8 @@ class _PendingTranscode {
 
   /// Whether this session should transcode (`/decision` → `start.mpd`) or
   /// just direct-play the original media Part. Direct play skips `/decision`
-  /// — the universal-transcoder `start.*` URL is not openable by mpv, so we
-  /// always resolve to the Part URL instead.
+  /// (the universal-transcoder `start.*` URL is not openable by mpv, so we
+  /// always resolve to the Part URL instead).
   final bool transcode;
 
   /// The Plex session id currently in use. Starts as the marker id and

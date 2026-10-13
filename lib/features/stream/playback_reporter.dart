@@ -8,13 +8,13 @@ import 'media_server.dart';
 
 /// App-level service that reports playback of media-server tracks back to
 /// their server (Jellyfin / Plex): start, periodic progress, and stop. This
-/// drives the server's "Now Playing", play-progress / on-deck, and scrobble.
+/// drives the server's "Now Playing", play progress and on-deck, and scrobble.
 ///
 /// It listens to the single app [Player] and routes each report to the right
-/// connected [MediaServer] using the `'server'` / `'serverId'` keys embedded
-/// in the playing [Media]'s extras (see `ServerLibraryTab`). Tracks without
-/// those extras (the Lab tab, local files) are ignored. All reporting is
-/// best-effort — the server impls swallow their own errors.
+/// connected [MediaServer] using the `'server'` and `'serverId'` keys
+/// embedded in the playing [Media]'s extras (see `serverMedia`). Tracks
+/// without those extras (the Lab tab, local files) are ignored. All
+/// reporting is best effort: the servers log their own errors.
 class PlaybackReporter {
   PlaybackReporter(this._player, this._servers, this._favorites);
 
@@ -66,8 +66,8 @@ class PlaybackReporter {
 
   void _onPlaylist() {
     final (kind, id) = _currentTrack();
-    if (id == _itemId && kind == _kind) return; // same track — nothing new
-    _reportStop(); // stop the previous track (no-op if none / not started)
+    if (id == _itemId && kind == _kind) return; // same track: nothing new
+    _reportStop(); // stop the previous track (no-op if none or not started)
     _kind = kind;
     _itemId = id;
     _started = false;
@@ -78,7 +78,7 @@ class PlaybackReporter {
   // ─── Favourites / OS lock-screen "like" ───────────────────────────────
 
   /// The favourite flag the current [Media] carried in its extras (set by
-  /// the Stream tab at play time) — the fallback before any live toggle.
+  /// the Stream tab at play time), the fallback before any live toggle.
   bool _currentFavoriteFallback() {
     final playlist = _player.state.playlist;
     final items = playlist.items;
@@ -97,7 +97,17 @@ class PlaybackReporter {
         ? _favorites.resolved(_kind!, _itemId!, _currentFavoriteFallback())
         : false;
     if (session.isFavorite == fav) return;
-    unawaited(_player.setMediaSession(session.copyWith(isFavorite: fav)));
+    unawaited(_pushSessionFavorite(session.copyWith(isFavorite: fav)));
+  }
+
+  Future<void> _pushSessionFavorite(MediaSession session) async {
+    try {
+      await _player.setMediaSession(session);
+    } catch (e) {
+      // The lock-screen star is cosmetic: a refused update leaves it stale
+      // until the next track, never breaks playback.
+      debugPrint('PlaybackReporter: media session update failed: $e');
+    }
   }
 
   void _onSessionCommand(MediaSessionCommand command) {
@@ -119,7 +129,7 @@ class PlaybackReporter {
   void _onIntent(bool playWhenReady) {
     if (_itemId == null || !_started) return;
     // Reflect the user's intent on the server's Now Playing, and keep the
-    // progress timer in sync — stable across the seek/buffer transients of
+    // progress timer in sync, stable across the seek and buffer transients of
     // the actual-output axis.
     _reportProgress(paused: !playWhenReady);
     if (playWhenReady) {
