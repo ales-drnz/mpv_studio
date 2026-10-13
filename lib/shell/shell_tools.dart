@@ -69,10 +69,11 @@ class ShellToolButton extends StatelessWidget {
   }
 }
 
-/// The shell's utility entries: the theme switch (when a
-/// [StudioThemeHost] is above) and, on pointer devices, the keyboard
-/// shortcut list.
+/// The shell's utility entries on pointer devices: a quick theme switch
+/// (when a [StudioThemeHost] is above; its home is Settings, Listening,
+/// Appearance) and the keyboard shortcut list. Touch layouts have none.
 List<Widget> shellTools(BuildContext context, {bool expanded = true}) {
+  if (!context.layout.isPointer) return const [];
   final theme = ThemeController.maybeOf(context);
   return [
     if (theme != null)
@@ -82,13 +83,12 @@ List<Widget> shellTools(BuildContext context, {bool expanded = true}) {
         onTap: theme.cycle,
         expanded: expanded,
       ),
-    if (context.layout.isPointer)
-      ShellToolButton(
-        icon: Icons.keyboard_outlined,
-        label: 'Keyboard shortcuts',
-        onTap: () => showShortcutHelp(context),
-        expanded: expanded,
-      ),
+    ShellToolButton(
+      icon: Icons.keyboard_outlined,
+      label: 'Keyboard shortcuts',
+      onTap: () => showShortcutHelp(context),
+      expanded: expanded,
+    ),
   ];
 }
 

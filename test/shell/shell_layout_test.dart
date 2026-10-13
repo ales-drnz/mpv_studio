@@ -78,7 +78,8 @@ void main() {
       );
       await tester.tap(find.text('More'));
       await tester.pumpAndSettle();
-      expect(find.text('Theme: Dark'), findsOneWidget);
+      expect(find.text('Console'), findsWidgets);
+      expect(find.text('Theme: Dark'), findsNothing);
       expectNoOverflow(tester);
     });
   });
@@ -221,14 +222,14 @@ void main() {
     expect(find.text('Play or pause'), findsNothing);
   });
 
-  testWidgets('touch layouts hide the shortcut list', (tester) async {
+  testWidgets('touch layouts leave the tools to Settings', (tester) async {
     await pumpShell(
       tester,
       size: const Size(1024, 700),
       input: InputMode.touch,
     );
     expect(find.text('Keyboard shortcuts'), findsNothing);
-    expect(find.text('Theme: Dark'), findsOneWidget);
+    expect(find.text('Theme: Dark'), findsNothing);
   });
 }
 
