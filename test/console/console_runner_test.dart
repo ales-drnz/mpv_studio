@@ -112,15 +112,64 @@ void main() {
       expect(await run('playlist-play-index 1'), [
         'routed: via Player.jump(1)',
       ]);
+      // Player.stop() would clear the queue: these keep it.
       expect(await run('playlist-play-index none'), [
-        'routed: via Player.stop()',
+        'routed: via raw playlist-play-index none, then Player.pause()',
       ]);
+      expect(await run('stop keep-playlist'), [
+        'routed: via raw stop keep-playlist, then Player.pause()',
+      ]);
+      expect(player.items, [_a, _b]);
+      expect(player.state.playWhenReady, isFalse);
+      expect(await run('playlist-remove current'), [
+        'routed: via Player.remove(1)',
+      ]);
+      expect(player.items, [_a]);
       expect(await run('stop'), ['routed: via Player.stop()']);
+      expect(player.items, isEmpty);
       expect(await run('playlist-next-playlist'), [
         'routed: via Player.nextPlaylist()',
         'output: No next playlist',
       ]);
       expect(await run('playlist-play-index 9'), [startsWith('error:')]);
+    });
+  });
+
+  group('mpv placement and play rules', () {
+    test('options with append-play do not unpause a loaded queue', () async {
+      player.emit((s) => s.copyWith(playlist: const Playlist([_a], index: 0)));
+      expect(await run('loadfile /b.flac append-play -1 start=5'), [
+        'routed: via raw loadfile (with options)',
+      ]);
+      expect(player.calls, isNot(contains('play')));
+      expect(await run('loadfile /b.flac replace -1 start=5'), [
+        'routed: via raw loadfile (with options), then Player.play()',
+      ]);
+    });
+
+    test('insert-next with nothing current appends', () async {
+      player.emit(
+        (s) => s.copyWith(playlist: const Playlist([_a, _b], index: -1)),
+      );
+      expect(await run('loadfile /c.flac insert-next'), [
+        'routed: via Player.add()',
+      ]);
+      expect(player.items.last.uri, '/c.flac');
+    });
+
+    test('insert-at with a negative index appends', () async {
+      player.emit(
+        (s) => s.copyWith(playlist: const Playlist([_a, _b], index: 0)),
+      );
+      expect(await run('loadfile /c.flac insert-at -1'), [
+        'routed: via Player.add()',
+      ]);
+      expect(player.items.last.uri, '/c.flac');
+    });
+
+    test('quit is not sent', () async {
+      expect((await run('quit')).single, startsWith('error: quit would'));
+      expect(player.rawCommands, isEmpty);
     });
   });
 

@@ -108,7 +108,9 @@ class QueueFakePlayer extends FakePlayer {
 
   @override
   Future<void> stop() async {
+    // Like mpv's stop: unloads and clears the playlist.
     calls.add('stop');
+    _set(const [], -1);
     emit((s) => s.copyWith(playWhenReady: false));
   }
 

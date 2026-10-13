@@ -59,11 +59,12 @@ const kConsoleHelp = [
   'get <property> reads a property as text, getnode <property> as '
       'structured data, and set <property> <value> writes one.',
   'Commands that change what plays (loadfile and loadlist with any flag, '
-      'pause, cycle pause, set pause, stop, playlist-next, playlist-prev, '
-      'playlist-play-index and the playlist jumps) go through the Player '
-      'API, so the play button, the mini-player and the Engine page stay in '
-      'step. The log line names the call used. Other commands go to mpv as '
-      'typed.',
+      'pause, cycle pause, set pause yes or no, stop, playlist-next, '
+      'playlist-prev, playlist-play-index, playlist-remove and the playlist '
+      'jumps) go through the Player API, so the play button, the '
+      'mini-player and the Engine page stay in step. The log line names the '
+      'call used. Other commands go to mpv as typed; the engine refuses '
+      'cycle-values pause and the af commands, and quit is not sent.',
   r'print-text and show-text expand ${property} references themselves. '
       'For any other command, put expand-properties in front of it.',
   'hooks on reports the file lifecycle hooks (on_load, on_unload...) as '
@@ -174,9 +175,20 @@ class ConsoleRunner {
         return _setPause('toggle');
       case 'set' when a.length >= 2 && a.first == 'pause':
         return _setPause(a[1]);
+      case 'stop' when a.contains('keep-playlist'):
+        return _stopKeepingPlaylist(['stop', ...a]);
       case 'stop':
         await player.stop();
         return _routed('Player.stop()');
+      case 'playlist-remove' when a.isNotEmpty:
+        return _remove(a.first);
+      case 'quit' || 'quit-watch-later':
+        return const [
+          ConsoleResult.error(
+            'quit would shut the audio engine down for good; close the app '
+            'instead',
+          ),
+        ];
       case 'playlist-next':
         final force = a.isNotEmpty && a.first == 'force';
         final moved = await player.next(force: force);
@@ -229,8 +241,7 @@ class ConsoleRunner {
     final current = player.state.playlist.index;
     switch (which) {
       case 'none':
-        await player.stop();
-        return _routed('Player.stop()');
+        return _stopKeepingPlaylist(['playlist-play-index', 'none']);
       case 'current':
         if (current < 0) return [ConsoleResult.error('Nothing is current')];
         await player.jump(current);
@@ -244,15 +255,37 @@ class ConsoleRunner {
     return _routed('Player.jump($index)');
   }
 
+  /// Stops playback and keeps the queue: `Player.stop()` would clear it,
+  /// so the command goes raw and the intent follows with `Player.pause()`.
+  Future<List<ConsoleResult>> _stopKeepingPlaylist(List<String> args) async {
+    await player.sendRawCommand(args);
+    await player.pause();
+    return _routed('raw ${args.join(' ')}, then Player.pause()');
+  }
+
+  /// `playlist-remove <index|current>`.
+  Future<List<ConsoleResult>> _remove(String which) async {
+    final index = which == 'current'
+        ? player.state.playlist.index
+        : int.tryParse(which);
+    if (index == null || index < 0) {
+      return [ConsoleResult.error('Expected an index or current')];
+    }
+    await player.remove(index);
+    return _routed('Player.remove($index)');
+  }
+
   /// `loadfile <url> [<flags> [<index> [<options>]]]`.
   Future<List<ConsoleResult>> _loadfile(List<String> a) async {
     final media = Media(a[0]);
     final flag = a.length > 1 ? a[1] : 'replace';
     if (a.length > 3) {
       // Per-file options have no typed form: send the line as typed and
-      // bring the intent in step.
+      // bring the intent in step where mpv starts playback: always for
+      // replace, only from idle for the -play flags.
+      final idle = _idle;
       await player.sendRawCommand(['loadfile', ...a]);
-      if (flag == 'replace' || flag.endsWith('-play')) {
+      if (flag == 'replace' || (flag.endsWith('-play') && idle)) {
         await player.play();
         return _routed('raw loadfile (with options), then Player.play()');
       }
@@ -268,6 +301,8 @@ class ConsoleRunner {
       calls.add('Player.add()');
     }
 
+    // The new entry is assumed to land at [end]: a queue change from
+    // elsewhere between the add and the move would misplace it.
     Future<void> moveTo(int target) async {
       if (target >= end) return;
       await player.move(end, target);
@@ -290,16 +325,18 @@ class ConsoleRunner {
         await add();
         await playIfIdle(end);
       case 'insert-next' || 'insert-next-play':
-        final target = playlist.index + 1;
+        // With nothing current mpv appends.
+        final target = idle ? end : playlist.index + 1;
         await add();
         await moveTo(target);
         if (flag == 'insert-next-play') await playIfIdle(target);
       case 'insert-at' || 'insert-at-play':
         final target = a.length > 2 ? int.tryParse(a[2]) : null;
-        if (target == null || target < 0) {
+        if (target == null) {
           return [ConsoleResult.error('$flag needs an index')];
         }
-        final at = target > end ? end : target;
+        // A negative index appends, as in mpv.
+        final at = target < 0 || target > end ? end : target;
         await add();
         await moveTo(at);
         if (flag == 'insert-at-play') await playIfIdle(at);
