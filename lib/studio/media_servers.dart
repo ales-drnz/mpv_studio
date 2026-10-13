@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/stream/favorites_controller.dart';
@@ -37,15 +40,27 @@ connectMediaServers(Player player) async {
   await Future.wait([jellyfin.tryRestore(), plex.tryRestore()]);
 
   // Plex hands mpv `plex-transcode://` marker URLs; the source resolver turns
-  // each one into the real URL right before it opens.
-  await player.setSourceResolver(plex.resolveSource);
+  // each one into the real URL right before it opens. A refused install
+  // only costs Plex playback, so it never stops the launch.
+  try {
+    await player.setSourceResolver(plex.resolveSource);
+  } on PlayerException catch (e) {
+    debugPrint('Plex source resolver not installed: $e');
+  }
 
   final favorites = FavoritesController(servers);
 
   // Report playback (start / progress / stop) of server tracks back to their
-  // server, and bridge the OS lock-screen "like" to favourites. Lives for the
-  // whole session.
-  PlaybackReporter(player, servers, favorites).start();
+  // server, and bridge the OS lock-screen "like" to favourites. Lives until
+  // the studio shuts down (dispose).
+  final reporter = PlaybackReporter(player, servers, favorites)..start();
 
-  return (servers: servers, favorites: favorites, dispose: plex.dispose);
+  return (
+    servers: servers,
+    favorites: favorites,
+    dispose: () {
+      unawaited(reporter.dispose());
+      plex.dispose();
+    },
+  );
 }
