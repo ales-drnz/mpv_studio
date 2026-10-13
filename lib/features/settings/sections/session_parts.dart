@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 
 /// Actions the running platform's native media UI will NOT render as a usable
 /// control, so the Session settings dim them. From the verified per-OS
@@ -148,8 +149,8 @@ class ShownActionTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Tokens.s8),
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.shape(Tokens.rSm),
+          color: Tokens.surface3,
+          shape: Tokens.shape(Tokens.rMd),
         ),
         child: Column(
           children: [
@@ -175,15 +176,12 @@ class ShownActionTile extends StatelessWidget {
                 Icon(m.icon, size: 18, color: Tokens.accent),
                 const SizedBox(width: Tokens.s12),
                 Expanded(child: Text(m.label, style: Tokens.body)),
-                IconButton(
-                  onPressed: onRemove,
-                  icon: const Icon(
-                    Icons.remove_circle_outline_rounded,
-                    size: 18,
-                  ),
+                RoundIconButton(
+                  icon: Icons.remove_circle_outline_rounded,
+                  size: 20,
                   color: Tokens.fgDim,
-                  constraints: BoxConstraints.tightFor(width: tap, height: tap),
                   tooltip: 'Remove ${m.label}',
+                  onTap: onRemove,
                 ),
               ],
             ),
@@ -266,13 +264,13 @@ class SessionActionChip extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.shape(Tokens.rSm),
-            child: Container(
-              constraints: BoxConstraints(minHeight: context.layout.minTap),
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+            customBorder: Tokens.pill,
+            child: Ink(
+              height: context.layout.minTap,
+              padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
               decoration: ShapeDecoration(
-                color: advertised ? Tokens.surface3 : Tokens.surface2,
-                shape: Tokens.shape(Tokens.rSm),
+                color: advertised ? Tokens.accentContainer : Tokens.surface3,
+                shape: Tokens.pill,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -280,15 +278,22 @@ class SessionActionChip extends StatelessWidget {
                   Icon(
                     m.icon,
                     size: 16,
-                    color: dim ? Tokens.fgFaint : Tokens.fgDim,
+                    color: advertised
+                        ? Tokens.onAccentContainer
+                        : dim
+                        ? Tokens.fgFaint
+                        : Tokens.fgDim,
                   ),
                   const SizedBox(width: Tokens.s8),
                   Text(
                     m.label,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: dim ? Tokens.fgFaint : Tokens.fg,
+                    style: Tokens.label.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: advertised
+                          ? Tokens.onAccentContainer
+                          : dim
+                          ? Tokens.fgFaint
+                          : Tokens.fg,
                     ),
                   ),
                   const SizedBox(width: Tokens.s8),
@@ -299,7 +304,11 @@ class SessionActionChip extends StatelessWidget {
                               ? Icons.block_rounded
                               : Icons.add_rounded),
                     size: 16,
-                    color: dim ? Tokens.fgFaint : Tokens.accent,
+                    color: advertised
+                        ? Tokens.onAccentContainer
+                        : dim
+                        ? Tokens.fgFaint
+                        : Tokens.fg,
                   ),
                 ],
               ),
