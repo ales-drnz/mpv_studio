@@ -85,7 +85,7 @@ enum InputMode {
   pointer;
 
   /// The platform's mode: touch on Android and iOS, pointer on desktop.
-  /// A debug build can force one with `--dart-define=STUDIO_INPUT=touch`
+  /// Any build can force one with `--dart-define=STUDIO_INPUT=touch`
   /// (or `pointer`).
   static InputMode get platformDefault {
     const forced = String.fromEnvironment('STUDIO_INPUT');
