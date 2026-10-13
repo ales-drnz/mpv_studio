@@ -59,7 +59,12 @@ class SettingTile extends StatelessWidget {
               ),
               if (description != null) ...[
                 const SizedBox(height: 2),
-                Text(description!, style: Tokens.caption),
+                Text(
+                  description!,
+                  // Dim rather than faint: it stays legible on the light
+                  // palette.
+                  style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                ),
               ],
             ],
           ),
