@@ -151,7 +151,9 @@ void main() {
     ('360x780', Palette.dark),
     ('915x412', Palette.dark),
     ('1440x900', Palette.dark),
+    ('1024x700', Palette.dark),
     ('360x780', Palette.light),
+    ('412x915', Palette.light),
     ('1440x900', Palette.light),
   ]) {
     final theme = palette.isDark ? 'dark' : 'light';
