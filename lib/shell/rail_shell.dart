@@ -34,7 +34,9 @@ class RailShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final layout = context.layout;
     final labels = !layout.isShort;
-    final width = labels ? 80.0 : 68.0;
+    // The rail grows by the left safe-area inset (a landscape notch), so
+    // its items keep their full width.
+    final width = (labels ? 80.0 : 68.0) + MediaQuery.paddingOf(context).left;
     final mini = miniPlayer;
     final railMini = railMiniPlayer;
 
