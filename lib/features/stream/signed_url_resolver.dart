@@ -69,9 +69,18 @@ class SignedUrlResolver extends ChangeNotifier {
   SignedUrlResolver({
     this.lifetime = const Duration(minutes: 10),
     DateTime Function()? clock,
+    Duration Function(void Function() work)? timer,
     String key = 'mpv-studio-demo',
   }) : _clock = clock ?? DateTime.now,
+       _timer = timer ?? _measure,
        _key = key;
+
+  /// How long [work] takes, on a stopwatch.
+  static Duration _measure(void Function() work) {
+    final watch = Stopwatch()..start();
+    work();
+    return watch.elapsed;
+  }
 
   /// The resolver the app installs at launch, shared with the Resolver tab.
   static final shared = SignedUrlResolver();
@@ -86,6 +95,10 @@ class SignedUrlResolver extends ChangeNotifier {
   final Duration lifetime;
 
   final DateTime Function() _clock;
+
+  /// Times one resolution for the log (a fixed duration in tests, so the
+  /// log reads the same on every run).
+  final Duration Function(void Function() work) _timer;
   final String _key;
 
   static const _maxLog = 50;
@@ -131,23 +144,23 @@ class SignedUrlResolver extends ChangeNotifier {
     // just failed.
     final target = unwrap(request.media.uri);
     if (target == null) return null;
-    final watch = Stopwatch()..start();
     final now = _clock();
-    final ResolveOutcome outcome;
-    final String? returned;
-    if (!request.isRetry && isValid(request.uri)) {
-      // mpv runs the pre-open pass again after a retry rewrite, with the
-      // fresh link already in place: keep it.
-      outcome = ResolveOutcome.kept;
-      returned = null;
-    } else if (!request.isRetry && _simulateExpiry) {
-      outcome = ResolveOutcome.expired;
-      returned = sign(_brokenVariant(target), now.subtract(lifetime));
-    } else {
-      outcome = ResolveOutcome.signed;
-      returned = sign(target, now.add(lifetime));
-    }
-    watch.stop();
+    late final ResolveOutcome outcome;
+    late final String? returned;
+    final elapsed = _timer(() {
+      if (!request.isRetry && isValid(request.uri)) {
+        // mpv runs the pre-open pass again after a retry rewrite, with the
+        // fresh link already in place: keep it.
+        outcome = ResolveOutcome.kept;
+        returned = null;
+      } else if (!request.isRetry && _simulateExpiry) {
+        outcome = ResolveOutcome.expired;
+        returned = sign(_brokenVariant(target), now.subtract(lifetime));
+      } else {
+        outcome = ResolveOutcome.signed;
+        returned = sign(target, now.add(lifetime));
+      }
+    });
     _record(
       ResolveLogEntry(
         at: now,
@@ -155,7 +168,7 @@ class SignedUrlResolver extends ChangeNotifier {
         isRetry: request.isRetry,
         outcome: outcome,
         returned: returned,
-        elapsed: watch.elapsed,
+        elapsed: elapsed,
       ),
     );
     return returned;
