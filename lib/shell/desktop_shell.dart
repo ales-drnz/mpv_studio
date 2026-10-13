@@ -142,7 +142,11 @@ class _Sidebar extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
-      width: collapsed ? DesktopShell.collapsedWidth : DesktopShell.openWidth,
+      // Grows by the left safe-area inset, as the rail does, so the items
+      // keep their full width beside a notch.
+      width:
+          (collapsed ? DesktopShell.collapsedWidth : DesktopShell.openWidth) +
+          MediaQuery.paddingOf(context).left,
       child: SafeArea(
         right: false,
         bottom: safeBottom,

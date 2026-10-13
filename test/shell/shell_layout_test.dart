@@ -88,6 +88,29 @@ void main() {
       });
     }
 
+    for (final collapsed in [false, true]) {
+      testWidgets('the ${collapsed ? 'collapsed' : 'open'} sidebar keeps its '
+          'items whole beside a left inset', (tester) async {
+        Future<double> itemWidth(EdgeInsets padding) async {
+          await pumpShell(
+            tester,
+            size: const Size(1024, 700),
+            input: InputMode.touch,
+            padding: padding,
+          );
+          if (collapsed) {
+            await tester.tap(find.byTooltip('Collapse the sidebar'));
+            await tester.pumpAndSettle();
+          }
+          return tester.getSize(find.byType(SectionDestination).first).width;
+        }
+
+        final bare = await itemWidth(EdgeInsets.zero);
+        final inset = await itemWidth(const EdgeInsets.only(left: 32));
+        expect(inset, bare);
+      });
+    }
+
     testWidgets('a low window puts the mini-player in the rail', (
       tester,
     ) async {
