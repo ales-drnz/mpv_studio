@@ -233,16 +233,27 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final top = math.max(min, max);
     final height = (_meterHeight ?? initial).clamp(min, top).toDouble();
     final touch = context.layout.isTouch;
+    // The gap between the panes; on touch the grab area is a full touch
+    // target laid over the panes around the gap.
     final grip = touch ? 24.0 : 12.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final hit = touch ? math.max(grip, context.layout.minTap) : grip;
+    return Stack(
       children: [
-        _waveform(height: height),
-        SizedBox(
-          height: grip,
-          child: ResizeHandle(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _waveform(height: height),
+            SizedBox(height: grip),
+            Expanded(child: below),
+          ],
+        ),
+        ResizeHandle.overlay(
+          offset: height + grip / 2,
+          hit: hit,
+          handle: ResizeHandle(
             axis: Axis.horizontal,
-            hitThickness: grip,
+            hitThickness: hit,
+            label: 'Waveform height',
             // From the current height: several drag events can arrive
             // before the next build.
             onDelta: (dy) => setState(
@@ -252,7 +263,6 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             ),
           ),
         ),
-        Expanded(child: below),
       ],
     );
   }

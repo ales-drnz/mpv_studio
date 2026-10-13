@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../tokens.dart';
 
@@ -12,23 +13,54 @@ import '../tokens.dart';
 /// bottom resize line overlaps).
 ///
 /// [axis] is the orientation of the seam: [Axis.horizontal] separates a
-/// top/bottom split (drag vertically), [Axis.vertical] separates a left/right
-/// split (drag horizontally). [onDelta] reports the drag delta along the
-/// resize direction each update.
+/// top and bottom split (drag vertically), [Axis.vertical] separates a left
+/// and right split (drag horizontally). [onDelta] reports the drag delta
+/// along the resize direction each update.
+///
+/// Screen readers get an adjustable [label] whose increase and decrease
+/// actions move the seam by [step] (towards the bottom or the right on
+/// increase); with the keyboard, the focused grip moves by [step] on the
+/// arrow keys.
 class ResizeHandle extends StatefulWidget {
   final Axis axis;
   final ValueChanged<double> onDelta;
 
-  /// Width (vertical) / height (horizontal) of the invisible grab area around
-  /// the seam, so it's easy to catch with the pointer.
+  /// Width (vertical) or height (horizontal) of the invisible grab area
+  /// around the seam, so it is easy to catch. On touch, give at least the
+  /// touch target (48): it may overlap the panes on either side (see
+  /// [ResizeHandle.overlay]).
   final double hitThickness;
+
+  /// What the seam resizes, for screen readers.
+  final String label;
+
+  /// How far one increase, decrease or arrow key moves the seam.
+  final double step;
 
   const ResizeHandle({
     super.key,
     required this.axis,
     required this.onDelta,
     this.hitThickness = 9,
+    this.label = 'Resize',
+    this.step = 16,
   });
+
+  /// Lays a horizontal handle [hit] tall centred on a seam [offset] from
+  /// the top of a Stack, over the panes around it, so a touch target
+  /// taller than the gap between the panes still catches. Only the grip
+  /// takes pointers; the rest of the strip lets them through.
+  static Widget overlay({
+    required double offset,
+    required double hit,
+    required ResizeHandle handle,
+  }) => Positioned(
+    left: 0,
+    right: 0,
+    top: offset - hit / 2,
+    height: hit,
+    child: handle,
+  );
 
   @override
   State<ResizeHandle> createState() => _ResizeHandleState();
@@ -37,6 +69,29 @@ class ResizeHandle extends StatefulWidget {
 class _ResizeHandleState extends State<ResizeHandle> {
   bool _hovering = false;
   bool _dragging = false;
+  bool _focused = false;
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final horizontal = widget.axis == Axis.horizontal;
+    final key = event.logicalKey;
+    final forward = horizontal
+        ? LogicalKeyboardKey.arrowDown
+        : LogicalKeyboardKey.arrowRight;
+    final back = horizontal
+        ? LogicalKeyboardKey.arrowUp
+        : LogicalKeyboardKey.arrowLeft;
+    if (key == forward) {
+      widget.onDelta(widget.step);
+    } else if (key == back) {
+      widget.onDelta(-widget.step);
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
+  }
 
   static const double _gripLong = 44; // length along the seam
   static const double _gripShort = 6; // thickness across the seam
@@ -44,7 +99,7 @@ class _ResizeHandleState extends State<ResizeHandle> {
   @override
   Widget build(BuildContext context) {
     final horizontal = widget.axis == Axis.horizontal;
-    final gripColor = _dragging
+    final gripColor = _dragging || _focused
         ? Tokens.accent
         : (_hovering ? Tokens.fgDim : Tokens.fgFaint);
 
@@ -107,7 +162,22 @@ class _ResizeHandleState extends State<ResizeHandle> {
     return SizedBox(
       width: horizontal ? double.infinity : widget.hitThickness,
       height: horizontal ? widget.hitThickness : double.infinity,
-      child: Stack(alignment: Alignment.center, children: [seam, gripHit]),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          seam,
+          Semantics(
+            label: widget.label,
+            onIncrease: () => widget.onDelta(widget.step),
+            onDecrease: () => widget.onDelta(-widget.step),
+            child: Focus(
+              onKeyEvent: _onKey,
+              onFocusChange: (f) => setState(() => _focused = f),
+              child: gripHit,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
