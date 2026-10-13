@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../studio/app_settings.dart';
 import 'rack_catalog.dart';
 import 'rack_chain.dart';
+import 'runtime_params.dart';
 
 /// Where the rack's chain plays: the player, or a fake in tests.
 abstract interface class EffectsEngine {
@@ -44,9 +45,11 @@ class PlayerEffectsEngine implements EffectsEngine {
 /// and follows what the engine reports.
 ///
 /// Slider drags call [edit] with `live: true`: the rack shows the value
-/// at once and sends the chain at most once per [throttle], then [flush]
-/// sends the last value on release. A parameter change of the same shape
-/// reaches mpv as a live `af-command`, so the drag is heard as it moves.
+/// at once and, when the change moves only options the running graph
+/// takes live ([changesLive]), sends the chain at most once per
+/// [throttle], so the drag is heard as it moves. Any other drag (an
+/// equalizer band, a loudnorm target) would rebuild the filter on every
+/// write, so it waits for [flush], which sends the last value on release.
 ///
 /// When mpv refuses a chain, the rack goes back to the last chain mpv
 /// accepted and [error] says why.
@@ -132,8 +135,25 @@ class RackController extends ChangeNotifier {
   /// Replaces stage [id] with [effect]. With [live] the write is throttled,
   /// for a control that moves continuously; call [flush] when it stops.
   void edit(int id, AudioEffect effect, {bool live = false}) {
-    if (_chain.stage(id) == null) return;
-    _set(_chain.replace(id, effect), live: live);
+    final old = _chain.stage(id)?.effect;
+    if (old == null) return;
+    final next = _chain.replace(id, effect);
+    if (live && !changesLive(old, effect)) {
+      _hold(next);
+    } else {
+      _set(next, live: live);
+    }
+  }
+
+  /// Shows [next] and keeps it for [flush] without sending it.
+  void _hold(RackChain next) {
+    if (next == _chain) return;
+    _chain = next;
+    if (_bypass) _onRecord?.call(_chain.effects);
+    _throttleTimer?.cancel();
+    _throttleTimer = null;
+    _dirty = true;
+    notifyListeners();
   }
 
   /// Sends a pending live write now.
@@ -331,8 +351,11 @@ class RackController extends ChangeNotifier {
   }
 
   void _onEngine(List<AudioEffect> fx) {
-    // Our own writes in flight: their echoes are older than the rack.
-    if (_disposed || _inFlight > 0 || _throttleTimer != null) return;
+    // Our own writes in flight or held: their echoes are older than the
+    // rack.
+    if (_disposed || _inFlight > 0 || _throttleTimer != null || _dirty) {
+      return;
+    }
     if (listEquals(fx, engineChain)) return;
     // Changed elsewhere. While bypassed the engine plays a copy, so the
     // rack's chain stays as the user left it.
