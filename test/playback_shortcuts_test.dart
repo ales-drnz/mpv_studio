@@ -142,6 +142,8 @@ void main() {
       expect(find.text('Loop A at 2:03'), findsOneWidget);
       fake.emit((s) => s.copyWith(position: const Duration(minutes: 3)));
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+      await tester.pump();
+      expect(find.text('Loop 2:03 to 3:00'), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
       await tester.pump();
       // B at the playhead sends it back to A, as mpv's own ab-loop does.
@@ -165,6 +167,8 @@ void main() {
       expect(fake.state.abLoopB, const Duration(minutes: 3));
       // The playhead (2:03) is the loop's start, so it stays put.
       expect(fake.calls.where((c) => c.startsWith('seek')), isEmpty);
+      // The toast names the swapped range, not the point just set.
+      expect(find.text('Loop 2:03 to 3:00'), findsOneWidget);
       await settleToast(tester);
     });
 

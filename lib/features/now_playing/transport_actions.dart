@@ -91,22 +91,28 @@ Future<void> setLoopB(
   Notify? notify,
 }) async {
   final a = player.state.abLoopA;
+  // A B before A swaps the two, so the toast names the range, not "B".
+  final Duration start;
+  final Duration end;
+  if (a != null && at < a) {
+    (start, end) = (at, a);
+  } else {
+    (start, end) = (a ?? Duration.zero, at);
+  }
   final done = await guard(() async {
-    final Duration start;
-    final Duration end;
     if (a != null && at < a) {
-      (start, end) = (at, a);
       await player.setAbLoopA(start);
       await player.setAbLoopB(end);
     } else {
-      (start, end) = (a ?? Duration.zero, at);
       await player.setAbLoopB(end);
     }
     final pos = player.state.position;
     if (pos < start || pos >= end) await player.seek(start);
     return true;
   });
-  if (done == true) notify?.call('Loop B at ${formatDuration(at)}');
+  if (done == true) {
+    notify?.call('Loop ${formatDuration(start)} to ${formatDuration(end)}');
+  }
 }
 
 /// Removes both loop points.
