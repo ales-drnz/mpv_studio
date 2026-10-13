@@ -1,0 +1,255 @@
+name: CI
+
+# Checks and builds only: nothing is released or published. Build outputs
+# are kept as workflow artifacts for a week, for trying a build by hand.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      mpv_audio_kit_ref:
+        description: mpv_audio_kit branch, tag or commit, used while the app depends on it by path
+        type: string
+        default: release/0.5.0
+      libmpv_scripts_run:
+        description: libmpv-scripts run id whose libmpv-release artifact to bundle (empty for the libmpv release)
+        type: string
+        default: ''
+      all_platforms:
+        description: Also build Windows, macOS and iOS
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its previous run; every push to main
+# runs to the end, so each commit there keeps a result.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # While pubspec.yaml has `mpv_audio_kit: {path: ../mpv_audio_kit}`, the
+  # library is checked out beside the app from this ref (the workflow input,
+  # else the repository variable MPV_AUDIO_KIT_REF). Once the app depends on
+  # a pub.dev version the ref is ignored.
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.5.0' }}
+  # mpv_audio_kit's build hook downloads libmpv from its pinned GitHub
+  # release (libmpv-r16 for 0.5.0) whenever Flutter builds native assets:
+  # flutter test and flutter build, not flutter pub get or flutter analyze.
+  # Until that release exists, set this (the workflow input, else the
+  # repository variable LIBMPV_SCRIPTS_RUN) to the libmpv-scripts run that
+  # built it: the hook then bundles that run's libmpv-release artifact
+  # through the `libmpv` user define, added to pubspec.yaml on the runner.
+  # Downloading another repository's artifacts needs the secret
+  # LIBMPV_SCRIPTS_TOKEN, a token with Actions read access on
+  # ales-drnz/libmpv-scripts: GITHUB_TOKEN only reaches this repository,
+  # and the artifact API refuses anonymous downloads even when public.
+  # Unset the variable once the release is out: run artifacts expire after
+  # 90 days.
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || vars.LIBMPV_SCRIPTS_RUN }}
+
+defaults:
+  run:
+    shell: bash
+    # The app lives in a subfolder so that a path dependency on
+    # ../mpv_audio_kit resolves to the library checked out beside it.
+    working-directory: mpv_studio
+
+jobs:
+  analyze:
+    name: Analyze (Flutter ${{ matrix.flutter }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor declared in pubspec.yaml (flutter >=3.38.0, Dart
+        # ^3.10.0) and the current stable.
+        flutter: ['3.38.x', 'any']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      # No libmpv here: analyze and format never run the build hook.
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          flutter-version: ${{ matrix.flutter }}
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+      # The formatter's output can change between Dart releases: check it
+      # with one, the stable the code is formatted with.
+      - name: Format
+        if: matrix.flutter == 'any'
+        run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      # flutter test runs the build hook, so libmpv is fetched even though
+      # the tests drive a fake player and never load it.
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      # Goldens are rendered on Linux with the current stable only: another
+      # Flutter version may draw a pixel differently.
+      - run: flutter test
+      # flutter test writes the master, test and diff images of every
+      # failed golden into a failures folder beside the test file.
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: mpv_studio/test/**/failures/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      - run: flutter build linux --release
+      # The build hook must have bundled libmpv next to the app.
+      - run: test -f build/linux/x64/release/bundle/lib/libmpv_audio_kit.so
+      # A tarball keeps the executable bit, which artifacts drop.
+      - run: tar -czf mpv_studio-linux-x64.tar.gz -C build/linux/x64/release bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpv_studio-linux-x64
+          path: mpv_studio/mpv_studio-linux-x64.tar.gz
+          retention-days: 7
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      # android/app/build.gradle.kts signs release builds with the debug
+      # keys, so a release APK needs no signing secret.
+      - run: flutter build apk --release
+      # The build hook must have put libmpv in the APK for each of its
+      # three ABIs (arm64-v8a, armeabi-v7a, x86_64).
+      - run: |
+          unzip -l build/app/outputs/flutter-apk/app-release.apk |
+            grep -c 'lib/.*/libmpv_audio_kit.so' | grep -qx 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpv_studio-android
+          path: mpv_studio/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+
+  # Windows, macOS and iOS run on pushes to main and on demand, not on pull
+  # requests: their runners start slower, macOS runners are few per
+  # account, and a pull request touching native code can still be checked
+  # by running the workflow on its branch. They wait for analyze, so a
+  # change that does not even analyze does not occupy them.
+
+  build-windows:
+    name: Build Windows
+    if: github.event_name == 'push' || inputs.all_platforms
+    needs: analyze
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      - run: flutter build windows --release
+      - run: test -f build/windows/x64/runner/Release/mpv_audio_kit.dll
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpv_studio-windows-x64
+          path: mpv_studio/build/windows/x64/runner/Release/
+          retention-days: 7
+
+  build-macos:
+    name: Build macOS
+    if: github.event_name == 'push' || inputs.all_platforms
+    needs: analyze
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      # The Runner target signs automatically for the author's development
+      # team, whose certificate the runner does not have. xcodebuild applies
+      # the file named by XCODE_XCCONFIG_FILE over every target, so the
+      # build signs ad hoc instead, without touching the project.
+      - name: Sign ad hoc
+        run: |
+          printf '%s\n' 'CODE_SIGN_IDENTITY = -' 'CODE_SIGN_STYLE = Manual' \
+            'DEVELOPMENT_TEAM =' 'PROVISIONING_PROFILE_SPECIFIER =' \
+            > "$RUNNER_TEMP/adhoc.xcconfig"
+          echo "XCODE_XCCONFIG_FILE=$RUNNER_TEMP/adhoc.xcconfig" >> "$GITHUB_ENV"
+      - run: flutter build macos --release
+      - run: |
+          app=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' | head -n 1)
+          test -d "$app/Contents/Frameworks/libmpv_audio_kit.framework"
+          # A tarball keeps the framework symlinks, which artifacts drop.
+          tar -czf mpv_studio-macos.tar.gz -C "$(dirname "$app")" "$(basename "$app")"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpv_studio-macos
+          path: mpv_studio/mpv_studio-macos.tar.gz
+          retention-days: 7
+
+  # A device build without signing: it compiles the app ahead of time
+  # against the ios-arm64 libmpv slice, which a simulator build would not.
+  # Unsigned, it cannot be installed, so nothing is uploaded. The hook needs
+  # a Flutter that targets iOS 15 (3.47.4 or later), which stable is.
+  build-ios:
+    name: Build iOS
+    if: github.event_name == 'push' || inputs.all_platforms
+    needs: analyze
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      - run: flutter build ios --release --no-codesign
+      - run: test -d build/ios/iphoneos/Runner.app/Frameworks/libmpv_audio_kit.framework
