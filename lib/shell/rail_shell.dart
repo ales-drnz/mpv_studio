@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/scroll_fade.dart';
 import 'nav_parts.dart';
 import 'sections.dart';
 import 'shell_tools.dart';
@@ -54,6 +55,7 @@ class RailShell extends StatelessWidget {
       ),
     );
 
+    final tools = shellTools(context, expanded: false);
     final rail = SizedBox(
       width: width,
       child: SafeArea(
@@ -61,47 +63,53 @@ class RailShell extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Tokens.s8,
-                  vertical: labels ? Tokens.s16 : Tokens.s8,
-                ),
-                child: Column(
-                  children: [
-                    if (labels) ...[
-                      const StudioMark(size: 40),
-                      const SizedBox(height: Tokens.s16),
+              // A low window fits its targets with no padding to spare
+              // (a phone in landscape: four tabs, More and the rail
+              // mini-player in 336); the fade says when it still scrolls.
+              child: ScrollFade(
+                axis: Axis.vertical,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Tokens.s8,
+                    vertical: labels ? Tokens.s16 : 0,
+                  ),
+                  child: Column(
+                    children: [
+                      if (labels) ...[
+                        const StudioMark(size: 40),
+                        const SizedBox(height: Tokens.s16),
+                      ],
+                      for (final s in Section.tabs) item(s),
+                      // A low window has no height for seven targets and
+                      // the mini-player: the tools fold into More, as on
+                      // the phone bar.
+                      if (labels) ...[
+                        const NavGroupGap(),
+                        for (final s in Section.more) item(s),
+                      ] else
+                        MoreDestination(
+                          section: section,
+                          onSelect: onSelect,
+                          layout: NavItemLayout.iconOnly,
+                        ),
+                      if (tools.isNotEmpty) const SizedBox(height: Tokens.s8),
+                      for (final t in tools)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: Tokens.s8),
+                          child: t,
+                        ),
                     ],
-                    for (final s in Section.tabs) item(s),
-                    // A low window has no height for seven targets and
-                    // the mini-player: the tools fold into More, as on
-                    // the phone bar.
-                    if (labels) ...[
-                      const NavGroupGap(),
-                      for (final s in Section.more) item(s),
-                    ] else
-                      MoreDestination(
-                        section: section,
-                        onSelect: onSelect,
-                        layout: NavItemLayout.iconOnly,
-                      ),
-                    const SizedBox(height: Tokens.s8),
-                    for (final t in shellTools(context, expanded: false))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: Tokens.s8),
-                        child: t,
-                      ),
-                  ],
+                  ),
                 ),
               ),
             ),
             if (railMini != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   Tokens.s8,
                   0,
                   Tokens.s8,
-                  Tokens.s8,
+                  labels ? Tokens.s8 : 0,
                 ),
                 child: railMini,
               ),

@@ -6,6 +6,7 @@ import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/shell/desktop_shell.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
 import 'package:mpv_studio/shell/mobile_shell.dart';
+import 'package:mpv_studio/shell/nav_parts.dart';
 import 'package:mpv_studio/shell/rail_shell.dart';
 import 'package:mpv_studio/shell/sections.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
@@ -67,6 +68,24 @@ void main() {
           expectNoOverflow(tester, reason: '$s ${input.name}');
         });
       }
+    }
+
+    for (final (name, insets) in [('with', true), ('without', false)]) {
+      testWidgets('a phone in landscape shows More whole, $name insets', (
+        tester,
+      ) async {
+        const size = Size(780, 360);
+        await pumpShell(
+          tester,
+          size: size,
+          input: InputMode.touch,
+          padding: insets ? phoneInsets(size) : EdgeInsets.zero,
+        );
+        final more = tester.getRect(find.byType(MoreDestination));
+        final mini = tester.getRect(find.byType(MiniPlayer));
+        expect(more.bottom, lessThanOrEqualTo(mini.top));
+        expect(more.height, greaterThanOrEqualTo(48));
+      });
     }
 
     testWidgets('a low window puts the mini-player in the rail', (
