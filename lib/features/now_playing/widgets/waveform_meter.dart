@@ -814,6 +814,38 @@ class _HScrollBarState extends State<_HScrollBar> {
   }
 }
 
+/// The vertical extent of one waveform bar: [top] to [bottom] spans the
+/// bin's min and max peaks, at least 1 px tall; [body] spans plus and minus
+/// its RMS, inside the peaks, and is null without an RMS value. [lo] and
+/// [hi] are in [-1, 1], [rms] in [0, 1]; [maxHalf] is the pixel height of
+/// full scale above [centreY].
+@visibleForTesting
+({double top, double bottom, ({double top, double bottom})? body}) waveBar({
+  required double lo,
+  required double hi,
+  required double? rms,
+  required double centreY,
+  required double maxHalf,
+}) {
+  final top = centreY - hi.clamp(-1.0, 1.0) * maxHalf;
+  final bottomRaw = centreY - lo.clamp(-1.0, 1.0) * maxHalf;
+  final bottom = bottomRaw < top + 1 ? top + 1 : bottomRaw;
+  if (rms == null || rms.isNaN) return (top: top, bottom: bottom, body: null);
+  final r = rms.clamp(0.0, 1.0) * maxHalf;
+  var bodyTop = (centreY - r).clamp(top, bottom);
+  var bodyBottom = (centreY + r).clamp(top, bottom);
+  // Keep a visible core for quiet bins.
+  if (bodyBottom - bodyTop < 1) {
+    bodyTop = (centreY - 0.5).clamp(top, bottom - 1);
+    bodyBottom = bodyTop + 1;
+  }
+  return (
+    top: top,
+    bottom: bottom,
+    body: (top: bodyTop, bottom: bodyBottom),
+  );
+}
+
 class _MeterPainter extends CustomPainter {
   final WaveformData? wave;
   final Duration pos;
@@ -933,10 +965,16 @@ class _MeterPainter extends CustomPainter {
     // a region skipped by a seek) — drawn as a faint baseline, not as a
     // real flat-zero spike, using the per-bin `filled` flags.
     final unloaded = Paint()..color = Tokens.line;
+    // With RMS (libmpv-r14 and later) the RMS is the solid body and the
+    // min/max peaks a lighter outline around it, which keeps loud, limited
+    // masters readable. Without it the peaks are the body, as before.
+    final playedPeak = Paint()..color = Tokens.accent.withValues(alpha: 0.35);
+    final upcomingPeak = Paint()..color = Tokens.fg.withValues(alpha: 0.06);
     final wv = wave;
     if (wv != null && wv.bins > 0 && wv.duration > Duration.zero) {
       final bins = wv.bins;
       final filled = wv.filled;
+      final rms = wv.rms;
       // Bins are placed in ABSOLUTE media time: bin i starts at
       // `start + i * binSecs`. For a normal track `start` is 0; for a live
       // window it's the oldest cached moment, so bins line up with the
@@ -953,15 +991,26 @@ class _MeterPainter extends CustomPainter {
         final x = (t - tLeft) * pxPerSec;
         if (x < -barW || x > w + barW) continue;
         final covered = i >= filled.length || filled[i] != 0;
-        final lo = wv.min[i].clamp(-1.0, 1.0);
-        final hi = wv.max[i].clamp(-1.0, 1.0);
-        final top = centreY - hi * maxHalf;
-        final bottomRaw = centreY - lo * maxHalf;
-        final bottom = bottomRaw < top + 1 ? top + 1 : bottomRaw;
-        canvas.drawRect(
-          Rect.fromLTRB(x, top, x + barW, bottom),
-          !covered ? unloaded : (t <= posSecs ? played : upcoming),
+        final bar = waveBar(
+          lo: wv.min[i],
+          hi: wv.max[i],
+          rms: covered && rms != null && i < rms.length ? rms[i] : null,
+          centreY: centreY,
+          maxHalf: maxHalf,
         );
+        final isPlayed = t <= posSecs;
+        final peaks = Rect.fromLTRB(x, bar.top, x + barW, bar.bottom);
+        if (!covered) {
+          canvas.drawRect(peaks, unloaded);
+        } else if (bar.body == null) {
+          canvas.drawRect(peaks, isPlayed ? played : upcoming);
+        } else {
+          canvas.drawRect(peaks, isPlayed ? playedPeak : upcomingPeak);
+          canvas.drawRect(
+            Rect.fromLTRB(x, bar.body!.top, x + barW, bar.body!.bottom),
+            isPlayed ? played : upcoming,
+          );
+        }
       }
     }
 
