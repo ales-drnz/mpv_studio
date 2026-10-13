@@ -47,8 +47,7 @@ GoRouter createAppRouter({
                 GoRoute(
                   path: section.path,
                   builder: (context, state) =>
-                      buildPage?.call(section) ??
-                      _pageFor(section, state.uri.queryParameters),
+                      buildPage?.call(section) ?? _pageFor(section, state),
                 ),
               ],
             ),
@@ -58,9 +57,10 @@ GoRouter createAppRouter({
   );
 }
 
-/// The page of [section]. [query] carries the route's parameters, such as
-/// the Stream tab to open (`/stream?tab=plex`).
-Widget _pageFor(Section section, Map<String, String> query) {
+/// The page of [section]. [state] carries the route's parameters, such as
+/// the Stream tab to open (`/stream?tab=plex`); each navigation brings a
+/// new state, which is how the live Stream page tells a new request apart.
+Widget _pageFor(Section section, GoRouterState state) {
   switch (section) {
     case Section.nowPlaying:
       return const NowPlayingPage();
@@ -71,7 +71,10 @@ Widget _pageFor(Section section, Map<String, String> query) {
     case Section.engine:
       return const EnginePage();
     case Section.stream:
-      return StreamPage(initialTab: StreamTab.byName(query['tab']));
+      return StreamPage(
+        initialTab: StreamTab.byName(state.uri.queryParameters['tab']),
+        tabRequest: state,
+      );
     case Section.settings:
       return const SettingsPage();
     case Section.console:

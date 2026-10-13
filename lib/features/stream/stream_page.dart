@@ -44,11 +44,14 @@ enum StreamTab {
 /// Reads the player, the servers and the favourites from the app's
 /// [PlayerScope]; [StreamView] is the page itself.
 class StreamPage extends StatelessWidget {
-  const StreamPage({super.key, this.initialTab});
+  const StreamPage({super.key, this.initialTab, this.tabRequest});
 
   /// The tab to show, from the route (`/stream?tab=jellyfin`); Lab when
   /// null.
   final StreamTab? initialTab;
+
+  /// The navigation that asked for [initialTab] (see [StreamView.tabRequest]).
+  final Object? tabRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +68,7 @@ class StreamPage extends StatelessWidget {
       favorites: PlayerScope.favoritesOf(context),
       resolver: SignedUrlResolver.shared,
       initialTab: initialTab ?? StreamTab.lab,
+      tabRequest: initialTab == null ? null : tabRequest,
     );
   }
 }
@@ -81,6 +85,7 @@ class StreamView extends StatefulWidget {
     required this.favorites,
     required this.resolver,
     this.initialTab = StreamTab.lab,
+    this.tabRequest,
     this.samba,
   });
 
@@ -90,6 +95,12 @@ class StreamView extends StatefulWidget {
   final FavoritesController favorites;
   final SignedUrlResolver resolver;
   final StreamTab initialTab;
+
+  /// The navigation that asked for [initialTab]. The page stays alive, so
+  /// a new request (a different object, even for the same tab) moves it
+  /// to [initialTab]; a rebuild with the same request, or none, leaves the
+  /// tab the user picked alone.
+  final Object? tabRequest;
 
   /// The Samba tab; the real one when null (tests pass one on a fake
   /// share).
@@ -114,9 +125,10 @@ class _StreamViewState extends State<StreamView>
   @override
   void didUpdateWidget(StreamView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // The page stays alive, so a later route asking for another tab (the
+    // The page stays alive, so a later route asking for a tab (the
     // welcome screen's "Connect a server") moves to it here.
-    if (widget.initialTab != oldWidget.initialTab) {
+    final request = widget.tabRequest;
+    if (request != null && !identical(request, oldWidget.tabRequest)) {
       _tabs.animateTo(widget.initialTab.index);
     }
   }

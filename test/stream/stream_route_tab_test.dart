@@ -21,20 +21,36 @@ void main() {
     expect(StreamTab.byName(null), isNull);
   });
 
-  testWidgets('a later route moves the live page to its tab', (tester) async {
+  testWidgets('a new request moves the live page, a rebuild does not', (
+    tester,
+  ) async {
     final player = StreamPlayer();
-    await pumpAt(tester, streamView(player: player), '1440x900');
     TabController tabs() =>
-        DefaultTabController.maybeOf(tester.element(find.byType(TabBar))) ??
         tester.widget<TabBar>(find.byType(TabBar)).controller!;
+    Future<void> show(StreamTab tab, Object? request) async {
+      await pumpAt(
+        tester,
+        streamView(player: player, tab: tab, tabRequest: request),
+        '1440x900',
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await show(StreamTab.lab, null);
     expect(tabs().index, StreamTab.lab.index);
 
-    await pumpAt(
-      tester,
-      streamView(player: player, tab: StreamTab.jellyfin),
-      '1440x900',
-    );
+    final first = Object();
+    await show(StreamTab.jellyfin, first);
+    expect(tabs().index, StreamTab.jellyfin.index);
+
+    // The user moves on; a rebuild with the same request keeps their tab.
+    tabs().animateTo(StreamTab.lab.index);
     await tester.pumpAndSettle();
+    await show(StreamTab.jellyfin, first);
+    expect(tabs().index, StreamTab.lab.index);
+
+    // Asking for the same tab again is a new request and moves the page.
+    await show(StreamTab.jellyfin, Object());
     expect(tabs().index, StreamTab.jellyfin.index);
   });
 }

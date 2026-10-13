@@ -247,6 +247,7 @@ Widget streamView({
   FakeServer? plex,
   SignedUrlResolver? resolver,
   StreamTab tab = StreamTab.lab,
+  Object? tabRequest,
 }) {
   final j = jellyfin ?? FakeServer();
   final p = plex ?? FakeServer(kind: ServerKind.plex);
@@ -262,6 +263,7 @@ Widget streamView({
       }),
       resolver: resolver ?? SignedUrlResolver(),
       initialTab: tab,
+      tabRequest: tabRequest,
       samba: SambaTab(actions: actions, restore: () async => null),
     ),
   );
