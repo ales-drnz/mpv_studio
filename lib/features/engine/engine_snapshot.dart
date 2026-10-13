@@ -21,7 +21,8 @@ class EngineSnapshot {
   final List<PrefetchMark> prefetchHistory;
   final double now;
 
-  /// The effects chain [FxBypass] will restore, when the bypass is on.
+  /// The user's effects chain while the rack's bypass is on (the engine
+  /// then plays a muted copy of it).
   final List<AudioEffect>? bypassedChain;
 
   const EngineSnapshot({

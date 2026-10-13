@@ -2,11 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../features/effects/rack_controller.dart';
 import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
-import 'fx_bypass.dart';
 import 'loudness_normalizer.dart';
 import 'mpv_studio.dart';
 import 'playback_issues.dart';
@@ -41,8 +41,8 @@ class PlayerScope extends InheritedWidget {
   static LoudnessNormalizer normalizerOf(BuildContext context) =>
       _scope(context).normalizer;
 
-  /// The FX bypass (before and after comparison of the effects chain).
-  static FxBypass fxBypassOf(BuildContext context) => _scope(context).fxBypass;
+  /// The Signal chain rack, whose bypass is the app's FX bypass.
+  static RackController rackOf(BuildContext context) => _scope(context).rack;
 
   /// The connected server of the given [kind].
   static MediaServer serverOf(BuildContext context, ServerKind kind) =>

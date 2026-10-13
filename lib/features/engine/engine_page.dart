@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../studio/fx_bypass.dart';
+import '../effects/rack_controller.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/tokens.dart';
 import 'engine_snapshot.dart';
@@ -26,7 +26,7 @@ class EnginePage extends StatelessWidget {
     if (!Visibility.of(context)) return const SizedBox.shrink();
     return EnginePanel(
       player: PlayerScope.of(context),
-      bypass: PlayerScope.fxBypassOf(context),
+      rack: PlayerScope.rackOf(context),
     );
   }
 }
@@ -40,7 +40,10 @@ class EnginePage extends StatelessWidget {
 /// `loudnessScan`) are followed directly.
 class EnginePanel extends StatefulWidget {
   final PlayerApi player;
-  final FxBypass? bypass;
+
+  /// The effects rack: while its bypass is on, the chain view shows the
+  /// user's chain rather than the muted copy the engine plays.
+  final RackController? rack;
 
   /// How often the snapshot is sampled.
   final Duration interval;
@@ -48,7 +51,7 @@ class EnginePanel extends StatefulWidget {
   const EnginePanel({
     super.key,
     required this.player,
-    this.bypass,
+    this.rack,
     this.interval = const Duration(milliseconds: 200),
   });
 
@@ -86,7 +89,7 @@ class _EnginePanelState extends State<EnginePanel> {
       s.waveform.listen((v) => _update(() => _waveform = v)),
       s.loudnessScan.listen((v) => _update(() => _scan = v)),
     ]);
-    widget.bypass?.addListener(_onBypass);
+    widget.rack?.addListener(_onRack);
     _sample();
     _timer = Timer.periodic(widget.interval, (_) => _update(_sample));
   }
@@ -96,7 +99,7 @@ class _EnginePanelState extends State<EnginePanel> {
     setState(change);
   }
 
-  void _onBypass() => _update(() {});
+  void _onRack() => _update(() {});
 
   void _sample() {
     final st = widget.player.state;
@@ -120,13 +123,13 @@ class _EnginePanelState extends State<EnginePanel> {
     for (final s in _subs) {
       s.cancel();
     }
-    widget.bypass?.removeListener(_onBypass);
+    widget.rack?.removeListener(_onRack);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bypass = widget.bypass;
+    final rack = widget.rack;
     final snap = EngineSnapshot(
       state: widget.player.state,
       playbackState: _playbackState,
@@ -137,7 +140,7 @@ class _EnginePanelState extends State<EnginePanel> {
       cacheHistory: List.unmodifiable(_cacheHistory),
       prefetchHistory: List.unmodifiable(_prefetchHistory),
       now: _now,
-      bypassedChain: bypass != null && bypass.active ? bypass.savedChain : null,
+      bypassedChain: rack != null && rack.bypass ? rack.chain.effects : null,
     );
 
     final status = StatusView(snapshot: snap);

@@ -95,6 +95,22 @@ void main() {
     });
   });
 
+  test('only a stage other than the meter makes the bypass useful', () {
+    fakeAsync((async) {
+      final engine = FakeEngine([bass.copyWith(enabled: false), kMeterStage]);
+      final rack = RackController(engine);
+      expect(rack.canBypass, isFalse);
+      rack.setEnabled(rack.chain.stages.first.id, true);
+      expect(rack.canBypass, isTrue);
+      rack.setBypass(true);
+      async.flushMicrotasks();
+      rack.setEnabled(rack.chain.stages.first.id, false);
+      expect(rack.canBypass, isTrue,
+          reason: 'the bypass can still be released');
+      rack.dispose();
+    });
+  });
+
   test('new stages go before a trailing meter and open', () {
     fakeAsync((async) {
       final engine = FakeEngine([bass]);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../studio/fx_bypass.dart';
+import '../features/effects/rack_controller.dart';
 import '../ui/tokens.dart';
 import '../util/duration_format.dart';
 import '../util/reactive.dart';
@@ -9,20 +9,20 @@ import '../util/reactive.dart';
 /// The persistent mini-player shown on every section but Playback: cover,
 /// title and artist, play and pause bound to `playWhenReady`, next, a thin
 /// seekable progress bar, a loading and buffering indicator from
-/// `playbackState`, and the FX bypass toggle.
+/// `playbackState`, and the FX bypass toggle of the effects [rack].
 ///
 /// [compact] trims it for the mobile shell, where it sits above the tab
 /// bar. [onOpen] (tapping the cover or the title) goes to Playback.
 class MiniPlayer extends StatelessWidget {
   final PlayerApi player;
-  final FxBypass? bypass;
+  final RackController? rack;
   final VoidCallback? onOpen;
   final bool compact;
 
   const MiniPlayer({
     super.key,
     required this.player,
-    this.bypass,
+    this.rack,
     this.onOpen,
     this.compact = false,
   });
@@ -71,12 +71,8 @@ class MiniPlayer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: Tokens.s8),
-                  if (bypass != null) ...[
-                    FxBypassToggle(
-                      player: player,
-                      bypass: bypass!,
-                      compact: compact,
-                    ),
+                  if (rack != null) ...[
+                    FxBypassToggle(rack: rack!, compact: compact),
                     SizedBox(width: compact ? Tokens.s2 : Tokens.s8),
                   ],
                   _PlayPause(player: player),
@@ -422,98 +418,88 @@ class _MiniGlyph extends StatelessWidget {
   }
 }
 
-/// The before and after switch: bypasses the effects chain through
-/// [FxBypass] and restores it on the second tap. Disabled when no stage
-/// is switched on and nothing is bypassed.
+/// The before and after switch: the rack's global bypass, the same one
+/// as on the Effects page. Disabled when no stage but the meter is
+/// switched on and nothing is bypassed.
 class FxBypassToggle extends StatelessWidget {
-  final PlayerApi player;
-  final FxBypass bypass;
+  final RackController rack;
   final bool compact;
 
-  const FxBypassToggle({
-    super.key,
-    required this.player,
-    required this.bypass,
-    this.compact = false,
-  });
+  const FxBypassToggle({super.key, required this.rack, this.compact = false});
+
+  void _toggle() => rack.setBypass(!rack.bypass);
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: bypass,
-      builder: (context, _) => Live<List<AudioEffect>>(
-        stream: player.stream.audioEffects,
-        initial: player.state.audioEffects,
-        builder: (context, chain) {
-          final on = bypass.active;
-          final enabled = on || FxBypass.hasActiveStages(chain);
-          final tip = on
-              ? 'FX bypassed. Tap to restore the chain'
-              : enabled
-                  ? 'Bypass FX to compare before and after'
-                  : 'No effects to bypass';
-          final color =
-              on ? Tokens.amber : (enabled ? Tokens.fgDim : Tokens.fgFaint);
-          return Semantics(
-            button: true,
-            toggled: on,
-            enabled: enabled,
-            label: 'Bypass FX',
-            excludeSemantics: true,
-            onTap: enabled ? bypass.toggle : null,
-            child: Tooltip(
-              message: tip,
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  onTap: enabled ? bypass.toggle : null,
-                  customBorder: Tokens.squircle(Tokens.rSm),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: compact ? Tokens.s6 : Tokens.s8,
-                      vertical: Tokens.s6,
-                    ),
-                    decoration: ShapeDecoration(
-                      color: on
-                          ? Tokens.amber.withValues(alpha: 0.16)
-                          : Colors.transparent,
-                      shape: Tokens.squircle(
-                        Tokens.rSm,
-                        side: BorderSide(
-                          color: on ? Colors.transparent : Tokens.line2,
-                        ),
+      listenable: rack,
+      builder: (context, _) {
+        final on = rack.bypass;
+        final enabled = rack.canBypass;
+        final tip = on
+            ? 'FX bypassed. Tap to restore the chain'
+            : enabled
+                ? 'Bypass FX to compare before and after'
+                : 'No effects to bypass';
+        final color =
+            on ? Tokens.amber : (enabled ? Tokens.fgDim : Tokens.fgFaint);
+        return Semantics(
+          button: true,
+          toggled: on,
+          enabled: enabled,
+          label: 'Bypass FX',
+          excludeSemantics: true,
+          onTap: enabled ? _toggle : null,
+          child: Tooltip(
+            message: tip,
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: enabled ? _toggle : null,
+                customBorder: Tokens.squircle(Tokens.rSm),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? Tokens.s6 : Tokens.s8,
+                    vertical: Tokens.s6,
+                  ),
+                  decoration: ShapeDecoration(
+                    color: on
+                        ? Tokens.amber.withValues(alpha: 0.16)
+                        : Colors.transparent,
+                    shape: Tokens.squircle(
+                      Tokens.rSm,
+                      side: BorderSide(
+                        color: on ? Colors.transparent : Tokens.line2,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          on
-                              ? Icons.layers_clear_rounded
-                              : Icons.layers_rounded,
-                          size: 16,
-                          color: color,
-                        ),
-                        if (!compact) ...[
-                          const SizedBox(width: Tokens.s6),
-                          Text(
-                            on ? 'Dry' : 'FX',
-                            style: Tokens.label.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        on ? Icons.layers_clear_rounded : Icons.layers_rounded,
+                        size: 16,
+                        color: color,
+                      ),
+                      if (!compact) ...[
+                        const SizedBox(width: Tokens.s6),
+                        Text(
+                          on ? 'Dry' : 'FX',
+                          style: Tokens.label.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,12 +1,12 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../features/effects/rack_controller.dart';
 import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
 import 'app_settings.dart';
 import 'audio_engine.dart';
-import 'fx_bypass.dart';
 import 'loudness_normalizer.dart';
 import 'media_servers.dart';
 import 'playback_issues.dart';
@@ -51,9 +51,10 @@ class MpvStudio {
   /// that have played.
   final QueueDetails queueDetails;
 
-  /// Before and after comparison for the effects chain, shared by the
-  /// mini-player toggle and the Effects page.
-  final FxBypass fxBypass;
+  /// The Signal chain rack: the user's effects chain and the one FX
+  /// bypass, shared by the Effects page, the mini-player toggle and the
+  /// Engine panel.
+  final RackController rack;
 
   const MpvStudio._({
     required this.player,
@@ -64,7 +65,7 @@ class MpvStudio {
     required this.normalizer,
     required this.issues,
     required this.queueDetails,
-    required this.fxBypass,
+    required this.rack,
     required void Function() disposeServers,
   }) : _disposeServers = disposeServers;
 
@@ -91,15 +92,9 @@ class MpvStudio {
     // subscription itself arms the scan, so an off toggle costs nothing.
     final normalizer = LoudnessNormalizer(engine.player, settings)..restore();
 
-    // The bypass holds persistence while it plays the muted copy, so a quit
-    // mid-comparison keeps the real rack on disk.
-    final fxBypass = FxBypass(
-      engine.player,
-      onHold: (hold, current) {
-        settings.holdEffects = hold;
-        if (!hold && current != null) settings.recordEffects(current);
-      },
-    );
+    // The rack's bypass holds persistence while it plays the muted copy,
+    // so a quit mid-comparison keeps the real chain on disk.
+    final rack = RackController.forSettings(engine.player, settings);
 
     return MpvStudio._(
       player: engine.player,
@@ -111,7 +106,7 @@ class MpvStudio {
       issues: issues,
       queueDetails: queueDetails,
       disposeServers: media.dispose,
-      fxBypass: fxBypass,
+      rack: rack,
     );
   }
 
@@ -122,7 +117,7 @@ class MpvStudio {
     _disposeServers();
     issues.dispose();
     queueDetails.dispose();
-    fxBypass.dispose();
+    rack.dispose();
     await settings.dispose();
     await consoleLog.dispose();
     await player.dispose();

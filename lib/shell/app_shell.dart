@@ -56,7 +56,7 @@ class _AppShellState extends State<AppShell> {
         ? null
         : MiniPlayer(
             player: player,
-            bypass: PlayerScope.fxBypassOf(context),
+            rack: PlayerScope.rackOf(context),
             compact: compact,
             onOpen: () => _select(Section.nowPlaying),
           );

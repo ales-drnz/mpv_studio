@@ -21,9 +21,9 @@ abstract interface class EffectsEngine {
   Future<void> apply(List<AudioEffect> effects);
 }
 
-/// [EffectsEngine] over a [Player].
+/// [EffectsEngine] over a [PlayerApi].
 class PlayerEffectsEngine implements EffectsEngine {
-  final Player player;
+  final PlayerApi player;
   const PlayerEffectsEngine(this.player);
 
   @override
@@ -49,6 +49,10 @@ class PlayerEffectsEngine implements EffectsEngine {
 ///
 /// When mpv refuses a chain, the rack goes back to the last chain mpv
 /// accepted and [error] says why.
+///
+/// The rack's [bypass] is the app's only FX bypass: the mini-player
+/// toggle and the Engine panel use it too, through the rack the studio
+/// owns ([forSettings]).
 class RackController extends ChangeNotifier {
   RackController(
     this._engine, {
@@ -63,16 +67,18 @@ class RackController extends ChangeNotifier {
     _sub = _engine.changes.listen(_onEngine);
   }
 
-  /// The rack of [player], created on first use and kept for the life of
+  /// The rack of [player], recording its chain in [settings] and holding
+  /// that record while bypassed. The studio creates one for the life of
   /// the app, so the bypass and the open stages survive leaving the page.
-  static RackController of(Player player, AppSettings settings) =>
-      _registry[player] ??= RackController(
+  factory RackController.forSettings(
+    PlayerApi player,
+    AppSettings settings,
+  ) =>
+      RackController(
         PlayerEffectsEngine(player),
         onRecord: settings.recordEffects,
         onHold: (hold) => settings.holdEffects = hold,
       );
-
-  static final Expando<RackController> _registry = Expando('rack');
 
   final EffectsEngine _engine;
   final void Function(List<AudioEffect>)? _onRecord;
@@ -170,6 +176,10 @@ class RackController extends ChangeNotifier {
 
   /// Plays the chain with every stage off (the meters stay on), or the
   /// chain again. The rack keeps showing and editing the chain meanwhile.
+  ///
+  /// The muted copy keeps the shape of the chain (the stage taps stay
+  /// valid and the meter stays on), and AppSettings is held meanwhile, so
+  /// what is saved is always the user's chain.
   void setBypass(bool on) {
     if (on == _bypass) return;
     _bypass = on;
@@ -180,6 +190,11 @@ class RackController extends ChangeNotifier {
     notifyListeners();
     _push();
   }
+
+  /// Whether the bypass would change what you hear: a stage other than
+  /// the meter is switched on, or the bypass is already on.
+  bool get canBypass =>
+      _bypass || _chain.effects.any((e) => e.enabled && !isMeterStage(e));
 
   void toggleExpanded(int id) {
     if (!_expanded.remove(id)) _expanded.add(id);

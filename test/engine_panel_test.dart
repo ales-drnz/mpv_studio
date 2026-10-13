@@ -3,9 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/engine/engine_page.dart';
 import 'package:mpv_studio/features/engine/widgets/analysis_view.dart';
-import 'package:mpv_studio/studio/fx_bypass.dart';
+import 'package:mpv_studio/features/engine/widgets/chain_view.dart';
 import 'package:mpv_studio/ui/theme.dart';
 
 import 'support/fake_player.dart';
@@ -136,20 +137,31 @@ void main() {
 
   testWidgets('shows the saved chain while the FX bypass is on',
       (tester) async {
-    final bypass = FxBypass(player);
-    addTearDown(bypass.dispose);
+    final rack = RackController(PlayerEffectsEngine(player));
+    addTearDown(rack.dispose);
     await _pump(
       tester,
-      EnginePanel(player: player, bypass: bypass),
+      EnginePanel(player: player, rack: rack),
       const Size(1280, 1600),
     );
 
-    await tester.runAsync(bypass.engage);
+    await tester.runAsync(() async {
+      rack.setBypass(true);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    });
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Bypass'), findsOneWidget);
     expect(
       find.text('Bypassed: the audio plays dry until the bypass is released.'),
+      findsOneWidget,
+    );
+    // The engine plays a switched-off copy of the same shape; the panel
+    // still names the stages of the user's chain.
+    expect(player.state.audioEffects, hasLength(3));
+    expect(player.state.audioEffects.where((e) => e.enabled), isEmpty);
+    expect(
+      find.text(ChainView.nameOf(const BassEffect(gain: 4))),
       findsOneWidget,
     );
   });

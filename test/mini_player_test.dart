@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/effects/rack_catalog.dart';
+import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
-import 'package:mpv_studio/studio/fx_bypass.dart';
 import 'package:mpv_studio/ui/theme.dart';
 
 import 'support/fake_player.dart';
@@ -100,9 +101,9 @@ void main() {
 
   testWidgets('controls carry tooltips and semantics', (tester) async {
     final handle = tester.ensureSemantics();
-    final bypass = FxBypass(player);
-    addTearDown(bypass.dispose);
-    await _pump(tester, MiniPlayer(player: player, bypass: bypass));
+    final rack = RackController(PlayerEffectsEngine(player));
+    addTearDown(rack.dispose);
+    await _pump(tester, MiniPlayer(player: player, rack: rack));
 
     expect(find.byTooltip('Next'), findsOneWidget);
     expect(find.byTooltip('Play'), findsOneWidget);
@@ -127,9 +128,9 @@ void main() {
     player.emit(
       (s) => s.copyWith(audioEffects: const [BassEffect(gain: 5)]),
     );
-    final bypass = FxBypass(player);
-    addTearDown(bypass.dispose);
-    await _pump(tester, MiniPlayer(player: player, bypass: bypass));
+    final rack = RackController(PlayerEffectsEngine(player));
+    addTearDown(rack.dispose);
+    await _pump(tester, MiniPlayer(player: player, rack: rack));
 
     expect(find.text('FX'), findsOneWidget);
     await tester.runAsync(() async {
@@ -137,7 +138,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     });
     await tester.pump();
-    expect(bypass.active, isTrue);
+    expect(rack.bypass, isTrue);
     expect(player.state.audioEffects.single.enabled, isFalse);
     expect(find.text('Dry'), findsOneWidget);
 
@@ -146,8 +147,36 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     });
     await tester.pump();
-    expect(bypass.active, isFalse);
+    expect(rack.bypass, isFalse);
     expect(player.state.audioEffects.single.enabled, isTrue);
     expect(find.text('FX'), findsOneWidget);
+  });
+
+  testWidgets('the FX toggle ignores the loudness meter and keeps it on',
+      (tester) async {
+    player.emit((s) => s.copyWith(audioEffects: [kMeterStage]));
+    final rack = RackController(PlayerEffectsEngine(player));
+    addTearDown(rack.dispose);
+    await _pump(tester, MiniPlayer(player: player, rack: rack));
+    expect(find.byTooltip('No effects to bypass'), findsOneWidget);
+
+    player.emit(
+      (s) => s.copyWith(
+        audioEffects: [const BassEffect(gain: 5), kMeterStage],
+      ),
+    );
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('FX'));
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    });
+    await tester.pump();
+    expect(rack.bypass, isTrue);
+    expect(player.state.audioEffects, hasLength(2));
+    expect(player.state.audioEffects.first.enabled, isFalse);
+    expect(player.state.audioEffects.last.enabled, isTrue);
   });
 }

@@ -28,7 +28,7 @@ class EffectsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = PlayerScope.of(context);
-    final rack = RackController.of(player, PlayerScope.settingsOf(context));
+    final rack = PlayerScope.rackOf(context);
     final normalizer = PlayerScope.normalizerOf(context);
     return Live<SpectrumSettings>(
       stream: player.stream.spectrum,
