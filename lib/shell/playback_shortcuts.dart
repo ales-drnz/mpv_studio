@@ -1,18 +1,21 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../studio/playback_issues.dart';
+import '../ui/layout/layout.dart';
+import '../ui/tokens.dart';
 
 /// Desktop keyboard shortcuts for playback, active anywhere in the app:
 ///
 /// * Space: play and pause (on `playWhenReady`)
 /// * Left and Right: seek 5 s back and forward (repeats while held)
 /// * M: mute, N: next, P: previous
+/// * ? or F1: the list of shortcuts ([showShortcutHelp])
 ///
 /// Keys are left alone while a text field has focus, when a modifier is
-/// held (so system and app shortcuts keep working) and when [enabled] is
-/// false. A focused button still gets its own Space: it handles the key
+/// held (so system and app shortcuts keep working; Shift is allowed for
+/// the ?) and when [enabled] is false. A focused button still gets its own Space: it handles the key
 /// before it bubbles up here. The player calls run through [guard].
 class PlaybackShortcuts extends StatelessWidget {
   final PlayerApi player;
@@ -36,12 +39,72 @@ class PlaybackShortcuts extends StatelessWidget {
       // Holds the focus when nothing else does, so the keys arrive.
       autofocus: true,
       debugLabel: 'PlaybackShortcuts',
-      onKeyEvent: (node, event) => enabled
-          ? handlePlaybackKey(player, event, guard: guard)
-          : KeyEventResult.ignored,
+      onKeyEvent: (node, event) {
+        if (!enabled) return KeyEventResult.ignored;
+        if (isShortcutHelpKey(event)) {
+          showShortcutHelp(context);
+          return KeyEventResult.handled;
+        }
+        return handlePlaybackKey(player, event, guard: guard);
+      },
       child: child,
     );
   }
+}
+
+/// The keyboard shortcuts, as (keys, action) pairs, in the order the help
+/// lists them.
+const List<(String, String)> playbackShortcutList = [
+  ('Space', 'Play or pause'),
+  ('Left', 'Seek 5 s back (hold to repeat)'),
+  ('Right', 'Seek 5 s forward (hold to repeat)'),
+  ('M', 'Mute or unmute'),
+  ('N', 'Next track'),
+  ('P', 'Previous track'),
+  ('? or F1', 'Show these shortcuts'),
+];
+
+/// Whether [event] asks for the shortcut help: a press of F1, or of the
+/// key that types ?, outside a text field.
+bool isShortcutHelpKey(KeyEvent event) {
+  if (event is! KeyDownEvent || _typingInTextField()) return false;
+  return event.logicalKey == LogicalKeyboardKey.f1 || event.character == '?';
+}
+
+/// Shows the list of keyboard shortcuts in a dialog.
+Future<void> showShortcutHelp(BuildContext context) {
+  return showStudioDialog<void>(
+    context,
+    title: 'Keyboard shortcuts',
+    maxWidth: 420,
+    builder: (context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (keys, action) in playbackShortcutList)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Tokens.s6),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 96,
+                  child: Text(
+                    keys,
+                    style: Tokens.numeric.copyWith(color: Tokens.fg),
+                  ),
+                ),
+                Expanded(child: Text(action, style: Tokens.body)),
+              ],
+            ),
+          ),
+      ],
+    ),
+    actions: (context) => [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Close'),
+      ),
+    ],
+  );
 }
 
 /// Applies the [PlaybackShortcuts] binding for [event] to [player].
