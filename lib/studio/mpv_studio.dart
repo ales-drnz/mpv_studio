@@ -95,7 +95,10 @@ class MpvStudio {
     // mid-comparison keeps the real rack on disk.
     final fxBypass = FxBypass(
       engine.player,
-      onHold: (hold, current) => settings.holdEffects(hold, current: current),
+      onHold: (hold, current) {
+        settings.holdEffects = hold;
+        if (!hold && current != null) settings.recordEffects(current);
+      },
     );
 
     return MpvStudio._(

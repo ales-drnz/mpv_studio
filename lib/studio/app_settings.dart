@@ -256,24 +256,24 @@ class AppSettings {
   MediaSession? get mediaSession =>
       sessionOn ? composeMediaSession(sessionActions) : null;
 
-  Map<String, Object?> get _effectsBlob {
-    final e = _data['effects'];
-    return e is Map ? e.cast<String, Object?>() : const {};
-  }
+  /// The persisted effects chain, in order. Reads the blob of MPV Studio
+  /// 0.2 too, which the next change rewrites in the current format.
+  List<AudioEffect> get effects => EffectsCodec.decode(_data['effects']);
 
-  /// The persisted DSP rack, decoded into the stages of an effects chain.
-  List<AudioEffect> get effects => EffectsCodec.decode(_effectsBlob);
+  /// While true the chain on `stream.audioEffects` is not recorded: the
+  /// rack's global bypass plays a switched-off copy of the chain, and
+  /// records the user's chain itself through [recordEffects].
+  bool holdEffects = false;
 
-  bool _effectsHeld = false;
+  /// Records the effects chain explicitly.
+  void recordEffects(List<AudioEffect> fx) =>
+      _snapJson('effects', EffectsCodec.encode(fx));
 
-  /// Pauses the recording of the effects chain, e.g. while the FX bypass
-  /// swaps in a muted copy of the rack. Releasing the hold records
-  /// [current] so a change made during the hold is not lost.
-  void holdEffects(bool hold, {List<AudioEffect>? current}) {
-    _effectsHeld = hold;
-    if (!hold && current != null) {
-      _snap('effects', EffectsCodec.encode(current));
-    }
+  /// [_snap] for JSON values, which compare by content.
+  void _snapJson(String key, Object? value) {
+    if (jsonEncode(_data[key]) == jsonEncode(value)) return;
+    _data[key] = value;
+    _scheduleSave();
   }
 
   /// Exclusive audio output has no observable stream, so the Settings
@@ -374,7 +374,7 @@ class AppSettings {
         _scheduleSave();
       }),
       s.audioEffects.listen((v) {
-        if (!_effectsHeld) _snap('effects', EffectsCodec.encode(v));
+        if (!holdEffects) recordEffects(v);
       }),
     ]);
   }
