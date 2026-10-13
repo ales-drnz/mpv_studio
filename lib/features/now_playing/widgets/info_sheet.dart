@@ -243,7 +243,6 @@ class _InfoSheet extends StatelessWidget {
       _card([
         StreamBuilder<MpvPlaybackState>(
           stream: player.stream.playbackState,
-          initialData: MpvPlaybackState.idle,
           builder: (c, s) =>
               _kv('State', (s.data ?? MpvPlaybackState.idle).name),
         ),
