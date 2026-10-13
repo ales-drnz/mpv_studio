@@ -9,6 +9,7 @@ import '../../../ui/widgets/section_body.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
+import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'session_parts.dart';
 
@@ -26,13 +27,29 @@ class SessionSection extends StatefulWidget {
 }
 
 class _SessionSectionState extends State<SessionSection> {
-  late final SettingsScope _scope = SettingsScope.of(context);
+  // Read in didChangeDependencies, so a new scope (another player or
+  // settings) is followed and the selection reloads from its settings.
+  late SettingsScope _scope;
+  late bool _on;
+  late List<MediaAction> _shown;
+  late int _ffSecs;
+  late int _rwSecs;
+  late InterruptionPolicy _interruption;
+  AppSettings? _loadedFrom;
 
-  late bool _on = _scope.settings.sessionOn;
-  late List<MediaAction> _shown = _scope.settings.sessionActions;
-  late int _ffSecs = _scope.settings.sessionFastForwardSecs;
-  late int _rwSecs = _scope.settings.sessionRewindSecs;
-  late InterruptionPolicy _interruption = _scope.settings.sessionInterruption;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scope = SettingsScope.of(context);
+    final settings = _scope.settings;
+    if (identical(settings, _loadedFrom)) return;
+    _loadedFrom = settings;
+    _on = settings.sessionOn;
+    _shown = settings.sessionActions;
+    _ffSecs = settings.sessionFastForwardSecs;
+    _rwSecs = settings.sessionRewindSecs;
+    _interruption = settings.sessionInterruption;
+  }
 
   // Actions the running OS's native media UI won't render (dimmed below).
   final Set<MediaAction> _unsupported = unsupportedSessionActions();
