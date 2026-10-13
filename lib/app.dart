@@ -163,7 +163,8 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
 }
 
 /// Covers the app while the player restarts: the old player is going away,
-/// so nothing under it may be touched until the new one is on screen.
+/// so nothing under it may be touched, by pointer or keyboard, until the
+/// new one is on screen.
 class _RestartCover extends StatelessWidget {
   const _RestartCover({required this.restarting, required this.child});
 
@@ -175,7 +176,8 @@ class _RestartCover extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        child,
+        // The barrier stops the pointer; this stops the keyboard shortcuts.
+        ExcludeFocus(excluding: restarting, child: child),
         if (restarting) ...[
           ModalBarrier(color: Tokens.bg.withValues(alpha: 0.6)),
           Center(
