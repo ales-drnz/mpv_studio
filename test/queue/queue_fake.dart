@@ -37,8 +37,12 @@ class QueueFakePlayer extends FakePlayer {
     if (play ?? false) emit((s) => s.copyWith(playWhenReady: true));
   }
 
+  /// When set, [openAll] waits for it, to observe an add in flight.
+  Completer<void>? openGate;
+
   @override
   Future<void> openAll(List<Media> medias, {bool? play, int index = 0}) async {
+    await openGate?.future;
     calls.add('openAll ${medias.length} play=$play');
     _set(medias, index);
     if (play ?? false) emit((s) => s.copyWith(playWhenReady: true));

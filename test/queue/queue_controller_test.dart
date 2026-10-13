@@ -97,4 +97,20 @@ void main() {
     player.hasOtherPlaylist = true;
     expect(await queue.previousPlaylist(), isTrue);
   });
+
+  test('disposing mid-add is safe', () async {
+    final empty = QueueFakePlayer()..openGate = Completer();
+    final c = QueueController(
+      player: empty,
+      guard: unguarded,
+      pickFiles: () async => ['/x/One.flac'],
+    );
+    final adding = c.addFiles();
+    await pumpEventQueue();
+    expect(c.adding.value, 1);
+    c.dispose();
+    empty.openGate!.complete();
+    await adding;
+    expect(empty.items, hasLength(1));
+  });
 }
