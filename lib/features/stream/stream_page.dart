@@ -765,7 +765,7 @@ class _ReferenceTab extends StatelessWidget {
 
   // No title: the queue names a bare URL after its last path segment, and
   // the tags replace that once the stream loads.
-  static Media _media(String url) => Media(url, extras: {'artist': 'Stream'});
+  static Media _media(String url) => Media(url);
 
   @override
   Widget build(BuildContext context) {
@@ -823,8 +823,7 @@ class _StreamTile extends StatelessWidget {
     this.current = false,
   });
 
-  Media get _media =>
-      Media(item.url, extras: {'title': item.label, 'artist': 'Stream'});
+  Media get _media => Media(item.url, extras: {'title': item.label});
 
   Future<void> _play(BuildContext context) => PlayerScope.issuesOf(
     context,
