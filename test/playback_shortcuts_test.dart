@@ -63,9 +63,9 @@ void main() {
     await _pump(
       tester,
       player,
-      guard: (call) async {
+      guard: <T>(call) async {
         guarded++;
-        await call();
+        return call();
       },
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
