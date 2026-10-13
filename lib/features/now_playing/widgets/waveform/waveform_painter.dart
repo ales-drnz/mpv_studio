@@ -183,7 +183,9 @@ class WaveformPainter extends CustomPainter {
       var dx = x - tp.width / 2;
       if (dx + tp.width > w - 1) dx = w - 1 - tp.width;
       if (dx < 1) dx = 1;
-      tp.paint(canvas, Offset(dx, 2));
+      tp
+        ..paint(canvas, Offset(dx, 2))
+        ..dispose();
     }
   }
 
@@ -280,7 +282,9 @@ class WaveformPainter extends CustomPainter {
       RRect.fromRectAndRadius(bubble, const Radius.circular(3)),
       Paint()..color = palette.surface3,
     );
-    tp.paint(canvas, Offset(bx + 3, rulerHeight + 4));
+    tp
+      ..paint(canvas, Offset(bx + 3, rulerHeight + 4))
+      ..dispose();
   }
 
   @override

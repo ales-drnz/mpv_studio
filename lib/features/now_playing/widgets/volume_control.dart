@@ -9,10 +9,10 @@ import '../transport_actions.dart';
 /// Mute toggle + volume slider, bound to `player.stream.volume` and
 /// `player.stream.mute`. Range tracks `volumeMax`. [axis] picks a
 /// horizontal slider (default) or a vertical one (slim, fills its
-/// parent's height — for a column beside the meters).
+/// parent's height, for a column beside the meters).
 ///
 /// The slider is the app's flat house style ([_FlatSlider]): a squircle
-/// pill track, an accent fill, and a squircle thumb — matching the
+/// pill track, an accent fill, and a squircle thumb, matching the
 /// settings/effects sliders. Muting dims the fill and thumb instead of
 /// disabling interaction, so you can still drag while muted. The calls run
 /// through the page's guard.
@@ -104,7 +104,7 @@ class VolumeControl extends StatelessWidget {
   }
 }
 
-/// A flat slider — squircle pill track, accent fill, squircle thumb — that
+/// A flat slider (squircle pill track, accent fill, squircle thumb) that
 /// works horizontally or vertically. Tap or drag to set; reports through
 /// [onChanged]. Mirrors the look of `AppSlider`; [enabled] = false dims it
 /// (used for the muted state) without blocking the gesture.

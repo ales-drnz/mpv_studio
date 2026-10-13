@@ -181,6 +181,19 @@ void main() {
       expect(player.calls, ['setChapter 2', 'setChapter 1']);
     });
 
+    testWidgets('before the first chapter no chapter is claimed', (
+      tester,
+    ) async {
+      final player = playingTrack()
+        ..emit((s) => s.copyWith(currentChapter: null));
+      await _pumpPage(tester, player);
+      final title = find.byKey(const ValueKey('chapter-title'));
+      expect(tester.widget<Text>(title).data, 'Before the first chapter');
+      expect(find.text('3 chapters'), findsOneWidget);
+      await tester.tap(find.byTooltip('Next chapter'));
+      expect(player.calls, ['setChapter 0']);
+    });
+
     testWidgets('a track without chapters shows no chapter line', (
       tester,
     ) async {

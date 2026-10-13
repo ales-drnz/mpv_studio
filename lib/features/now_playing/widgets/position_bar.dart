@@ -86,8 +86,14 @@ class ChapterBar extends StatelessWidget {
             initial: player.state.chapterMetadata,
             builder: (context, _) {
               final notify = feedbackFor(context);
-              final index = current ?? 0;
-              final title = chapterTitle(player.state, index);
+              // Before the first chapter starts, mpv reports none.
+              final index = current ?? -1;
+              final title = index < 0
+                  ? 'Before the first chapter'
+                  : chapterTitle(player.state, index);
+              final count = index < 0
+                  ? '${chapters.length} chapters'
+                  : 'Chapter ${index + 1} of ${chapters.length}';
               return Row(
                 children: [
                   TransportButton(
@@ -99,7 +105,7 @@ class ChapterBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: Semantics(
-                      label: 'Chapter ${index + 1} of ${chapters.length}',
+                      label: count,
                       value: title,
                       excludeSemantics: true,
                       child: Column(
@@ -114,7 +120,7 @@ class ChapterBar extends StatelessWidget {
                             style: Tokens.label.copyWith(color: Tokens.fg),
                           ),
                           Text(
-                            'Chapter ${index + 1} of ${chapters.length}',
+                            count,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Tokens.caption,
@@ -193,7 +199,7 @@ class AbLoopChip extends StatelessWidget {
         if (hasLoop)
           const StudioMenuItem(
             value: (_LoopAction.clear, null),
-            label: 'Clear the loop',
+            label: 'Clear A-B loop',
             icon: Icons.layers_clear_rounded,
             destructive: true,
           ),
