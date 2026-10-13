@@ -129,6 +129,8 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<Duration> get position => _s((s) => s.position);
   @override
+  Stream<bool> get seeking => _s((s) => s.seeking);
+  @override
   Stream<Duration> get duration => _s((s) => s.duration);
   @override
   Stream<bool> get mute => _s((s) => s.mute);
