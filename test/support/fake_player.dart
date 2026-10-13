@@ -10,8 +10,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 /// on) are fields set through [emitExtra]. Commands are recorded in
 /// [calls] and applied to [state] where it makes sense.
 class FakePlayer implements PlayerApi {
-  FakePlayer([PlayerState? initial])
-      : _state = initial ?? const PlayerState();
+  FakePlayer([PlayerState? initial]) : _state = initial ?? const PlayerState();
 
   PlayerState _state;
   final _changes = StreamController<void>.broadcast(sync: true);
