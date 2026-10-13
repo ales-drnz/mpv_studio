@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show Chapter;
 
+import '../../util/duration_format.dart';
+import '../layout/layout.dart';
 import '../tokens.dart';
 
-/// A YouTube-style chapter strip for the currently-playing track: a thin bar
-/// with a dot at each chapter boundary (the dots stand proud of the bar), a
-/// coloured fill showing playback progress, and a per-dot tooltip with the
-/// chapter name. The active chapter's name sits above it.
+/// A chapter strip for the current track: a thin bar with the playback
+/// progress and a dot at each chapter start that stands proud of it, each
+/// with a tooltip naming the chapter. The active chapter's title and
+/// number sit above. Without chapters it is a plain progress bar.
 ///
-/// When [onSeekChapter] is provided the dots are **clickable** — tapping one
-/// jumps straight to that chapter (the caller typically wires it to
-/// `player.setChapter`). With [onSeekChapter] null the strip is purely visual.
+/// With [onSeekChapter] the dots are buttons that jump to their chapter
+/// (wire it to `player.setChapter`); with [onSeek] a tap or drag on the
+/// bar seeks there. Both null makes the strip read only. [activeTitle]
+/// overrides the active chapter's title, for the chapter's own tags
+/// (`chapterMetadata`).
 class ChapterScrubber extends StatelessWidget {
   final List<Chapter> chapters;
   final Duration position;
   final Duration duration;
 
-  /// Called with the 0-based chapter index when a dot is tapped. Null = the
-  /// strip is read-only (no click, default cursor).
+  /// Called with the 0-based chapter index when a dot is tapped.
   final ValueChanged<int>? onSeekChapter;
+
+  /// Called with the time under a tap or drag on the bar.
+  final ValueChanged<Duration>? onSeek;
+
+  /// The title to show for the active chapter, when known.
+  final String? activeTitle;
 
   const ChapterScrubber({
     super.key,
@@ -26,26 +35,23 @@ class ChapterScrubber extends StatelessWidget {
     required this.position,
     required this.duration,
     this.onSeekChapter,
+    this.onSeek,
+    this.activeTitle,
   });
 
   static const double _barH = 6;
-  static const double _laneH = 24;
   static const double _dot = 13; // > _barH so the dots stick out of the bar
-  static const double _hit = 24; // tap/hover target around each dot
 
-  static String _fmt(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes % 60;
-    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:$s' : '$m:$s';
+  String _titleOf(int i) {
+    if (i == _activeIndex && (activeTitle?.trim().isNotEmpty ?? false)) {
+      return activeTitle!.trim();
+    }
+    final t = chapters[i].title?.trim();
+    return t == null || t.isEmpty ? 'Chapter ${i + 1}' : t;
   }
 
-  String _titleOf(int i) => (chapters[i].title?.trim().isNotEmpty ?? false)
-      ? chapters[i].title!.trim()
-      : 'Chapter ${i + 1}';
-
-  /// Index of the chapter that contains [position] (the last one whose start
-  /// is at or before the playhead).
+  /// The chapter that holds [position]: the last one starting at or
+  /// before it.
   int get _activeIndex {
     var idx = 0;
     for (var i = 0; i < chapters.length; i++) {
@@ -65,47 +71,64 @@ class ChapterScrubber extends StatelessWidget {
         ? 0.0
         : (position.inMilliseconds / totalMs).clamp(0.0, 1.0);
 
-    // No usable chapters: fall back to a plain progress bar so the surface
-    // still reads as "now playing".
-    if (chapters.isEmpty || totalMs <= 0) return _bar(progress);
+    if (chapters.isEmpty || totalMs <= 0) return _bar(context, progress);
 
     final active = _activeIndex;
+    final title = _titleOf(active);
+    final count = 'Chapter ${active + 1} of ${chapters.length}';
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _titleOf(active),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Tokens.label.copyWith(color: Tokens.fg),
+        Semantics(
+          label: count,
+          value: title,
+          excludeSemantics: true,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Tokens.label.copyWith(color: Tokens.fg),
+                ),
               ),
-            ),
-            const SizedBox(width: Tokens.s8),
-            Text('${active + 1}/${chapters.length}', style: Tokens.numeric),
-          ],
+              const SizedBox(width: Tokens.s8),
+              Text(
+                '${active + 1} of ${chapters.length}',
+                style: Tokens.numeric,
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: Tokens.s8),
-        _bar(progress),
+        _bar(context, progress),
       ],
     );
   }
 
-  Widget _bar(double progress) {
+  Widget _bar(BuildContext context, double progress) {
+    final layout = context.layout;
+    // The lane is the tap target: a full one on touch.
+    final lane = layout.isTouch ? layout.minTap : 24.0;
+    final hit = layout.isTouch ? 32.0 : 24.0;
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
         final hasChapters = chapters.isNotEmpty && duration.inMilliseconds > 0;
-        final interactive = onSeekChapter != null;
+        final seek = onSeek;
 
         double fracOf(Duration t) =>
             (t.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
 
-        const barTop = (_laneH - _barH) / 2;
+        void seekAt(double dx) {
+          if (seek == null || w <= 0 || duration <= Duration.zero) return;
+          seek(duration * (dx / w).clamp(0.0, 1.0));
+        }
+
+        final barTop = (lane - _barH) / 2;
         final children = <Widget>[
-          // Background track (full width).
           Positioned(
             left: 0,
             right: 0,
@@ -118,7 +141,6 @@ class ChapterScrubber extends StatelessWidget {
               ),
             ),
           ),
-          // Progress fill — left-anchored to the exact width.
           Positioned(
             left: 0,
             top: barTop,
@@ -134,42 +156,47 @@ class ChapterScrubber extends StatelessWidget {
         ];
 
         if (hasChapters) {
-          // One clickable dot per chapter, standing proud of the bar, with a
-          // tooltip + (when interactive) a click cursor and a comfortable hit
-          // target. Later dots paint on top, so dense chapters resolve to the
-          // nearest-later one.
+          final jump = onSeekChapter;
+          // Later dots paint on top, so dense chapters resolve to the
+          // nearest later one. The dot stays on the bar; its wider hit box
+          // may stick out of the edges (the Stack does not clip).
           for (var i = 0; i < chapters.length; i++) {
-            // Dot centre, kept fully on the bar; the (wider) hit box around it
-            // may overflow the edges harmlessly (Stack is Clip.none).
             final cx = (fracOf(chapters[i].time) * w).clamp(
               _dot / 2,
               w - _dot / 2,
             );
             final passed = position >= chapters[i].time;
+            final name = '${_titleOf(i)}, ${formatDuration(chapters[i].time)}';
             children.add(
               Positioned(
-                left: cx - _hit / 2,
+                left: cx - hit / 2,
                 top: 0,
                 bottom: 0,
-                width: _hit,
-                child: Tooltip(
-                  message: '${_titleOf(i)}  ·  ${_fmt(chapters[i].time)}',
-                  preferBelow: false,
-                  child: MouseRegion(
-                    cursor: interactive
-                        ? SystemMouseCursors.click
-                        : MouseCursor.defer,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: interactive ? () => onSeekChapter!(i) : null,
-                      child: Center(
-                        child: Container(
-                          width: _dot,
-                          height: _dot,
-                          decoration: BoxDecoration(
-                            color: passed ? Tokens.accent : Tokens.fgFaint,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Tokens.bg, width: 1.5),
+                width: hit,
+                child: Semantics(
+                  button: jump != null,
+                  label: name,
+                  excludeSemantics: true,
+                  onTap: jump == null ? null : () => jump(i),
+                  child: Tooltip(
+                    message: name,
+                    preferBelow: false,
+                    child: MouseRegion(
+                      cursor: jump != null
+                          ? SystemMouseCursors.click
+                          : MouseCursor.defer,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: jump == null ? null : () => jump(i),
+                        child: Center(
+                          child: Container(
+                            width: _dot,
+                            height: _dot,
+                            decoration: BoxDecoration(
+                              color: passed ? Tokens.accent : Tokens.fgFaint,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Tokens.bg, width: 1.5),
+                            ),
                           ),
                         ),
                       ),
@@ -181,9 +208,19 @@ class ChapterScrubber extends StatelessWidget {
           }
         }
 
-        return SizedBox(
-          height: _laneH,
-          child: Stack(clipBehavior: Clip.none, children: children),
+        return MouseRegion(
+          cursor: seek != null ? SystemMouseCursors.click : MouseCursor.defer,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: seek == null ? null : (d) => seekAt(d.localPosition.dx),
+            onHorizontalDragUpdate: seek == null
+                ? null
+                : (d) => seekAt(d.localPosition.dx),
+            child: SizedBox(
+              height: lane,
+              child: Stack(clipBehavior: Clip.none, children: children),
+            ),
+          ),
         );
       },
     );
