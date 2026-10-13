@@ -6,7 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'app_settings.dart';
 
 /// EBU R128 volume normalization, driven by the engine's offline loudness
-/// scan (`player.stream.loudness`).
+/// scan (`player.stream.loudnessScan`).
 ///
 /// The loudness is ALWAYS measured (it rides the waveform analyzer's single
 /// decode pass), regardless of the toggle: the result feeds both normalization
