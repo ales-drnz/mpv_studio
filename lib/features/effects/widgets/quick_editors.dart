@@ -8,6 +8,7 @@ import '../../../ui/widgets/round_icon_button.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
+import '../../../ui/widgets/scroll_fade.dart';
 
 /// The featured effects as pill chips, one tap from their editor: wrapped
 /// over as many lines as they need on wide windows, a scrolling row on
@@ -123,7 +124,9 @@ class _ScrollingRow extends StatefulWidget {
 
 class _ScrollingRowState extends State<_ScrollingRow> {
   final _scroll = ScrollController();
-  bool _more = true;
+  // Nothing is known hidden until the first layout says so: no arrows on
+  // the first frame.
+  bool _more = false;
   bool _less = false;
 
   @override
@@ -169,17 +172,7 @@ class _ScrollingRowState extends State<_ScrollingRow> {
     final pointer = context.layout.isPointer;
     final row = SizedBox(
       height: widget.height,
-      child: ShaderMask(
-        blendMode: BlendMode.dstIn,
-        shaderCallback: (rect) => LinearGradient(
-          colors: [
-            _less ? Colors.transparent : Colors.black,
-            Colors.black,
-            Colors.black,
-            _more ? Colors.transparent : Colors.black,
-          ],
-          stops: const [0, 0.08, 0.92, 1],
-        ).createShader(rect),
+      child: ScrollFade(
         // A resize or rotation changes what is hidden without a scroll.
         child: NotificationListener<ScrollMetricsNotification>(
           onNotification: (_) {
@@ -196,8 +189,8 @@ class _ScrollingRowState extends State<_ScrollingRow> {
         ),
       ),
     );
-    // Every chip in view: no arrows to offer.
-    if (!pointer || (!_less && !_more)) return row;
+    // Every chip in view, or touch: no arrows to offer.
+    final arrows = pointer && (_less || _more);
     Widget arrow(IconData icon, String tip, int direction, bool shown) =>
         // Dimmed at the end it cannot go past, keeping its place.
         Opacity(
@@ -212,13 +205,17 @@ class _ScrollingRowState extends State<_ScrollingRow> {
             ),
           ),
         );
+    // One tree whether or not the arrows show, so the list under it never
+    // remounts (and loses its offset) when they come and go.
     return Row(
       // Both arrows after the chips, so the row starts under its label.
       children: [
         Expanded(child: row),
-        const SizedBox(width: Tokens.s4),
-        arrow(Icons.chevron_left_rounded, 'Scroll back', -1, _less),
-        arrow(Icons.chevron_right_rounded, 'More quick editors', 1, _more),
+        if (arrows) ...[
+          const SizedBox(width: Tokens.s4),
+          arrow(Icons.chevron_left_rounded, 'Scroll back', -1, _less),
+          arrow(Icons.chevron_right_rounded, 'More quick editors', 1, _more),
+        ],
       ],
     );
   }

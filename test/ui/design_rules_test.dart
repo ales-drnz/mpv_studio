@@ -25,12 +25,9 @@ void main() {
     ),
   };
 
-  // Lines that may break a rule on purpose, as `path: rule`: the quick
-  // editors' fade mask is drawn in black and transparent, not in colour.
-  const allowed = <String>{
-    'lib/features/effects/widgets/quick_editors.dart: '
-        'a Material colour (use Tokens; Colors.transparent is fine)',
-  };
+  // Lines that may break a rule on purpose, as `path: rule`. Fade masks
+  // live in lib/ui (ScrollFade), so none is needed today.
+  const allowed = <String>{};
 
   test('lib follows the design rules', () {
     final offences = <String>[];
