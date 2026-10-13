@@ -29,6 +29,7 @@ class QueueTile extends StatefulWidget {
   const QueueTile({
     super.key,
     required this.index,
+    required this.row,
     required this.info,
     required this.outcome,
     required this.current,
@@ -40,7 +41,12 @@ class QueueTile extends StatefulWidget {
     required this.onMore,
   });
 
+  /// The entry's position in the queue, shown on the row.
   final int index;
+
+  /// The row's position in the list, which the drag handle reports; it
+  /// differs from [index] while a swiped row is hidden.
+  final int row;
   final QueueRowInfo info;
 
   /// How its last play ended, null while it plays or before it played.
@@ -204,11 +210,11 @@ class _QueueTileState extends State<QueueTile> {
 
     final handle = touch
         ? ReorderableDelayedDragStartListener(
-            index: widget.index,
+            index: widget.row,
             child: _Handle(size: layout.minTap),
           )
         : ReorderableDragStartListener(
-            index: widget.index,
+            index: widget.row,
             child: MouseRegion(
               cursor: SystemMouseCursors.grab,
               child: Tooltip(
@@ -244,6 +250,13 @@ class _QueueTileState extends State<QueueTile> {
                       button: true,
                       selected: widget.selected,
                       label: _semanticLabel,
+                      // The row's own actions, since the children (and
+                      // their gestures) are hidden from the reader; the
+                      // long press menu also holds the hover buttons.
+                      onTap: widget.onTap,
+                      onTapHint: touch ? 'play' : 'select',
+                      onLongPress: () => widget.onMore(null),
+                      onLongPressHint: 'show actions',
                       excludeSemantics: true,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,

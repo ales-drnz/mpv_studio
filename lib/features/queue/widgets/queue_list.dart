@@ -306,6 +306,7 @@ class _QueueListState extends State<QueueList> {
             key: rowKey,
             child: QueueTile(
               index: i,
+              row: row,
               info: QueueRowInfo.of(item, widget.details[item]),
               outcome: widget.outcomes[item],
               current: i == widget.playlist.index,
