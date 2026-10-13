@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'media_server.dart';
 
 /// App-level store of favourite (like) state for media-server tracks, shared
-/// by the song list (the star button) and the [PlaybackReporter] (the OS
+/// by the song lists (the star button) and the [PlaybackReporter] (the OS
 /// lock-screen like command). Holds optimistic overrides keyed by
 /// `"<kind>:<trackId>"` so a toggle from either surface reflects in the other
 /// without a refetch, and writes through to the server.
@@ -20,11 +20,28 @@ class FavoritesController extends ChangeNotifier {
   bool resolved(ServerKind kind, String id, bool fallback) =>
       _overrides[_key(kind, id)] ?? fallback;
 
-  /// Set the favourite state for [id] on [kind]: record the override
-  /// (optimistic), notify listeners, then write through to the server.
-  Future<void> setFavorite(ServerKind kind, String id, bool value) async {
-    _overrides[_key(kind, id)] = value;
+  /// Sets the favourite state for [id] on [kind]: shows it at once
+  /// (optimistic), then writes it to the server. When the server refuses,
+  /// the previous state comes back and this returns false; it never
+  /// throws.
+  Future<bool> setFavorite(ServerKind kind, String id, bool value) async {
+    final key = _key(kind, id);
+    final had = _overrides.containsKey(key);
+    final before = _overrides[key];
+    _overrides[key] = value;
     notifyListeners();
-    await _servers[kind]?.setFavorite(id, value);
+    try {
+      await _servers[kind]?.setFavorite(id, value);
+      return true;
+    } catch (e) {
+      debugPrint('FavoritesController: ${kind.name} refused $id: $e');
+      if (had) {
+        _overrides[key] = before!;
+      } else {
+        _overrides.remove(key);
+      }
+      notifyListeners();
+      return false;
+    }
   }
 }
