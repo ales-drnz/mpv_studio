@@ -49,6 +49,7 @@ class RoundIconButton extends StatelessWidget {
     this.color,
     this.selected,
     this.onContainer = false,
+    this.badge,
   });
 
   final IconData icon;
@@ -73,6 +74,10 @@ class RoundIconButton extends StatelessWidget {
 
   /// Whether the button sits on the secondary selection fill.
   final bool onContainer;
+
+  /// A short count on the icon (the number of options set); null for
+  /// none.
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +132,13 @@ class RoundIconButton extends StatelessWidget {
                   ? Tokens.onAccentContainer.withValues(alpha: 0.10)
                   : null,
               child: Center(
-                child: Icon(icon, size: size, color: color),
+                child: Badge(
+                  isLabelVisible: badge != null,
+                  label: badge == null ? null : Text(badge!),
+                  backgroundColor: Tokens.accent,
+                  textColor: Tokens.onAccent,
+                  child: Icon(icon, size: size, color: color),
+                ),
               ),
             ),
           ),

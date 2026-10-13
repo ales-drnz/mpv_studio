@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../stream_actions.dart';
 
 /// One row of every Stream list (reference streams, server tracks, Samba
@@ -196,45 +197,24 @@ class RowButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-    this.selected = false,
+    this.selected,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
 
-  /// A toggle that is on (a favourite): the secondary selection fill.
-  final bool selected;
+  /// A toggle's state (a favourite): the secondary selection fill when
+  /// on; null for a plain action.
+  final bool? selected;
 
   @override
-  Widget build(BuildContext context) {
-    final tap = context.layout.minTap;
-    final onCurrent = StreamRow.onCurrent(context);
-    final Color color;
-    if (onPressed == null) {
-      color = onCurrent ? Tokens.onAccentContainer : Tokens.fgFaint;
-    } else if (onCurrent || selected) {
-      color = Tokens.onAccentContainer;
-    } else {
-      color = Tokens.fg;
-    }
-    return IconButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      isSelected: selected,
-      icon: Icon(icon, size: 20),
-      color: color,
-      disabledColor: color,
-      style: IconButton.styleFrom(
-        backgroundColor: selected && !onCurrent
-            ? Tokens.accentContainer
-            : Colors.transparent,
-        hoverColor: onCurrent
-            ? Tokens.onAccentContainer.withValues(alpha: 0.10)
-            : Tokens.accentWash,
-      ),
-      constraints: BoxConstraints.tightFor(width: tap, height: tap),
-      padding: EdgeInsets.zero,
-    );
-  }
+  Widget build(BuildContext context) => RoundIconButton(
+    icon: icon,
+    size: 20,
+    tooltip: tooltip,
+    selected: selected,
+    onContainer: StreamRow.onCurrent(context),
+    onTap: onPressed,
+  );
 }

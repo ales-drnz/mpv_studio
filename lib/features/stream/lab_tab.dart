@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/custom_url_bar.dart';
+import '../../ui/widgets/round_icon_button.dart';
 import 'http_options.dart';
 import 'stream_actions.dart';
 import 'stream_catalog.dart';
@@ -87,7 +87,6 @@ class _UrlEntryState extends State<UrlEntry> {
   @override
   Widget build(BuildContext context) {
     final count = _options.count;
-    final tap = context.layout.minTap;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -95,25 +94,16 @@ class _UrlEntryState extends State<UrlEntry> {
           onPlay: _play,
           onQueue: _queue,
           trailing: [
-            IconButton(
-              onPressed: () => setState(() => _open = !_open),
-              isSelected: _open,
+            RoundIconButton(
+              icon: Icons.tune_rounded,
+              size: 20,
               tooltip: _open ? 'Hide HTTP options' : 'HTTP options',
-              color: _open ? Tokens.onAccentContainer : Tokens.fgDim,
-              style: IconButton.styleFrom(
-                backgroundColor: _open
-                    ? Tokens.accentContainer
-                    : Colors.transparent,
-              ),
-              constraints: BoxConstraints.tightFor(width: tap, height: tap),
-              padding: EdgeInsets.zero,
-              icon: Badge(
-                isLabelVisible: count > 0,
-                label: Text('$count'),
-                backgroundColor: Tokens.accent,
-                textColor: Tokens.onAccent,
-                child: const Icon(Icons.tune_rounded, size: 20),
-              ),
+              label: 'HTTP options',
+              toggled: _open,
+              active: _open,
+              color: Tokens.fgDim,
+              badge: count > 0 ? '$count' : null,
+              onTap: () => setState(() => _open = !_open),
             ),
           ],
         ),

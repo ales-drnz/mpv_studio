@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
 import '../../../util/media_labels.dart';
 import '../../../util/reactive.dart';
@@ -191,24 +192,30 @@ class _QueueTileState extends State<QueueTile> {
           ],
           if (showActions) ...[
             const SizedBox(width: Tokens.s4),
-            _RowButton(
+            RoundIconButton(
               icon: Icons.play_arrow_rounded,
+              size: 20,
               tooltip: 'Play',
-              color: on,
-              onPressed: widget.onPlay,
+              color: Tokens.fgDim,
+              onContainer: current,
+              onTap: widget.onPlay,
             ),
-            _RowButton(
+            RoundIconButton(
               icon: Icons.close_rounded,
+              size: 20,
               tooltip: 'Remove',
-              color: on,
-              onPressed: widget.onRemove,
+              color: Tokens.fgDim,
+              onContainer: current,
+              onTap: widget.onRemove,
             ),
             Builder(
-              builder: (context) => _RowButton(
+              builder: (context) => RoundIconButton(
                 icon: Icons.more_vert_rounded,
+                size: 20,
                 tooltip: 'More',
-                color: on,
-                onPressed: () {
+                color: Tokens.fgDim,
+                onContainer: current,
+                onTap: () {
                   final box = context.findRenderObject() as RenderBox?;
                   widget.onMore(
                     box?.localToGlobal(box.size.bottomLeft(Offset.zero)),
@@ -305,32 +312,6 @@ class _Handle extends StatelessWidget {
       size: 20,
       color: color ?? Tokens.fgFaint,
     ),
-  );
-}
-
-/// A hover action of a row: a bare icon in a round hit area, in [color]
-/// when the row has its own content tone.
-class _RowButton extends StatelessWidget {
-  const _RowButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.color,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) => IconButton(
-    onPressed: onPressed,
-    tooltip: tooltip,
-    icon: Icon(icon, size: 20),
-    color: color ?? Tokens.fgDim,
-    constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-    padding: EdgeInsets.zero,
   );
 }
 
