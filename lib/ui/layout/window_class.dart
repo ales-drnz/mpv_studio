@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../tokens.dart';
+
 /// The width and height thresholds of the responsive layout, in logical
 /// pixels. Pages never hardcode a width: they ask `context.layout` for the
 /// window class, or compare an available width against these names.
@@ -106,4 +108,10 @@ enum InputMode {
       TargetPlatform.windows => pointer,
     };
   }
+
+  /// The smallest side of anything tappable, and the height of every
+  /// button and field-like control: 48 on touch, [Tokens.controlH] (40)
+  /// with a pointer. The one definition the layout, the controls and the
+  /// Material theme's button sizes all read.
+  double get minTap => this == touch ? 48 : Tokens.controlH;
 }

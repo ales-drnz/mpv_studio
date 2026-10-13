@@ -51,7 +51,10 @@ class AppTheme {
       color: color,
     );
     const pillPadding = EdgeInsets.symmetric(horizontal: Tokens.s24);
-    final buttonSize = Size(touch ? 48 : 40, touch ? 48 : 40);
+    // Every button is one tap target tall, whatever the density: the
+    // compact density of pointer layouts would take 8 off each minimum.
+    final buttonSize = Size.square(input.minTap);
+    const buttonDensity = VisualDensity.standard;
     final buttonText = WidgetStatePropertyAll(
       text(14, FontWeight.w600, p.fg).copyWith(letterSpacing: 0.1),
     );
@@ -92,6 +95,7 @@ class AppTheme {
           shape: const WidgetStatePropertyAll(StadiumBorder()),
           padding: const WidgetStatePropertyAll(pillPadding),
           minimumSize: WidgetStatePropertyAll(buttonSize),
+          visualDensity: buttonDensity,
           textStyle: buttonText,
           elevation: const WidgetStatePropertyAll(0),
         ),
@@ -101,6 +105,7 @@ class AppTheme {
           shape: const WidgetStatePropertyAll(StadiumBorder()),
           padding: const WidgetStatePropertyAll(pillPadding),
           minimumSize: WidgetStatePropertyAll(buttonSize),
+          visualDensity: buttonDensity,
           textStyle: buttonText,
           // Tonal instead of outlined: a hairline-free secondary button.
           backgroundColor: WidgetStatePropertyAll(p.tonal),
@@ -117,6 +122,7 @@ class AppTheme {
             EdgeInsets.symmetric(horizontal: Tokens.s16),
           ),
           minimumSize: WidgetStatePropertyAll(buttonSize),
+          visualDensity: buttonDensity,
           textStyle: buttonText,
         ),
       ),
@@ -124,6 +130,7 @@ class AppTheme {
         style: ButtonStyle(
           shape: const WidgetStatePropertyAll(CircleBorder()),
           minimumSize: WidgetStatePropertyAll(buttonSize),
+          visualDensity: buttonDensity,
         ),
       ),
       chipTheme: ChipThemeData(

@@ -60,8 +60,9 @@ class StudioLayout {
     return ShellNavigation.sidebar;
   }
 
-  /// The smallest side of anything tappable: 48 on touch, 36 on pointer.
-  double get minTap => isTouch ? 48 : 36;
+  /// The smallest side of anything tappable: 48 on touch, 40 with a
+  /// pointer ([InputMode.minTap]).
+  double get minTap => input.minTap;
 
   /// The page's side margin.
   double get gutter => switch (width) {

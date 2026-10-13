@@ -387,8 +387,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       builder: (context, c) {
         final h = c.maxHeight;
         final cover = (c.maxWidth * 0.18).clamp(120.0, 168.0);
-        final rowH = math.max(cover, 196.0);
         final tap = context.layout.minTap;
+        // The title (56), the play row (80) and the mode row (a tap
+        // target), 12 apart.
+        final rowH = math.max(cover, 160.0 + tap);
         return _resizable(
           initial: h * 0.28,
           min: 96,

@@ -30,7 +30,7 @@ void main() {
       ShellNavigation.sidebar,
     );
     expect(at(360, 780, InputMode.touch).minTap, 48);
-    expect(at(1440, 900, InputMode.pointer).minTap, 36);
+    expect(at(1440, 900, InputMode.pointer).minTap, 40);
     expect(at(1440, 900, InputMode.pointer).prefersSheets, isFalse);
     expect(at(1440, 900, InputMode.touch).prefersSheets, isTrue);
     expect(at(500, 900, InputMode.pointer).prefersSheets, isTrue);

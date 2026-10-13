@@ -24,7 +24,7 @@ class ShellToolButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tap = context.layout.minTap < 40 ? 40.0 : context.layout.minTap;
+    final tap = context.layout.minTap;
     final glyph = Icon(icon, size: 20, color: Tokens.fgDim);
     // Icon only: a tonal circle. Expanded: a full-width pill row.
     return Semantics(
