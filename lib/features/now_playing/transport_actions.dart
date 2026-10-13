@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
+import '../../studio/player_scope.dart';
 import '../../ui/tokens.dart';
 import '../../util/duration_format.dart';
 
@@ -11,10 +12,10 @@ import '../../util/duration_format.dart';
 /// queue, a new speed) through [notify].
 typedef Notify = void Function(String message);
 
-/// Shows [message] as a short toast on the app's messenger. The guard's
-/// errors use the longer toast of the shell; this one is for feedback on
-/// an action that worked or had nothing to do. Does nothing once [context]
-/// is gone.
+/// Shows [message] as a short toast on the nearest messenger, for a
+/// control hosted without the app around it (the widget tests). In the app
+/// [feedbackFor] goes through [PlaybackIssues.notify] instead. Does nothing
+/// once [context] is gone.
 void showPlaybackFeedback(BuildContext context, String message) {
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.maybeOf(context);
@@ -31,9 +32,17 @@ void showPlaybackFeedback(BuildContext context, String message) {
     );
 }
 
-/// A [Notify] that shows toasts above [context].
-Notify feedbackFor(BuildContext context) =>
-    (message) => showPlaybackFeedback(context, message);
+/// A [Notify] for feedback on an action that worked or had nothing to do:
+/// the app's informational notice ([PlaybackIssues.notify]), or a toast
+/// above [context] when there is no app around it.
+Notify feedbackFor(BuildContext context) {
+  final issues = context
+      .getInheritedWidgetOfExactType<PlayerScope>()
+      ?.studio
+      .issues;
+  if (issues != null) return issues.notify;
+  return (message) => showPlaybackFeedback(context, message);
+}
 
 /// Goes to the next ([forward]) or previous queue entry. When there is
 /// none, says "End of queue" or "Start of queue". With [force], going past
