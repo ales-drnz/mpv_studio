@@ -6,6 +6,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets/custom_url_bar.dart';
 import '../../ui/widgets/section_header.dart';
 import '../../util/media_labels.dart';
+import '../../util/redact.dart';
 import 'signed_url_resolver.dart';
 import 'stream_actions.dart';
 import 'stream_catalog.dart';
@@ -82,11 +83,6 @@ class ResolverTab extends StatelessWidget {
     );
   }
 }
-
-/// [url] with any `user:password@` taken out of its authorities, so the
-/// log never shows credentials typed into a URL.
-String withoutCredentials(String url) =>
-    url.replaceAll(RegExp(r'://[^/@\s]*@'), '://');
 
 /// Why [url] cannot be signed, or null when it can: the resolver only
 /// handles full http and https URLs.

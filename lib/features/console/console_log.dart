@@ -3,6 +3,8 @@ import 'dart:collection';
 
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../util/redact.dart';
+
 /// Always-on capture of the engine and library log, started at app launch.
 ///
 /// The Console page (and its `player.stream.log` subscriptions) is built
@@ -15,7 +17,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 /// This buffers the most recent [maxLines] entries from `player.stream.log`
 /// and `player.stream.internalLog` from boot, and re-broadcasts each new
 /// entry so the live Console appends it. The Console seeds itself from
-/// [backlog] on open, then follows [entries].
+/// [backlog] on open, then follows [entries]. Credentials in URLs are taken
+/// out of every line on the way in.
 class ConsoleLog {
   ConsoleLog({this.maxLines = 2000});
 
@@ -47,7 +50,13 @@ class ConsoleLog {
   /// error) to the backlog and the live Console.
   void add(MpvLogEntry entry) => _onEntry(entry);
 
-  void _onEntry(MpvLogEntry entry) {
+  void _onEntry(MpvLogEntry raw) {
+    // mpv logs the URLs it opens, credentials included (an SMB share's
+    // smb2://user:password@host): the Console never shows them.
+    final text = withoutCredentials(raw.text);
+    final entry = text == raw.text
+        ? raw
+        : MpvLogEntry(prefix: raw.prefix, level: raw.level, text: text);
     _buffer.addLast(entry);
     while (_buffer.length > maxLines) {
       _buffer.removeFirst();
