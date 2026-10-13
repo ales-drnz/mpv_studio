@@ -13,7 +13,6 @@ import '../../util/media_labels.dart';
 import 'media_server.dart';
 import 'samba_browser_tab.dart';
 import 'server_library_tab.dart';
-import 'youtube_resolver.dart';
 
 /// One streamable reference URL.
 class StreamItem {
@@ -117,45 +116,6 @@ const _streamCategories = <StreamCategory>[
   ),
 ];
 
-/// Per-request range cap for the YouTube tab: 8 MiB. Some CDNs — notably
-/// progressive YouTube / `googlevideo` audio — throttle a single open-ended
-/// request for the whole file, so seeking back freezes once the buffer drains.
-/// Capping each range below that threshold keeps it serving at full speed
-/// (the technique yt-dlp uses as `--http-chunk-size`). See [Media.httpChunkSize].
-const _ytChunkSize = 8 * 1024 * 1024;
-
-/// A ready-made YouTube link for the YouTube tab's example list.
-class _YtExample {
-  final String label;
-  final String url;
-  const _YtExample({required this.label, required this.url});
-}
-
-/// Example YouTube songs: royalty-free NoCopyrightSounds (NCS) single tracks
-/// (verified to resolve via the ANDROID_VR client). Resolved at tap time
-/// (`youtube_explode_dart`) — watch URLs don't expire, the resolved
-/// `googlevideo` stream does — and played in [_ytChunkSize] chunks. Paste any
-/// other YouTube URL into the bar above. (Chapter-bearing streams live on the
-/// Chapters tab, not here.)
-const _youtubeExamples = <_YtExample>[
-  _YtExample(
-    label: 'Janji — Heroes Tonight (feat. Johnning)',
-    url: 'https://www.youtube.com/watch?v=3nQNiWdeH2Q',
-  ),
-  _YtExample(
-    label: 'Elektronomia — Sky High',
-    url: 'https://www.youtube.com/watch?v=TW9d8vYrVFQ',
-  ),
-  _YtExample(
-    label: 'Cartoon — On & On (feat. Daniel Levi)',
-    url: 'https://www.youtube.com/watch?v=K4DyBUG242c',
-  ),
-  _YtExample(
-    label: 'DEAF KEV — Invincible',
-    url: 'https://www.youtube.com/watch?v=J2X5mJ3HDYE',
-  ),
-];
-
 /// Reference streams with **embedded chapter markers** in their container, for
 /// the Chapters tab — they exercise the engine's `chapter-list` → [Chapter]
 /// path (and the [ChapterScrubber]) without needing a network resolver. Stable,
@@ -182,9 +142,8 @@ const _chapterCategories = <StreamCategory>[
   ),
 ];
 
-/// The Stream surface: six windowed tabs — **Lab** (reference network
-/// streams), **YouTube** (resolve a YouTube URL to its audio stream and play
-/// it, in [_ytChunkSize] chunks), **Chapters** (chapter-bearing reference
+/// The Stream surface: five windowed tabs — **Lab** (reference network
+/// streams), **Chapters** (chapter-bearing reference
 /// streams + a now-playing [ChapterScrubber]), **Jellyfin** and **Plex**
 /// (connect to a server and browse the paginated music library), and **Samba**
 /// (an SMB2/3 share, browsed as a folder tree — see [SambaBrowserTab]). The two
@@ -213,14 +172,7 @@ class _StreamPageState extends State<StreamPage> {
       children: [
         _ChromeTabBar(
           selected: _tab,
-          tabs: const [
-            'Lab',
-            'YouTube',
-            'Chapters',
-            'Jellyfin',
-            'Plex',
-            'Samba',
-          ],
+          tabs: const ['Lab', 'Chapters', 'Jellyfin', 'Plex', 'Samba'],
           onSelect: (i) => setState(() => _tab = i),
         ),
         Expanded(
@@ -229,7 +181,6 @@ class _StreamPageState extends State<StreamPage> {
             sizing: StackFit.expand,
             children: [
               const _LabTab(),
-              const _YouTubeTab(),
               const _ChaptersTab(),
               ServerLibraryTab(server: jellyfin),
               ServerLibraryTab(server: plex),
@@ -345,157 +296,11 @@ class _LabTab extends StatelessWidget {
       const _ReferenceTab(categories: _streamCategories);
 }
 
-/// The YouTube tab. Paste a YouTube URL (or pick an example song): it's
-/// resolved in Dart to its best audio-only stream (`youtube_explode_dart`, no
-/// yt-dlp/scripting), played in [_ytChunkSize] chunks. Any chapters are still
-/// injected via `player.setChapters`, but they're visualised on the Chapters
-/// tab — here the row that started the current track just lights up.
-class _YouTubeTab extends StatefulWidget {
-  const _YouTubeTab();
-
-  @override
-  State<_YouTubeTab> createState() => _YouTubeTabState();
-}
-
-class _YouTubeTabState extends State<_YouTubeTab> {
-  final _resolver = YoutubeResolver();
-  Player? _player;
-
-  /// The example URL currently being resolved (its row shows a spinner in
-  /// place of the video icon); null when idle.
-  String? _resolvingUrl;
-  String? _error;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _player ??= PlayerScope.of(context);
-  }
-
-  @override
-  void dispose() {
-    _resolver.dispose();
-    super.dispose();
-  }
-
-  Future<void> _play(String urlOrId) => _resolveAnd(urlOrId, enqueue: false);
-  Future<void> _enqueue(String urlOrId) => _resolveAnd(urlOrId, enqueue: true);
-
-  /// Resolves [urlOrId] to its best audio stream, then plays it now — or, when
-  /// [enqueue] and a queue already exists, appends it to the queue instead.
-  Future<void> _resolveAnd(String urlOrId, {required bool enqueue}) async {
-    final player = _player;
-    if (player == null) return;
-    setState(() {
-      _resolvingUrl = urlOrId;
-      _error = null;
-    });
-    try {
-      final r = await _resolver.resolve(urlOrId);
-      final media = Media(
-        r.streamUrl,
-        // 8 MiB bounded range requests (Media.httpChunkSize → request_size/
-        // initial_request_size) so googlevideo doesn't throttle a whole-file
-        // request. NB: a 403 that persists on a fresh URL + cooled/other IP
-        // is upstream auth (n-sig/PoToken), not the range — fix that in the
-        // resolver, not here.
-        httpChunkSize: _ytChunkSize,
-        // Defensive: replay with the resolving client's User-Agent (matches
-        // the client that minted the URL).
-        httpHeaders: r.userAgent.isEmpty ? null : {'User-Agent': r.userAgent},
-        // `origin` = the URL the user actually tapped/typed (the watch URL),
-        // so the matching example row lights up while it plays — the resolved
-        // `streamUrl` (googlevideo) wouldn't match anything.
-        extras: {
-          'title': r.title,
-          'artist': r.author,
-          'source': 'youtube',
-          'origin': urlOrId,
-        },
-      );
-      if (enqueue && player.state.playlist.items.isNotEmpty) {
-        await player.add(media);
-      } else {
-        await player.open(media, play: true);
-      }
-      if (!mounted) return;
-      setState(() => _resolvingUrl = null);
-      // Chapters live in the description, not the audio stream — inject them
-      // once the file has loaded (mpv resets chapter-list to the demuxer's
-      // empty list on load, so wait for duration before writing).
-      if (r.chapters.isNotEmpty) unawaited(_injectChapters(player, r.chapters));
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _resolvingUrl = null;
-        _error = e.toString();
-      });
-    }
-  }
-
-  Future<void> _injectChapters(Player player, List<Chapter> chapters) async {
-    try {
-      await player.stream.duration
-          .firstWhere((d) => d > Duration.zero)
-          .timeout(const Duration(seconds: 25));
-      await player.setChapters(chapters);
-    } catch (_) {
-      // Timed out or load failed — leave the demuxer's (empty) chapter list.
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final player = _player;
-    return StreamBuilder<Playlist>(
-      stream: player?.stream.playlist,
-      initialData: player?.state.playlist,
-      builder: (context, snap) {
-        final origin = snap.data == null ? '' : _playingOrigin(snap.data!);
-        return SectionBody(
-          // s16 horizontal matches the Jellyfin/Plex/Samba tabs so the content
-          // edge doesn't shift when switching stream tabs.
-          padding: const EdgeInsets.fromLTRB(
-            Tokens.s16,
-            Tokens.s8,
-            Tokens.s16,
-            Tokens.s32,
-          ),
-          children: [
-            CustomUrlBar(onPlay: _play),
-            if (_error != null) ...[
-              const SizedBox(height: Tokens.s12),
-              Text(
-                _error!,
-                style: Tokens.caption.copyWith(color: Tokens.red),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            // Match the Lab/Chapters tabs' spacing above the first section
-            // header so the row block doesn't sit lower when switching tabs.
-            const SizedBox(height: Tokens.s16),
-            const SectionHeader('Royalty-free songs · NCS'),
-            for (final ex in _youtubeExamples)
-              _YtExampleTile(
-                example: ex,
-                current: ex.url == origin,
-                resolving: ex.url == _resolvingUrl,
-                onTap: () => _play(ex.url),
-                onQueue: () => _enqueue(ex.url),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
 /// The Chapters tab: reference streams that carry embedded chapter markers
 /// (Auphonic demos, a LibriVox M4B) to exercise the engine's `chapter-list`
 /// path, with a now-playing [ChapterScrubber] shown above whenever the current
-/// track actually has chapters (a YouTube mix with chapters injected via
-/// `setChapters` shows here too).
+/// track actually has chapters (chapters injected via `setChapters` show
+/// here too).
 class _ChaptersTab extends StatelessWidget {
   const _ChaptersTab();
 
@@ -621,126 +426,8 @@ class _NowPlayingChaptersState extends State<_NowPlayingChapters> {
   }
 }
 
-/// A row in the YouTube examples list: a label + a play button. Tapping
-/// resolves and plays via the tab's [_YouTubeTabState._play].
-class _YtExampleTile extends StatelessWidget {
-  final _YtExample example;
-
-  /// Resolve + play this example now.
-  final VoidCallback onTap;
-
-  /// Resolve + append this example to the queue.
-  final VoidCallback onQueue;
-
-  /// Whether this example started the currently-playing track.
-  final bool current;
-
-  /// Whether this example's URL is currently being resolved — its leading
-  /// video icon is replaced by a spinner.
-  final bool resolving;
-
-  const _YtExampleTile({
-    required this.example,
-    required this.onTap,
-    required this.onQueue,
-    this.current = false,
-    this.resolving = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s8),
-      decoration: ShapeDecoration(
-        color: current ? Tokens.accentWash : Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rMd),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Tokens.s16,
-              Tokens.s12,
-              Tokens.s8,
-              Tokens.s12,
-            ),
-            child: Row(
-              children: [
-                // Leading slot: a spinner while the raw URL resolves, or the
-                // speaker glyph while playing. Nothing (and no reserved width)
-                // when idle, so the label sits flush — the spinner appears on
-                // its own only during resolution.
-                if (resolving || current) ...[
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: resolving
-                        ? CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Tokens.accent,
-                          )
-                        : Icon(
-                            Icons.volume_up_rounded,
-                            size: 18,
-                            color: Tokens.accent,
-                          ),
-                  ),
-                  const SizedBox(width: Tokens.s12),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        example.label,
-                        style: Tokens.body.copyWith(
-                          color: current ? Tokens.accent : Tokens.fg,
-                          fontWeight: current
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        example.url,
-                        style: Tokens.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: onQueue,
-                  icon: const Icon(Icons.playlist_add_rounded, size: 18),
-                  color: Tokens.fgDim,
-                  splashRadius: 18,
-                  tooltip: 'Add to queue',
-                ),
-                IconButton(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                  color: Tokens.accent,
-                  splashRadius: 18,
-                  tooltip: 'Play',
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// The "origin" of the currently-playing track — the key that lights up the
-/// row that started it. It's the `origin` extra (YouTube sets it to the watch
-/// URL) or else the media URI (Lab/Chapters play a tile's URL directly).
+/// row that started it. It's the `origin` extra when set, or else the media URI (Lab/Chapters play a tile's URL directly).
 /// Empty when nothing is playing.
 String _playingOrigin(Playlist pl) {
   if (pl.items.isEmpty || pl.index < 0 || pl.index >= pl.items.length) {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 
 /// A shared "play any URL" bar used at the top of the Stream page's reference
-/// tabs (Lab, YouTube, Chapters). A monospace URL field with a play button;
+/// tabs (Lab, Chapters). A monospace URL field with a play button;
 /// submitting (enter or the button) hands the trimmed URL to [onPlay]. The
 /// field keeps its text so the same URL can be replayed.
 class CustomUrlBar extends StatefulWidget {
