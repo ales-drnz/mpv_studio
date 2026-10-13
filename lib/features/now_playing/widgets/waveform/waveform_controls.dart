@@ -1,0 +1,264 @@
+import 'package:flutter/material.dart';
+
+import '../../../../ui/layout/layout.dart';
+import '../../../../ui/tokens.dart';
+
+/// The zoom pill (out and in) over the waveform meter. Its buttons are a
+/// full tap target on touch.
+class WaveformZoomControls extends StatelessWidget {
+  const WaveformZoomControls({
+    super.key,
+    required this.canZoomIn,
+    required this.canZoomOut,
+    required this.onZoomIn,
+    required this.onZoomOut,
+  });
+
+  final bool canZoomIn;
+  final bool canZoomOut;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: Tokens.surface2,
+        shape: Tokens.squircle(Tokens.rMd),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ZoomButton(
+            icon: Icons.zoom_out_rounded,
+            tooltip: 'Zoom out',
+            onTap: canZoomOut ? onZoomOut : null,
+          ),
+          _ZoomButton(
+            icon: Icons.zoom_in_rounded,
+            tooltip: 'Zoom in',
+            onTap: canZoomIn ? onZoomIn : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZoomButton extends StatelessWidget {
+  const _ZoomButton({required this.icon, required this.tooltip, this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final side = context.layout.isTouch ? context.layout.minTap : 28.0;
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        enabled: onTap != null,
+        label: tooltip,
+        excludeSemantics: true,
+        onTap: onTap,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: SizedBox.square(
+              dimension: side,
+              child: Icon(
+                icon,
+                size: 18,
+                color: onTap != null ? Tokens.fgDim : Tokens.fgFaint,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The progress of the audio scan (the waveform decode, which the loudness
+/// scan rides) as a chip over the meter: determinate when the fraction is
+/// known, indeterminate otherwise. Fades out when no scan runs; the percent
+/// has a fixed width so the chip never jitters.
+class WaveformScanIndicator extends StatelessWidget {
+  const WaveformScanIndicator({
+    super.key,
+    required this.visible,
+    this.fraction,
+  });
+
+  final bool visible;
+  final double? fraction;
+
+  @override
+  Widget build(BuildContext context) {
+    final f = visible ? fraction : 0.0;
+    final bar = f == null
+        ? LinearProgressIndicator(
+            minHeight: 3,
+            color: Tokens.accent,
+            backgroundColor: Tokens.line2,
+          )
+        : TweenAnimationBuilder<double>(
+            tween: Tween(end: f.clamp(0.0, 1.0)),
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOut,
+            builder: (_, v, _) => LinearProgressIndicator(
+              value: v,
+              minHeight: 3,
+              color: Tokens.accent,
+              backgroundColor: Tokens.line2,
+            ),
+          );
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Tokens.s8,
+            vertical: Tokens.s4,
+          ),
+          decoration: ShapeDecoration(
+            color: Tokens.surface2,
+            shape: Tokens.squircle(Tokens.rSm),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Scanning audio', style: Tokens.caption),
+              const SizedBox(width: Tokens.s8),
+              SizedBox(
+                width: 60,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: visible ? bar : null,
+                ),
+              ),
+              if (f != null) ...[
+                const SizedBox(width: Tokens.s8),
+                SizedBox(
+                  width: 38,
+                  child: Text(
+                    '${(f * 100).round()}%',
+                    style: Tokens.numeric,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The horizontal scrollbar under the meter: a flat strip whose thumb is
+/// the visible part of the timeline. Tap or drag to move the view; the
+/// thumb lights up in the accent on hover.
+class WaveformScrollBar extends StatefulWidget {
+  const WaveformScrollBar({
+    super.key,
+    required this.enabled,
+    required this.viewStart,
+    required this.visibleSecs,
+    required this.maxStart,
+    required this.timelineSecs,
+    required this.onChanged,
+    required this.height,
+  });
+
+  final bool enabled;
+  final double viewStart;
+  final double visibleSecs;
+  final double maxStart;
+  final double timelineSecs;
+  final ValueChanged<double> onChanged;
+  final double height;
+
+  @override
+  State<WaveformScrollBar> createState() => _WaveformScrollBarState();
+}
+
+class _WaveformScrollBarState extends State<WaveformScrollBar> {
+  bool _hoverThumb = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: widget.height,
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final w = c.maxWidth;
+          final frac =
+              (widget.timelineSecs <= 0
+                      ? 1.0
+                      : widget.visibleSecs / widget.timelineSecs)
+                  .clamp(0.06, 1.0);
+          final thumbW = (w * frac).clamp(28.0, w);
+          final avail = w - thumbW;
+          final thumbX = widget.maxStart > 0
+              ? (widget.viewStart / widget.maxStart) * avail
+              : 0.0;
+
+          void setFromX(double x) {
+            if (!widget.enabled || avail <= 0) return;
+            final tx = (x - thumbW / 2).clamp(0.0, avail);
+            widget.onChanged((tx / avail) * widget.maxStart);
+          }
+
+          final thumbColour = !widget.enabled
+              ? Tokens.surface2
+              : _hoverThumb
+              ? Tokens.accent
+              : Tokens.surface3;
+
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (d) => setFromX(d.localPosition.dx),
+            onHorizontalDragUpdate: (d) => setFromX(d.localPosition.dx),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Tokens.surface2,
+                border: Border(top: BorderSide(color: Tokens.line)),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: thumbX,
+                    top: 0,
+                    bottom: 0,
+                    width: thumbW,
+                    child: MouseRegion(
+                      cursor: widget.enabled
+                          ? SystemMouseCursors.click
+                          : MouseCursor.defer,
+                      onEnter: widget.enabled
+                          ? (_) => setState(() => _hoverThumb = true)
+                          : null,
+                      onExit: (_) => setState(() => _hoverThumb = false),
+                      child: ColoredBox(color: thumbColour),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../studio/player_scope.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../util/reactive.dart';
+import '../playback_scope.dart';
+import '../transport_actions.dart';
 
 /// Mute toggle + volume slider, bound to `player.stream.volume` and
 /// `player.stream.mute`. Range tracks `volumeMax`. [axis] picks a
@@ -12,7 +14,8 @@ import '../../../util/reactive.dart';
 /// The slider is the app's flat house style ([_FlatSlider]): a squircle
 /// pill track, an accent fill, and a squircle thumb — matching the
 /// settings/effects sliders. Muting dims the fill and thumb instead of
-/// disabling interaction, so you can still drag while muted.
+/// disabling interaction, so you can still drag while muted. The calls run
+/// through the page's guard.
 class VolumeControl extends StatelessWidget {
   final Axis axis;
   const VolumeControl({super.key, this.axis = Axis.horizontal});
@@ -27,7 +30,9 @@ class VolumeControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final player = PlayerScope.of(context);
+    final scope = PlaybackScope.of(context);
+    final player = scope.player;
+    final guard = scope.guard;
     return Live<bool>(
       stream: player.stream.mute,
       initial: player.state.mute,
@@ -50,14 +55,26 @@ class VolumeControl extends StatelessWidget {
             final muteButton = _MuteButton(
               icon: _icon(muted, vol, max),
               muted: muted,
-              onTap: () => player.setMute(!muted),
+              onTap: () => guard(() => player.setMute(!muted)),
             );
-            final slider = _FlatSlider(
-              value: value,
-              max: max,
-              axis: axis,
-              enabled: !muted,
-              onChanged: player.setVolume,
+            final slider = Semantics(
+              slider: true,
+              label: 'Volume',
+              value: muted
+                  ? '${vol.round()} percent, muted'
+                  : '${vol.round()} percent',
+              increasedValue: '${(vol + 5).clamp(0, max).round()} percent',
+              decreasedValue: '${(vol - 5).clamp(0, max).round()} percent',
+              onIncrease: () => stepVolume(player, guard, 5),
+              onDecrease: () => stepVolume(player, guard, -5),
+              excludeSemantics: true,
+              child: _FlatSlider(
+                value: value,
+                max: max,
+                axis: axis,
+                enabled: !muted,
+                onChanged: (v) => guard(() => player.setVolume(v)),
+              ),
             );
 
             if (axis == Axis.vertical) {
@@ -108,7 +125,6 @@ class _FlatSlider extends StatelessWidget {
 
   static const double _thumb = 16;
   static const double _track = 6;
-  static const double _cross = 24; // cross-axis extent (tap target)
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +132,8 @@ class _FlatSlider extends StatelessWidget {
     final frac = (value / m).clamp(0.0, 1.0);
     final fillColor = enabled ? Tokens.accent : Tokens.fgFaint;
     final thumbColor = enabled ? Tokens.fg : Tokens.fgFaint;
+    // The cross-axis extent is the tap target.
+    final cross = context.layout.isTouch ? context.layout.minTap : 24.0;
 
     final emptyShape = ShapeDecoration(
       color: Tokens.surface3,
@@ -143,7 +161,7 @@ class _FlatSlider extends StatelessWidget {
             onHorizontalDragUpdate: (d) =>
                 onChanged(valueAt(d.localPosition.dx)),
             child: SizedBox(
-              height: _cross,
+              height: cross,
               width: double.infinity,
               child: Stack(
                 alignment: Alignment.centerLeft,
@@ -171,7 +189,7 @@ class _FlatSlider extends StatelessWidget {
           onTapDown: (d) => onChanged(valueAt(d.localPosition.dy)),
           onVerticalDragUpdate: (d) => onChanged(valueAt(d.localPosition.dy)),
           child: SizedBox(
-            width: _cross,
+            width: cross,
             height: double.infinity,
             child: Stack(
               alignment: Alignment.bottomCenter,
@@ -192,8 +210,8 @@ class _FlatSlider extends StatelessWidget {
   }
 }
 
-/// Flat speaker/mute toggle — a bare tappable icon (no Material ripple),
-/// dimmed when muted, sized to sit cleanly in both layouts.
+/// The speaker and mute toggle: an icon dimmed when muted, a full tap
+/// target on touch.
 class _MuteButton extends StatelessWidget {
   final IconData icon;
   final bool muted;
@@ -207,17 +225,29 @@ class _MuteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(Tokens.s6),
-          child: Icon(
-            icon,
-            size: 20,
-            color: muted ? Tokens.fgFaint : Tokens.fgDim,
+    final label = muted ? 'Unmute' : 'Mute';
+    final minTap = context.layout.minTap;
+    return Semantics(
+      button: true,
+      toggled: muted,
+      label: 'Mute',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Tooltip(
+        message: label,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: minTap, minHeight: minTap),
+              child: Icon(
+                icon,
+                size: 20,
+                color: muted ? Tokens.fgFaint : Tokens.fgDim,
+              ),
+            ),
           ),
         ),
       ),

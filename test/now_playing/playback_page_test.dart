@@ -1,0 +1,375 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/now_playing/now_playing_page.dart';
+import 'package:mpv_studio/ui/layout/layout.dart';
+
+import '../support/layout_harness.dart';
+import 'playback_fake.dart';
+import 'playback_harness.dart';
+
+Future<void> _pumpPage(
+  WidgetTester tester,
+  PlaybackFake player, {
+  Size size = const Size(1440, 900),
+  InputMode input = InputMode.pointer,
+  ValueNotifier<Set<Media>>? failed,
+  VoidCallback? onOpenFiles,
+  VoidCallback? onOpenStream,
+}) => pumpStudio(
+  tester,
+  Scaffold(
+    body: NowPlayingPage(
+      player: player,
+      failed: failed,
+      onOpenFiles: onOpenFiles ?? () {},
+      onOpenStream: onOpenStream ?? () {},
+    ),
+  ),
+  size: size,
+  input: input,
+);
+
+/// Lets a toast's timer run out, so no timer is left pending.
+Future<void> _settleToast(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 3));
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  setUpAll(loadStudioFonts);
+
+  group('transport', () {
+    testWidgets('next at the end of the queue says so', (tester) async {
+      final player = playingTrack()..nextResult = false;
+      await _pumpPage(tester, player);
+      await tester.tap(find.byTooltip('Next (long press to force)'));
+      await tester.pump();
+      expect(player.calls, ['next']);
+      expect(find.text('End of queue'), findsOneWidget);
+      await _settleToast(tester);
+    });
+
+    testWidgets('previous at the start of the queue says so', (tester) async {
+      final player = playingTrack()..previousResult = false;
+      await _pumpPage(tester, player);
+      await tester.tap(find.byTooltip('Previous (long press to force)'));
+      await tester.pump();
+      expect(player.calls, ['previous']);
+      expect(find.text('Start of queue'), findsOneWidget);
+      await _settleToast(tester);
+    });
+
+    testWidgets('a move to another entry shows no toast', (tester) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+      await tester.tap(find.byTooltip('Next (long press to force)'));
+      await tester.pump();
+      expect(find.text('End of queue'), findsNothing);
+    });
+
+    testWidgets('a spinner rings play while seeking or buffering', (
+      tester,
+    ) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+      expect(find.byKey(const ValueKey('play-busy')), findsNothing);
+
+      player.emit((s) => s.copyWith(seeking: true));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('play-busy')), findsOneWidget);
+      expect(find.text('Seeking'), findsOneWidget);
+
+      player.emit((s) => s.copyWith(seeking: false));
+      player.emitExtra((p) => p.playbackState = MpvPlaybackState.buffering);
+      await tester.pump();
+      expect(find.text('Buffering'), findsOneWidget);
+
+      player.emitExtra((p) => p.playbackState = MpvPlaybackState.paused);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('play-busy')), findsNothing);
+    });
+  });
+
+  group('A-B loop', () {
+    testWidgets('the chip shows the points and the loops left', (tester) async {
+      final player = playingTrack()
+        ..emit(
+          (s) => s.copyWith(
+            abLoopA: const Duration(minutes: 1),
+            abLoopB: const Duration(minutes: 1, seconds: 30),
+            abLoopCount: 3,
+            remainingAbLoops: 2,
+          ),
+        );
+      await _pumpPage(tester, player);
+      expect(find.text('1:00 to 1:30'), findsOneWidget);
+      expect(find.text('2 left'), findsOneWidget);
+
+      // Once the run is over, the badge falls back to the count.
+      player.emit((s) => s.copyWith(remainingAbLoops: null));
+      await tester.pump();
+      expect(find.text('3x'), findsOneWidget);
+    });
+
+    testWidgets('the chip menu sets points and the loop count', (tester) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+
+      await tester.tap(find.text('A-B loop'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Set A at 2:03'));
+      await tester.pumpAndSettle();
+      expect(player.calls, ['setAbLoopA 123000']);
+      expect(find.text('A 2:03'), findsOneWidget);
+
+      await tester.tap(find.text('A 2:03'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Repeat 3 times'));
+      await tester.pumpAndSettle();
+      expect(player.calls.last, 'setAbLoopCount 3');
+      await _settleToast(tester);
+    });
+
+    testWidgets('the waveform menu sets loop B where it was clicked', (
+      tester,
+    ) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+      final meter = tester.getRect(
+        find.bySemanticsLabel('Waveform and position'),
+      );
+      await tester.tapAt(
+        Offset(meter.left + meter.width / 2, meter.center.dy),
+        buttons: kSecondaryButton,
+      );
+      await tester.pumpAndSettle();
+      final setB = find.textContaining('Set loop B at');
+      expect(setB, findsOneWidget);
+      await tester.tap(setB);
+      await tester.pumpAndSettle();
+      expect(player.calls.single, startsWith('setAbLoopB '));
+      expect(player.state.abLoopB, isNotNull);
+      await _settleToast(tester);
+    });
+  });
+
+  group('chapters', () {
+    testWidgets('the title comes from the chapter tags first', (tester) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+      final title = find.byKey(const ValueKey('chapter-title'));
+      expect(tester.widget<Text>(title).data, 'Theme');
+      expect(find.text('Chapter 2 of 3'), findsOneWidget);
+
+      player.emit(
+        (s) => s.copyWith(chapterMetadata: const {'TITLE': 'Main theme'}),
+      );
+      await tester.pump();
+      expect(tester.widget<Text>(title).data, 'Main theme');
+    });
+
+    testWidgets('previous and next chapter step the chapter', (tester) async {
+      final player = playingTrack();
+      await _pumpPage(tester, player);
+      await tester.tap(find.byTooltip('Next chapter'));
+      await tester.pump();
+      expect(player.calls, ['setChapter 2']);
+      await tester.tap(find.byTooltip('Previous chapter'));
+      await tester.pump();
+      expect(player.calls, ['setChapter 2', 'setChapter 1']);
+    });
+
+    testWidgets('a track without chapters shows no chapter line', (
+      tester,
+    ) async {
+      final player = playingTrack()
+        ..emit((s) => s.copyWith(chapters: const [], currentChapter: null));
+      await _pumpPage(tester, player);
+      expect(find.byTooltip('Next chapter'), findsNothing);
+    });
+  });
+
+  group('states', () {
+    testWidgets('nothing playing offers files and Stream', (tester) async {
+      var files = 0;
+      var stream = 0;
+      await _pumpPage(
+        tester,
+        PlaybackFake(const PlayerState()),
+        onOpenFiles: () => files++,
+        onOpenStream: () => stream++,
+      );
+      expect(find.text('Nothing playing'), findsOneWidget);
+      expect(find.byType(NowPlayingPage), findsOneWidget);
+      await tester.tap(find.text('Open files'));
+      await tester.tap(find.text('Go to Stream'));
+      expect((files, stream), (1, 1));
+      expect(find.bySemanticsLabel('Waveform and position'), findsNothing);
+    });
+
+    testWidgets('a queue with nothing on offers to play it', (tester) async {
+      final player = PlaybackFake(
+        const PlayerState(
+          playlist: Playlist([Media('https://example.test/a.flac')], index: -1),
+        ),
+      );
+      await _pumpPage(tester, player);
+      await tester.tap(find.text('Play the queue'));
+      expect(player.calls, ['jump 0']);
+    });
+
+    testWidgets('a failed current track shows Retry and Next', (tester) async {
+      final player = playingTrack();
+      final failed = ValueNotifier<Set<Media>>({
+        player.state.playlist.items.first,
+      });
+      addTearDown(failed.dispose);
+      await _pumpPage(tester, player, failed: failed);
+      expect(find.text('Could not play "Blue in Green".'), findsOneWidget);
+      await tester.tap(find.text('Retry'));
+      expect(player.calls, ['jump 0']);
+
+      failed.value = const {};
+      await tester.pump();
+      expect(find.text('Retry'), findsNothing);
+    });
+  });
+
+  group('touch', () {
+    testWidgets('a double tap on the cover skips 10 s', (tester) async {
+      final player = playingTrack();
+      await _pumpPage(
+        tester,
+        player,
+        size: const Size(412, 915),
+        input: InputMode.touch,
+      );
+      final cover = tester.getRect(find.bySemanticsLabel('No cover art'));
+      final right = Offset(cover.right - 10, cover.center.dy);
+      await tester.tapAt(right);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tapAt(right);
+      await tester.pump();
+      expect(player.calls, ['seek +10000']);
+      expect(find.text('10 s'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('a tap on the waveform seeks once it is not a double tap', (
+      tester,
+    ) async {
+      final player = playingTrack();
+      await _pumpPage(
+        tester,
+        player,
+        size: const Size(412, 915),
+        input: InputMode.touch,
+      );
+      final meter = tester.getRect(
+        find.bySemanticsLabel('Waveform and position'),
+      );
+      await tester.tapAt(Offset(meter.left + 4, meter.center.dy));
+      expect(player.calls, isEmpty);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(player.calls.single, startsWith('seek '));
+    });
+  });
+
+  testWidgets('custom painted parts carry semantics', (tester) async {
+    final handle = tester.ensureSemantics();
+    await _pumpPage(tester, playingTrack());
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Waveform and position')),
+      matchesSemantics(
+        label: 'Waveform and position',
+        value: '2:03 of 5:37',
+        increasedValue: '2:08 of 5:37',
+        decreasedValue: '1:58 of 5:37',
+        isSlider: true,
+        hasIncreaseAction: true,
+        hasDecreaseAction: true,
+      ),
+    );
+    expect(find.bySemanticsLabel('Output level'), findsOneWidget);
+    expect(find.bySemanticsLabel('Spectrum analyser'), findsOneWidget);
+    expect(find.bySemanticsLabel('No cover art'), findsOneWidget);
+    expect(find.bySemanticsLabel('Volume'), findsOneWidget);
+    handle.dispose();
+  });
+
+  testWidgets('every icon button has a tooltip', (tester) async {
+    await _pumpPage(tester, playingTrack());
+    for (final button in tester.widgetList<InkWell>(
+      find.descendant(
+        of: find.byType(NowPlayingPage),
+        matching: find.byType(InkWell),
+      ),
+    )) {
+      if (button.onTap == null) continue;
+      final hasTooltip = find
+          .ancestor(of: find.byWidget(button), matching: find.byType(Tooltip))
+          .evaluate()
+          .isNotEmpty;
+      final isTextButton = find
+          .ancestor(
+            of: find.byWidget(button),
+            matching: find.byType(ButtonStyleButton),
+          )
+          .evaluate()
+          .isNotEmpty;
+      expect(hasTooltip || isTextButton, isTrue, reason: '$button');
+    }
+  });
+
+  group('large text on a small phone', () {
+    for (final empty in [false, true]) {
+      testWidgets(empty ? 'empty' : 'playing', (tester) async {
+        await pumpPlayback(
+          tester,
+          empty ? PlaybackFake(const PlayerState()) : playingTrack(),
+          size: studioSize('360x780'),
+          textScale: 1.3,
+        );
+        expectNoOverflow(tester);
+      });
+    }
+
+    testWidgets('in landscape', (tester) async {
+      await pumpPlayback(
+        tester,
+        playingTrack(),
+        size: studioSize('780x360'),
+        textScale: 1.3,
+      );
+      expectNoOverflow(tester);
+    });
+  });
+
+  testWidgets('the waveform keeps its state across a change of shape', (
+    tester,
+  ) async {
+    final player = playingTrack();
+    await _pumpPage(tester, player);
+    bool canZoomOut() =>
+        tester
+            .widget<InkWell>(
+              find.descendant(
+                of: find.byTooltip('Zoom out'),
+                matching: find.byType(InkWell),
+              ),
+            )
+            .onTap !=
+        null;
+
+    expect(canZoomOut(), isFalse, reason: 'the whole track shows at first');
+    await tester.tap(find.byTooltip('Zoom in'));
+    await tester.pump();
+    expect(canZoomOut(), isTrue);
+
+    setStudioView(tester, const Size(780, 360));
+    await tester.pumpAndSettle();
+    expect(canZoomOut(), isTrue, reason: 'the zoom survived the new layout');
+  });
+}

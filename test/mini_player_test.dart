@@ -1,11 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/rack_catalog.dart';
 import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
+import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/theme.dart';
 
+import 'now_playing/playback_fake.dart';
 import 'support/fake_player.dart';
 
 const _queue = Playlist([
@@ -16,19 +19,30 @@ const _queue = Playlist([
   Media('https://example.test/two.flac'),
 ]);
 
-Future<void> _pump(WidgetTester tester, Widget child) async {
+Future<void> _pump(
+  WidgetTester tester,
+  Widget child, {
+  InputMode input = InputMode.pointer,
+}) async {
   tester.view.physicalSize = const Size(800, 400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.dark,
+      builder: (context, child) => LayoutScope(inputMode: input, child: child!),
       home: Scaffold(
         body: Align(alignment: Alignment.bottomCenter, child: child),
       ),
     ),
   );
   await tester.pump();
+}
+
+/// Lets a toast's timer run out, so no timer is left pending.
+Future<void> _settleToast(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 3));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -71,6 +85,82 @@ void main() {
     expect(player.calls, ['next']);
   });
 
+  testWidgets('the bar has previous; the phone bar leaves it to swipes', (
+    tester,
+  ) async {
+    await _pump(tester, MiniPlayer(player: player));
+    await tester.tap(find.byIcon(Icons.skip_previous_rounded));
+    expect(player.calls, ['previous']);
+
+    await _pump(
+      tester,
+      MiniPlayer(player: player, variant: MiniPlayerVariant.compact),
+    );
+    expect(find.byIcon(Icons.skip_previous_rounded), findsNothing);
+  });
+
+  testWidgets('next at the end of the queue says so', (tester) async {
+    final fake = playingTrack()..nextResult = false;
+    await _pump(tester, MiniPlayer(player: fake));
+    await tester.tap(find.byIcon(Icons.skip_next_rounded));
+    await tester.pump();
+    expect(find.text('End of queue'), findsOneWidget);
+    await _settleToast(tester);
+  });
+
+  testWidgets('on touch, swipes skip and open Playback', (tester) async {
+    var opened = 0;
+    await _pump(
+      tester,
+      MiniPlayer(
+        player: player,
+        variant: MiniPlayerVariant.compact,
+        onOpen: () => opened++,
+      ),
+      input: InputMode.touch,
+    );
+    final info = find.byKey(const ValueKey('mini-info'));
+    await tester.fling(info, const Offset(-160, 0), 1200);
+    await tester.pumpAndSettle();
+    expect(player.calls, ['next']);
+    await tester.fling(info, const Offset(160, 0), 1200);
+    await tester.pumpAndSettle();
+    expect(player.calls, ['next', 'previous']);
+    await tester.fling(info, const Offset(0, -80), 1200);
+    await tester.pumpAndSettle();
+    expect(opened, 1);
+    // A slow drag is not a swipe.
+    await tester.timedDrag(
+      info,
+      const Offset(-60, 0),
+      const Duration(seconds: 1),
+    );
+    await tester.pumpAndSettle();
+    expect(player.calls, ['next', 'previous']);
+  });
+
+  testWidgets('a right-click opens the menu', (tester) async {
+    var opened = 0;
+    await _pump(tester, MiniPlayer(player: player, onOpen: () => opened++));
+    await tester.tapAt(
+      tester.getCenter(find.byKey(const ValueKey('mini-info'))),
+      buttons: kSecondaryButton,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Next track'), findsOneWidget);
+    await tester.tap(find.text('Open Playback'));
+    await tester.pumpAndSettle();
+    expect(opened, 1);
+  });
+
+  testWidgets('the cover and title open Playback on tap', (tester) async {
+    var opened = 0;
+    await _pump(tester, MiniPlayer(player: player, onOpen: () => opened++));
+    await tester.tap(find.text('Blue Train'));
+    expect(opened, 1);
+    expect(find.byTooltip('Open Playback'), findsOneWidget);
+  });
+
   testWidgets('tapping the progress bar seeks there', (tester) async {
     await _pump(tester, MiniPlayer(player: player));
     final bar = find.byKey(const ValueKey('mini-progress'));
@@ -99,6 +189,11 @@ void main() {
     player.emitExtra((p) => p.playbackState = MpvPlaybackState.playing);
     await tester.pump();
     expect(ring, findsNothing);
+
+    player.emit((s) => s.copyWith(seeking: true));
+    await tester.pump();
+    expect(ring, findsOneWidget);
+    expect(find.byTooltip('Play (Seeking)'), findsOneWidget);
   });
 
   testWidgets('controls carry tooltips and semantics', (tester) async {
@@ -108,9 +203,11 @@ void main() {
     await _pump(tester, MiniPlayer(player: player, rack: rack));
 
     expect(find.byTooltip('Next'), findsOneWidget);
+    expect(find.byTooltip('Previous'), findsOneWidget);
     expect(find.byTooltip('Play'), findsOneWidget);
     expect(find.byTooltip('No effects to bypass'), findsOneWidget);
     expect(find.bySemanticsLabel('Next'), findsOneWidget);
+    expect(find.bySemanticsLabel('Previous'), findsOneWidget);
     expect(find.bySemanticsLabel('Play'), findsOneWidget);
     expect(find.bySemanticsLabel('Seek'), findsOneWidget);
     expect(

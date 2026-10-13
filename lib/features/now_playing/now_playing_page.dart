@@ -1,101 +1,297 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../shell/sections.dart';
+import '../../studio/playback_issues.dart';
+import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/resize_handle.dart';
+import '../../util/media_import.dart';
+import '../../util/reactive.dart';
+import 'playback_scope.dart';
+import 'track_identity.dart';
 import 'widgets/cover_art.dart';
+import 'widgets/double_tap_seek.dart';
+import 'widgets/info_sheet.dart';
+import 'widgets/playback_states.dart';
+import 'widgets/position_bar.dart';
 import 'widgets/spectrum_curve.dart';
 import 'widgets/track_info.dart';
 import 'widgets/transport_controls.dart';
-import 'widgets/vu_meter.dart';
 import 'widgets/volume_control.dart';
-import 'widgets/waveform_meter.dart';
+import 'widgets/vu_meter.dart';
+import 'widgets/waveform/waveform_meter.dart';
 
-/// The home surface, laid out like a DAW: a full-bleed waveform meter
-/// (Reaper-style ruler + playhead) on top — resizable — then a control
-/// block (centred title over the transport, artwork left, vertical VU
-/// meters right, volume) and finally the curved spectrum filling all the
-/// remaining space, anchored to the bottom edge.
-class NowPlayingPage extends StatefulWidget {
-  const NowPlayingPage({super.key});
+/// The Playback page: the current track's cover and title, the transport,
+/// the waveform meter with the chapters and the A-B loop, the volume, the
+/// level meter and the spectrum. Laid out for the space it gets:
+///
+/// * a column on phones in portrait and tall tablets, scrolling when the
+///   text is large;
+/// * side by side on short windows (phones in landscape): the deck on the
+///   left, the waveform on the right;
+/// * a stage on medium windows: the waveform on top, the deck in a row,
+///   the spectrum under it;
+/// * two columns on large and ultrawide windows: the deck on the left,
+///   the waveform and the spectrum filling the rest.
+///
+/// With no current track it shows how to start one. It reads the player
+/// from the app; tests hand one in with [player] and [guard].
+class NowPlayingPage extends StatelessWidget {
+  const NowPlayingPage({
+    super.key,
+    this.player,
+    this.guard = unguarded,
+    this.failed,
+    this.onOpenFiles,
+    this.onOpenStream,
+  });
 
-  @override
-  State<NowPlayingPage> createState() => _NowPlayingPageState();
-}
+  /// The player to show, instead of the app's.
+  final PlayerApi? player;
 
-class _NowPlayingPageState extends State<NowPlayingPage> {
-  double _meterHeight = 200;
+  /// The guard of [player]'s calls.
+  final CallGuard guard;
 
-  // Stable identity for the waveform meter so crossing the mobile/desktop
-  // layout boundary REPARENTS its element (keeping the State and its waveform
-  // subscription alive) instead of disposing and recreating it. A recreate
-  // drops the stream's only listener, which restarts the native analysis and
-  // wipes a progressive (streaming) waveform.
-  final GlobalKey _waveformKey = GlobalKey();
+  /// The failed queue entries, with [player].
+  final ValueListenable<Set<Media>>? failed;
 
-  /// Below this surface width the controls stack into the mobile column.
-  static const double _narrowBelow = 600;
+  /// Replaces opening the file picker (tests).
+  final VoidCallback? onOpenFiles;
+
+  /// Replaces going to the Stream section (tests).
+  final VoidCallback? onOpenStream;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        // One width decision for the whole surface, so the meter sizing and
-        // the control layout never disagree — an earlier split check let the
-        // meter reserve row-space while the body rendered the taller column,
-        // overflowing the bottom and crushing the visualizer to zero height.
-        if (c.maxWidth < _narrowBelow) {
-          // The meter is resizable on mobile too. The controls below adapt
-          // (they scale down as one cluster — see [_MobileLayout]), so the
-          // meter is free to take most of the surface; the bounds here are
-          // just a usable floor and a "don't swallow everything" ceiling.
-          final h = c.maxHeight;
-          final w = c.maxWidth;
-          final maxMeter = (h * 0.62).clamp(160.0, 520.0);
-          final meterH = _meterHeight.clamp(110.0, maxMeter);
-          final cover = math
-              .min(w * 0.5, h * 0.26)
-              .clamp(120.0, 200.0)
-              .toDouble();
-          return _MobileLayout(
-            waveformKey: _waveformKey,
-            meterHeight: meterH,
-            coverSize: cover,
-            onResize: (dy) => setState(
-              () => _meterHeight = (meterH + dy).clamp(110.0, maxMeter),
+    final body = _PlaybackBody(
+      onOpenFiles: onOpenFiles,
+      onOpenStream: onOpenStream,
+    );
+    final given = player;
+    if (given != null) {
+      return PlaybackScope(
+        player: given,
+        guard: guard,
+        failed: failed,
+        child: body,
+      );
+    }
+    return PlaybackScope.fromApp(context, child: body)!;
+  }
+}
+
+/// How the page is laid out for the space it has.
+enum _Shape { column, side, stage, split }
+
+_Shape _shapeFor(Size size) {
+  final wide = WidthClass.of(size.width);
+  if (HeightClass.of(size.height) == HeightClass.short &&
+      size.width > size.height) {
+    return _Shape.side;
+  }
+  if (wide.atLeast(WidthClass.large)) return _Shape.split;
+  // Phones, and tablets standing up: one column.
+  if (wide == WidthClass.compact || size.height > size.width * 1.2) {
+    return _Shape.column;
+  }
+  return _Shape.stage;
+}
+
+class _PlaybackBody extends StatefulWidget {
+  const _PlaybackBody({this.onOpenFiles, this.onOpenStream});
+
+  final VoidCallback? onOpenFiles;
+  final VoidCallback? onOpenStream;
+
+  @override
+  State<_PlaybackBody> createState() => _PlaybackBodyState();
+}
+
+class _PlaybackBodyState extends State<_PlaybackBody> {
+  /// The waveform's height where the user can resize it; null until they
+  /// do, so each shape starts at its own default.
+  double? _meterHeight;
+
+  // One identity for the waveform meter, so a change of shape reparents
+  // it (its State and waveform subscription live on) instead of making a
+  // new one: a new one would drop the stream's only listener, which
+  // restarts the analysis and wipes a streaming waveform.
+  final GlobalKey _waveformKey = GlobalKey(debugLabel: 'waveform');
+
+  Future<void> _openFiles() async {
+    final open = widget.onOpenFiles;
+    if (open != null) return open();
+    final scope = PlaybackScope.of(context);
+    final paths = await pickAudioFiles();
+    if (paths.isEmpty) return;
+    await scope.guard(
+      () => scope.player.openAll([
+        for (final p in paths) Media(p, extras: {'title': baseNameNoExt(p)}),
+      ], play: true),
+    );
+  }
+
+  void _openStream() {
+    final open = widget.onOpenStream;
+    if (open != null) return open();
+    StatefulNavigationShell.maybeOf(context)?.goBranch(Section.stream.index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PlaybackScope.of(context);
+    final player = scope.player;
+    return Live<Playlist>(
+      stream: player.stream.playlist,
+      initial: player.state.playlist,
+      builder: (context, pl) {
+        if (currentMedia(pl) == null) {
+          return PageFrame(
+            title: 'Playback',
+            scrollable: false,
+            body: EmptyPlayback(
+              onOpenFiles: _openFiles,
+              onOpenStream: _openStream,
+              onPlayQueue: pl.items.isEmpty
+                  ? null
+                  : () => scope.guard(() => player.jump(0)),
             ),
           );
         }
-
-        final maxMeter = (c.maxHeight - 320).clamp(120.0, 600.0);
-        final meterH = _meterHeight.clamp(120.0, maxMeter);
-        // Meter and the controls area touch flush; the resize line is
-        // overlaid on the seam, so there are no gap pixels between them.
-        return Stack(
-          children: [
-            Column(
-              children: [
-                SizedBox(
-                  height: meterH,
-                  child: ColoredBox(
-                    color: Tokens.surface,
-                    child: WaveformMeter(key: _waveformKey),
+        return LayoutBuilder(
+          builder: (context, c) {
+            final shape = _shapeFor(c.biggest);
+            // Phones keep the height for the player: the tab bar already
+            // says where they are, and the transport has the info button.
+            final header =
+                shape != _Shape.side &&
+                !WidthClass.of(c.maxWidth).below(WidthClass.medium);
+            return PageFrame(
+              title: header ? 'Playback' : null,
+              actions: [
+                if (header)
+                  IconButton(
+                    tooltip: 'Track and playback info',
+                    onPressed: () => showInfoSheet(context),
+                    icon: Icon(Icons.info_outline_rounded, color: Tokens.fgDim),
                   ),
-                ),
-                const Expanded(child: _RowBottom()),
               ],
+              scrollable: false,
+              maxWidth: switch (shape) {
+                _Shape.column => Breakpoints.medium,
+                _Shape.stage => Breakpoints.wide,
+                _Shape.side || _Shape.split => double.infinity,
+              },
+              body: switch (shape) {
+                _Shape.column => _columnLayout(context),
+                _Shape.side => _sideLayout(context),
+                _Shape.stage => _stageLayout(context),
+                _Shape.split => _splitLayout(context),
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _waveform({double? height}) {
+    final meter = DecoratedBox(
+      decoration: ShapeDecoration(
+        color: Tokens.surface,
+        shape: Tokens.squircle(Tokens.rMd),
+      ),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rMd)),
+        child: WaveformMeter(key: _waveformKey),
+      ),
+    );
+    return height == null ? meter : SizedBox(height: height, child: meter);
+  }
+
+  Widget _cover(double size) {
+    final scope = PlaybackScope.of(context);
+    return DoubleTapSeek(
+      onSeek: (by) => scope.guard(() => scope.player.seek(by, relative: true)),
+      child: CoverArtView(player: scope.player, size: size),
+    );
+  }
+
+  /// A waveform the user resizes by its bottom seam, above [below].
+  Widget _resizable({
+    required double initial,
+    required double min,
+    required double max,
+    required Widget below,
+  }) {
+    final top = math.max(min, max);
+    final height = (_meterHeight ?? initial).clamp(min, top).toDouble();
+    final touch = context.layout.isTouch;
+    final grip = touch ? 24.0 : 12.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _waveform(height: height),
+        SizedBox(
+          height: grip,
+          child: ResizeHandle(
+            axis: Axis.horizontal,
+            hitThickness: grip,
+            onDelta: (dy) => setState(
+              () => _meterHeight = (height + dy).clamp(min, top).toDouble(),
             ),
-            Positioned(
-              top: meterH - 6,
-              left: 0,
-              right: 0,
-              height: 12,
-              child: ResizeHandle(
-                axis: Axis.horizontal,
-                hitThickness: 12,
-                onDelta: (dy) => setState(
-                  () => _meterHeight = (meterH + dy).clamp(120.0, maxMeter),
+          ),
+        ),
+        Expanded(child: below),
+      ],
+    );
+  }
+
+  /// Phones in portrait, tall tablets: one column, the spectrum filling
+  /// what is left, scrolling when the content does not fit.
+  Widget _columnLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final h = c.maxHeight;
+        final cover = math.min(c.maxWidth * 0.62, h * 0.27).clamp(120.0, 320.0);
+        final meter = (_meterHeight ?? h * 0.16).clamp(96.0, h * 0.4);
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const FailedTrackBanner(),
+                  Center(child: _cover(cover)),
+                  const SizedBox(height: Tokens.s12),
+                  const TrackInfo(),
+                  const SizedBox(height: Tokens.s12),
+                  _waveform(height: meter),
+                  const PositionBar(),
+                  const ChapterBar(),
+                  const SizedBox(height: Tokens.s4),
+                  const TransportControls(),
+                  const SizedBox(height: Tokens.s8),
+                  const VolumeControl(),
+                ],
+              ),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 88),
+                child: const Column(
+                  children: [
+                    SizedBox(height: Tokens.s8),
+                    VuMeter(),
+                    SizedBox(height: Tokens.s8),
+                    Expanded(child: SpectrumCurve()),
+                  ],
                 ),
               ),
             ),
@@ -104,197 +300,175 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
       },
     );
   }
-}
 
-/// Desktop bottom: the control row over the full-bleed spectrum.
-class _RowBottom extends StatelessWidget {
-  const _RowBottom();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Control block — full width, no lateral cap.
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Tokens.s20,
-            Tokens.s16,
-            Tokens.s20,
-            Tokens.s12,
-          ),
-          child: LayoutBuilder(
-            builder: (context, c) => _RowControls(maxWidth: c.maxWidth),
-          ),
-        ),
-        // Visualizer fills the rest, full-bleed, anchored to the bottom.
-        const Expanded(child: SpectrumCurve()),
-      ],
-    );
-  }
-}
-
-/// Mobile surface: a resizable meter up top, then the stacked controls over
-/// the spectrum, which fills whatever height is left. The meter height is the
-/// shared [_meterHeight] (drag the grip on its bottom seam); the artwork
-/// scales with the available height, so the column always fits a portrait
-/// viewport without overflowing — and the visualizer keeps a real, non-zero
-/// height instead of being squeezed out.
-class _MobileLayout extends StatelessWidget {
-  final Key waveformKey;
-  final double meterHeight;
-  final double coverSize;
-  final ValueChanged<double> onResize;
-  const _MobileLayout({
-    required this.waveformKey,
-    required this.meterHeight,
-    required this.coverSize,
-    required this.onResize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
+  /// Short windows: the deck on the left, the waveform on the right.
+  Widget _sideLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final deck = (c.maxWidth * 0.44).clamp(260.0, 420.0);
+        final cover = (c.maxHeight * 0.26).clamp(56.0, 96.0);
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: meterHeight,
-              child: ColoredBox(
-                color: Tokens.surface,
-                child: WaveformMeter(key: waveformKey),
+              width: deck,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        _cover(cover),
+                        const SizedBox(width: Tokens.s12),
+                        const Expanded(
+                          child: TrackInfo(centered: false, compact: true),
+                        ),
+                        TransportButton(
+                          icon: Icons.info_outline_rounded,
+                          size: 20,
+                          tooltip: 'Track and playback info',
+                          onTap: () => showInfoSheet(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Tokens.s8),
+                    const TransportControls(dense: true),
+                    const VolumeControl(),
+                    const ChapterBar(),
+                  ],
+                ),
               ),
             ),
+            SizedBox(width: context.layout.gap),
             Expanded(
-              // The control block adapts to whatever height the meter leaves
-              // it: at natural size when there's room, scaled down as a single
-              // cluster (the [FittedBox]) once the meter is dragged large — so
-              // the meter can grow freely without the fixed-height transport
-              // ever overflowing. The visualizer keeps the remainder.
-              child: LayoutBuilder(
-                builder: (context, cc) {
-                  final avail = cc.maxHeight;
-                  const spectrumMin = 28.0;
-                  // Approx. natural height of the stacked controls (cover plus
-                  // the fixed transport/volume/VU rows and gaps). It only
-                  // steers where scaling begins and the controls/visualizer
-                  // split; FittedBox guarantees no overflow even if it's off.
-                  final naturalControls = coverSize + 304;
-                  final upper = math.max(0.0, avail - spectrumMin);
-                  final controlsBudget = naturalControls.clamp(0.0, upper);
-                  final spectrumH = avail - controlsBudget;
-                  return Column(
-                    children: [
-                      SizedBox(
-                        height: controlsBudget,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.topCenter,
-                          child: SizedBox(
-                            width: cc.maxWidth,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                Tokens.s20,
-                                Tokens.s16,
-                                Tokens.s20,
-                                Tokens.s12,
-                              ),
-                              child: _StackedControls(coverSize: coverSize),
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: spectrumH, child: const SpectrumCurve()),
-                    ],
-                  );
-                },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const FailedTrackBanner(),
+                  Expanded(child: _waveform()),
+                  const PositionBar(),
+                ],
               ),
             ),
           ],
-        ),
-        // Resize grip on the meter's bottom seam — a tall band so it's an easy
-        // touch target on a phone.
-        Positioned(
-          top: meterHeight - 11,
-          left: 0,
-          right: 0,
-          height: 22,
-          child: ResizeHandle(
-            axis: Axis.horizontal,
-            hitThickness: 22,
-            onDelta: onResize,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
-}
 
-/// Wide layout: artwork + info on the left, transport in the middle, the
-/// volume and VU meters as slim vertical strips on the right.
-class _RowControls extends StatelessWidget {
-  final double maxWidth;
-  const _RowControls({required this.maxWidth});
-
-  @override
-  Widget build(BuildContext context) {
-    final coverSize = (maxWidth * 0.14).clamp(120.0, 168.0).toDouble();
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: coverSize + 48,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  /// Medium windows: the waveform on top, the deck in a row, the spectrum
+  /// under it.
+  Widget _stageLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final h = c.maxHeight;
+        final cover = (c.maxWidth * 0.18).clamp(120.0, 168.0);
+        final rowH = math.max(cover, 196.0);
+        final tap = context.layout.minTap;
+        return _resizable(
+          initial: h * 0.28,
+          min: 96,
+          max: h - rowH - 160,
+          below: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CoverArtView(size: coverSize),
+              const PositionBar(),
+              const ChapterBar(),
+              const FailedTrackBanner(),
+              const SizedBox(height: Tokens.s8),
+              SizedBox(
+                height: rowH,
+                child: Row(
+                  children: [
+                    _cover(cover),
+                    const SizedBox(width: Tokens.s24),
+                    const Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TrackInfo(),
+                          SizedBox(height: Tokens.s12),
+                          TransportControls(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: Tokens.s24),
+                    SizedBox(
+                      width: tap,
+                      child: const VolumeControl(axis: Axis.vertical),
+                    ),
+                    const SizedBox(width: Tokens.s12),
+                    const VuMeter(axis: Axis.vertical),
+                  ],
+                ),
+              ),
               const SizedBox(height: Tokens.s12),
-              const TrackInfo(),
+              const Expanded(child: SpectrumCurve()),
             ],
           ),
-        ),
-        const SizedBox(width: Tokens.s32),
-        const Expanded(child: TransportControls()),
-        const SizedBox(width: Tokens.s32),
-        SizedBox(
-          width: 40,
-          height: coverSize,
-          child: const VolumeControl(axis: Axis.vertical),
-        ),
-        const SizedBox(width: Tokens.s16),
-        SizedBox(
-          width: 44,
-          height: coverSize,
-          child: const VuMeter(axis: Axis.vertical),
-        ),
-      ],
+        );
+      },
     );
   }
-}
 
-/// Narrow (mobile) layout: everything stacks under the artwork in a
-/// column — cover, title, the full-size transport, then the volume slider
-/// and a horizontal VU meter — so the transport keeps its real size
-/// instead of being squeezed into a sliver of a row.
-class _StackedControls extends StatelessWidget {
-  final double coverSize;
-  const _StackedControls({required this.coverSize});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Center(child: CoverArtView(size: coverSize)),
-        const SizedBox(height: Tokens.s12),
-        const TrackInfo(),
-        const SizedBox(height: Tokens.s16),
-        const TransportControls(),
-        const SizedBox(height: Tokens.s12),
-        const VolumeControl(axis: Axis.horizontal),
-        const SizedBox(height: Tokens.s8),
-        const VuMeter(axis: Axis.horizontal),
-      ],
+  /// Large and ultrawide windows: the deck in a column on the left, the
+  /// waveform and the spectrum filling the rest.
+  Widget _splitLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final h = c.maxHeight;
+        final deck = (c.maxWidth * 0.28).clamp(340.0, 440.0);
+        final cover = math.min(deck, h * 0.42);
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: deck,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(child: _cover(cover)),
+                    const SizedBox(height: Tokens.s16),
+                    const TrackInfo(),
+                    const SizedBox(height: Tokens.s16),
+                    const TransportControls(),
+                    const SizedBox(height: Tokens.s12),
+                    const VolumeControl(),
+                    const SizedBox(height: Tokens.s8),
+                    const VuMeter(),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: Tokens.s32),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const FailedTrackBanner(),
+                  Expanded(
+                    child: _resizable(
+                      initial: h * 0.5,
+                      min: 140,
+                      max: h - 220,
+                      below: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          PositionBar(),
+                          ChapterBar(),
+                          SizedBox(height: Tokens.s12),
+                          Expanded(child: SpectrumCurve()),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
