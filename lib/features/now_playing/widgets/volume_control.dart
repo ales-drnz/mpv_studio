@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
 import '../transport_actions.dart';
 
-/// Mute toggle + volume slider, bound to `player.stream.volume` and
+/// Mute toggle and volume slider, bound to `player.stream.volume` and
 /// `player.stream.mute`. Range tracks `volumeMax`. [axis] picks a
 /// horizontal slider (default) or a vertical one (slim, fills its
 /// parent's height, for a column beside the meters).
 ///
-/// The slider is the app's flat house style ([_FlatSlider]): a rounded
-/// pill track, an accent fill, and a rounded thumb, matching the
-/// settings/effects sliders. Muting dims the fill and thumb instead of
-/// disabling interaction, so you can still drag while muted. The calls run
-/// through the page's guard.
+/// The slider is the app's [AppSlider] (turned upright for the vertical
+/// axis). Muting fades it instead of disabling it, so you can still drag
+/// while muted; the mute circle takes the secondary selection fill. The
+/// calls run through the page's guard.
 class VolumeControl extends StatelessWidget {
   final Axis axis;
   const VolumeControl({super.key, this.axis = Axis.horizontal});
@@ -44,7 +44,7 @@ class VolumeControl extends StatelessWidget {
           initial: player.state.volume,
           builder: (context, vol) {
             final max = vmax < 100 ? 100.0 : vmax;
-            final value = vol.clamp(0.0, max);
+            final value = vol.clamp(0.0, max).toDouble();
             final readout = Text(
               vol.round().toString(),
               style: Tokens.numeric.copyWith(
@@ -52,12 +52,28 @@ class VolumeControl extends StatelessWidget {
               ),
               textAlign: TextAlign.end,
             );
-            final muteButton = _MuteButton(
+            final muteButton = RoundIconButton(
               icon: _icon(muted, vol, max),
-              muted: muted,
+              size: 20,
+              tooltip: muted ? 'Unmute' : 'Mute',
+              label: 'Mute',
+              toggled: muted,
+              active: muted,
               onTap: () => guard(() => player.setMute(!muted)),
             );
-            final slider = Semantics(
+            Widget slider = Opacity(
+              opacity: muted ? 0.45 : 1,
+              child: AppSlider(
+                value: value,
+                min: 0,
+                max: max,
+                onChanged: (v) => guard(() => player.setVolume(v)),
+              ),
+            );
+            if (axis == Axis.vertical) {
+              slider = RotatedBox(quarterTurns: 3, child: slider);
+            }
+            slider = Semantics(
               slider: true,
               label: 'Volume',
               value: muted
@@ -68,13 +84,7 @@ class VolumeControl extends StatelessWidget {
               onIncrease: () => stepVolume(player, guard, 5),
               onDecrease: () => stepVolume(player, guard, -5),
               excludeSemantics: true,
-              child: _FlatSlider(
-                value: value,
-                max: max,
-                axis: axis,
-                enabled: !muted,
-                onChanged: (v) => guard(() => player.setVolume(v)),
-              ),
+              child: slider,
             );
 
             if (axis == Axis.vertical) {
@@ -93,162 +103,11 @@ class VolumeControl extends StatelessWidget {
                 muteButton,
                 const SizedBox(width: Tokens.s8),
                 Expanded(child: slider),
-                const SizedBox(width: Tokens.s8),
+                const SizedBox(width: Tokens.s12),
                 SizedBox(width: 32, child: readout),
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-/// A flat slider (rounded pill track, accent fill, rounded thumb) that
-/// works horizontally or vertically. Tap or drag to set; reports through
-/// [onChanged]. Mirrors the look of `AppSlider`; [enabled] = false dims it
-/// (used for the muted state) without blocking the gesture.
-class _FlatSlider extends StatelessWidget {
-  final double value;
-  final double max;
-  final Axis axis;
-  final bool enabled;
-  final ValueChanged<double> onChanged;
-
-  const _FlatSlider({
-    required this.value,
-    required this.max,
-    required this.axis,
-    required this.onChanged,
-    this.enabled = true,
-  });
-
-  static const double _thumb = 16;
-  static const double _track = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final m = max <= 0 ? 1.0 : max;
-    final frac = (value / m).clamp(0.0, 1.0);
-    final fillColor = enabled ? Tokens.accent : Tokens.fgFaint;
-    final thumbColor = enabled ? Tokens.fg : Tokens.fgFaint;
-    // The cross-axis extent is the tap target.
-    final cross = context.layout.isTouch ? context.layout.minTap : 24.0;
-
-    final emptyShape = ShapeDecoration(
-      color: Tokens.surface3,
-      shape: Tokens.shape(Tokens.rPill),
-    );
-    final fillShape = ShapeDecoration(
-      color: fillColor,
-      shape: Tokens.shape(Tokens.rPill),
-    );
-    final thumb = Container(
-      width: _thumb,
-      height: _thumb,
-      decoration: ShapeDecoration(color: thumbColor, shape: Tokens.shape(8)),
-    );
-
-    return LayoutBuilder(
-      builder: (context, c) {
-        if (axis == Axis.horizontal) {
-          final span = (c.maxWidth - _thumb).clamp(1.0, double.infinity);
-          double valueAt(double dx) =>
-              (((dx - _thumb / 2) / span).clamp(0.0, 1.0)) * m;
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (d) => onChanged(valueAt(d.localPosition.dx)),
-            onHorizontalDragUpdate: (d) =>
-                onChanged(valueAt(d.localPosition.dx)),
-            child: SizedBox(
-              height: cross,
-              width: double.infinity,
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  // Container with only the cross-axis size set fills the
-                  // main axis (the long dimension).
-                  Container(height: _track, decoration: emptyShape),
-                  Container(
-                    width: _thumb / 2 + frac * span,
-                    height: _track,
-                    decoration: fillShape,
-                  ),
-                  Positioned(left: frac * span, child: thumb),
-                ],
-              ),
-            ),
-          );
-        }
-        // Vertical: 0 at the bottom, max at the top.
-        final span = (c.maxHeight - _thumb).clamp(1.0, double.infinity);
-        double valueAt(double dy) =>
-            (1 - (((dy - _thumb / 2) / span).clamp(0.0, 1.0))) * m;
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (d) => onChanged(valueAt(d.localPosition.dy)),
-          onVerticalDragUpdate: (d) => onChanged(valueAt(d.localPosition.dy)),
-          child: SizedBox(
-            width: cross,
-            height: double.infinity,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Container(width: _track, decoration: emptyShape),
-                Container(
-                  width: _track,
-                  height: _thumb / 2 + frac * span,
-                  decoration: fillShape,
-                ),
-                Positioned(bottom: frac * span, child: thumb),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// The speaker and mute toggle: an icon dimmed when muted, a full tap
-/// target on touch.
-class _MuteButton extends StatelessWidget {
-  final IconData icon;
-  final bool muted;
-  final VoidCallback onTap;
-
-  const _MuteButton({
-    required this.icon,
-    required this.muted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final label = muted ? 'Unmute' : 'Mute';
-    final minTap = context.layout.minTap;
-    return Semantics(
-      button: true,
-      toggled: muted,
-      label: 'Mute',
-      excludeSemantics: true,
-      onTap: onTap,
-      child: Tooltip(
-        message: label,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const CircleBorder(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: minTap, minHeight: minTap),
-              child: Icon(
-                icon,
-                size: 20,
-                color: muted ? Tokens.fgFaint : Tokens.fgDim,
-              ),
-            ),
-          ),
         ),
       ),
     );

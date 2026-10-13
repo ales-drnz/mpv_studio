@@ -38,21 +38,21 @@ class EmptyPlayback extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: ShapeDecoration(
-                  color: Tokens.surface2,
-                  shape: Tokens.shape(Tokens.rLg),
+                  color: Tokens.tonal,
+                  shape: const CircleBorder(),
                 ),
                 child: Icon(
                   Icons.graphic_eq_rounded,
                   size: 44,
-                  color: Tokens.accent,
+                  color: Tokens.fg,
                 ),
               ),
-              const SizedBox(height: Tokens.s20),
+              const SizedBox(height: Tokens.s24),
               Semantics(
                 header: true,
                 child: Text(
                   'Nothing playing',
-                  style: Tokens.title,
+                  style: Tokens.display,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -68,26 +68,19 @@ class EmptyPlayback extends StatelessWidget {
               const SizedBox(height: Tokens.s24),
               Wrap(
                 alignment: WrapAlignment.center,
-                spacing: Tokens.s12,
-                runSpacing: Tokens.s12,
+                spacing: Tokens.s8,
+                runSpacing: Tokens.s8,
                 children: [
+                  FilledButton.icon(
+                    onPressed: onOpenFiles,
+                    icon: const Icon(Icons.folder_open_rounded),
+                    label: const Text('Open files'),
+                  ),
                   if (queued)
-                    FilledButton.icon(
+                    OutlinedButton.icon(
                       onPressed: onPlayQueue,
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text('Play the queue'),
-                    ),
-                  if (queued)
-                    OutlinedButton.icon(
-                      onPressed: onOpenFiles,
-                      icon: const Icon(Icons.folder_open_rounded),
-                      label: const Text('Open files'),
-                    )
-                  else
-                    FilledButton.icon(
-                      onPressed: onOpenFiles,
-                      icon: const Icon(Icons.folder_open_rounded),
-                      label: const Text('Open files'),
                     ),
                   OutlinedButton.icon(
                     onPressed: onOpenStream,
@@ -162,17 +155,14 @@ class _Banner extends StatelessWidget {
       container: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(
-          Tokens.s12,
+          Tokens.s16,
+          Tokens.s4,
           Tokens.s8,
-          Tokens.s8,
-          Tokens.s8,
+          Tokens.s4,
         ),
         decoration: ShapeDecoration(
-          color: Tokens.red.withValues(alpha: 0.12),
-          shape: Tokens.shape(
-            Tokens.rMd,
-            side: BorderSide(color: Tokens.red.withValues(alpha: 0.4)),
-          ),
+          color: Tokens.red.withValues(alpha: 0.14),
+          shape: Tokens.shape(Tokens.rMd),
         ),
         child: Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -190,7 +180,7 @@ class _Banner extends StatelessWidget {
                     'Could not play "$title".',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Tokens.body,
+                    style: Tokens.body.copyWith(color: Tokens.red),
                   ),
                 ),
               ],

@@ -7,9 +7,8 @@ import '../support/layout_harness.dart';
 import 'queue_fixture.dart';
 
 /// The Queue page with three entries (a local file, the current tagged
-/// stream and a failed server track) at every size, dark, and light on a
-/// phone, a phone in landscape and a desktop window; the empty queue on a
-/// phone and a desktop window.
+/// stream and a failed server track) at every size, and the empty queue on
+/// a phone and a desktop window, in dark and light.
 void main() {
   setUpAll(loadStudioFonts);
 
@@ -43,22 +42,19 @@ void main() {
     );
   }
 
-  for (final s in studioSizes) {
-    testWidgets('dark queue at $s', (tester) async {
-      await golden(tester, s, Palette.dark);
-    }, skip: skipGoldens);
-  }
+  for (final palette in [Palette.dark, Palette.light]) {
+    final theme = palette.isDark ? 'dark' : 'light';
+    for (final s in studioSizes) {
+      testWidgets('$theme queue at $s', (tester) async {
+        await golden(tester, s, palette);
+      }, skip: skipGoldens);
+    }
 
-  for (final name in ['360x780', '915x412', '1440x900']) {
-    testWidgets('light queue at $name', (tester) async {
-      await golden(tester, studioSize(name), Palette.light);
-    }, skip: skipGoldens);
-  }
-
-  for (final name in ['360x780', '1440x900']) {
-    testWidgets('empty queue at $name', (tester) async {
-      await golden(tester, studioSize(name), Palette.dark, empty: true);
-    }, skip: skipGoldens);
+    for (final name in ['360x780', '1440x900']) {
+      testWidgets('$theme empty queue at $name', (tester) async {
+        await golden(tester, studioSize(name), palette, empty: true);
+      }, skip: skipGoldens);
+    }
   }
 
   for (final empty in [false, true]) {

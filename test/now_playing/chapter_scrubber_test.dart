@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/ui/tokens.dart';
 import 'package:mpv_studio/ui/widgets/chapter_scrubber.dart';
 
 import '../support/layout_harness.dart';
@@ -12,6 +13,8 @@ const _chapters = [
 ];
 
 void main() {
+  setUpAll(loadStudioFonts);
+
   Future<void> pump(
     WidgetTester tester, {
     String? activeTitle,
@@ -64,4 +67,39 @@ void main() {
     await tester.tapAt(Offset(bar.left + bar.width / 2, bar.bottom - 6));
     expect(at, const Duration(minutes: 2));
   });
+
+  for (final palette in [Palette.dark, Palette.light]) {
+    final theme = palette.isDark ? 'dark' : 'light';
+    testWidgets('the strip on a card, $theme', (tester) async {
+      await pumpStudio(
+        tester,
+        size: const Size(480, 160),
+        palette: palette,
+        Builder(
+          builder: (context) => Scaffold(
+            backgroundColor: Tokens.bg,
+            body: Center(
+              child: Container(
+                width: 432,
+                padding: const EdgeInsets.all(Tokens.s16),
+                decoration: ShapeDecoration(
+                  color: Tokens.surface,
+                  shape: Tokens.shape(Tokens.rLg),
+                ),
+                child: const ChapterScrubber(
+                  chapters: _chapters,
+                  position: Duration(minutes: 1, seconds: 30),
+                  duration: Duration(minutes: 4),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await expectLater(
+        find.byType(Scaffold),
+        matchesGoldenFile('goldens/chapter_scrubber_$theme.png'),
+      );
+    }, skip: skipGoldens);
+  }
 }

@@ -5,9 +5,10 @@ import '../../util/duration_format.dart';
 import '../layout/layout.dart';
 import '../tokens.dart';
 
-/// A chapter strip for the current track: a thin bar with the playback
-/// progress and a dot at each chapter start that stands proud of it, each
-/// with a tooltip naming the chapter. The active chapter's title and
+/// A chapter strip for the current track: a pill track with the playback
+/// progress in the accent and a dot at each chapter start that stands
+/// proud of it (accent once passed, the secondary tone ahead, with a pip
+/// in its middle), each with a tooltip naming the chapter. The active chapter's title and
 /// number sit above. Without chapters it is a plain progress bar.
 ///
 /// With [onSeekChapter] the dots are buttons that jump to their chapter
@@ -39,8 +40,9 @@ class ChapterScrubber extends StatelessWidget {
     this.activeTitle,
   });
 
-  static const double _barH = 6;
-  static const double _dot = 13; // > _barH so the dots stick out of the bar
+  static const double _barH = 8;
+  static const double _dot = 16; // > _barH so the dots stick out of the bar
+  static const double _pip = 6;
 
   String _titleOf(int i) {
     if (i == _activeIndex && (activeTitle?.trim().isNotEmpty ?? false)) {
@@ -135,9 +137,9 @@ class ChapterScrubber extends StatelessWidget {
             top: barTop,
             height: _barH,
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Tokens.surface3,
-                borderRadius: BorderRadius.circular(_barH / 2),
+              decoration: ShapeDecoration(
+                color: Tokens.surface4,
+                shape: Tokens.pill,
               ),
             ),
           ),
@@ -147,9 +149,9 @@ class ChapterScrubber extends StatelessWidget {
             height: _barH,
             width: progress.clamp(0.0, 1.0) * w,
             child: DecoratedBox(
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: Tokens.accent,
-                borderRadius: BorderRadius.circular(_barH / 2),
+                shape: Tokens.pill,
               ),
             ),
           ),
@@ -189,13 +191,25 @@ class ChapterScrubber extends StatelessWidget {
                         behavior: HitTestBehavior.opaque,
                         onTap: jump == null ? null : () => jump(i),
                         child: Center(
+                          // The pip keeps a passed dot readable on the
+                          // accent progress, whatever the strip sits on.
                           child: Container(
                             width: _dot,
                             height: _dot,
-                            decoration: BoxDecoration(
-                              color: passed ? Tokens.accent : Tokens.fgFaint,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Tokens.bg, width: 1.5),
+                            alignment: Alignment.center,
+                            decoration: ShapeDecoration(
+                              color: passed ? Tokens.accent : Tokens.accentDim,
+                              shape: const CircleBorder(),
+                            ),
+                            child: Container(
+                              width: _pip,
+                              height: _pip,
+                              decoration: ShapeDecoration(
+                                color: passed
+                                    ? Tokens.onAccent
+                                    : Tokens.surface,
+                                shape: const CircleBorder(),
+                              ),
                             ),
                           ),
                         ),
