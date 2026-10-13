@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +30,7 @@ Future<WelcomeApp> pumpWelcome(
   Palette palette = Palette.dark,
   Map<String, Object?>? stored,
   List<String> picked = const [],
+  Future<List<String>> Function()? pick,
 }) async {
   final s = studioSize(size);
   final input = inputFor(s);
@@ -53,7 +56,7 @@ Future<WelcomeApp> pumpWelcome(
   final actions = OnboardingActions(
     player: player,
     guard: <T>(call) async => call(),
-    pickFiles: () async => picked,
+    pickFiles: pick ?? () async => picked,
   );
   // Not awaited: it completes when the screen closes.
   welcomeOnFirstLaunch(context, settings, actions);
@@ -92,6 +95,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Welcome to MPV Studio'), findsNothing);
     expect(desktop.settings.onboarded, isTrue);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('files picked after the screen closed are not queued', (
+    tester,
+  ) async {
+    final picking = Completer<List<String>>();
+    final app = await pumpWelcome(tester, pick: () => picking.future);
+    await tester.tap(find.text('Open audio files'));
+    await tester.pump();
+    // The user closes the screen while the file picker is still open.
+    await tester.tap(find.text('Skip'));
+    await tester.pump(const Duration(milliseconds: 50));
+    picking.complete(['/m/a.flac']);
+    await tester.pumpAndSettle();
+    expect(app.player.calls, isEmpty);
+    expect(find.text('page ${Section.nowPlaying.name}'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
   });
 
