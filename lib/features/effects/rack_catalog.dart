@@ -33,10 +33,6 @@ FilterDescriptor? descriptorOf(AudioFilter? filter) =>
 /// The descriptor whose lavfi name is [name] (`'acompressor'`).
 FilterDescriptor? descriptorNamed(String name) => _byName[name];
 
-/// Whether [filter] is one of the featured filters.
-bool isFeatured(AudioFilter? filter) =>
-    filter != null && kFeaturedSubtitles.containsKey(filter);
-
 /// Whether [e] is a measuring stage: an `ebur128` with its metadata on,
 /// which feeds `stream.loudnessMeter` and leaves the audio unchanged.
 bool isMeterStage(AudioEffect e) => e is Ebur128Effect && e.metadata;

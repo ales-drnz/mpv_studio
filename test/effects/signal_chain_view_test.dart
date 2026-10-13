@@ -319,7 +319,7 @@ void main() {
         ),
       );
       expect(row.height, greaterThanOrEqualTo(48));
-      await tester.tap(find.text('Bypass this stage'));
+      await tester.tap(find.text('Switch off'));
       await tester.pumpAndSettle();
       expect(engine.current, [bass.copyWith(enabled: false), comp]);
     });

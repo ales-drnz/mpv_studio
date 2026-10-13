@@ -24,7 +24,7 @@ List<StudioMenuItem<StageAction>> stageMenuItems(RackController rack, int id) {
   return [
     StudioMenuItem(
       value: StageAction.power,
-      label: on ? 'Bypass this stage' : 'Switch on',
+      label: on ? 'Switch off' : 'Switch on',
       icon: Icons.power_settings_new_rounded,
     ),
     const StudioMenuItem(

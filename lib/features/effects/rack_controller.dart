@@ -88,9 +88,9 @@ class RackController extends ChangeNotifier {
   /// The shortest gap between two live writes.
   final Duration throttle;
 
-  /// How many open stages get their before and after meters. libmpv taps
-  /// eight stages at once across the process; the rest is left to other
-  /// surfaces (the Now Playing visualizers, for one).
+  /// How many open stages get their before and after meters: libmpv taps
+  /// at most eight stages at once across the process, so the stages
+  /// opened last get them and the others say so.
   final int maxTappedStages;
 
   late final StreamSubscription<List<AudioEffect>> _sub;

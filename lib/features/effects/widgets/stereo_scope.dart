@@ -18,8 +18,8 @@ import '../rack_environment.dart';
 /// out of phase. A phase-correlation bar underneath puts a number on it
 /// (+1 mono → −1 inverted).
 ///
-/// Fed by the chain's output ([RackEnvironment.pcm]) so it reflects whatever the width control is
-/// doing to the output. Flat house style; scales to fit any width.
+/// Fed by the chain's output ([RackEnvironment.pcm]) so it reflects
+/// whatever the width control is doing to the output. Flat house style; scales to fit any width.
 class StereoScope extends StatefulWidget {
   final bool enabled;
   const StereoScope({super.key, required this.enabled});
