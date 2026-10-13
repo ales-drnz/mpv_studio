@@ -152,7 +152,7 @@ class SignInCard extends StatelessWidget {
           vertical: context.layout.isShort ? Tokens.s8 : Tokens.s24,
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
+          constraints: const BoxConstraints(maxWidth: streamCardWidth),
           child: Form(
             key: formKey,
             child: FocusTraversalGroup(
