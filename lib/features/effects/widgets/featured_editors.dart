@@ -143,6 +143,9 @@ class FeaturedEditor {
             response: BiquadResponse.lowShelf(b.frequency, b.gain),
             markerHz: b.frequency,
             enabled: b.enabled,
+            description:
+                '${b.gain.toStringAsFixed(1)} dB below '
+                '${b.frequency.round()} Hz',
           ),
           [
             slider(
@@ -171,6 +174,9 @@ class FeaturedEditor {
             response: BiquadResponse.highShelf(t.frequency, t.gain),
             markerHz: t.frequency,
             enabled: t.enabled,
+            description:
+                '${t.gain.toStringAsFixed(1)} dB above '
+                '${t.frequency.round()} Hz',
           ),
           [
             slider(
@@ -201,6 +207,9 @@ class FeaturedEditor {
               amplitudeToDb(sb.boost),
             ),
             markerHz: sb.cutoff,
+            description:
+                'boost ${sb.boost.toStringAsFixed(1)} below '
+                '${sb.cutoff.round()} Hz',
             enabled: sb.enabled,
           ),
           [

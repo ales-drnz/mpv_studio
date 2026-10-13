@@ -24,7 +24,8 @@ class ResponseCurve extends StatelessWidget {
   /// Optional corner/centre frequency to mark with a vertical hairline.
   final double? markerHz;
 
-  final double height;
+  /// What the curve shows, for screen readers (`+6 dB below 120 Hz`).
+  final String? description;
 
   const ResponseCurve({
     super.key,
@@ -32,21 +33,27 @@ class ResponseCurve extends StatelessWidget {
     required this.enabled,
     this.maxDb = 24,
     this.markerHz,
-    this.height = 132,
+    this.description,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _ResponsePainter(
-          response: response,
-          enabled: enabled,
-          maxDb: maxDb,
-          markerHz: markerHz,
+    return Semantics(
+      label: 'Frequency response',
+      value: description,
+      child: LayoutBuilder(
+        builder: (context, c) => SizedBox(
+          height: (c.maxWidth * 0.24).clamp(132.0, 220.0),
+          width: double.infinity,
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _ResponsePainter(
+              response: response,
+              enabled: enabled,
+              maxDb: maxDb,
+              markerHz: markerHz,
+            ),
+          ),
         ),
       ),
     );

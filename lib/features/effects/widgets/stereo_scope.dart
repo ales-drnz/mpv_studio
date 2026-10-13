@@ -83,21 +83,25 @@ class _StereoScopeState extends State<StereoScope> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 188,
-      width: double.infinity,
-      child: RepaintBoundary(
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: _ScopePainter(
-            xs: _xs,
-            ys: _ys,
-            count: () => _count,
-            head: () => _head,
-            capacity: _capacity,
-            corr: _corr,
-            tick: _tick,
-            enabled: widget.enabled,
+    return Semantics(
+      label: 'Stereo vectorscope with phase correlation',
+      value: widget.enabled ? null : 'Stage is off',
+      child: SizedBox(
+        height: 188,
+        width: double.infinity,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _ScopePainter(
+              xs: _xs,
+              ys: _ys,
+              count: () => _count,
+              head: () => _head,
+              capacity: _capacity,
+              corr: _corr,
+              tick: _tick,
+              enabled: widget.enabled,
+            ),
           ),
         ),
       ),

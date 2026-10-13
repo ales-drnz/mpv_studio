@@ -138,20 +138,30 @@ class _CompressorCurveState extends State<CompressorCurve> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 168,
-      width: double.infinity,
-      child: RepaintBoundary(
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: _KneePainter(
-            thresholdDb: amplitudeToDb(widget.threshold),
-            ratio: widget.ratio,
-            kneeDb: amplitudeToDb(widget.knee.clamp(1.0, 8.0)),
-            makeupDb: amplitudeToDb(widget.makeup),
-            enabled: widget.enabled,
-            inDb: _inDb,
-            grDb: _grDb,
+    final w = widget;
+    return Semantics(
+      label: 'Compressor transfer curve',
+      value:
+          'threshold ${amplitudeToDb(w.threshold).round()} dB, '
+          'ratio ${w.ratio.toStringAsFixed(1)} to 1, '
+          'make-up ${amplitudeToDb(w.makeup).round()} dB',
+      child: LayoutBuilder(
+        builder: (context, c) => SizedBox(
+          height: (c.maxWidth * 0.3).clamp(150.0, 240.0),
+          width: double.infinity,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _KneePainter(
+                thresholdDb: amplitudeToDb(widget.threshold),
+                ratio: widget.ratio,
+                kneeDb: amplitudeToDb(widget.knee.clamp(1.0, 8.0)),
+                makeupDb: amplitudeToDb(widget.makeup),
+                enabled: widget.enabled,
+                inDb: _inDb,
+                grDb: _grDb,
+              ),
+            ),
           ),
         ),
       ),

@@ -33,19 +33,43 @@ class LoudnessGauge extends StatelessWidget {
     this.enabled = true,
   });
 
+  /// The readings in words, for screen readers.
+  String _describe() {
+    String lufs(double? v) => v == null || v <= _luMin
+        ? 'no reading'
+        : '${v.toStringAsFixed(1)} LUFS';
+    final r = reading;
+    return [
+      if (!enabled)
+        'meter off'
+      else ...[
+        'momentary ${lufs(r?.momentary)}',
+        'short-term ${lufs(r?.shortTerm)}',
+        'integrated ${lufs(r?.integrated)}',
+      ],
+      if (target != null) 'target ${target!.round()} LUFS',
+      if (truePeak != null)
+        'true peak ceiling ${truePeak!.toStringAsFixed(1)} dB',
+    ].join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 84,
-      width: double.infinity,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _GaugePainter(
-          reading: reading,
-          target: target,
-          range: range,
-          truePeak: truePeak,
-          enabled: enabled,
+    return Semantics(
+      label: 'Loudness gauge',
+      value: _describe(),
+      child: SizedBox(
+        height: 84,
+        width: double.infinity,
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _GaugePainter(
+            reading: reading,
+            target: target,
+            range: range,
+            truePeak: truePeak,
+            enabled: enabled,
+          ),
         ),
       ),
     );

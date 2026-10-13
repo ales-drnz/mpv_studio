@@ -22,15 +22,21 @@ class CrossfeedDiagram extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 132,
-      width: double.infinity,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _CrossfeedPainter(
-          strength: strength,
-          range: range,
-          enabled: enabled,
+    return Semantics(
+      label: 'Crossfeed routing',
+      value:
+          'bleed ${(strength * 100).round()}%, '
+          'range ${(range * 100).round()}%',
+      child: SizedBox(
+        height: 132,
+        width: double.infinity,
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _CrossfeedPainter(
+            strength: strength,
+            range: range,
+            enabled: enabled,
+          ),
         ),
       ),
     );

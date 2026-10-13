@@ -121,20 +121,28 @@ class _StageMetersState extends State<StageMeters> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      decoration: ShapeDecoration(
-        color: Tokens.bg,
-        shape: Tokens.squircle(Tokens.rSm),
-      ),
-      child: widget.active
-          ? RepaintBoundary(
-              child: CustomPaint(
-                size: Size.infinite,
-                painter: _MetersPainter(_pre, _post, _tick),
+    return Semantics(
+      label: 'Stage meters, before and after',
+      value: widget.active ? null : widget.idleText,
+      child: Container(
+        height: 72,
+        decoration: ShapeDecoration(
+          color: Tokens.bg,
+          shape: Tokens.squircle(Tokens.rSm),
+        ),
+        child: widget.active
+            ? RepaintBoundary(
+                child: CustomPaint(
+                  size: Size.infinite,
+                  painter: _MetersPainter(_pre, _post, _tick),
+                ),
+              )
+            : Center(
+                child: ExcludeSemantics(
+                  child: Text(widget.idleText, style: Tokens.caption),
+                ),
               ),
-            )
-          : Center(child: Text(widget.idleText, style: Tokens.caption)),
+      ),
     );
   }
 }

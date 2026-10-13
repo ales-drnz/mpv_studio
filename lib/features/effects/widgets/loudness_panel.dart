@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../audio/pcm_analysis.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import 'loudness_gauge.dart';
@@ -123,7 +124,7 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
               );
               final file = _Column(title: 'This file', rows: _scanRows());
               final norm = _Column(title: 'Normalization', rows: _normRows());
-              if (c.maxWidth < 520) {
+              if (WidthClass.of(c.maxWidth).below(WidthClass.medium)) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
