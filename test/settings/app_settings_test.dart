@@ -73,7 +73,47 @@ void main() {
       expect(s.userAgent, '');
       expect(s.logLevel, LogLevel.info);
       expect(s.rawOptions, isEmpty);
-      expect(s.onboarded, isFalse);
+    });
+
+    test(
+      'a 0.2 user skips the first-launch welcome, a new one does not',
+      () async {
+        expect((await loadSettings(_v02)).onboarded, isTrue);
+        expect((await loadSettings()).onboarded, isFalse);
+        // A 0.3 blob keeps its own answer.
+        expect(
+          (await loadSettings({
+            schemaKey: settingsSchema,
+            'volume': 3.0,
+          })).onboarded,
+          isFalse,
+        );
+      },
+    );
+
+    test('values of the wrong type fall back to their defaults', () async {
+      final s = await loadSettings({
+        schemaKey: 'two',
+        'volume': '50',
+        'audioBufferMs': 'big',
+        'mute': 'yes',
+        'audioDriver': 3,
+        'loop': 7,
+        'rawOptions': 'cache=yes',
+        'sessionActions': 'play',
+        'effects': [1, 2],
+        'resumePlayback': 0,
+      });
+      expect(s.volume, 50);
+      expect(s.audioBufferMs, 200);
+      expect(s.mute, isFalse);
+      expect(s.audioDriver, '');
+      expect(s.loop, Loop.off);
+      expect(s.rawOptions, isEmpty);
+      expect(s.effects, isEmpty);
+      expect(s.playerConfiguration.resumePlayback, isTrue);
+      final failures = await s.applyTo(StudioFakePlayer());
+      expect(failures, isEmpty);
     });
 
     test('a corrupt blob starts clean', () async {

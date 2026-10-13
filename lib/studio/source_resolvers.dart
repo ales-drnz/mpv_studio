@@ -1,7 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+
+import 'app_settings.dart';
+import 'studio_log.dart';
 
 /// Several [SourceResolver]s behind the player's single resolver slot.
 ///
@@ -10,7 +12,8 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 /// signed links). The chain asks each in order and plays the first URL one
 /// returns; a resolver returns null for entries that are not its own, so
 /// order only matters if two claim the same entry. A resolver that throws
-/// is logged and skipped, so one broken source never blocks the others.
+/// is logged in the Console (the URL without its query, which can carry a
+/// token) and skipped, so one broken source never blocks the others.
 class SourceResolverChain {
   SourceResolverChain(List<SourceResolver> resolvers)
     : resolvers = List.unmodifiable(resolvers);
@@ -23,22 +26,24 @@ class SourceResolverChain {
       try {
         final url = await resolve(request);
         if (url != null && url.isNotEmpty) return url;
-      } catch (e) {
-        debugPrint('Source resolver failed for ${request.uri}: $e');
+      } on Object catch (e) {
+        StudioLog.write(
+          'source resolver failed for ${redactUri(request.uri)}: $e',
+          level: LogLevel.warn,
+        );
       }
     }
     return null;
   }
 
-  /// Installs the chain on [player]. Returns false (after logging) when the
-  /// player refused it, so a failure never aborts the app's launch.
-  Future<bool> installOn(PlayerApi player) async {
+  /// Installs the chain on [player]. Returns what the player refused, or
+  /// null, so a failure joins the launch's notice instead of aborting it.
+  Future<SettingFailure?> installOn(PlayerApi player) async {
     try {
       await player.setSourceResolver(call);
-      return true;
-    } catch (e) {
-      debugPrint('Could not install the source resolvers: $e');
-      return false;
+      return null;
+    } on Object catch (e) {
+      return SettingFailure('Source resolvers', e);
     }
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../studio/studio_log.dart';
 import 'favorites_controller.dart';
 import 'media_server.dart';
 
@@ -106,7 +106,10 @@ class PlaybackReporter {
     } catch (e) {
       // The lock-screen star is cosmetic: a refused update leaves it stale
       // until the next track, never breaks playback.
-      debugPrint('PlaybackReporter: media session update failed: $e');
+      StudioLog.write(
+        'PlaybackReporter: media session update failed: $e',
+        level: LogLevel.warn,
+      );
     }
   }
 
@@ -147,7 +150,10 @@ class PlaybackReporter {
     final server = _servers[_kind];
     if (server == null) return;
     _started = true;
-    debugPrint('PlaybackReporter: start ${_kind!.name} $_itemId');
+    StudioLog.write(
+      'PlaybackReporter: start ${_kind!.name} $_itemId',
+      level: LogLevel.v,
+    );
     server.reportStart(_itemId!);
     _restartTimer();
   }
@@ -163,9 +169,10 @@ class PlaybackReporter {
 
   void _reportStop() {
     if (!_started || _itemId == null) return;
-    debugPrint(
+    StudioLog.write(
       'PlaybackReporter: stop ${_kind!.name} $_itemId '
       '@ ${_player.state.position}',
+      level: LogLevel.v,
     );
     _servers[_kind]?.reportStopped(_itemId!, position: _player.state.position);
     _started = false;
@@ -197,7 +204,10 @@ class PlaybackReporter {
         .where((k) => k.name == serverName)
         .firstOrNull;
     if (kind == null) {
-      debugPrint('PlaybackReporter: unknown server "$serverName"');
+      StudioLog.write(
+        'PlaybackReporter: unknown server "$serverName"',
+        level: LogLevel.warn,
+      );
       return (null, null);
     }
     return (kind, id);

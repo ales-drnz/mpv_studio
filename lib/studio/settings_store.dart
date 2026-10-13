@@ -48,10 +48,25 @@ class SettingsStore extends ChangeNotifier {
 
   bool containsKey(String k) => _data.containsKey(k);
 
-  double readDouble(String k, double d) => (_data[k] as num?)?.toDouble() ?? d;
-  int readInt(String k, int d) => (_data[k] as num?)?.toInt() ?? d;
-  bool readBool(String k, bool d) => _data[k] as bool? ?? d;
-  String readString(String k, String d) => _data[k] as String? ?? d;
+  // The typed readers fall back to the default for a value of the wrong
+  // type (a hand-edited or damaged blob), so one bad value never stops the
+  // launch.
+  double readDouble(String k, double d) => switch (_data[k]) {
+    final num v when v.isFinite => v.toDouble(),
+    _ => d,
+  };
+  int readInt(String k, int d) => switch (_data[k]) {
+    final num v when v.isFinite => v.toInt(),
+    _ => d,
+  };
+  bool readBool(String k, bool d) => switch (_data[k]) {
+    final bool v => v,
+    _ => d,
+  };
+  String readString(String k, String d) => switch (_data[k]) {
+    final String v => v,
+    _ => d,
+  };
 
   /// The [values] entry named by the string under [k], or [d].
   E readEnum<E extends Enum>(String k, List<E> values, E d) {
@@ -117,8 +132,9 @@ const schemaKey = 'schema';
 /// The current version of the settings blob.
 ///
 /// 1: MPV Studio 0.2 (no version key).
-/// 2: MPV Studio 0.3: adds the network, logging and raw option keys, and
-///    stores an automatic output driver as an empty string.
+/// 2: MPV Studio 0.3: adds the network, logging and raw option keys,
+///    stores an automatic output driver as an empty string, and marks a
+///    0.2 user as past the welcome screen.
 const settingsSchema = 2;
 
 /// Upgrades [data] from whichever schema wrote it to [settingsSchema],
@@ -126,11 +142,15 @@ const settingsSchema = 2;
 @visibleForTesting
 Map<String, Object?> migrateSettings(Map<String, Object?> data) {
   final out = Map<String, Object?>.of(data);
-  final from = (out[schemaKey] as num?)?.toInt() ?? 1;
+  final version = out[schemaKey];
+  final from = version is num ? version.toInt() : 1;
   if (from < 2) {
     // 0.2 could store the driver picker's "auto" literally; mpv has no
     // driver of that name, and 0.3 stores automatic as empty.
     if (out['audioDriver'] == 'auto') out['audioDriver'] = '';
+    // Someone who used 0.2 knows the app: the welcome screen is for a
+    // first launch (Settings still opens it).
+    if (out.isNotEmpty) out['onboarded'] = true;
   }
   out[schemaKey] = settingsSchema;
   return out;

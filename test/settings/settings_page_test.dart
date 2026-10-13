@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/settings/settings_catalog.dart';
 import 'package:mpv_studio/features/settings/settings_page.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
+import 'package:mpv_studio/ui/widgets/controls.dart';
 
 import '../support/layout_harness.dart';
 import 'studio_fakes.dart';
@@ -164,5 +165,49 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
     }
+  });
+
+  testWidgets('a new scope reloads the sections that keep local state', (
+    tester,
+  ) async {
+    await pumpSettings(
+      tester,
+      stored: {
+        'rawOptions': [
+          ['cache-secs', '10'],
+        ],
+        'sessionOn': true,
+      },
+    );
+    await tester.tap(find.text('Advanced').first);
+    await tester.pumpAndSettle();
+    expect(find.text('cache-secs=10'), findsOneWidget);
+
+    // The same page, now on another player and settings (a restart).
+    final next = await SettingsHarness.create(
+      stored: {
+        'rawOptions': [
+          ['cache-secs', '99'],
+        ],
+        'sessionOn': false,
+      },
+    );
+    await pumpStudio(
+      tester,
+      next.wrap(const Scaffold(body: SettingsPage())),
+      size: studioSize('1440x900').size,
+    );
+    expect(find.text('cache-secs=99'), findsOneWidget);
+
+    await tester.tap(find.text('Listening').first);
+    await tester.pumpAndSettle();
+    final publish = find.text(SettingsCatalog.sessionPublish.title);
+    await tester.ensureVisible(publish);
+    await tester.pumpAndSettle();
+    final row = tester.widget<SwitchRow>(
+      find.ancestor(of: publish, matching: find.byType(SwitchRow)),
+    );
+    expect(row.value, isFalse);
+    await drain(tester);
   });
 }

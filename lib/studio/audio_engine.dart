@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
@@ -42,14 +41,6 @@ Future<AudioEngine> startAudioEngine(AppSettings settings) async {
   } on Object catch (e) {
     failures.add(SettingFailure('Media session', e));
   }
-
-  // The library auto-applies inbound OS commands to the player; this
-  // subscription is the interception hook: it sees every lock screen,
-  // headset, Bluetooth or Siri command as it lands. It ends with the
-  // player's streams.
-  player.stream.mediaSessionCommands.listen(
-    (command) => debugPrint('MediaSession command from OS: $command'),
-  );
 
   // Re-apply the user's last engine configuration and DSP rack, then
   // start snapshotting future changes back to disk.

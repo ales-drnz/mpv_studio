@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/plex_transcode_session_manager.dart';
 import 'package:mpv_studio/features/stream/signed_url_resolver.dart';
+import 'package:mpv_studio/features/console/console_log.dart';
 import 'package:mpv_studio/studio/source_resolvers.dart';
+import 'package:mpv_studio/studio/studio_log.dart';
+
+import '../settings/studio_fakes.dart';
 
 import 'stream_fakes.dart';
 
@@ -107,8 +111,25 @@ void main() {
 
   test('installs itself as the player resolver', () async {
     final player = StreamPlayer();
-    expect(await chain.installOn(player), isTrue);
+    expect(await chain.installOn(player), isNull);
     expect(player.calls, ['setSourceResolver']);
     expect(player.resolver, isNotNull);
+  });
+
+  test('a failing resolver is logged without the URL query', () async {
+    final log = ConsoleLog();
+    StudioLog.attach(log);
+    addTearDown(() => StudioLog.detach(log));
+    final failing = SourceResolverChain([(_) => throw StateError('expired')]);
+    await failing(_first('https://pms.test/a.mp3?X-Plex-Token=secret'));
+    final line = log.backlog.single.text;
+    expect(line, contains('https://pms.test/a.mp3'));
+    expect(line, isNot(contains('secret')));
+  });
+
+  test('a refused install becomes a launch failure', () async {
+    final player = StudioFakePlayer()..refuse.add('setSourceResolver');
+    final failure = await chain.installOn(player);
+    expect(failure?.setting, 'Source resolvers');
   });
 }

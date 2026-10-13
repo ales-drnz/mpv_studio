@@ -9,6 +9,7 @@ import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
+import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
 
@@ -84,10 +85,18 @@ class EngineOptionsSection extends StatefulWidget {
 }
 
 class _EngineOptionsSectionState extends State<EngineOptionsSection> {
-  late final SettingsScope _scope = SettingsScope.of(context);
-  late final _text = TextEditingController(
-    text: EngineOptionsSection.format(_scope.settings.rawOptions),
-  );
+  final _text = TextEditingController();
+  AppSettings? _loadedFrom;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A new scope brings its own settings: show their options.
+    final settings = SettingsScope.of(context).settings;
+    if (identical(settings, _loadedFrom)) return;
+    _loadedFrom = settings;
+    _text.text = EngineOptionsSection.format(settings.rawOptions);
+  }
 
   @override
   void dispose() {
@@ -96,6 +105,7 @@ class _EngineOptionsSectionState extends State<EngineOptionsSection> {
   }
 
   Future<void> _apply() async {
+    final scope = SettingsScope.of(context);
     final errors = <String>[];
     final options = EngineOptionsSection.parse(_text.text, errors);
     if (errors.isNotEmpty) {
@@ -105,11 +115,11 @@ class _EngineOptionsSectionState extends State<EngineOptionsSection> {
       );
       return;
     }
-    _scope.settings.recordRawOptions(options);
+    scope.settings.recordRawOptions(options);
     var refused = 0;
     for (final (name, value) in options) {
-      final ok = await _scope.guard(() async {
-        await _scope.player.setRawProperty(name, value);
+      final ok = await scope.guard(() async {
+        await scope.player.setRawProperty(name, value);
         return true;
       });
       if (ok != true) refused++;

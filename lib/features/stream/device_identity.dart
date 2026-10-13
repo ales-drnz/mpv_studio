@@ -2,8 +2,11 @@ import 'dart:io' show Platform;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../studio/studio_log.dart';
 
 /// How this install introduces itself to Jellyfin and Plex: the app name,
 /// version, a readable device name for their "Now Playing", and a stable
@@ -46,7 +49,10 @@ abstract final class DeviceIdentity {
       }
       _deviceId = id;
     } catch (e) {
-      debugPrint('DeviceIdentity: device id unavailable: $e');
+      StudioLog.write(
+        'DeviceIdentity: device id unavailable: $e',
+        level: LogLevel.warn,
+      );
     }
   }
 
@@ -69,7 +75,10 @@ abstract final class DeviceIdentity {
       }
       if (Platform.isLinux) return (await info.linuxInfo).name;
     } catch (e) {
-      debugPrint('DeviceIdentity: device name unavailable: $e');
+      StudioLog.write(
+        'DeviceIdentity: device name unavailable: $e',
+        level: LogLevel.warn,
+      );
     }
     return '';
   }

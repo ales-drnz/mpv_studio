@@ -135,23 +135,30 @@ class OnboardingView extends StatelessWidget {
   final bool card;
   final OnboardingActions actions;
 
-  /// Closes the welcome screen, then goes to [location] if given.
-  static void _finish(BuildContext context, [String? location]) {
+  /// The widest the welcome content gets, as a card and as a page: the
+  /// width of the app's dialogs (`showStudioDialog`).
+  static const maxWidth = 520.0;
+
+  /// Closes the welcome screen, then goes to [location] if given. False,
+  /// doing nothing, when the screen is already closing (a second tap or
+  /// key during its fade out), so the route below is never popped.
+  static bool _finish(BuildContext context, [String? location]) {
+    final route = ModalRoute.of(context);
+    if (route == null || !route.isCurrent) return false;
     final router = GoRouter.maybeOf(context);
     Navigator.of(context).pop();
     if (location != null) router?.go(location);
+    return true;
   }
 
   Future<void> _openFiles(BuildContext context) async {
     final paths = await actions.pickFiles();
     if (paths.isEmpty || !context.mounted) return;
-    _finish(context, Section.queue.path);
-    await actions.enqueue(paths);
+    if (_finish(context, Section.queue.path)) await actions.enqueue(paths);
   }
 
   Future<void> _playDemo(BuildContext context) async {
-    _finish(context, Section.nowPlaying.path);
-    await actions.playDemo();
+    if (_finish(context, Section.nowPlaying.path)) await actions.playDemo();
   }
 
   @override
@@ -230,7 +237,7 @@ class OnboardingView extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(Tokens.s24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
+                constraints: const BoxConstraints(maxWidth: maxWidth),
                 child: Material(
                   color: Tokens.surface,
                   shape: Tokens.squircle(Tokens.rLg),
@@ -247,7 +254,7 @@ class OnboardingView extends StatelessWidget {
             child: SafeArea(
               child: SingleChildScrollView(
                 padding: layout.pagePadding.copyWith(top: Tokens.s24),
-                child: ReadableWidth(maxWidth: 560, child: content),
+                child: ReadableWidth(maxWidth: maxWidth, child: content),
               ),
             ),
           );

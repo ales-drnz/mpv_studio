@@ -59,14 +59,28 @@ class _StudioHostState<T extends Object> extends State<StudioHost<T>> {
   Object? _error;
   Future<void>? _running;
 
-  Future<void> _restart() => _running ??= _swap(() => widget.restart(_studio));
+  Future<void> _restart() => _start(() => widget.restart(_studio));
 
-  void _retry() {
-    _running ??= _swap(widget.launch);
+  void _retry() => _start(widget.launch);
+
+  /// Runs one swap at a time: a call while one runs joins it. [_running]
+  /// is set before the swap starts and cleared only when it ended, even
+  /// when [next] throws before its first await.
+  Future<void> _start(Future<T> Function() next) {
+    final running = _running;
+    if (running != null) return running;
+    final done = _swap(next).whenComplete(() {
+      _running = null;
+      if (mounted) setState(() {});
+    });
+    _running = done;
+    setState(() {});
+    return done;
   }
 
   Future<void> _swap(Future<T> Function() next) async {
-    setState(() {});
+    // Let the caller record the swap as running before anything happens.
+    await null;
     try {
       final studio = await next();
       if (!mounted) return;
@@ -77,9 +91,6 @@ class _StudioHostState<T extends Object> extends State<StudioHost<T>> {
       widget.onChanged?.call(studio);
     } on Object catch (e) {
       if (mounted) setState(() => _error = e);
-    } finally {
-      _running = null;
-      if (mounted) setState(() {});
     }
   }
 

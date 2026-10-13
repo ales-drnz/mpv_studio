@@ -1,10 +1,11 @@
 import 'dart:io' show Platform;
 
 import 'package:dart_plex/dart_plex.dart';
-import 'package:flutter/foundation.dart';
-import 'package:mpv_audio_kit/mpv_audio_kit.dart' show SourceResolveRequest;
+import 'package:mpv_audio_kit/mpv_audio_kit.dart'
+    show LogLevel, SourceResolveRequest;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../studio/studio_log.dart';
 import 'device_identity.dart';
 import 'media_server.dart';
 import 'plex_transcode_session_manager.dart';
@@ -333,7 +334,10 @@ class PlexServer extends MediaServer {
         continuing: continuing,
       );
     } catch (e) {
-      debugPrint('PlexServer: timeline($state) failed: $e');
+      StudioLog.write(
+        'PlexServer: timeline($state) failed: $e',
+        level: LogLevel.warn,
+      );
     }
   }
 }
