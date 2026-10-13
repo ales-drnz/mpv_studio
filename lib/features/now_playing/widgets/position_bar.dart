@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
@@ -45,7 +46,7 @@ class PositionBar extends StatelessWidget {
                         color: Tokens.accent,
                       ),
                     ),
-                    const SizedBox(width: Tokens.s6),
+                    const SizedBox(width: Tokens.s4),
                     Text(wait.label, style: Tokens.caption),
                   ],
                 ),
@@ -96,7 +97,7 @@ class ChapterBar extends StatelessWidget {
                   : 'Chapter ${index + 1} of ${chapters.length}';
               return Row(
                 children: [
-                  TransportButton(
+                  RoundIconButton(
                     icon: Icons.skip_previous_rounded,
                     size: 20,
                     tooltip: 'Previous chapter',
@@ -129,7 +130,7 @@ class ChapterBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  TransportButton(
+                  RoundIconButton(
                     icon: Icons.skip_next_rounded,
                     size: 20,
                     tooltip: 'Next chapter',
@@ -264,7 +265,8 @@ class AbLoopChip extends StatelessWidget {
                 if (on) text else 'off',
                 ?badge,
               ].join(', ');
-              final color = on ? Tokens.amber : Tokens.fgDim;
+              final color = on ? Tokens.onAccentContainer : Tokens.fgDim;
+              final tap = context.layout.minTap;
               return Semantics(
                 button: true,
                 label: 'A-B loop',
@@ -273,59 +275,83 @@ class AbLoopChip extends StatelessWidget {
                 onTap: () => _menu(context, player, scope.guard),
                 child: Tooltip(
                   message: 'A-B loop (L)',
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: InkWell(
-                      onTap: () => _menu(context, player, scope.guard),
-                      customBorder: Tokens.shape(Tokens.rSm),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: context.layout.minTap,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Tokens.s8,
+                  // The pill is a control high; the hit area a full tap
+                  // target around it.
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _menu(context, player, scope.guard),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: tap),
+                      child: Center(
+                        widthFactor: 1,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 32,
+                          decoration: ShapeDecoration(
+                            color: on
+                                ? Tokens.accentContainer
+                                : Colors.transparent,
+                            shape: Tokens.pill,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.repeat_on_rounded,
-                                size: 16,
-                                color: color,
-                              ),
-                              const SizedBox(width: Tokens.s6),
-                              Flexible(
-                                child: Text(
-                                  text,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Tokens.label.copyWith(color: color),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              onTap: () => _menu(context, player, scope.guard),
+                              customBorder: Tokens.pill,
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: Tokens.s12,
+                                  right: badge == null ? Tokens.s12 : Tokens.s4,
                                 ),
-                              ),
-                              if (badge != null) ...[
-                                const SizedBox(width: Tokens.s6),
-                                Container(
-                                  key: const ValueKey('ab-badge'),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: Tokens.s6,
-                                    vertical: 1,
-                                  ),
-                                  decoration: ShapeDecoration(
-                                    color: Tokens.amber.withValues(alpha: 0.18),
-                                    shape: Tokens.shape(Tokens.rPill),
-                                  ),
-                                  child: Text(
-                                    badge,
-                                    maxLines: 1,
-                                    style: Tokens.caption.copyWith(
-                                      color: Tokens.amber,
-                                      fontWeight: FontWeight.w600,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.repeat_on_rounded,
+                                      size: 18,
+                                      color: color,
                                     ),
-                                  ),
+                                    const SizedBox(width: Tokens.s8),
+                                    Flexible(
+                                      child: Text(
+                                        text,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Tokens.label.copyWith(
+                                          color: color,
+                                          fontWeight: on
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    if (badge != null) ...[
+                                      const SizedBox(width: Tokens.s8),
+                                      Container(
+                                        key: const ValueKey('ab-badge'),
+                                        height: 24,
+                                        alignment: Alignment.center,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: Tokens.s8,
+                                        ),
+                                        decoration: ShapeDecoration(
+                                          color: Tokens.onAccentContainer,
+                                          shape: Tokens.pill,
+                                        ),
+                                        child: Text(
+                                          badge,
+                                          maxLines: 1,
+                                          style: Tokens.caption.copyWith(
+                                            color: Tokens.accentContainer,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                              ],
-                            ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
