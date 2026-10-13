@@ -286,4 +286,69 @@ void main() {
     expect(player.state.audioEffects.first.enabled, isFalse);
     expect(player.state.audioEffects.last.enabled, isTrue);
   });
+
+  group('the bar fits the rail and sidebar widths', () {
+    for (final width in [512.0, 600.0, 616.0]) {
+      for (final input in InputMode.values) {
+        for (final (name, length) in [
+          ('4-minute', const Duration(minutes: 4)),
+          ('hour-long', const Duration(hours: 1, minutes: 2, seconds: 3)),
+        ]) {
+          testWidgets('$width wide, ${input.name}, $name times, a rack', (
+            tester,
+          ) async {
+            player.emit(
+              (s) => s.copyWith(
+                duration: length,
+                position: length - const Duration(seconds: 1),
+                audioEffects: const [BassEffect(gain: 5)],
+              ),
+            );
+            final rack = RackController(PlayerEffectsEngine(player));
+            addTearDown(rack.dispose);
+            await _pump(
+              tester,
+              SizedBox(
+                width: width,
+                child: MiniPlayer(player: player, rack: rack),
+              ),
+              input: input,
+            );
+            expect(tester.takeException(), isNull);
+            expect(find.byTooltip('Next'), findsOneWidget);
+            expect(find.bySemanticsLabel('Bypass FX'), findsOneWidget);
+          });
+        }
+      }
+    }
+
+    testWidgets('a roomy bar shows the times and the FX label', (tester) async {
+      final rack = RackController(PlayerEffectsEngine(player));
+      addTearDown(rack.dispose);
+      await _pump(tester, MiniPlayer(player: player, rack: rack));
+      expect(find.text('1:00'), findsOneWidget);
+      expect(find.text('4:00'), findsOneWidget);
+      expect(find.text('FX'), findsOneWidget);
+    });
+
+    testWidgets('a narrow bar keeps the progress and drops the labels', (
+      tester,
+    ) async {
+      player.emit(
+        (s) => s.copyWith(duration: const Duration(hours: 1, minutes: 2)),
+      );
+      final rack = RackController(PlayerEffectsEngine(player));
+      addTearDown(rack.dispose);
+      await _pump(
+        tester,
+        SizedBox(
+          width: 512,
+          child: MiniPlayer(player: player, rack: rack),
+        ),
+      );
+      expect(find.byKey(const ValueKey('mini-progress')), findsOneWidget);
+      expect(find.text('1:02:00'), findsNothing);
+      expect(find.text('FX'), findsNothing);
+    });
+  });
 }

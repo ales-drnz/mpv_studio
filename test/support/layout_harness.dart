@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
 import 'package:mpv_studio/shell/playback_shortcuts.dart';
 import 'package:mpv_studio/shell/router.dart';
@@ -45,6 +46,14 @@ const List<StudioSize> studioSizes = [
   StudioSize('1440x900', 1440, 900),
   StudioSize('1920x1080', 1920, 1080),
   StudioSize('2560x1080', 2560, 1080),
+];
+
+/// Windows at the shell's tightest points: the narrowest rail window
+/// (600 wide, a 512 bar) and the narrowest sidebar one (840 wide, a 616
+/// bar). Layout tests only, no goldens.
+const List<StudioSize> edgeSizes = [
+  StudioSize('600x900', 600, 900),
+  StudioSize('840x600', 840, 600),
 ];
 
 /// Looks up a [studioSizes] entry by name.
@@ -202,6 +211,7 @@ Future<ShellHarness> pumpShell(
   double textScale = 1,
   EdgeInsets padding = EdgeInsets.zero,
   FakePlayer? player,
+  RackController? rack,
   Widget Function(Section section)? page,
 }) async {
   setStudioView(tester, size, padding: padding);
@@ -220,6 +230,7 @@ Future<ShellHarness> pumpShell(
         navigationShell: navigationShell,
         miniPlayer: (context, variant) => MiniPlayer(
           player: fake,
+          rack: rack,
           variant: variant,
           onOpen: () => navigationShell.goBranch(Section.nowPlaying.index),
         ),

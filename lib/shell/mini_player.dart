@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -228,6 +230,8 @@ class MiniPlayer extends StatelessWidget {
 
     // The bar: info on the left, the transport in the centre, the time
     // and the progress with the FX switch on the right, on the chrome.
+    // Below [_roomyBar] the FX switch drops its label; the times drop out
+    // by themselves when they leave the progress no room.
     return Material(
       type: MaterialType.transparency,
       child: Padding(
@@ -237,50 +241,58 @@ class MiniPlayer extends StatelessWidget {
           Tokens.s16,
           Tokens.s8,
         ),
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              Expanded(flex: 4, child: infoArea),
-              const SizedBox(width: Tokens.s16),
-              RoundIconButton(
-                icon: Icons.skip_previous_rounded,
-                tooltip: 'Previous',
-                tone: RoundTone.tonal,
-                diameter: 40,
-                onTap: () => _skip(context, forward: false),
-              ),
-              const SizedBox(width: Tokens.s8),
-              _PlayPause(player: player, guard: guard),
-              const SizedBox(width: Tokens.s8),
-              RoundIconButton(
-                icon: Icons.skip_next_rounded,
-                tooltip: 'Next',
-                tone: RoundTone.tonal,
-                diameter: 40,
-                onTap: () => _skip(context, forward: true),
-              ),
-              const SizedBox(width: Tokens.s16),
-              Expanded(
-                flex: 4,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _TimedProgress(player: player, guard: guard),
-                    ),
-                    if (rack != null) ...[
-                      const SizedBox(width: Tokens.s16),
-                      FxBypassToggle(rack: rack!),
-                    ],
-                  ],
+        child: LayoutBuilder(
+          builder: (context, c) => SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                Expanded(flex: 4, child: infoArea),
+                const SizedBox(width: Tokens.s16),
+                RoundIconButton(
+                  icon: Icons.skip_previous_rounded,
+                  tooltip: 'Previous',
+                  tone: RoundTone.tonal,
+                  diameter: 40,
+                  onTap: () => _skip(context, forward: false),
                 ),
-              ),
-            ],
+                const SizedBox(width: Tokens.s8),
+                _PlayPause(player: player, guard: guard),
+                const SizedBox(width: Tokens.s8),
+                RoundIconButton(
+                  icon: Icons.skip_next_rounded,
+                  tooltip: 'Next',
+                  tone: RoundTone.tonal,
+                  diameter: 40,
+                  onTap: () => _skip(context, forward: true),
+                ),
+                const SizedBox(width: Tokens.s16),
+                Expanded(
+                  flex: 4,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _TimedProgress(player: player, guard: guard),
+                      ),
+                      if (rack != null) ...[
+                        const SizedBox(width: Tokens.s16),
+                        FxBypassToggle(
+                          rack: rack!,
+                          compact: c.maxWidth < _roomyBar,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  /// The bar width from which the FX switch shows its label.
+  static const double _roomyBar = 640;
 }
 
 /// Position, the progress pill and the length, in a row.
@@ -290,27 +302,61 @@ class _TimedProgress extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
 
+  /// The least the progress pill keeps between the times.
+  static const double _minBar = 48;
+
   @override
   Widget build(BuildContext context) {
     final style = Tokens.numeric.copyWith(fontSize: 11);
-    return Row(
-      children: [
-        Live<Duration>(
+    final scaler = MediaQuery.textScalerOf(context);
+    double widthOf(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final w = painter.width.ceilToDouble();
+      painter.dispose();
+      return w;
+    }
+
+    Widget time(String text, TextAlign align) => Text(
+      text,
+      style: style,
+      maxLines: 1,
+      softWrap: false,
+      textAlign: align,
+    );
+
+    return LayoutBuilder(
+      builder: (context, c) => Live<Duration>(
+        stream: player.stream.duration,
+        initial: player.state.duration,
+        builder: (context, d) => Live<Duration>(
           stream: player.stream.position,
           initial: player.state.position,
-          builder: (context, p) => Text(formatDuration(p), style: style),
+          builder: (context, p) {
+            final at = formatDuration(p);
+            final length = formatDuration(d);
+            // Both labels take the wider one's width, so the pill does not
+            // shift as the position grows.
+            final label = math.max(widthOf(at), widthOf(length));
+            final bar = MiniProgressBar(player: player, guard: guard);
+            // Hour-long times on a narrow bar: the pill alone.
+            if (c.maxWidth < 2 * (label + Tokens.s12) + _minBar) return bar;
+            return Row(
+              children: [
+                SizedBox(width: label, child: time(at, TextAlign.end)),
+                const SizedBox(width: Tokens.s12),
+                Expanded(child: bar),
+                const SizedBox(width: Tokens.s12),
+                SizedBox(width: label, child: time(length, TextAlign.start)),
+              ],
+            );
+          },
         ),
-        const SizedBox(width: Tokens.s12),
-        Expanded(
-          child: MiniProgressBar(player: player, guard: guard),
-        ),
-        const SizedBox(width: Tokens.s12),
-        Live<Duration>(
-          stream: player.stream.duration,
-          initial: player.state.duration,
-          builder: (context, d) => Text(formatDuration(d), style: style),
-        ),
-      ],
+      ),
     );
   }
 }

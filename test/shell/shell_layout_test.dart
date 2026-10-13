@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/shell/desktop_shell.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
 import 'package:mpv_studio/shell/mobile_shell.dart';
@@ -9,6 +11,7 @@ import 'package:mpv_studio/shell/sections.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/tokens.dart';
 
+import '../support/fake_player.dart';
 import '../support/layout_harness.dart';
 
 void main() {
@@ -31,6 +34,39 @@ void main() {
         expect(find.byType(MiniPlayer), findsOneWidget);
         expectNoOverflow(tester, reason: s.name);
       });
+    }
+
+    for (final s in [...studioSizes, ...edgeSizes]) {
+      for (final input in InputMode.values) {
+        testWidgets('$s ${input.name} fits a rack and hour-long times', (
+          tester,
+        ) async {
+          final player = FakePlayer(
+            const PlayerState(
+              playlist: Playlist([
+                Media(
+                  'https://example.test/long.flac',
+                  extras: {'title': 'A Love Supreme', 'artist': 'Coltrane'},
+                ),
+              ]),
+              duration: Duration(hours: 1, minutes: 12, seconds: 40),
+              position: Duration(hours: 1, minutes: 2, seconds: 3),
+              audioEffects: [BassEffect(gain: 5)],
+            ),
+          );
+          final rack = RackController(PlayerEffectsEngine(player));
+          addTearDown(rack.dispose);
+          await pumpShell(
+            tester,
+            size: s.size,
+            input: input,
+            player: player,
+            rack: rack,
+          );
+          expect(find.byType(MiniPlayer), findsOneWidget);
+          expectNoOverflow(tester, reason: '$s ${input.name}');
+        });
+      }
     }
 
     testWidgets('a low window puts the mini-player in the rail', (
