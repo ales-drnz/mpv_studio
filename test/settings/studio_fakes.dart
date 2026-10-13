@@ -28,6 +28,12 @@ class StudioFakePlayer extends FakePlayer {
   /// Member names whose call throws.
   final Set<String> refuse = {};
 
+  /// mpv restarting playback (an entry opened), for `stream.seekCompleted`.
+  final opened = StreamController<void>.broadcast(sync: true);
+
+  /// The ends of entries, for `stream.endFile`.
+  final ended = StreamController<MpvFileEndedEvent>.broadcast(sync: true);
+
   @override
   late final PlayerStream stream = _StudioFakeStream(this);
 
@@ -53,7 +59,14 @@ class StudioFakePlayer extends FakePlayer {
 }
 
 class _StudioFakeStream extends FakePlayerStream {
-  _StudioFakeStream(super.p);
+  _StudioFakeStream(this._player) : super(_player);
+  final StudioFakePlayer _player;
+
+  @override
+  Stream<void> get seekCompleted => _player.opened.stream;
+
+  @override
+  Stream<MpvFileEndedEvent> get endFile => _player.ended.stream;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => const Stream<Never>.empty();

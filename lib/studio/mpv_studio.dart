@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -153,14 +155,14 @@ class MpvStudio {
   /// Restarts the player with the current settings, for the settings the
   /// player reads only when it is created ([RestartSetting]). This studio
   /// shuts down completely first (one OS media session per process), then
-  /// a new one launches and gets the queue, the current entry, the position
-  /// and the play state back. Returns the new studio; this one is unusable
-  /// afterwards.
+  /// a new one launches and returns at once, getting the queue, the current
+  /// entry, the position and the play state back in the background (what
+  /// fails there becomes a notice). This studio is unusable afterwards.
   Future<MpvStudio> restart() async {
     final snapshot = PlaybackSnapshot.of(player.state);
     await shutdown();
     final next = await launch();
-    await next.issues.guard(() => snapshot.restore(next.player));
+    unawaited(snapshot.restoreReporting(next.player, next.issues.report));
     return next;
   }
 

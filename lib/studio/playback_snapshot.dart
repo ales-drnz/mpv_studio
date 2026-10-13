@@ -33,23 +33,22 @@ class PlaybackSnapshot {
   final bool playing;
 
   /// How long [restore] waits for the current entry to open before it
-  /// gives up on the position.
+  /// plays on without the position.
   static const openTimeout = Duration(seconds: 10);
 
   /// Positions this close to the start are not worth a seek.
   static const _minSeek = Duration(seconds: 1);
 
-  /// Loads the queue on [player] paused at the current entry, seeks to the
-  /// position once the entry has opened (a live stream that cannot seek
-  /// starts over), then resumes when it was playing. An empty queue
-  /// restores nothing.
+  /// Loads the queue on [player] paused at the current entry, puts it back
+  /// at the position once the entry has opened, then resumes when it was
+  /// playing. The position is skipped when the entry cannot seek (a live
+  /// stream), when it failed and the player moved on, or when it did not
+  /// open within [openTimeout]. An empty queue restores nothing.
   Future<void> restore(PlayerApi player) async {
     if (queue.isEmpty) return;
     final at = index.clamp(0, queue.length - 1);
     final opened = index >= 0 && position >= _minSeek
-        ? player.stream.duration
-              .firstWhere((d) => d > Duration.zero)
-              .timeout(openTimeout)
+        ? _whenOpened(player)
         : null;
     try {
       await player.openAll(queue, index: at, play: false);
@@ -57,15 +56,52 @@ class PlaybackSnapshot {
       opened?.ignore();
       rethrow;
     }
-    if (opened != null) {
-      try {
-        await opened;
-        await player.seek(position);
-      } on TimeoutException {
-        // The entry never reported a length: play it from the start.
-      }
+    if (opened != null &&
+        await opened &&
+        player.state.playlist.index == at &&
+        player.state.seekable) {
+      await player.seek(position);
     }
     if (playing) await player.play();
+  }
+
+  /// Completes with true once the next entry has opened (mpv restarted
+  /// playback, live streams included), false when it ended first (it
+  /// failed) or nothing happened within [openTimeout].
+  static Future<bool> _whenOpened(PlayerApi player) {
+    final done = Completer<bool>();
+    final subs = <StreamSubscription<Object?>>[];
+    void finish(bool opened) {
+      if (done.isCompleted) return;
+      done.complete(opened);
+      for (final s in subs) {
+        s.cancel();
+      }
+    }
+
+    subs
+      ..add(player.stream.seekCompleted.listen((_) => finish(true)))
+      ..add(player.stream.endFile.listen((_) => finish(false)));
+    return done.future.timeout(
+      openTimeout,
+      onTimeout: () {
+        finish(false);
+        return false;
+      },
+    );
+  }
+
+  /// [restore], with whatever it throws handed to [report] instead: the
+  /// restart carries on without the session rather than failing.
+  Future<void> restoreReporting(
+    PlayerApi player,
+    void Function(Object error) report,
+  ) async {
+    try {
+      await restore(player);
+    } on Object catch (e) {
+      report(e);
+    }
   }
 
   @override
