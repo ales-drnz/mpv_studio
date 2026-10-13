@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 
 /// Shown when the current entry came from a playlist file
 /// (`stream.playlistPath`): its name and buttons to the previous and next
@@ -45,54 +45,49 @@ class PlaylistBanner extends StatelessWidget {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(none, style: TextStyle(color: Tokens.fg)),
-          backgroundColor: Tokens.surface3,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
+        SnackBar(content: Text(none), duration: const Duration(seconds: 3)),
       );
   }
 
   @override
   Widget build(BuildContext context) {
-    final tap = context.layout.minTap;
-    final constraints = BoxConstraints.tightFor(width: tap, height: tap);
     return Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s8),
       child: Container(
-        padding: const EdgeInsets.only(left: Tokens.s12),
+        padding: const EdgeInsets.fromLTRB(
+          Tokens.s16,
+          Tokens.s4,
+          Tokens.s8,
+          Tokens.s4,
+        ),
         decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.shape(Tokens.rSm),
+          color: Tokens.surface,
+          shape: Tokens.shape(Tokens.rLg),
         ),
         child: Row(
           children: [
-            Icon(Icons.queue_music_rounded, size: 16, color: Tokens.accent),
-            const SizedBox(width: Tokens.s8),
+            Icon(Icons.queue_music_rounded, size: 20, color: Tokens.fg),
+            const SizedBox(width: Tokens.s12),
             Expanded(
               child: Text(
                 'From ${nameOf(path)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                style: Tokens.body,
               ),
             ),
-            IconButton(
+            RoundIconButton(
+              icon: Icons.skip_previous_rounded,
+              size: 20,
               tooltip: 'Previous playlist',
-              onPressed: () =>
+              onTap: () =>
                   _go(context, onPrevious, 'This is the first playlist'),
-              icon: const Icon(Icons.skip_previous_rounded, size: 20),
-              color: Tokens.fgDim,
-              constraints: constraints,
             ),
-            IconButton(
+            RoundIconButton(
+              icon: Icons.skip_next_rounded,
+              size: 20,
               tooltip: 'Next playlist',
-              onPressed: () =>
-                  _go(context, onNext, 'This is the last playlist'),
-              icon: const Icon(Icons.skip_next_rounded, size: 20),
-              color: Tokens.fgDim,
-              constraints: constraints,
+              onTap: () => _go(context, onNext, 'This is the last playlist'),
             ),
           ],
         ),

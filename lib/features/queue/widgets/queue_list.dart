@@ -262,12 +262,9 @@ class _QueueListState extends State<QueueList> {
       ?..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('Removed "$title"', style: TextStyle(color: Tokens.fg)),
-          backgroundColor: Tokens.surface3,
-          behavior: SnackBarBehavior.floating,
+          content: Text('Removed "$title"'),
           action: SnackBarAction(
             label: 'Undo',
-            textColor: Tokens.accent,
             onPressed: () => widget.controller.restore(removed, index),
           ),
         ),
@@ -337,21 +334,21 @@ class _QueueListState extends State<QueueList> {
 class _SwipeBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: Tokens.s6),
+    padding: const EdgeInsets.only(bottom: Tokens.s4),
     child: DecoratedBox(
       decoration: ShapeDecoration(
-        color: Tokens.red.withValues(alpha: 0.18),
-        shape: Tokens.shape(Tokens.rSm),
+        color: Tokens.red.withValues(alpha: 0.14),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Align(
         alignment: Alignment.centerRight,
         child: Padding(
-          padding: const EdgeInsets.only(right: Tokens.s20),
+          padding: const EdgeInsets.only(right: Tokens.s24),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.delete_outline_rounded, color: Tokens.red),
-              const SizedBox(width: Tokens.s6),
+              const SizedBox(width: Tokens.s8),
               Text('Remove', style: Tokens.label.copyWith(color: Tokens.red)),
             ],
           ),

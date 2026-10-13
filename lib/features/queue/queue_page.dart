@@ -138,12 +138,7 @@ class _QueueViewState extends State<QueueView> {
     messenger
       ?..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(message, style: TextStyle(color: Tokens.fg)),
-          backgroundColor: Tokens.surface3,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
+        SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
       );
   }
 
@@ -164,7 +159,7 @@ class _QueueViewState extends State<QueueView> {
     await showStudioSheet<void>(
       context,
       builder: (context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+        padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
         child: Live<Playlist>(
           stream: widget.player.stream.playlist,
           initial: widget.player.state.playlist,
@@ -359,22 +354,25 @@ class _QueueViewState extends State<QueueView> {
                             ? TwoPane(
                                 listWidth: _listWidth,
                                 minDetailWidth: _detailWidth,
-                                list: Padding(
-                                  padding: const EdgeInsets.only(
-                                    right: Tokens.s12,
-                                  ),
-                                  child: _list(playlist, selected, split),
-                                ),
+                                list: _list(playlist, selected, split),
+                                // A card at its content's height, scrolling
+                                // when it does not fit.
                                 detail: shown == null
                                     ? null
                                     : SingleChildScrollView(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          Tokens.s20,
-                                          0,
-                                          0,
-                                          Tokens.s16,
+                                        padding: const EdgeInsets.only(
+                                          bottom: Tokens.s16,
                                         ),
-                                        child: _info(playlist, shown),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(
+                                            Tokens.s16,
+                                          ),
+                                          decoration: ShapeDecoration(
+                                            color: Tokens.surface,
+                                            shape: Tokens.shape(Tokens.rLg),
+                                          ),
+                                          child: _info(playlist, shown),
+                                        ),
                                       ),
                                 placeholder: const _DetailPlaceholder(),
                               )
