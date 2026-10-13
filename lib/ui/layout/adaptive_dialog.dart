@@ -5,20 +5,18 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 import 'layout_scope.dart';
 
-/// The small grab bar at the top of every bottom sheet.
+/// The round grab handle at the top of every bottom sheet: a 32 by 4
+/// pill, centred, 16 above the content.
 class SheetHandle extends StatelessWidget {
   const SheetHandle({super.key});
 
   @override
   Widget build(BuildContext context) => Center(
     child: Container(
-      width: 36,
+      width: 32,
       height: 4,
-      margin: const EdgeInsets.only(bottom: Tokens.s12),
-      decoration: BoxDecoration(
-        color: Tokens.line2,
-        borderRadius: const BorderRadius.all(Radius.circular(2)),
-      ),
+      margin: const EdgeInsets.only(bottom: Tokens.s16),
+      decoration: ShapeDecoration(color: Tokens.fgFaint, shape: Tokens.pill),
     ),
   );
 }
@@ -36,10 +34,10 @@ Future<T?> showStudioSheet<T>(
     context: context,
     useRootNavigator: useRootNavigator,
     isScrollControlled: true,
-    backgroundColor: Tokens.surface,
+    backgroundColor: Tokens.surface2,
     elevation: 0,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(Tokens.rLg)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(Tokens.rXl)),
     ),
     constraints: const BoxConstraints(maxWidth: 640),
     builder: (context) {
@@ -51,10 +49,10 @@ Future<T?> showStudioSheet<T>(
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                Tokens.s12,
-                Tokens.s12,
-                Tokens.s12,
-                Tokens.s8,
+                Tokens.s16,
+                Tokens.s16,
+                Tokens.s16,
+                Tokens.s16,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -108,7 +106,10 @@ Future<T?> showStudioDialog<T>(
           padding: const EdgeInsets.only(bottom: Tokens.s12),
           child: Semantics(
             header: true,
-            child: Text(title, style: Tokens.heading),
+            child: Text(
+              title,
+              style: Tokens.heading.copyWith(fontSize: 22, height: 28 / 22),
+            ),
           ),
         ),
         // The sheet scrolls as a whole; the dialog scrolls its content
@@ -145,10 +146,10 @@ Future<T?> showStudioDialog<T>(
     builder: (context) {
       final height = MediaQuery.sizeOf(context).height;
       return Dialog(
-        backgroundColor: Tokens.surface,
+        backgroundColor: Tokens.surface2,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: Tokens.shape(Tokens.rLg),
+        shape: Tokens.shape(Tokens.rXl),
         insetPadding: const EdgeInsets.all(Tokens.s24),
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -156,7 +157,7 @@ Future<T?> showStudioDialog<T>(
             maxHeight: math.max(height - 48, 120),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(Tokens.s20),
+            padding: const EdgeInsets.all(Tokens.s24),
             child: body(context, sheet: false),
           ),
         ),

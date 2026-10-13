@@ -109,9 +109,9 @@ class PageFrame extends StatelessWidget {
         ? Padding(
             padding: EdgeInsets.fromLTRB(
               pad.left,
-              layout.isShort ? Tokens.s4 : Tokens.s12,
+              layout.isShort || layout.isCompact ? Tokens.s8 : Tokens.s16,
               pad.right,
-              Tokens.s4,
+              Tokens.s8,
             ),
             child: ReadableWidth(
               maxWidth: maxWidth,
@@ -181,8 +181,12 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layout = context.layout;
-    final style = layout.isCompact || layout.isShort
-        ? Tokens.title.copyWith(fontSize: 18)
+    // Large, bold titles: 28 on wide windows, 24 on phones, 22 on low
+    // windows.
+    final style = layout.isShort
+        ? Tokens.title.copyWith(fontSize: 22, height: 28 / 22)
+        : layout.isCompact
+        ? Tokens.title.copyWith(fontSize: 24, height: 32 / 24)
         : Tokens.title;
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: layout.minTap),

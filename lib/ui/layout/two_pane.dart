@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../tokens.dart';
+import 'layout_scope.dart';
 import '../widgets/section_switcher.dart';
 
 /// A list and its detail: side by side when there is room, one at a time
@@ -75,7 +75,9 @@ class _TwoPaneState extends State<TwoPane> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(width: widget.listWidth, child: list),
-              VerticalDivider(width: 1, thickness: 1, color: Tokens.line),
+              // A gap, not a hairline: the panes are told apart by
+              // their tonal fills.
+              SizedBox(width: context.layout.gap),
               Expanded(
                 child: detail ?? widget.placeholder ?? const SizedBox.shrink(),
               ),
