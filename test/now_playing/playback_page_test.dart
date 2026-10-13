@@ -368,6 +368,42 @@ void main() {
     });
   });
 
+  testWidgets('the wheel pans a zoomed waveform, not the page', (tester) async {
+    await _pumpPage(tester, playingTrack(), size: const Size(412, 600));
+    final page = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    final meter = tester.getCenter(
+      find.bySemanticsLabel('Waveform and position'),
+    );
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    Future<void> wheel() async {
+      await tester.sendEventToBinding(pointer.hover(meter));
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, 40)));
+      await tester.pump();
+    }
+
+    // The whole track shows: nothing to pan, the page scrolls.
+    await wheel();
+    expect(page.position.pixels, greaterThan(0));
+    page.position.jumpTo(0);
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Zoom in'));
+    await tester.pump();
+    final meterNow = tester.getCenter(
+      find.bySemanticsLabel('Waveform and position'),
+    );
+    expect(meterNow, meter);
+    await wheel();
+    expect(page.position.pixels, 0);
+  });
+
   testWidgets('transport buttons keep 48 dp on a 360 wide phone', (
     tester,
   ) async {
