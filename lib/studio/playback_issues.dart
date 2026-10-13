@@ -17,12 +17,16 @@ Future<T?> unguarded<T>(FutureOr<T> Function() call) async => call();
 /// One readable problem for the user, shown as a toast by the shell.
 @immutable
 class PlaybackNotice {
-  const PlaybackNotice(this.message);
+  const PlaybackNotice(this.message, {this.isError = true});
 
   final String message;
 
+  /// A problem (shown longer, with a way to the log) rather than plain
+  /// information such as "End of queue".
+  final bool isError;
+
   @override
-  String toString() => 'PlaybackNotice($message)';
+  String toString() => 'PlaybackNotice($message${isError ? '' : ', info'})';
 }
 
 /// How a queue entry last stopped playing, from the engine's end of file.
@@ -249,9 +253,12 @@ class PlaybackIssues {
     _add(PlaybackNotice(describeCallError(error)));
   }
 
-  /// Shows [message] as a notice: app-level news that is not a player
-  /// call failing (settings refused on launch, an uncaught error).
-  void notify(String message) => _add(PlaybackNotice(message));
+  /// Shows [message] as a notice, as it is: plain information by default
+  /// ("End of queue"), shown briefly; with [isError] a problem that is not
+  /// a player call failing (settings refused on launch, an uncaught
+  /// error), shown like the other errors.
+  void notify(String message, {bool isError = false}) =>
+      _add(PlaybackNotice(message, isError: isError));
 
   void dispose() {
     for (final s in _subs) {
