@@ -5,9 +5,9 @@ import '../ui/theme_host.dart';
 import '../ui/tokens.dart';
 import 'playback_shortcuts.dart';
 
-/// A quiet utility entry at the foot of the shell navigation: an icon
-/// with a [label] in the sidebar and the More sheet ([expanded]), or a
-/// bare icon with the label as tooltip in the rail.
+/// A quiet utility entry of the shell navigation: a pill row with a
+/// [label] in the More sheet ([expanded]), or a tonal circle with the
+/// label as tooltip at the foot of the sidebar and the rail.
 class ShellToolButton extends StatelessWidget {
   const ShellToolButton({
     super.key,
@@ -24,8 +24,9 @@ class ShellToolButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tap = context.layout.minTap;
-    final glyph = Icon(icon, size: 18, color: Tokens.fgDim);
+    final tap = context.layout.minTap < 40 ? 40.0 : context.layout.minTap;
+    final glyph = Icon(icon, size: 20, color: Tokens.fgDim);
+    // Icon only: a tonal circle. Expanded: a full-width pill row.
     return Semantics(
       button: true,
       label: label,
@@ -34,16 +35,17 @@ class ShellToolButton extends StatelessWidget {
       child: Tooltip(
         message: label,
         child: Material(
-          type: MaterialType.transparency,
+          color: expanded ? Colors.transparent : Tokens.surface3,
+          shape: expanded ? Tokens.pill : const CircleBorder(),
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.shape(Tokens.rSm),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: tap, minWidth: tap),
-              child: expanded
-                  ? Padding(
+            customBorder: expanded ? Tokens.pill : const CircleBorder(),
+            child: expanded
+                ? ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: tap),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: Tokens.s12,
+                        horizontal: Tokens.s16,
                       ),
                       child: Row(
                         children: [
@@ -54,14 +56,17 @@ class ShellToolButton extends StatelessWidget {
                               label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Tokens.label,
+                              style: Tokens.label.copyWith(fontSize: 14),
                             ),
                           ),
                         ],
                       ),
-                    )
-                  : Center(child: glyph),
-            ),
+                    ),
+                  )
+                : SizedBox.square(
+                    dimension: tap,
+                    child: Center(child: glyph),
+                  ),
           ),
         ),
       ),

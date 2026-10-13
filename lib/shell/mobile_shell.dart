@@ -2,11 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
-import 'section_badge.dart';
+import 'nav_parts.dart';
 import 'sections.dart';
-import 'shell_tools.dart';
 
 /// The bottom bar chrome (compact windows): the section body with a bottom
 /// tab bar that stays **pinned** to the screen edge. The soft keyboard
@@ -119,213 +117,33 @@ class _TabBar extends StatelessWidget {
   final ValueChanged<Section> onSelect;
   const _TabBar({required this.section, required this.onSelect});
 
-  Future<void> _openMore(BuildContext context) async {
-    final picked = await showStudioSheet<Section>(
-      context,
-      builder: (context) => _MoreSheet(current: section),
-    );
-    if (picked != null) onSelect(picked);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Pad the content above the home indicator while the surface colour fills
-    // the inset, so the bar runs continuously to the screen edge.
+    // A tonal bar, no hairline: its fill runs on into the home-indicator
+    // inset so it reads as continuous to the screen edge.
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
-      decoration: BoxDecoration(
-        color: Tokens.surface,
-        border: Border(top: BorderSide(color: Tokens.line)),
-      ),
+      color: Tokens.surface2,
       padding: EdgeInsets.only(top: Tokens.s8, bottom: Tokens.s8 + bottomInset),
       child: Row(
         children: [
           for (final s in Section.tabs)
             Expanded(
-              child: _Tab(
-                badge: s,
-                icon: s.icon,
-                label: s.shortLabel,
-                tooltip: s.title,
+              child: SectionDestination(
+                section: s,
                 active: s == section,
                 onTap: () => onSelect(s),
+                indicatorWidth: 64,
               ),
             ),
           Expanded(
-            child: _Tab(
-              // The Console lives in the More menu, so its error count
-              // rides on the More tab.
-              badge: Section.console,
-              // On a More section the tab carries that section's icon, so
-              // the bar still says where you are.
-              icon: section.tab ? Icons.more_horiz_rounded : section.icon,
-              label: 'More',
-              tooltip: 'More sections',
-              active: !section.tab,
-              onTap: () => _openMore(context),
+            child: MoreDestination(
+              section: section,
+              onSelect: onSelect,
+              indicatorWidth: 64,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Tab extends StatelessWidget {
-  final Section badge;
-  final IconData icon;
-  final String label;
-  final String tooltip;
-  final bool active;
-  final VoidCallback onTap;
-  const _Tab({
-    required this.badge,
-    required this.icon,
-    required this.label,
-    required this.tooltip,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Mirror the desktop sidebar's _NavItem: a solid-accent rounded pill for
-    // the active tab with onAccent contents, inactive tabs in fgDim.
-    final color = active ? Tokens.onAccent : Tokens.fgDim;
-    // The inter-pill gap is a Padding OUTSIDE the InkWell so the ink and
-    // hover area (clipped to the same rounded) lines up exactly with the
-    // visible pill: a margin inside the InkWell would make the highlight
-    // overshoot.
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s4),
-      child: Semantics(
-        selected: active,
-        button: true,
-        child: Tooltip(
-          message: tooltip,
-          excludeFromSemantics: true,
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onTap,
-              customBorder: Tokens.shape(Tokens.rSm),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-                decoration: ShapeDecoration(
-                  color: active ? Tokens.accent : Colors.transparent,
-                  shape: Tokens.shape(Tokens.rSm),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SectionBadge(
-                      section: badge,
-                      child: Icon(icon, size: 22, color: color),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The More menu: the sections without a tab of their own.
-class _MoreSheet extends StatelessWidget {
-  final Section current;
-  const _MoreSheet({required this.current});
-
-  @override
-  Widget build(BuildContext context) {
-    final tools = shellTools(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final s in Section.more)
-          _MoreItem(
-            section: s,
-            active: s == current,
-            onTap: () => Navigator.of(context).pop(s),
-          ),
-        if (tools.isNotEmpty) ...[
-          Divider(height: Tokens.s16, color: Tokens.line),
-          ...tools,
-        ],
-      ],
-    );
-  }
-}
-
-class _MoreItem extends StatelessWidget {
-  final Section section;
-  final bool active;
-  final VoidCallback onTap;
-  const _MoreItem({
-    required this.section,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? Tokens.onAccent : Tokens.fg;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s4),
-      child: Semantics(
-        selected: active,
-        button: true,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: Tokens.shape(Tokens.rSm),
-            child: Ink(
-              decoration: ShapeDecoration(
-                color: active ? Tokens.accent : Colors.transparent,
-                shape: Tokens.shape(Tokens.rSm),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: Tokens.s16,
-                vertical: 14,
-              ),
-              child: Row(
-                children: [
-                  SectionBadge(
-                    section: section,
-                    child: Icon(
-                      section.icon,
-                      size: 20,
-                      color: active ? Tokens.onAccent : Tokens.fgDim,
-                    ),
-                  ),
-                  const SizedBox(width: Tokens.s16),
-                  Text(
-                    section.title,
-                    style: Tokens.body.copyWith(
-                      color: color,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

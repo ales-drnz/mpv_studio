@@ -182,6 +182,17 @@ class Palette {
     red: Color(0xFFAE2F34), // 5.6:1 on bg
   );
 
+  // ---- The logo (fixed, the same in both themes) --------------------
+
+  /// The logo disc, also [dark]'s stage.
+  static const Color logoGraphite = Color(0xFF24282D);
+
+  /// The logo ring.
+  static const Color logoRing = Color(0xFFBFBFBF);
+
+  /// The logo's play triangle.
+  static const Color logoWhite = Color(0xFFFFFFFF);
+
   static Palette _active = dark;
 
   /// The colour set the app is drawn with right now.

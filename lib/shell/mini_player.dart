@@ -5,10 +5,12 @@ import '../features/effects/rack_controller.dart';
 import '../features/now_playing/track_identity.dart';
 import '../features/now_playing/transport_actions.dart';
 import '../features/now_playing/widgets/cover_art.dart';
-import '../features/now_playing/widgets/transport_controls.dart';
+import '../features/now_playing/widgets/transport_controls.dart'
+    show PlaybackBusy;
 import '../studio/playback_issues.dart';
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/round_icon_button.dart';
 import '../util/duration_format.dart';
 import '../util/reactive.dart';
 
@@ -121,101 +123,194 @@ class MiniPlayer extends StatelessWidget {
     }
     final compact = variant == MiniPlayerVariant.compact;
     final touch = context.layout.isTouch;
-    final cover = compact ? 40.0 : 44.0;
+    // Shape contrast: a round cover (the logo's disc), a large accent
+    // circle for play, smaller tonal circles for the rest.
+    final cover = compact ? 40.0 : 48.0;
     final info = Row(
       children: [
         ExcludeSemantics(
-          child: CoverArtView(player: player, size: cover, radius: Tokens.rSm),
+          child: CoverArtView(
+            player: player,
+            size: cover,
+            radius: Tokens.rPill,
+          ),
         ),
         const SizedBox(width: Tokens.s12),
         Expanded(child: _MiniTitle(player: player)),
       ],
     );
-    return Material(
-      color: Tokens.surface,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Tokens.line)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            MiniProgressBar(player: player, guard: guard),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                compact ? Tokens.s12 : Tokens.s16,
-                compact ? Tokens.s6 : Tokens.s8,
-                compact ? Tokens.s4 : Tokens.s12,
-                compact ? Tokens.s6 : Tokens.s8,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      key: const ValueKey('mini-info'),
-                      onSecondaryTapUp: (d) => _menu(context, d.globalPosition),
-                      onLongPressStart: (d) => _menu(context, d.globalPosition),
-                      onHorizontalDragEnd: touch
-                          ? (d) {
-                              final v = d.primaryVelocity ?? 0;
-                              if (v.abs() < _swipeVelocity) return;
-                              _skip(context, forward: v < 0);
-                            }
-                          : null,
-                      onVerticalDragEnd: touch && onOpen != null
-                          ? (d) {
-                              if ((d.primaryVelocity ?? 0) < -_swipeVelocity) {
-                                onOpen!();
-                              }
-                            }
-                          : null,
-                      child: Semantics(
-                        button: onOpen != null,
-                        hint: onOpen != null ? 'Open Playback' : null,
-                        onTap: onOpen,
-                        child: _OpenTooltip(
-                          enabled: onOpen != null,
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: InkWell(
-                              onTap: onOpen,
-                              customBorder: Tokens.shape(Tokens.rSm),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: context.layout.minTap,
-                                ),
-                                child: info,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: Tokens.s8),
-                  if (rack != null) ...[
-                    FxBypassToggle(rack: rack!, compact: compact),
-                    SizedBox(width: compact ? Tokens.s2 : Tokens.s8),
-                  ],
-                  if (!compact)
-                    TransportButton(
-                      icon: Icons.skip_previous_rounded,
-                      tooltip: 'Previous',
-                      onTap: () => _skip(context, forward: false),
-                    ),
-                  _PlayPause(player: player, guard: guard),
-                  TransportButton(
-                    icon: Icons.skip_next_rounded,
-                    tooltip: 'Next',
-                    onTap: () => _skip(context, forward: true),
-                  ),
-                ],
+    final infoArea = GestureDetector(
+      key: const ValueKey('mini-info'),
+      onSecondaryTapUp: (d) => _menu(context, d.globalPosition),
+      onLongPressStart: (d) => _menu(context, d.globalPosition),
+      onHorizontalDragEnd: touch
+          ? (d) {
+              final v = d.primaryVelocity ?? 0;
+              if (v.abs() < _swipeVelocity) return;
+              _skip(context, forward: v < 0);
+            }
+          : null,
+      onVerticalDragEnd: touch && onOpen != null
+          ? (d) {
+              if ((d.primaryVelocity ?? 0) < -_swipeVelocity) onOpen!();
+            }
+          : null,
+      child: Semantics(
+        button: onOpen != null,
+        hint: onOpen != null ? 'Open Playback' : null,
+        onTap: onOpen,
+        child: _OpenTooltip(
+          enabled: onOpen != null,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onOpen,
+              customBorder: Tokens.pill,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: context.layout.minTap),
+                child: info,
               ),
             ),
-          ],
+          ),
         ),
       ),
+    );
+
+    if (compact) {
+      // A floating card (the card tone) above the tab bar, 8 from the
+      // screen edges and the bar, its progress a slim pill along its foot.
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Tokens.s8,
+          Tokens.s8,
+          Tokens.s8,
+          Tokens.s8,
+        ),
+        child: Material(
+          color: Tokens.surface,
+          shape: Tokens.shape(Tokens.rLg),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Tokens.s8,
+              Tokens.s8,
+              Tokens.s8,
+              Tokens.s4,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: infoArea),
+                    const SizedBox(width: Tokens.s4),
+                    if (rack != null)
+                      FxBypassToggle(rack: rack!, compact: true),
+                    _PlayPause(player: player, guard: guard),
+                    RoundIconButton(
+                      icon: Icons.skip_next_rounded,
+                      tooltip: 'Next',
+                      onTap: () => _skip(context, forward: true),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+                  child: MiniProgressBar(player: player, guard: guard),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // The bar: info on the left, the transport in the centre, the time
+    // and the progress with the FX switch on the right, on the chrome.
+    return Material(
+      type: MaterialType.transparency,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Tokens.s16,
+          0,
+          Tokens.s16,
+          Tokens.s8,
+        ),
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
+              Expanded(flex: 4, child: infoArea),
+              const SizedBox(width: Tokens.s16),
+              RoundIconButton(
+                icon: Icons.skip_previous_rounded,
+                tooltip: 'Previous',
+                tone: RoundTone.tonal,
+                diameter: 40,
+                onTap: () => _skip(context, forward: false),
+              ),
+              const SizedBox(width: Tokens.s8),
+              _PlayPause(player: player, guard: guard),
+              const SizedBox(width: Tokens.s8),
+              RoundIconButton(
+                icon: Icons.skip_next_rounded,
+                tooltip: 'Next',
+                tone: RoundTone.tonal,
+                diameter: 40,
+                onTap: () => _skip(context, forward: true),
+              ),
+              const SizedBox(width: Tokens.s16),
+              Expanded(
+                flex: 4,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _TimedProgress(player: player, guard: guard),
+                    ),
+                    if (rack != null) ...[
+                      const SizedBox(width: Tokens.s16),
+                      FxBypassToggle(rack: rack!),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Position, the progress pill and the length, in a row.
+class _TimedProgress extends StatelessWidget {
+  const _TimedProgress({required this.player, required this.guard});
+
+  final PlayerApi player;
+  final CallGuard guard;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Tokens.numeric.copyWith(fontSize: 11);
+    return Row(
+      children: [
+        Live<Duration>(
+          stream: player.stream.position,
+          initial: player.state.position,
+          builder: (context, p) => Text(formatDuration(p), style: style),
+        ),
+        const SizedBox(width: Tokens.s12),
+        Expanded(
+          child: MiniProgressBar(player: player, guard: guard),
+        ),
+        const SizedBox(width: Tokens.s12),
+        Live<Duration>(
+          stream: player.stream.duration,
+          initial: player.state.duration,
+          builder: (context, d) => Text(formatDuration(d), style: style),
+        ),
+      ],
     );
   }
 }
@@ -285,7 +380,7 @@ class _RailMini extends StatelessWidget {
             },
           ),
         ),
-        TransportButton(
+        RoundIconButton(
           icon: Icons.skip_next_rounded,
           tooltip: 'Next',
           onTap: onNext,
@@ -295,11 +390,11 @@ class _RailMini extends StatelessWidget {
   }
 }
 
-/// A thin progress line along the top edge of the mini-player. With a
-/// pointer, a click or drag anywhere on it seeks (the hit area is taller
-/// than the line). On touch it only shows the progress: a strip this thin
-/// is no tap target and sits next to the swipe area, so seeking is left to
-/// Playback and to the screen reader's increase and decrease actions.
+/// A slim progress pill of the mini-player. With a pointer, a click or
+/// drag anywhere on it seeks (the hit area is taller than the pill). On
+/// touch it only shows the progress: a strip this thin is no tap target
+/// and sits next to the swipe area, so seeking is left to Playback and to
+/// the screen reader's increase and decrease actions.
 class MiniProgressBar extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
@@ -309,7 +404,7 @@ class MiniProgressBar extends StatelessWidget {
     this.guard = unguarded,
   });
 
-  static const double _hit = 14;
+  static const double _hit = 16;
 
   static String _of(Duration at, Duration total) {
     final clamped = at < Duration.zero
@@ -388,20 +483,27 @@ class MiniProgressBar extends StatelessWidget {
                     child: SizedBox(
                       key: const ValueKey('mini-progress'),
                       height: _hit,
-                      child: Align(
-                        alignment: Alignment.topCenter,
+                      child: Center(
                         child: SizedBox(
-                          height: 3,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              ColoredBox(color: Tokens.line2),
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: f,
-                                child: ColoredBox(color: Tokens.accent),
-                              ),
-                            ],
+                          height: 4,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ColoredBox(color: Tokens.surface4),
+                                FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: f,
+                                  child: DecoratedBox(
+                                    decoration: ShapeDecoration(
+                                      color: Tokens.accent,
+                                      shape: Tokens.pill,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -467,7 +569,7 @@ class _PlayPause extends StatelessWidget {
         initial: player.state.playWhenReady,
         builder: (context, wants) {
           final action = wants ? 'Pause' : 'Play';
-          final dimension = context.layout.isTouch ? 48.0 : 44.0;
+          const dimension = 48.0;
           void onTap() => guard(wants ? player.pause : player.play);
           return Semantics(
             button: true,
@@ -504,12 +606,12 @@ class _PlayPause extends StatelessWidget {
                               value: progress,
                               strokeWidth: 2,
                               color: Tokens.accent,
-                              backgroundColor: Tokens.line2,
+                              backgroundColor: Tokens.surface4,
                             ),
                           ),
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: dimension - 8,
+                          height: dimension - 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Tokens.accent,
@@ -518,7 +620,7 @@ class _PlayPause extends StatelessWidget {
                             wants
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded,
-                            size: 22,
+                            size: 24,
                             color: Tokens.onAccent,
                           ),
                         ),
@@ -574,7 +676,7 @@ class FxBypassToggle extends StatelessWidget {
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: enabled ? _toggle : null,
-                customBorder: Tokens.shape(Tokens.rSm),
+                customBorder: Tokens.pill,
                 // The pill stays small; the tap area grows to a full target.
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -587,19 +689,14 @@ class FxBypassToggle extends StatelessWidget {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 160),
                       padding: EdgeInsets.symmetric(
-                        horizontal: compact ? Tokens.s6 : Tokens.s8,
-                        vertical: Tokens.s6,
+                        horizontal: compact ? Tokens.s8 : Tokens.s12,
+                        vertical: Tokens.s8,
                       ),
                       decoration: ShapeDecoration(
                         color: on
-                            ? Tokens.amber.withValues(alpha: 0.16)
-                            : Colors.transparent,
-                        shape: Tokens.shape(
-                          Tokens.rSm,
-                          side: BorderSide(
-                            color: on ? Colors.transparent : Tokens.line2,
-                          ),
-                        ),
+                            ? Tokens.amber.withValues(alpha: 0.18)
+                            : (compact ? Colors.transparent : Tokens.surface3),
+                        shape: Tokens.pill,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -608,11 +705,11 @@ class FxBypassToggle extends StatelessWidget {
                             on
                                 ? Icons.layers_clear_rounded
                                 : Icons.layers_rounded,
-                            size: 16,
+                            size: compact ? 20 : 18,
                             color: color,
                           ),
                           if (!compact) ...[
-                            const SizedBox(width: Tokens.s6),
+                            const SizedBox(width: Tokens.s8),
                             Text(
                               on ? 'Dry' : 'FX',
                               style: Tokens.label.copyWith(
