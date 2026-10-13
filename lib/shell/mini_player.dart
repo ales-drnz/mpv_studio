@@ -596,7 +596,7 @@ class _PlayPause extends StatelessWidget {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Tokens.accent,
-                              backgroundColor: Tokens.line,
+                              backgroundColor: Tokens.surface4,
                             ),
                           )
                         else if (progress != null)

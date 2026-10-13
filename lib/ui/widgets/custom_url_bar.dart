@@ -63,12 +63,9 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: math.max(Tokens.controlH, tap)),
       child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: Tokens.surface2,
-          shape: Tokens.shape(Tokens.rSm),
-        ),
+        decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
         child: Padding(
-          padding: const EdgeInsets.only(left: Tokens.s12),
+          padding: const EdgeInsets.only(left: Tokens.s16),
           child: Row(
             children: [
               Icon(Icons.link_rounded, size: 18, color: Tokens.fgFaint),
