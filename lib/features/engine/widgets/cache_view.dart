@@ -66,7 +66,7 @@ class CacheView extends StatelessWidget {
               Readout('Behind', EngineFormat.seconds(geometry.behind)),
               Readout('Speed', EngineFormat.rate(s.cacheSpeed)),
               Readout(
-                'Cache secs',
+                'Cache duration',
                 geometry.cacheSecs == null
                     ? 'unbounded'
                     : EngineFormat.seconds(geometry.cacheSecs!),

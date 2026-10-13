@@ -79,6 +79,7 @@ class HttpOptions {
     if (ua == null) return null;
     // A browser user agent has commas ("KHTML, like Gecko"); the global one
     // is set as a raw property, which takes them.
+    if (!userAgent.contains(',')) return 'User agent: $ua';
     return 'User agent: $ua A user agent with commas goes in Settings, '
         'Network.';
   }

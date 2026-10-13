@@ -238,7 +238,7 @@ class _Version extends StatelessWidget {
       children: [
         Text(name, style: Tokens.caption),
         const SizedBox(width: Tokens.s8),
-        ValueBadge(value.isEmpty ? 'n/a' : value, color: Tokens.fg),
+        ValueBadge(value.isEmpty ? 'unknown' : value, color: Tokens.fg),
       ],
     );
   }

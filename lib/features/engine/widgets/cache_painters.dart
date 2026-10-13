@@ -142,7 +142,7 @@ class CacheBarPainter extends CustomPainter {
         _dashed(canvas, Offset(cx, _top - 4), Offset(cx, _top + _barH + 30));
         paintChartLabel(
           canvas,
-          'cache secs',
+          'cache duration',
           Offset(math.min(cx + 4, w - 60), _top + _barH + 32),
           Tokens.fgFaint,
         );

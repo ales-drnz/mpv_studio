@@ -25,7 +25,7 @@ class EngineFormat {
 
   /// `44.1 kHz`, `48 kHz`.
   static String sampleRate(int? hz) {
-    if (hz == null || hz <= 0) return 'n/a';
+    if (hz == null || hz <= 0) return 'unknown';
     final k = hz / 1000;
     return k == k.roundToDouble() ? '${k.round()} kHz' : '$k kHz';
   }
@@ -34,13 +34,13 @@ class EngineFormat {
   static ({String codec, String format, String rate, String channels}) params(
     AudioParams p,
   ) => (
-    codec: p.codecName ?? p.codec ?? 'n/a',
-    format: p.format?.mpvValue ?? 'n/a',
+    codec: p.codecName ?? p.codec ?? 'unknown',
+    format: p.format?.mpvValue ?? 'unknown',
     rate: sampleRate(p.sampleRate),
     channels:
         p.hrChannels ??
         p.channels?.mpvValue ??
-        (p.channelCount != null ? '${p.channelCount} ch' : 'n/a'),
+        (p.channelCount != null ? '${p.channelCount} ch' : 'unknown'),
   );
 
   static String playbackState(MpvPlaybackState s) => switch (s) {
