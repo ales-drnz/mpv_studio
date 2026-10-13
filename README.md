@@ -12,7 +12,7 @@
 <table>
 <tr>
 <td valign="middle" width="90"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/assets/mpv_studio.png" width="70" alt="logo"></td>
-<td valign="middle"><b>MPV Studio</b> is the standalone reference client for the <a href="https://pub.dev/packages/mpv_audio_kit"><code>mpv_audio_kit</code></a> engine: a cross-platform audio player with a full DSP rack, real-time visualizers, Jellyfin, Plex and Samba streaming, and a built-in mpv command console.</td>
+<td valign="middle"><b>MPV Studio</b> is the standalone reference client for the <a href="https://pub.dev/packages/mpv_audio_kit"><code>mpv_audio_kit</code></a> engine: a cross-platform audio player with a signal chain rack, real-time visualizers, Jellyfin, Plex and Samba streaming, an engine inspector and a built-in mpv command console. It adapts to every window, from a phone in portrait to an ultrawide desktop, in a dark and a light theme.</td>
 </tr>
 </table>
 
@@ -48,32 +48,42 @@
     <details>
     <summary><a href="#3-stream"><b>3. Stream</b></a></summary>
 
-    * [3.1 Jellyfin](#31-jellyfin)
-    * [3.2 Plex](#32-plex)
+    * [3.1 Lab and chapters](#31-lab-and-chapters)
+    * [3.2 Source resolver](#32-source-resolver)
+    * [3.3 Jellyfin, Plex and Samba](#33-jellyfin-plex-and-samba)
 
     </details>
 
     <details>
     <summary><a href="#4-effects"><b>4. Effects</b></a></summary>
 
-    * [4.1 The DSP rack](#41-the-dsp-rack)
-    * [4.2 Interactive controls](#42-interactive-controls)
+    * [4.1 The signal chain rack](#41-the-signal-chain-rack)
+    * [4.2 Interactive editors](#42-interactive-editors)
 
     </details>
 
     <details>
-    <summary><a href="#5-settings"><b>5. Settings</b></a></summary>
+    <summary><a href="#5-engine"><b>5. Engine</b></a></summary>
     </details>
 
     <details>
-    <summary><a href="#6-console"><b>6. Console</b></a></summary>
+    <summary><a href="#6-settings"><b>6. Settings</b></a></summary>
     </details>
 
     <details>
-    <summary><a href="#7-building-from-source"><b>7. Building from source</b></a></summary>
+    <summary><a href="#7-console"><b>7. Console</b></a></summary>
+    </details>
 
-    * [7.1 Requirements](#71-requirements)
-    * [7.2 Run](#72-run)
+    <details>
+    <summary><a href="#8-desktop-and-mobile"><b>8. Desktop and mobile</b></a></summary>
+    </details>
+
+    <details>
+    <summary><a href="#9-building-from-source"><b>9. Building from source</b></a></summary>
+
+    * [9.1 Requirements](#91-requirements)
+    * [9.2 Run](#92-run)
+    * [9.3 Continuous integration](#93-continuous-integration)
 
     </details>
 *   [Project background](#project-background)
@@ -93,7 +103,7 @@ The home screen: cover art, metadata and transport bound to mpv_audio_kit's play
 
 #### 1.1 Now playing
 
-Cover art, track info, a scrubbable seekbar, and a volume control, driven entirely by the engine's reactive streams.
+Cover art, track info, a scrubbable waveform, chapters with their titles, an A-B loop with a repeat count, speed and volume, driven entirely by the engine's reactive streams. Next and previous say so when there is nowhere to go.
 
 #### 1.2 Visualizers
 
@@ -107,7 +117,7 @@ Three real-time meters fed by mpv_audio_kit's FFT and PCM streams: a log-spaced 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/queue.gif" width="100%">
 </p>
 
-A reorderable playlist with drag-and-drop, gapless transitions, and a determinate prefetch indicator for the next track.
+A reorderable queue with gapless transitions. Each row shows the tags as soon as the engine reads them, where the track comes from, and whether it played, was skipped or failed and why. On desktop a details pane sits beside the list, rows have a right-click menu and the keyboard moves and plays the selection; on phones a long press opens the actions and a swipe removes a row.
 
 ---
 
@@ -117,15 +127,39 @@ A reorderable playlist with drag-and-drop, gapless transitions, and a determinat
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/stream.gif" width="100%">
 </p>
 
-Browse and play from self-hosted media servers. Each library tab pages lazily as you scroll.
+Network sources, one tab each.
 
-#### 3.1 Jellyfin
+#### 3.1 Lab and chapters
 
-Connects to a Jellyfin server and streams its libraries directly (HLS), seeking through transcoded sources.
+Reference streams in every common codec, and any URL with its own HTTP options: a user agent, custom headers and a chunk size, sent through `Media.httpHeaders` and `Media.httpChunkSize`. The Chapters tab plays streams with embedded chapters.
 
-#### 3.2 Plex
+#### 3.2 Source resolver
 
-Resolves Plex transcode URLs lazily through an `on_load` hook and a `/decision` session manager, and reports playback progress back to the server.
+The Resolver tab shows `setSourceResolver` at work: it plays signed links that expire, and with Simulate expiry the first link fails, so the retry (`isRetry`) gets a fresh one. A live log shows every call. Any resolver plugs in the same way, a YouTube one included:
+
+```dart
+// Entries carry the page URL; the resolver turns it into a direct audio URL
+// right before mpv opens it, and again when that URL has expired.
+final cache = <String, String>{};
+
+await player.setSourceResolver((request) async {
+  final page = request.media.extras?['pageUrl'] as String?;
+  if (page == null) return null; // not ours: keep the URL as is
+  if (!request.isRetry && cache[page] != null) return cache[page];
+  // Your extractor of choice: a web API, a script, a library.
+  final direct = await myExtractor.audioUrlFor(page);
+  return cache[page] = direct; // a fresh link on every retry
+});
+
+await player.open(Media('yt:dQw4w9WgXcQ', extras: {
+  'pageUrl': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  'title': 'My video',
+}));
+```
+
+#### 3.3 Jellyfin, Plex and Samba
+
+Sign in to a Jellyfin or Plex server and browse its songs and albums, or walk a Samba share. Plex transcode sessions open through the same source resolver, and playback progress is reported back to the server. The Samba password is kept in the system keychain.
 
 ---
 
@@ -135,48 +169,60 @@ Resolves Plex transcode URLs lazily through an `on_load` hook and a `/decision` 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/effects.gif" width="100%">
 </p>
 
-A live DSP rack on top of mpv_audio_kit's `AudioEffects` bundle: toggle and tune effects and hear the change immediately.
+A live signal chain on top of mpv_audio_kit's effects: stages in play order that you add, drag, duplicate, switch off and edit while the music plays.
 
-#### 4.1 The DSP rack
+#### 4.1 The signal chain rack
 
-18-band graphic EQ, compressor, loudness normalization, headphone crossfeed, crystalizer, stereo tools, bass and treble, and more.
+Quick editors for an 18-band equalizer, compressor, bass, treble, sub boost, stereo width, crossfeed, clarity and loudness, the whole lavfi catalog, and raw lavfi stages. A global bypass compares the chain on and off, and the chain is saved in order.
 
-#### 4.2 Interactive controls
+#### 4.2 Interactive editors
 
-Each effect renders its own live diagram (a compressor curve, a frequency response curve, a crossfeed diagram, a stereo scope, a loudness gauge), driven by per-filter PCM taps so the visualization tracks the actual signal.
+Each stage draws its own live diagram (a compressor curve, a frequency response curve, a crossfeed diagram, a stereo scope, a loudness gauge) with before and after meters fed by per-stage taps, so the picture follows the actual signal.
 
 ---
 
-### 5. Settings
+### 5. Engine
+
+What the engine is doing right now: play request and audio state, the demuxer cache around the playhead, prefetch, the waveform and loudness scans, the decoder and device formats, the effects chain and the library builds.
+
+---
+
+### 6. Settings
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/settings.gif" width="100%">
 </p>
 
-Every mpv subsystem grouped into one screen: audio engine and output, audio track, A-B loop, chapters, demuxer cache, hooks, OS media session, and streaming. Choices persist across launches.
+Every setting grouped by purpose: Listening, Output, Network (cache, streaming, proxy, cookies, certificates, user agent) and Advanced. A search finds any setting and jumps to it. Settings the player reads only at startup apply with a Restart player button that keeps the queue and the position. Choices persist across launches.
 
 ---
 
-### 6. Console
+### 7. Console
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/console.gif" width="100%">
 </p>
 
-A built-in mpv command console with a command catalog, autocomplete suggestions, and the live engine log, captured from boot, so it's never empty when you open it.
+A built-in mpv command console with a command catalog, autocomplete, history, mpv's own quoting and the live engine log, captured from boot. Commands that change what plays go through the Player API, so the controls stay in step, and credentials in URLs never show in the log.
 
 ---
 
-### 7. Building from source
+### 8. Desktop and mobile
 
-#### 7.1 Requirements
+Phones get bottom tabs, sheets, gestures and the Android back button; tablets and phones in landscape get a navigation rail; desktop gets a collapsible sidebar, hover, right-click menus and keyboard shortcuts (press ? or F1 for the list). The theme follows the logo's graphite, ring grey and white, in dark, light or the system's choice. A welcome screen on first launch helps you start.
+
+---
+
+### 9. Building from source
+
+#### 9.1 Requirements
 
 - **Flutter** 3.38 or newer (Dart 3.10). Building for iOS needs Flutter 3.47.4 or newer.
 - **Android** SDK 24 (Android 7.0) or newer on the device.
-- **Linux** glibc 2.31 or newer, with ALSA; PipeWire or PulseAudio when installed.
+- **Linux** glibc 2.31 or newer, with ALSA; PipeWire or PulseAudio when installed. Building needs libsecret (`libsecret-1-dev` on Debian and Ubuntu), and saving the Samba password needs a secret service such as GNOME Keyring or KWallet; without one the password is kept for the session only.
 - The native toolchain for your target platform (Xcode for Apple, Android SDK and NDK for Android, the desktop build tools for Linux and Windows).
 
-#### 7.2 Run
+#### 9.2 Run
 
 ```bash
 flutter pub get
@@ -184,6 +230,10 @@ flutter run -d macos        # or windows, linux, <android-device>, <ios-device>
 ```
 
 To build a release artifact, use the standard `flutter build <platform>`.
+
+#### 9.3 Continuous integration
+
+GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push and pull request. Pushes to main also build Windows, macOS and iOS. Nothing is published: each run keeps its builds as artifacts for a week.
 
 ---
 
