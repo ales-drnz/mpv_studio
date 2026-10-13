@@ -1,167 +1,220 @@
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import 'effects_chain.dart';
+import '../../generated/filter_catalog.dart';
+import 'rack_catalog.dart';
 
-/// Serialises the *curated* stages of the effects chain that MPV Studio
-/// exposes in its rack to/from a plain JSON-able map, for persistence
-/// via `AppSettings.effects`.
+/// Turns the whole effects chain into plain JSON and back, for
+/// `AppSettings.effects`. Generic: every stage is written through its
+/// filter's descriptor (name, enabled, one value per parameter), so a new
+/// filter in the catalog persists with no code here.
 ///
-/// Only the modules the UI surfaces are encoded; the other stages are not
-/// kept across launches. Decoding an empty / partial map yields defaults
-/// for the missing modules, so the format is forward- and
-/// backward-compatible.
+/// ```json
+/// {"version": 2, "chain": [
+///   {"filter": "bass", "enabled": true, "params": {"gain": 4.0, ...}},
+///   {"raw": "lavfi-anull", "enabled": false}
+/// ]}
+/// ```
+///
+/// [decode] also reads the blob of MPV Studio 0.2, one fixed key per
+/// featured module (`eq`, `comp`, `bass` and so on), see [decodeLegacy].
 class EffectsCodec {
   EffectsCodec._();
 
-  static double _d(Object? v, double fallback) =>
-      (v as num?)?.toDouble() ?? fallback;
-  static bool _b(Object? v, bool fallback) => v as bool? ?? fallback;
-  static Map<String, Object?> _m(Object? v) =>
-      v is Map ? v.cast<String, Object?>() : const {};
+  /// The format [encode] writes.
+  static const int version = 2;
 
-  static Map<String, Object?> encode(List<AudioEffect> fx) {
-    // Encode the defaults for modules not in the chain, so presets stay
-    // shape-stable.
-    final superequalizer = fx.stage<SuperequalizerEffect>() ??
-        const SuperequalizerEffect(enabled: false);
-    final acompressor = fx.stage<AcompressorEffect>() ??
-        const AcompressorEffect(enabled: false);
-    final bass = fx.stage<BassEffect>() ?? const BassEffect(enabled: false);
-    final treble =
-        fx.stage<TrebleEffect>() ?? const TrebleEffect(enabled: false);
-    final crossfeed =
-        fx.stage<CrossfeedEffect>() ?? const CrossfeedEffect(enabled: false);
-    final crystalizer = fx.stage<CrystalizerEffect>() ??
-        const CrystalizerEffect(enabled: false);
-    final extrastereo = fx.stage<ExtrastereoEffect>() ??
-        const ExtrastereoEffect(enabled: false);
-    final asubboost =
-        fx.stage<AsubboostEffect>() ?? const AsubboostEffect(enabled: false);
-    final loudnorm =
-        fx.stage<LoudnormEffect>() ?? const LoudnormEffect(enabled: false);
+  // ---- Encode ---------------------------------------------------------
+
+  static Map<String, Object?> encode(List<AudioEffect> fx) => {
+        'version': version,
+        'chain': [
+          for (final e in fx)
+            if (encodeStage(e) case final stage?) stage,
+        ],
+      };
+
+  /// One stage as JSON, or `null` for a filter the catalog does not know.
+  static Map<String, Object?>? encodeStage(AudioEffect e) {
+    if (e is RawAudioEffect) return {'raw': e.entry, 'enabled': e.enabled};
+    final d = descriptorOf(e.filter);
+    if (d == null) return null;
     return {
-      'eq': {
-        'enabled': superequalizer.enabled,
-        'params': superequalizer.params,
-      },
-      'comp': {
-        'enabled': acompressor.enabled,
-        'threshold': acompressor.threshold,
-        'ratio': acompressor.ratio,
-        'attack': acompressor.attack,
-        'release': acompressor.release,
-        'makeup': acompressor.makeup,
-        'knee': acompressor.knee,
-      },
-      'bass': {
-        'enabled': bass.enabled,
-        'gain': bass.gain,
-        'frequency': bass.frequency,
-      },
-      'treble': {
-        'enabled': treble.enabled,
-        'gain': treble.gain,
-        'frequency': treble.frequency,
-      },
-      'crossfeed': {
-        'enabled': crossfeed.enabled,
-        'strength': crossfeed.strength,
-        'range': crossfeed.range,
-      },
-      'crystalizer': {
-        'enabled': crystalizer.enabled,
-        'i': crystalizer.i,
-      },
-      'stereo': {
-        'enabled': extrastereo.enabled,
-        'm': extrastereo.m,
-      },
-      'subboost': {
-        'enabled': asubboost.enabled,
-        'boost': asubboost.boost,
-        'cutoff': asubboost.cutoff,
-        'dry': asubboost.dry,
-        'wet': asubboost.wet,
-        'feedback': asubboost.feedback,
-      },
-      'loudnorm': {
-        'enabled': loudnorm.enabled,
-        'i': loudnorm.i,
-        'lra': loudnorm.lra,
-        'tp': loudnorm.tp,
-        'linear': loudnorm.linear,
-      },
+      'filter': d.name,
+      'enabled': e.enabled,
+      'params': {for (final p in d.params) p.name: _encodeParam(p, e)},
     };
   }
 
-  static List<AudioEffect> decode(Map<String, Object?> json) {
-    final eq = _m(json['eq']);
-    final comp = _m(json['comp']);
-    final bass = _m(json['bass']);
-    final treble = _m(json['treble']);
-    final crossfeed = _m(json['crossfeed']);
-    final crystalizer = _m(json['crystalizer']);
-    final stereo = _m(json['stereo']);
-    final subboost = _m(json['subboost']);
-    final loudnorm = _m(json['loudnorm']);
+  static Object? _encodeParam(ParamSpec p, AudioEffect e) => switch (p) {
+        // JSON has no NaN or infinity.
+        DoubleParam d => d.get(e).isFinite ? d.get(e) : null,
+        IntParam i => i.get(e),
+        BoolParam b => b.get(e),
+        StringParam s => s.get(e),
+        EnumParam en => _enumLabel(en, en.get(e)),
+      };
 
+  static String? _enumLabel(EnumParam p, Object? value) {
+    if (value == null) return null;
+    for (final o in p.options) {
+      if (o.value == value) return o.label;
+    }
+    return null;
+  }
+
+  // ---- Decode ---------------------------------------------------------
+
+  /// The chain stored in [blob]: the current format, the 0.2 one, or an
+  /// empty chain for anything else. Stages it cannot read are skipped,
+  /// and a value it cannot read keeps the parameter's default.
+  static List<AudioEffect> decode(Object? blob) {
+    if (blob is! Map) return const [];
+    final json = blob.cast<String, Object?>();
+    final chain = json['chain'];
+    if (chain is List) {
+      return [
+        for (final s in chain)
+          if (decodeStage(s) case final stage?) stage,
+      ];
+    }
+    return decodeLegacy(json);
+  }
+
+  /// One stage from its JSON, or `null` when it is not one.
+  static AudioEffect? decodeStage(Object? json) {
+    if (json is! Map) return null;
+    final m = json.cast<String, Object?>();
+    final enabled = m['enabled'] is bool ? m['enabled'] as bool : true;
+    final raw = m['raw'];
+    if (raw is String) return RawAudioEffect(raw, enabled: enabled);
+    final name = m['filter'];
+    if (name is! String) return null;
+    final d = descriptorNamed(name);
+    if (d == null) return null;
+    var e = d.create();
+    final params = m['params'];
+    if (params is Map) {
+      for (final p in d.params) {
+        if (!params.containsKey(p.name)) continue;
+        e = _decodeParam(p, e, params[p.name]);
+      }
+    }
+    return d.setEnabled(e, enabled);
+  }
+
+  static AudioEffect _decodeParam(ParamSpec p, AudioEffect e, Object? v) {
+    switch (p) {
+      case DoubleParam d:
+        if (v is num && v.isFinite) return d.set(e, v.toDouble());
+      case IntParam i:
+        if (v is num && v.isFinite) return i.set(e, v.round());
+      case BoolParam b:
+        if (v is bool) return b.set(e, v);
+      case StringParam s:
+        if (v is String) return s.set(e, v);
+      case EnumParam en:
+        for (final o in en.options) {
+          if (o.label == v) return en.set(e, o.value);
+        }
+    }
+    return e;
+  }
+
+  // ---- MPV Studio 0.2 -------------------------------------------------
+
+  /// The keys of the 0.2 blob, in the order its modules ran.
+  static const legacyKeys = [
+    'eq',
+    'comp',
+    'bass',
+    'treble',
+    'crossfeed',
+    'crystalizer',
+    'stereo',
+    'subboost',
+    'loudnorm',
+  ];
+
+  /// Whether [json] is a blob written by MPV Studio 0.2.
+  static bool isLegacy(Object? json) =>
+      json is Map && json['chain'] == null && legacyKeys.any(json.containsKey);
+
+  /// Reads the 0.2 blob: one module per featured filter, all of them always
+  /// present. Only the modules the user touched become stages (switched on,
+  /// or with a value off its default), in the old fixed order, so the
+  /// rack does not open with nine idle stages.
+  static List<AudioEffect> decodeLegacy(Map<String, Object?> json) {
+    double d(Map<String, Object?> m, String k, double fallback) =>
+        (m[k] is num) ? (m[k] as num).toDouble() : fallback;
+    bool b(Map<String, Object?> m, String k, bool fallback) =>
+        m[k] is bool ? m[k] as bool : fallback;
+    Map<String, Object?> m(String k) =>
+        json[k] is Map ? (json[k] as Map).cast<String, Object?>() : const {};
+
+    final eq = m('eq');
     final eqParams = <String, double>{};
-    _m(eq['params']).forEach((k, v) {
-      if (v is num) eqParams[k] = v.toDouble();
-    });
+    if (eq['params'] is Map) {
+      (eq['params'] as Map).forEach((k, v) {
+        if (k is String && v is num) eqParams[k] = v.toDouble();
+      });
+    }
+    final comp = m('comp');
+    final bass = m('bass');
+    final treble = m('treble');
+    final cf = m('crossfeed');
+    final cr = m('crystalizer');
+    final st = m('stereo');
+    final sb = m('subboost');
+    final ln = m('loudnorm');
 
-    return [
-      SuperequalizerEffect(
-        enabled: _b(eq['enabled'], false),
-        params: eqParams,
-      ),
+    final all = <AudioEffect>[
+      SuperequalizerEffect(enabled: b(eq, 'enabled', false), params: eqParams),
       AcompressorEffect(
-        enabled: _b(comp['enabled'], false),
-        threshold: _d(comp['threshold'], 0.125),
-        ratio: _d(comp['ratio'], 2),
-        attack: _d(comp['attack'], 20),
-        release: _d(comp['release'], 250),
-        makeup: _d(comp['makeup'], 1),
-        knee: _d(comp['knee'], 2.82843),
+        enabled: b(comp, 'enabled', false),
+        threshold: d(comp, 'threshold', 0.125),
+        ratio: d(comp, 'ratio', 2),
+        attack: d(comp, 'attack', 20),
+        release: d(comp, 'release', 250),
+        makeup: d(comp, 'makeup', 1),
+        knee: d(comp, 'knee', 2.82843),
       ),
       BassEffect(
-        enabled: _b(bass['enabled'], false),
-        gain: _d(bass['gain'], 0),
-        frequency: _d(bass['frequency'], 100),
+        enabled: b(bass, 'enabled', false),
+        gain: d(bass, 'gain', 0),
+        frequency: d(bass, 'frequency', 100),
       ),
       TrebleEffect(
-        enabled: _b(treble['enabled'], false),
-        gain: _d(treble['gain'], 0),
-        frequency: _d(treble['frequency'], 3000),
+        enabled: b(treble, 'enabled', false),
+        gain: d(treble, 'gain', 0),
+        frequency: d(treble, 'frequency', 3000),
       ),
       CrossfeedEffect(
-        enabled: _b(crossfeed['enabled'], false),
-        strength: _d(crossfeed['strength'], 0.2),
-        range: _d(crossfeed['range'], 0.5),
+        enabled: b(cf, 'enabled', false),
+        strength: d(cf, 'strength', 0.2),
+        range: d(cf, 'range', 0.5),
       ),
-      CrystalizerEffect(
-        enabled: _b(crystalizer['enabled'], false),
-        i: _d(crystalizer['i'], 2),
-      ),
-      ExtrastereoEffect(
-        enabled: _b(stereo['enabled'], false),
-        m: _d(stereo['m'], 2.5),
-      ),
+      CrystalizerEffect(enabled: b(cr, 'enabled', false), i: d(cr, 'i', 2)),
+      ExtrastereoEffect(enabled: b(st, 'enabled', false), m: d(st, 'm', 2.5)),
       AsubboostEffect(
-        enabled: _b(subboost['enabled'], false),
-        boost: _d(subboost['boost'], 2),
-        cutoff: _d(subboost['cutoff'], 100),
-        dry: _d(subboost['dry'], 1),
-        wet: _d(subboost['wet'], 1),
-        feedback: _d(subboost['feedback'], 0.9),
+        enabled: b(sb, 'enabled', false),
+        boost: d(sb, 'boost', 2),
+        cutoff: d(sb, 'cutoff', 100),
+        dry: d(sb, 'dry', 1),
+        wet: d(sb, 'wet', 1),
+        feedback: d(sb, 'feedback', 0.9),
       ),
       LoudnormEffect(
-        enabled: _b(loudnorm['enabled'], false),
-        i: _d(loudnorm['i'], -24),
-        lra: _d(loudnorm['lra'], 7),
-        tp: _d(loudnorm['tp'], -2),
-        linear: _b(loudnorm['linear'], true),
+        enabled: b(ln, 'enabled', false),
+        i: d(ln, 'i', -24),
+        lra: d(ln, 'lra', 7),
+        tp: d(ln, 'tp', -2),
+        linear: b(ln, 'linear', true),
       ),
+    ];
+    return [
+      for (final e in all)
+        if (e.enabled || e != withEnabled(descriptorOf(e.filter)!.create(), false))
+          e,
     ];
   }
 }

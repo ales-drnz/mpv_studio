@@ -256,13 +256,25 @@ class AppSettings {
   MediaSession? get mediaSession =>
       sessionOn ? composeMediaSession(sessionActions) : null;
 
-  Map<String, Object?> get _effectsBlob {
-    final e = _data['effects'];
-    return e is Map ? e.cast<String, Object?>() : const {};
-  }
+  /// The persisted effects chain, in order. Reads the blob of MPV Studio
+  /// 0.2 too, which the next change rewrites in the current format.
+  List<AudioEffect> get effects => EffectsCodec.decode(_data['effects']);
 
-  /// The persisted DSP rack, decoded into the stages of an effects chain.
-  List<AudioEffect> get effects => EffectsCodec.decode(_effectsBlob);
+  /// While true the chain on `stream.audioEffects` is not recorded: the
+  /// rack's global bypass plays a switched-off copy of the chain, and
+  /// records the user's chain itself through [recordEffects].
+  bool holdEffects = false;
+
+  /// Records the effects chain explicitly.
+  void recordEffects(List<AudioEffect> fx) =>
+      _snapJson('effects', EffectsCodec.encode(fx));
+
+  /// [_snap] for JSON values, which compare by content.
+  void _snapJson(String key, Object? value) {
+    if (jsonEncode(_data[key]) == jsonEncode(value)) return;
+    _data[key] = value;
+    _scheduleSave();
+  }
 
   /// Exclusive audio output has no observable stream, so the Settings
   /// toggle records it explicitly here (and calls the player setter).
@@ -361,7 +373,9 @@ class AppSettings {
         _data['specBands'] = v.bandCount;
         _scheduleSave();
       }),
-      s.audioEffects.listen((v) => _snap('effects', EffectsCodec.encode(v))),
+      s.audioEffects.listen((v) {
+        if (!holdEffects) recordEffects(v);
+      }),
     ]);
   }
 
