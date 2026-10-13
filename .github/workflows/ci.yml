@@ -26,10 +26,12 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request cancels its previous run; every push to main
-# runs to the end, so each commit there keeps a result.
+# A new push to a pull request cancels its previous run. Pushes to main get
+# a group per commit: a shared group would drop a run still waiting when a
+# newer one queues, even without cancel-in-progress, so each commit on main
+# keeps its own result.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'run' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
