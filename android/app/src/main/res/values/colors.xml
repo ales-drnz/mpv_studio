@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launch window follows the system dark mode: the light page
+         background (Palette.light.bg) here, graphite in values-night, so
+         neither theme opens on a jarring flash. -->
+    <color name="launch_background">#FFEBEEF5</color>
+</resources>
