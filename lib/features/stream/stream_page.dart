@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/controls.dart';
 import 'chapters_tab.dart';
 import 'favorites_controller.dart';
 import 'lab_tab.dart';
@@ -115,21 +116,15 @@ class StreamView extends StatefulWidget {
   /// share).
   final Widget? samba;
 
+  /// The key of the stack of tabs, whose index is the tab on screen.
+  static const tabsKey = ValueKey('stream-tabs');
+
   @override
   State<StreamView> createState() => _StreamViewState();
 }
 
-class _StreamViewState extends State<StreamView>
-    with SingleTickerProviderStateMixin {
-  late final _tabs = TabController(
-    length: StreamTab.values.length,
-    initialIndex: widget.initialTab.index,
-    vsync: this,
-  )..addListener(_onTab);
-
-  void _onTab() {
-    if (!_tabs.indexIsChanging) setState(() {});
-  }
+class _StreamViewState extends State<StreamView> {
+  late StreamTab _tab = widget.initialTab;
 
   @override
   void didUpdateWidget(StreamView oldWidget) {
@@ -138,7 +133,7 @@ class _StreamViewState extends State<StreamView>
     // welcome screen's "Connect a server") moves to it here.
     final request = widget.tabRequest;
     if (request != null && !identical(request, oldWidget.tabRequest)) {
-      _tabs.animateTo(widget.initialTab.index);
+      _tab = widget.initialTab;
     }
   }
 
@@ -146,12 +141,6 @@ class _StreamViewState extends State<StreamView>
   /// alive after, so opening the page on Lab does not reconnect to Samba
   /// or page through both server libraries.
   final _visited = <StreamTab>{};
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
 
   Widget _body(StreamTab tab) => switch (tab) {
     StreamTab.lab => LabTab(
@@ -179,24 +168,28 @@ class _StreamViewState extends State<StreamView>
   @override
   Widget build(BuildContext context) {
     final layout = context.layout;
-    final selected = _tabs.index;
-    _visited.add(StreamTab.values[selected]);
+    final selected = _tab;
+    _visited.add(selected);
     return PageFrame(
       title: 'Stream',
       scrollable: false,
       // The tabs scroll themselves, each with the gutter at its sides; the
       // header and the tab row share it.
       padding: EdgeInsets.symmetric(horizontal: layout.gutter),
-      bottom: _StreamTabBar(controller: _tabs, scrollable: layout.isCompact),
+      bottom: StreamTabRow(
+        selected: selected,
+        onSelect: (t) => setState(() => _tab = t),
+      ),
       body: IndexedStack(
-        index: selected,
+        key: StreamView.tabsKey,
+        index: selected.index,
         sizing: StackFit.expand,
         children: [
           for (final tab in StreamTab.values)
             StreamTabScope(
-              active: tab.index == selected,
+              active: tab == selected,
               child: TickerMode(
-                enabled: tab.index == selected,
+                enabled: tab == selected,
                 child: _visited.contains(tab)
                     ? _body(tab)
                     : const SizedBox.shrink(),
@@ -208,36 +201,123 @@ class _StreamViewState extends State<StreamView>
   }
 }
 
-class _StreamTabBar extends StatelessWidget {
-  const _StreamTabBar({required this.controller, required this.scrollable});
+/// The Stream page's tabs: a row of pills, the selected one in the
+/// accent. It scrolls sideways when the window is too narrow for all of
+/// them, and brings the selected pill into view.
+class StreamTabRow extends StatefulWidget {
+  const StreamTabRow({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
 
-  final TabController controller;
+  final StreamTab selected;
+  final ValueChanged<StreamTab> onSelect;
 
-  /// Scrolls sideways (a phone) instead of sharing the width.
-  final bool scrollable;
+  @override
+  State<StreamTabRow> createState() => _StreamTabRowState();
+}
+
+class _StreamTabRowState extends State<StreamTabRow> {
+  final _keys = {for (final t in StreamTab.values) t: GlobalKey()};
+
+  @override
+  void initState() {
+    super.initState();
+    _reveal(animate: false);
+  }
+
+  @override
+  void didUpdateWidget(StreamTabRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != widget.selected) _reveal();
+  }
+
+  /// Centres the selected pill in the row (as far as the row scrolls)
+  /// after this frame.
+  void _reveal({bool animate = true}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pill = _keys[widget.selected]!.currentContext;
+      if (!mounted || pill == null) return;
+      Scrollable.ensureVisible(
+        pill,
+        alignment: 0.5,
+        duration: animate ? const Duration(milliseconds: 220) : Duration.zero,
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return TabBar(
-      controller: controller,
-      isScrollable: scrollable,
-      tabAlignment: scrollable ? TabAlignment.start : TabAlignment.fill,
-      labelColor: Tokens.accent,
-      unselectedLabelColor: Tokens.fgDim,
-      labelStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: const TextStyle(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.only(top: Tokens.s4, bottom: Tokens.s8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final t in StreamTab.values) ...[
+              if (t.index > 0) const SizedBox(width: Tokens.s8),
+              _TabPill(
+                key: _keys[t],
+                label: t.label,
+                selected: t == widget.selected,
+                onTap: () => widget.onSelect(t),
+              ),
+            ],
+          ],
+        ),
       ),
-      indicatorColor: Tokens.accent,
-      indicatorSize: TabBarIndicatorSize.label,
-      dividerColor: Tokens.line,
-      overlayColor: WidgetStatePropertyAll(Tokens.accentWash),
-      labelPadding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
-      tabs: [
-        for (final t in StreamTab.values)
-          Tab(height: context.layout.minTap, text: t.label),
-      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  const _TabPill({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: Tokens.pill,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            height: controlHeightOf(context),
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+            alignment: Alignment.center,
+            decoration: ShapeDecoration(
+              color: selected ? Tokens.accent : Tokens.surface,
+              shape: Tokens.pill,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              style: Tokens.body.copyWith(
+                fontWeight: FontWeight.w600,
+                color: selected ? Tokens.onAccent : Tokens.fgDim,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
