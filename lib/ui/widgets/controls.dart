@@ -3,6 +3,7 @@
 /// picker, dropdown and text field. Import this one file.
 library;
 
+export 'controls/app_text_field.dart';
 export 'controls/control_metrics.dart';
 export 'controls/dropdown.dart';
 export 'controls/segmented_control.dart';

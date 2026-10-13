@@ -59,6 +59,13 @@ class AppTheme {
       text(14, FontWeight.w600, p.fg).copyWith(letterSpacing: 0.1),
     );
 
+    OutlineInputBorder fieldBorder([Color? ring]) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(input.minTap / 2),
+      borderSide: ring == null
+          ? BorderSide.none
+          : BorderSide(color: ring, width: 2),
+    );
+
     return ThemeData(
       useMaterial3: true,
       fontFamily: Tokens.sans,
@@ -140,6 +147,26 @@ class AppTheme {
         selectedColor: p.accentContainer,
         labelStyle: text(13, FontWeight.w500, p.fg),
         padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+      ),
+      // A bare TextField looks like the app's field (AppTextField): a
+      // field pill, a body size hint, an accent ring while focused.
+      inputDecorationTheme: InputDecorationThemeData(
+        filled: true,
+        fillColor: p.surface3,
+        hoverColor: Colors.transparent,
+        isDense: true,
+        hintStyle: Tokens.body.copyWith(color: p.fgFaint),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: Tokens.s16,
+          vertical: (input.minTap - 20) / 2,
+        ),
+        border: fieldBorder(),
+        enabledBorder: fieldBorder(),
+        disabledBorder: fieldBorder(),
+        focusedBorder: fieldBorder(p.accent),
+        errorBorder: fieldBorder(p.red),
+        focusedErrorBorder: fieldBorder(p.red),
+        errorStyle: Tokens.label.copyWith(color: p.red),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

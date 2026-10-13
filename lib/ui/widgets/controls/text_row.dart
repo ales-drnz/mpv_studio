@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens.dart';
-import 'control_metrics.dart';
+import 'app_text_field.dart';
 import 'setting_tile.dart';
 
 /// Title (+ description) with a full-width single-line text field beneath,
@@ -74,8 +73,11 @@ class _TextRowState extends State<TextRow> {
       focusNode: _focus,
       enabled: widget.enabled,
       hint: widget.hint,
-      semanticLabel: widget.label,
+      label: widget.label,
       monospace: widget.monospace,
+      // Monospace rows hold URLs, paths and option values, not prose.
+      autocorrect: !widget.monospace,
+      enableSuggestions: !widget.monospace,
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
       action: widget.action,
@@ -85,87 +87,6 @@ class _TextRowState extends State<TextRow> {
       description: widget.description,
       enabled: widget.enabled,
       below: field,
-    );
-  }
-}
-
-/// The app's flat single-line text field: a pill box at the control
-/// height ([controlHeightOf]), surface3 fill, text vertically centred, an
-/// optional trailing [action]. Shared by [TextRow] and the search fields.
-class AppTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode? focusNode;
-  final bool enabled;
-  final String? hint;
-  final String? semanticLabel;
-  final bool monospace;
-  final ValueChanged<String>? onChanged;
-  final ValueChanged<String>? onSubmitted;
-  final Widget? leading;
-  final Widget? action;
-  final TextInputAction? textInputAction;
-
-  const AppTextField({
-    super.key,
-    required this.controller,
-    this.focusNode,
-    this.enabled = true,
-    this.hint,
-    this.semanticLabel,
-    this.monospace = false,
-    this.onChanged,
-    this.onSubmitted,
-    this.leading,
-    this.action,
-    this.textInputAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Tokens.body.copyWith(
-      fontFamily: monospace ? Tokens.mono : null,
-      color: enabled ? Tokens.fg : Tokens.fgFaint,
-    );
-    return Container(
-      constraints: BoxConstraints(minHeight: controlHeightOf(context)),
-      decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
-      padding: EdgeInsets.only(
-        left: leading == null ? Tokens.s16 : Tokens.s12,
-        right: action == null ? Tokens.s16 : Tokens.s4,
-      ),
-      // A Row centres the field vertically; a TextField forced to the full
-      // height would top-anchor its text instead.
-      child: Row(
-        children: [
-          if (leading != null) ...[leading!, const SizedBox(width: Tokens.s8)],
-          Expanded(
-            child: Semantics(
-              label: semanticLabel,
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                enabled: enabled,
-                onChanged: onChanged,
-                onSubmitted: onSubmitted,
-                textInputAction: textInputAction,
-                style: style,
-                cursorColor: Tokens.accent,
-                decoration: InputDecoration(
-                  isDense: true,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: Tokens.s8,
-                  ),
-                  hintText: hint,
-                  hintStyle: Tokens.caption,
-                  hintMaxLines: 1,
-                ),
-              ),
-            ),
-          ),
-          ?action,
-        ],
-      ),
     );
   }
 }

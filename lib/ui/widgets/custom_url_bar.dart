@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-import '../layout/layout_scope.dart';
 import '../tokens.dart';
+import 'controls/app_text_field.dart';
+import 'round_icon_button.dart';
 
 /// A "play any URL" bar: a monospace URL field with a play button, and an
 /// add to queue button when [onQueue] is given. Submitting (Enter or the
@@ -58,62 +57,37 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
 
   @override
   Widget build(BuildContext context) {
-    final tap = context.layout.minTap;
-    final buttons = BoxConstraints.tightFor(width: tap, height: tap);
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: math.max(Tokens.controlH, tap)),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
-        child: Padding(
-          padding: const EdgeInsets.only(left: Tokens.s16),
-          child: Row(
-            children: [
-              Icon(Icons.link_rounded, size: 18, color: Tokens.fgFaint),
-              const SizedBox(width: Tokens.s8),
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  onSubmitted: (_) => _submit(widget.onPlay),
-                  textInputAction: TextInputAction.go,
-                  keyboardType: TextInputType.url,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  style: TextStyle(
-                    fontFamily: Tokens.mono,
-                    fontSize: 13,
-                    color: Tokens.fg,
-                  ),
-                  cursorColor: Tokens.accent,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: widget.hint,
-                    hintStyle: Tokens.caption,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              if (widget.onQueue != null)
-                IconButton(
-                  onPressed: () => _submit(widget.onQueue),
-                  icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                  color: Tokens.fgDim,
-                  constraints: buttons,
-                  padding: EdgeInsets.zero,
-                  tooltip: 'Add to queue',
-                ),
-              IconButton(
-                onPressed: () => _submit(widget.onPlay),
-                icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                color: Tokens.accent,
-                constraints: buttons,
-                padding: EdgeInsets.zero,
-                tooltip: 'Play',
-              ),
-              ...widget.trailing,
-            ],
+    return AppTextField(
+      controller: _controller,
+      label: 'URL',
+      hint: widget.hint,
+      monospace: true,
+      keyboardType: TextInputType.url,
+      autocorrect: false,
+      enableSuggestions: false,
+      textInputAction: TextInputAction.go,
+      onSubmitted: (_) => _submit(widget.onPlay),
+      leading: Icon(Icons.link_rounded, size: 18, color: Tokens.fgDim),
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.onQueue != null)
+            RoundIconButton(
+              icon: Icons.playlist_add_rounded,
+              size: 20,
+              color: Tokens.fgDim,
+              tooltip: 'Add to queue',
+              onTap: () => _submit(widget.onQueue),
+            ),
+          RoundIconButton(
+            icon: Icons.play_arrow_rounded,
+            size: 22,
+            color: Tokens.accent,
+            tooltip: 'Play',
+            onTap: () => _submit(widget.onPlay),
           ),
-        ),
+          ...widget.trailing,
+        ],
       ),
     );
   }
