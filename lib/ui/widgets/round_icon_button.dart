@@ -26,8 +26,13 @@ enum RoundTone {
 /// fill ([Tokens.accentContainer]) whatever its [tone]. [label] names it
 /// for screen readers when the tooltip says more; [toggled] marks an on
 /// and off switch. [color] tints the icon of a [RoundTone.plain] or
-/// [RoundTone.tonal] button, for one that sits on a filled surface (a
-/// selected row) or shows a state in its tint.
+/// [RoundTone.tonal] button, for one that shows a state in its tint.
+/// [selected] marks a button that is the selected one of a set or a
+/// toggle shown as selected (a favourite): it gets the same fill as
+/// [active] and says "selected" to screen readers. [onContainer] draws
+/// it for a surface already in the secondary selection fill (the current
+/// row): the icon in [Tokens.onAccentContainer], a hover wash of that
+/// tone, and no fill of its own.
 class RoundIconButton extends StatelessWidget {
   const RoundIconButton({
     super.key,
@@ -42,6 +47,8 @@ class RoundIconButton extends StatelessWidget {
     this.label,
     this.toggled,
     this.color,
+    this.selected,
+    this.onContainer = false,
   });
 
   final IconData icon;
@@ -60,13 +67,27 @@ class RoundIconButton extends StatelessWidget {
   final bool? toggled;
   final Color? color;
 
+  /// Selected (a set's current one, or a toggle shown as selected); null
+  /// for a button with no selected state.
+  final bool? selected;
+
+  /// Whether the button sits on the secondary selection fill.
+  final bool onContainer;
+
   @override
   Widget build(BuildContext context) {
     final minTap = context.layout.minTap;
     final d = math.max(diameter ?? minTap, minTap);
     final enabled = onTap != null;
+    final on = active || (selected ?? false);
     final (Color fill, Color color) = switch (tone) {
-      _ when active => (Tokens.accentContainer, Tokens.onAccentContainer),
+      _ when onContainer => (
+        Colors.transparent,
+        enabled
+            ? Tokens.onAccentContainer
+            : Tokens.onAccentContainer.withValues(alpha: 0.5),
+      ),
+      _ when on => (Tokens.accentContainer, Tokens.onAccentContainer),
       RoundTone.primary => (
         enabled ? Tokens.accent : Tokens.surface4,
         enabled ? Tokens.onAccent : Tokens.fgFaint,
@@ -84,6 +105,7 @@ class RoundIconButton extends StatelessWidget {
       button: true,
       enabled: enabled,
       toggled: toggled,
+      selected: selected,
       label: label ?? tooltip,
       excludeSemantics: true,
       onTap: onTap,
@@ -101,6 +123,9 @@ class RoundIconButton extends StatelessWidget {
               onTap: onTap,
               onLongPress: onLongPress,
               customBorder: const CircleBorder(),
+              hoverColor: onContainer
+                  ? Tokens.onAccentContainer.withValues(alpha: 0.10)
+                  : null,
               child: Center(
                 child: Icon(icon, size: size, color: color),
               ),
