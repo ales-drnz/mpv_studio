@@ -63,6 +63,7 @@ class TileButton extends StatelessWidget {
       enabled: enabled,
       label: tooltip ?? label,
       excludeSemantics: true,
+      onTap: onPressed,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

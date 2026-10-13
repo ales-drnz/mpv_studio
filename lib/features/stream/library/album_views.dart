@@ -188,6 +188,7 @@ class AlbumCard extends StatelessWidget {
         selected: selected,
         label: sub.isEmpty ? album.title : '${album.title}, $sub',
         excludeSemantics: true,
+        onTap: onTap,
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(

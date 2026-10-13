@@ -292,6 +292,7 @@ class _TabPill extends StatelessWidget {
       inMutuallyExclusiveGroup: true,
       label: label,
       excludeSemantics: true,
+      onTap: onTap,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

@@ -260,6 +260,7 @@ class SessionActionChip extends StatelessWidget {
         label: m.label,
         hint: tip,
         excludeSemantics: true,
+        onTap: onTap,
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(

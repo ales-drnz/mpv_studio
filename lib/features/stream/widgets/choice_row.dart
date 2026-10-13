@@ -86,6 +86,7 @@ class _ChoicePill<T> extends StatelessWidget {
       inMutuallyExclusiveGroup: true,
       label: choice.label,
       excludeSemantics: true,
+      onTap: enabled ? () => onSelected(choice.value) : null,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

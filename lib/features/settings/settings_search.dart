@@ -127,6 +127,7 @@ class _ResultTile extends StatelessWidget {
       button: true,
       label: '${entry.title}, in ${entry.group.title}, ${entry.section}',
       excludeSemantics: true,
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.only(bottom: Tokens.s4),
         child: Material(

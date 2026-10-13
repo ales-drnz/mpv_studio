@@ -214,6 +214,7 @@ class _CodecChip extends StatelessWidget {
       toggled: active,
       label: label,
       excludeSemantics: true,
+      onTap: onTap,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

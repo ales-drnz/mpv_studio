@@ -93,6 +93,7 @@ class _Segment extends StatelessWidget {
       inMutuallyExclusiveGroup: true,
       label: tooltip ?? label,
       excludeSemantics: true,
+      onTap: onTap,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

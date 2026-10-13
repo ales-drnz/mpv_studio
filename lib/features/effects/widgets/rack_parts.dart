@@ -50,6 +50,7 @@ class RackHeaderButton extends StatelessWidget {
         toggled: active ? true : null,
         label: label,
         excludeSemantics: true,
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.only(left: Tokens.s8),
           child: Material(
