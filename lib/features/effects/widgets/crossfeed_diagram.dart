@@ -114,16 +114,16 @@ class _CrossfeedPainter extends CustomPainter {
     void node(Offset at, String label) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromCenter(center: at, width: 22, height: 16),
-          const Radius.circular(4),
+          Rect.fromCenter(center: at, width: 24, height: 24),
+          const Radius.circular(12),
         ),
-        Paint()..color = Tokens.surface2,
+        Paint()..color = Tokens.surface3,
       );
       paintChartLabel(
         canvas,
         label,
-        at.translate(0, -5),
-        accent,
+        at,
+        enabled ? Tokens.fg : Tokens.fgFaint,
         fontSize: 9.5,
         center: true,
         middle: true,

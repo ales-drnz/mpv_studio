@@ -74,8 +74,10 @@ class CacheGeometry {
   }
 }
 
-/// The cache bar: waveform bars over the time axis, the read part filled,
-/// the playhead, brackets for behind and ahead, the cache-secs limit.
+/// The cache bar: waveform bars over the time axis, played in the accent,
+/// cached ahead in the dim accent and not cached in the inactive tone,
+/// over a wash marking the read part; the playhead, brackets for behind
+/// and ahead, the cache-secs limit.
 class CacheBarPainter extends CustomPainter {
   final CacheGeometry geometry;
   final WaveformData? waveform;
@@ -93,22 +95,16 @@ class CacheBarPainter extends CustomPainter {
         ((t - g.axisStart) / (g.axisEnd - g.axisStart)).clamp(0.0, 1.0) * w;
 
     final bar = Rect.fromLTWH(0, _top, w, _barH);
-    final rr = RRect.fromRectAndRadius(bar, const Radius.circular(Tokens.rSm));
+    final rr = RRect.fromRectAndRadius(bar, const Radius.circular(Tokens.rMd));
     canvas.save();
     canvas.clipRRect(rr);
-    canvas.drawRect(bar, Paint()..color = Tokens.surface2);
+    canvas.drawRect(bar, Paint()..color = Tokens.surface3);
 
-    // The part read so far: behind the playhead dimmer than ahead.
+    // The part read so far.
     for (final r in g.ranges) {
-      final l = x(r.$1), rx = x(r.$2);
-      final p = x(g.position).clamp(l, rx);
       canvas.drawRect(
-        Rect.fromLTRB(l, _top, p, _top + _barH),
-        Paint()..color = Tokens.accentDim.withValues(alpha: 0.55),
-      );
-      canvas.drawRect(
-        Rect.fromLTRB(p, _top, rx, _top + _barH),
-        Paint()..color = Tokens.accentDim,
+        Rect.fromLTRB(x(r.$1), _top, x(r.$2), _top + _barH),
+        Paint()..color = Tokens.accentWash,
       );
     }
 
@@ -116,15 +112,19 @@ class CacheBarPainter extends CustomPainter {
     // placeholder pattern elsewhere.
     const step = 4.0;
     final mid = _top + _barH / 2;
-    final barPaint = Paint()..strokeWidth = 2;
+    final barPaint = Paint()
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
     for (var bx = step / 2; bx < w; bx += step) {
       final t = g.axisStart + bx / w * (g.axisEnd - g.axisStart);
       final amp = _amplitude(t, bx) * (_barH / 2 - 5);
       final inRead = g.ranges.any((r) => t >= r.$1 && t <= r.$2);
       final ahead = t >= g.position;
-      barPaint.color = inRead
-          ? (ahead ? Tokens.fg : Tokens.fg.withValues(alpha: 0.55))
-          : Tokens.fgFaint.withValues(alpha: 0.7);
+      barPaint.color = !inRead
+          ? Tokens.surface4
+          : ahead
+          ? Tokens.accentDim
+          : Tokens.accent;
       canvas.drawLine(
         Offset(bx, mid - math.max(amp, 1)),
         Offset(bx, mid + math.max(amp, 1)),

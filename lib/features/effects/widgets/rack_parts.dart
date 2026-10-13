@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../rack_controller.dart';
 
 /// The line under the page title: how many stages, how many on, and how
@@ -16,8 +17,9 @@ String chainSummary(RackController rack, StudioLayout layout) {
       : '$count Drag to reorder, right-click for actions.';
 }
 
-/// A header action of the rack: a pill with an icon and a label, or the
-/// icon alone when [compact]. [active] fills it amber (the bypass).
+/// A header action of the rack: a tonal pill with an icon and a label, or
+/// a tonal circle with the icon alone when [compact]. [active] fills it
+/// amber (the bypass).
 class RackHeaderButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -38,8 +40,9 @@ class RackHeaderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = active ? Tokens.onAccent : Tokens.fg;
+    final fg = active ? Tokens.onAccent : Tokens.onTonal;
     final tap = context.layout.minTap;
+    final ShapeBorder shape = compact ? const CircleBorder() : Tokens.pill;
     return Tooltip(
       message: tooltip,
       child: Semantics(
@@ -53,16 +56,16 @@ class RackHeaderButton extends StatelessWidget {
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              customBorder: Tokens.shape(Tokens.rSm),
+              customBorder: shape,
               child: Ink(
                 height: tap,
                 width: compact ? tap : null,
                 padding: compact
                     ? EdgeInsets.zero
-                    : const EdgeInsets.symmetric(horizontal: Tokens.s12),
+                    : const EdgeInsets.symmetric(horizontal: Tokens.s16),
                 decoration: ShapeDecoration(
-                  color: active ? Tokens.amber : Tokens.surface2,
-                  shape: Tokens.shape(Tokens.rSm),
+                  color: active ? Tokens.amber : Tokens.tonal,
+                  shape: shape,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -70,8 +73,14 @@ class RackHeaderButton extends StatelessWidget {
                   children: [
                     Icon(icon, size: 18, color: fg),
                     if (!compact) ...[
-                      const SizedBox(width: Tokens.s6),
-                      Text(label, style: Tokens.label.copyWith(color: fg)),
+                      const SizedBox(width: Tokens.s8),
+                      Text(
+                        label,
+                        style: Tokens.label.copyWith(
+                          color: fg,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -104,17 +113,18 @@ class RackErrorBanner extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: Tokens.red.withValues(alpha: 0.14),
-          shape: Tokens.shape(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rMd),
         ),
         child: Row(
           children: [
             Icon(Icons.error_outline_rounded, size: 16, color: Tokens.red),
             const SizedBox(width: Tokens.s8),
             Expanded(child: Text(rack.error!, style: Tokens.label)),
-            IconButton(
+            RoundIconButton(
+              icon: Icons.close_rounded,
+              size: 18,
               tooltip: 'Dismiss',
-              onPressed: rack.clearError,
-              icon: Icon(Icons.close_rounded, size: 16, color: Tokens.fgDim),
+              onTap: rack.clearError,
             ),
           ],
         ),
@@ -147,9 +157,9 @@ class RackNode extends StatelessWidget {
           const SizedBox(width: Tokens.s12),
           Text(
             label,
-            style: Tokens.caption.copyWith(
-              letterSpacing: 1.2,
-              color: Tokens.fgDim,
+            style: Tokens.label.copyWith(
+              color: Tokens.fg,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(width: Tokens.s8),
@@ -176,9 +186,10 @@ class EmptyRack extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
-      padding: const EdgeInsets.all(Tokens.s20),
+      padding: const EdgeInsets.all(Tokens.s24),
       decoration: ShapeDecoration(
-        shape: Tokens.shape(Tokens.rMd, side: BorderSide(color: Tokens.line2)),
+        color: Tokens.surface,
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: Column(
         children: [
@@ -194,14 +205,11 @@ class EmptyRack extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Tokens.s12),
-          TextButton.icon(
+          const SizedBox(height: Tokens.s4),
+          FilledButton.icon(
             onPressed: onAdd,
-            icon: const Icon(Icons.add_rounded, size: 16),
+            icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Add stage'),
-            style: TextButton.styleFrom(
-              foregroundColor: Tokens.accent,
-              textStyle: Tokens.label,
-            ),
           ),
         ],
       ),
@@ -222,11 +230,11 @@ class RackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s12),
+      margin: const EdgeInsets.only(bottom: Tokens.s16),
       padding: padding,
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.shape(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: child,
     );

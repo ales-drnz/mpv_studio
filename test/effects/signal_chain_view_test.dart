@@ -19,8 +19,8 @@ void main() {
     ) async {
       await pumpRack(tester, FakeEngine([bass, comp, kMeterStage]));
       expect(find.text('Effects'), findsOneWidget);
-      expect(find.text('INPUT'), findsOneWidget);
-      expect(find.text('OUTPUT'), findsOneWidget);
+      expect(find.text('Input'), findsOneWidget);
+      expect(find.text('Output'), findsOneWidget);
       final y = [
         for (final t in ['Bass', 'Compressor', 'Loudness meter'])
           tester
@@ -33,7 +33,7 @@ void main() {
               .dy,
       ];
       expect(y, orderedEquals([...y]..sort()));
-      expect(find.text('METER'), findsOneWidget);
+      expect(find.text('Meter'), findsOneWidget);
       expect(
         find.text('3 stages, 3 on. Drag to reorder, right-click for actions.'),
         findsOneWidget,
@@ -288,13 +288,13 @@ void main() {
       expect(find.byTooltip('Back'), findsOneWidget);
       final gain = tester.getRect(find.text('Gain'));
       expect(gain.bottom, lessThanOrEqualTo(phone.height));
-      expect(find.text('INPUT'), findsNothing, reason: 'chain covered');
+      expect(find.text('Input'), findsNothing, reason: 'chain covered');
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(StageDetail), findsNothing);
       expect(rack.focused, isNull);
-      expect(find.text('INPUT'), findsOneWidget);
+      expect(find.text('Input'), findsOneWidget);
     });
 
     testWidgets('long press opens the stage actions as a sheet', (
@@ -382,7 +382,7 @@ void main() {
     await tester.tap(find.byKey(ValueKey('stage-header-$id')));
     await tester.pumpAndSettle();
     expect(find.byType(StageDetail), findsOneWidget);
-    expect(find.text('INPUT'), findsOneWidget, reason: 'chain in view');
+    expect(find.text('Input'), findsOneWidget, reason: 'chain in view');
     expect(find.text('Gain'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('detail-close')));
     await tester.pumpAndSettle();

@@ -25,7 +25,9 @@ enum RoundTone {
 /// [active] marks a toggle that is on: it gets the secondary selection
 /// fill ([Tokens.accentContainer]) whatever its [tone]. [label] names it
 /// for screen readers when the tooltip says more; [toggled] marks an on
-/// and off switch.
+/// and off switch. [color] tints the icon of a [RoundTone.plain] or
+/// [RoundTone.tonal] button, for one that sits on a filled surface (a
+/// selected row) or shows a state in its tint.
 class RoundIconButton extends StatelessWidget {
   const RoundIconButton({
     super.key,
@@ -39,6 +41,7 @@ class RoundIconButton extends StatelessWidget {
     this.active = false,
     this.label,
     this.toggled,
+    this.color,
   });
 
   final IconData icon;
@@ -55,6 +58,7 @@ class RoundIconButton extends StatelessWidget {
   final bool active;
   final String? label;
   final bool? toggled;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +73,11 @@ class RoundIconButton extends StatelessWidget {
       ),
       RoundTone.tonal => (
         Tokens.surface3,
-        enabled ? Tokens.fg : Tokens.fgFaint,
+        enabled ? this.color ?? Tokens.fg : Tokens.fgFaint,
       ),
       RoundTone.plain => (
         Colors.transparent,
-        enabled ? Tokens.fg : Tokens.fgFaint,
+        enabled ? this.color ?? Tokens.fg : Tokens.fgFaint,
       ),
     };
     return Semantics(

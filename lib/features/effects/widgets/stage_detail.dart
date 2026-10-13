@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
 import '../stage_presets.dart';
@@ -25,15 +26,13 @@ class StagePowerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final on = rack.chain.stage(id)?.effect.enabled ?? false;
-    return IconButton(
+    return RoundIconButton(
       key: ValueKey('detail-power-$id'),
+      icon: Icons.power_settings_new_rounded,
       tooltip: on ? 'Switch off' : 'Switch on',
-      isSelected: on,
-      onPressed: () => powerStage(rack, id, !on),
-      icon: Icon(
-        Icons.power_settings_new_rounded,
-        color: on ? Tokens.accent : Tokens.fgFaint,
-      ),
+      toggled: on,
+      color: on ? Tokens.accent : Tokens.fgFaint,
+      onTap: () => powerStage(rack, id, !on),
     );
   }
 }
@@ -52,10 +51,11 @@ class StageMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return RoundIconButton(
       key: ValueKey('detail-menu-$id'),
+      icon: Icons.more_vert_rounded,
       tooltip: 'Stage actions',
-      onPressed: () async {
+      onTap: () async {
         final picked = await showStageMenu(
           context,
           rack,
@@ -64,7 +64,6 @@ class StageMenuButton extends StatelessWidget {
         );
         if (picked != null) onAction(picked);
       },
-      icon: Icon(Icons.more_vert_rounded, color: Tokens.fgDim),
     );
   }
 }
@@ -107,10 +106,10 @@ class StageDetail extends StatelessWidget {
         children: [
           if (showHeader)
             Padding(
-              padding: const EdgeInsets.only(bottom: Tokens.s8),
+              padding: const EdgeInsets.fromLTRB(Tokens.s16, 0, 0, Tokens.s8),
               child: Row(
                 children: [
-                  Icon(stageIcon(e), size: 20, color: Tokens.accent),
+                  Icon(stageIcon(e), size: 20, color: Tokens.fg),
                   const SizedBox(width: Tokens.s12),
                   Expanded(
                     child: Column(
@@ -136,11 +135,11 @@ class StageDetail extends StatelessWidget {
                   ),
                   StagePowerButton(rack: rack, id: id),
                   StageMenuButton(rack: rack, id: id, onAction: onAction),
-                  IconButton(
+                  RoundIconButton(
                     key: const ValueKey('detail-close'),
+                    icon: Icons.close_rounded,
                     tooltip: 'Close the editor',
-                    onPressed: onClose,
-                    icon: Icon(Icons.close_rounded, color: Tokens.fgDim),
+                    onTap: onClose,
                   ),
                 ],
               ),

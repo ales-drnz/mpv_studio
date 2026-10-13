@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
 
 /// Writes a new value of a stage. `live` marks a control that moves
 /// continuously (a slider drag), which the rack throttles.
@@ -155,12 +156,13 @@ class _SubmitTextRowState extends State<SubmitTextRow> {
   @override
   Widget build(BuildContext context) {
     final field = Container(
-      constraints: const BoxConstraints(minHeight: Tokens.controlH),
+      constraints: BoxConstraints(minHeight: controlHeightOf(context)),
       decoration: ShapeDecoration(
-        color: Tokens.surface2,
-        shape: Tokens.shape(Tokens.rSm),
+        color: Tokens.surface3,
+        // A pill for one line; a several-line entry keeps round corners.
+        shape: widget.maxLines == 1 ? Tokens.pill : Tokens.shape(Tokens.rMd),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+      padding: const EdgeInsets.only(left: Tokens.s16, right: Tokens.s4),
       child: Row(
         children: [
           Expanded(
@@ -184,15 +186,11 @@ class _SubmitTextRowState extends State<SubmitTextRow> {
               ),
             ),
           ),
-          IconButton(
+          RoundIconButton(
+            icon: Icons.check_rounded,
+            size: 20,
             tooltip: 'Apply',
-            visualDensity: VisualDensity.compact,
-            onPressed: widget.enabled && _dirty ? _submit : null,
-            icon: Icon(
-              Icons.check_rounded,
-              size: 16,
-              color: _dirty ? Tokens.accent : Tokens.fgFaint,
-            ),
+            onTap: widget.enabled && _dirty ? _submit : null,
           ),
         ],
       ),

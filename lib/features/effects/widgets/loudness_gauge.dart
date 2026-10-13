@@ -113,9 +113,9 @@ class _GaugePainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(left, barTop, w, barH),
-        const Radius.circular(4),
+        const Radius.circular(barH / 2),
       ),
-      Paint()..color = Tokens.surface2,
+      Paint()..color = Tokens.surface3,
     );
 
     // Target and its range.
@@ -125,13 +125,13 @@ class _GaugePainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTRB(x(t - lra / 2), barTop, x(t + lra / 2), barTop + barH),
-          const Radius.circular(4),
+          const Radius.circular(barH / 2),
         ),
-        Paint()..color = accent.withValues(alpha: 0.14),
+        Paint()..color = Tokens.accentWash,
       );
       canvas.drawRect(
-        Rect.fromLTWH(x(t) - 0.5, barTop, 1, barH),
-        Paint()..color = accent.withValues(alpha: 0.6),
+        Rect.fromLTWH(x(t) - 1, barTop, 2, barH),
+        Paint()..color = enabled ? Tokens.fg : Tokens.fgFaint,
       );
       paintChartLabel(
         canvas,
@@ -148,10 +148,10 @@ class _GaugePainter extends CustomPainter {
     if (m != null && m > _luMin) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTRB(left, barTop + 6, x(m), barTop + barH - 6),
-          const Radius.circular(2),
+          Rect.fromLTRB(left + 6, barTop + 6, x(m), barTop + barH - 6),
+          const Radius.circular(5),
         ),
-        Paint()..color = accent.withValues(alpha: 0.85),
+        Paint()..color = accent,
       );
     }
     // Short-term tick.

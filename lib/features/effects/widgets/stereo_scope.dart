@@ -208,8 +208,8 @@ class _ScopePainter extends CustomPainter {
     final barTop = scopeH + 3;
     final barRect = Rect.fromLTWH(2, barTop, size.width - 4, _barH - 8);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(barRect, const Radius.circular(3)),
-      Paint()..color = Tokens.surface2,
+      RRect.fromRectAndRadius(barRect, Radius.circular(barRect.height / 2)),
+      Paint()..color = Tokens.surface3,
     );
     final c = corr.value;
     final mid = barRect.center.dx;
@@ -226,7 +226,7 @@ class _ScopePainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTRB(lo, barRect.top, hi, barRect.bottom),
-        const Radius.circular(3),
+        Radius.circular(barRect.height / 2),
       ),
       Paint()..color = enabled ? fillColor : Tokens.fgFaint,
     );

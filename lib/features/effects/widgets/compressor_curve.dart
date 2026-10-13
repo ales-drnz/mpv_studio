@@ -303,7 +303,10 @@ class _KneePainter extends CustomPainter {
     wedge.close();
     canvas.save();
     canvas.clipRect(plot);
-    canvas.drawPath(wedge, Paint()..color = accent.withValues(alpha: 0.10));
+    canvas.drawPath(
+      wedge,
+      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
+    );
     canvas.restore();
     canvas.drawPath(
       curve,

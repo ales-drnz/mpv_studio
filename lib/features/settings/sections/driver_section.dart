@@ -218,24 +218,22 @@ class _CodecChip extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.shape(Tokens.rSm),
-          child: Container(
-            constraints: BoxConstraints(
-              minHeight: context.layout.minTap,
-              minWidth: context.layout.minTap,
-            ),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+          customBorder: Tokens.pill,
+          child: Ink(
+            height: context.layout.minTap,
+            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
             decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Tokens.surface2,
-              shape: Tokens.shape(Tokens.rSm),
+              color: active ? Tokens.accentContainer : Tokens.surface3,
+              shape: Tokens.pill,
             ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: active ? Tokens.onAccent : Tokens.fgDim,
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: Tokens.label.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: active ? Tokens.onAccentContainer : Tokens.fg,
+                ),
               ),
             ),
           ),

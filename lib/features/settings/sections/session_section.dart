@@ -233,10 +233,10 @@ class _SessionSectionState extends State<SessionSection> {
     final shown = _shownSupported;
     if (shown.isEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: Tokens.s20),
+        padding: const EdgeInsets.symmetric(vertical: Tokens.s24),
         alignment: Alignment.center,
         decoration: ShapeDecoration(
-          color: Tokens.surface,
+          color: Tokens.surface3,
           shape: Tokens.shape(Tokens.rMd),
         ),
         child: Text('No controls yet. Add some below.', style: Tokens.caption),

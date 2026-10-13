@@ -64,4 +64,28 @@ void main() {
       }, skip: skipGoldens);
     }
   }
+
+  for (final palette in [Palette.dark, Palette.light]) {
+    final theme = palette == Palette.dark ? 'dark' : 'light';
+    testWidgets('$theme search results at 412x915', (tester) async {
+      final h = await SettingsHarness.create();
+      final s = studioSize('412x915');
+      await pumpStudio(
+        tester,
+        h.wrap(const Scaffold(body: SettingsPage())),
+        size: s.size,
+        input: InputMode.touch,
+        palette: palette,
+        padding: phoneInsets(s.size),
+      );
+      await tester.enterText(find.byType(TextField).first, 'cache');
+      await tester.pumpAndSettle();
+      expectNoOverflow(tester);
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/settings_search_${theme}_412x915.png'),
+      );
+      await tester.pump(const Duration(seconds: 1));
+    }, skip: skipGoldens);
+  }
 }
