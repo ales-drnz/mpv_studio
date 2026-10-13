@@ -51,9 +51,11 @@ class ConsoleResult {
 const kConsoleHelp = [
   'Type an mpv command, such as seek 30 or cycle mute. Tab completes '
       'commands, properties and values; Up and Down recall earlier lines.',
-  'Quote an argument with spaces: "a b" takes C style escapes (\\" \\\\ '
-      "\\n), 'a b' is taken literally. Backslashes outside quotes stay as "
-      'typed, so Windows paths need no quotes.',
+  'Quote an argument with spaces as mpv does: "a b" takes C style escapes '
+      "(\\\" \\\\ \\n), 'a b' and `!a b!` are taken literally. Quotes "
+      'count only at the start of an argument, # starts a comment, and '
+      'backslashes outside quotes stay as typed, so Windows paths need no '
+      'quotes.',
   'get <property> reads a property as text, getnode <property> as '
       'structured data, and set <property> <value> writes one.',
   'Commands that change what plays (loadfile and loadlist with any flag, '
