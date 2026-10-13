@@ -314,7 +314,7 @@ class _InfoBody extends StatelessWidget {
     ),
     decoration: ShapeDecoration(
       color: Tokens.surface2,
-      shape: Tokens.squircle(Tokens.rSm),
+      shape: Tokens.shape(Tokens.rSm),
     ),
     child: Column(children: rows),
   );
@@ -427,7 +427,7 @@ class _InfoBody extends StatelessWidget {
   }
 }
 
-/// A small stat cell: dim label over a mono value, on a raised squircle.
+/// A small stat cell: dim label over a mono value, on a raised rounded.
 class _StatCell extends StatelessWidget {
   final String label;
   final String value;
@@ -442,7 +442,7 @@ class _StatCell extends StatelessWidget {
       ),
       decoration: ShapeDecoration(
         color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

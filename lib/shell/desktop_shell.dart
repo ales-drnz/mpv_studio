@@ -214,7 +214,7 @@ class _NavItem extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
               curve: Curves.easeOut,
@@ -222,7 +222,7 @@ class _NavItem extends StatelessWidget {
               alignment: Alignment.centerLeft,
               decoration: ShapeDecoration(
                 color: active ? Tokens.accent : Colors.transparent,
-                shape: Tokens.squircle(Tokens.rSm),
+                shape: Tokens.shape(Tokens.rSm),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(

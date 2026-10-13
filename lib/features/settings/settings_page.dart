@@ -187,10 +187,10 @@ class _GroupTile extends StatelessWidget {
       button: true,
       child: Material(
         color: selected ? Tokens.accentWash : Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rMd),
+          customBorder: Tokens.shape(Tokens.rMd),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: context.layout.minTap + 16),
             child: Padding(

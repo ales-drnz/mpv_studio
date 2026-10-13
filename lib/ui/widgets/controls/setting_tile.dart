@@ -100,7 +100,7 @@ class SettingTile extends StatelessWidget {
       enabled: enabled,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        customBorder: Tokens.squircle(Tokens.rSm),
+        customBorder: Tokens.shape(Tokens.rSm),
         child: padded,
       ),
     );

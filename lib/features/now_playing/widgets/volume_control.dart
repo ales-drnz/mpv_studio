@@ -11,8 +11,8 @@ import '../transport_actions.dart';
 /// horizontal slider (default) or a vertical one (slim, fills its
 /// parent's height, for a column beside the meters).
 ///
-/// The slider is the app's flat house style ([_FlatSlider]): a squircle
-/// pill track, an accent fill, and a squircle thumb, matching the
+/// The slider is the app's flat house style ([_FlatSlider]): a rounded
+/// pill track, an accent fill, and a rounded thumb, matching the
 /// settings/effects sliders. Muting dims the fill and thumb instead of
 /// disabling interaction, so you can still drag while muted. The calls run
 /// through the page's guard.
@@ -104,7 +104,7 @@ class VolumeControl extends StatelessWidget {
   }
 }
 
-/// A flat slider (squircle pill track, accent fill, squircle thumb) that
+/// A flat slider (rounded pill track, accent fill, rounded thumb) that
 /// works horizontally or vertically. Tap or drag to set; reports through
 /// [onChanged]. Mirrors the look of `AppSlider`; [enabled] = false dims it
 /// (used for the muted state) without blocking the gesture.
@@ -137,16 +137,16 @@ class _FlatSlider extends StatelessWidget {
 
     final emptyShape = ShapeDecoration(
       color: Tokens.surface3,
-      shape: Tokens.squircle(Tokens.rPill),
+      shape: Tokens.shape(Tokens.rPill),
     );
     final fillShape = ShapeDecoration(
       color: fillColor,
-      shape: Tokens.squircle(Tokens.rPill),
+      shape: Tokens.shape(Tokens.rPill),
     );
     final thumb = Container(
       width: _thumb,
       height: _thumb,
-      decoration: ShapeDecoration(color: thumbColor, shape: Tokens.squircle(8)),
+      decoration: ShapeDecoration(color: thumbColor, shape: Tokens.shape(8)),
     );
 
     return LayoutBuilder(

@@ -91,7 +91,7 @@ class _SettingAnchorState extends State<SettingAnchor>
         return DecoratedBox(
           decoration: ShapeDecoration(
             color: wash.withValues(alpha: wash.a * t.clamp(0.0, 1.0)),
-            shape: Tokens.squircle(Tokens.rSm),
+            shape: Tokens.shape(Tokens.rSm),
           ),
           child: child,
         );

@@ -67,7 +67,7 @@ class TransportControls extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: pad, vertical: Tokens.s4),
             decoration: ShapeDecoration(
               color: Tokens.surface2,
-              shape: Tokens.squircle(Tokens.rLg),
+              shape: Tokens.shape(Tokens.rLg),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -227,10 +227,10 @@ class PlayPauseButton extends StatelessWidget {
                   children: [
                     Material(
                       color: Tokens.accent,
-                      shape: Tokens.squircle(Tokens.rLg),
+                      shape: Tokens.shape(Tokens.rLg),
                       child: InkWell(
                         onTap: onTap,
-                        customBorder: Tokens.squircle(Tokens.rLg),
+                        customBorder: Tokens.shape(Tokens.rLg),
                         child: SizedBox.square(
                           dimension: size,
                           child: AnimatedSwitcher(
@@ -426,7 +426,7 @@ class _SpeedButton extends StatelessWidget {
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: () => _pick(context, rate),
-                customBorder: Tokens.squircle(Tokens.rSm),
+                customBorder: Tokens.shape(Tokens.rSm),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     minWidth: minTap,

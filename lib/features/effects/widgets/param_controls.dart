@@ -158,7 +158,7 @@ class _SubmitTextRowState extends State<SubmitTextRow> {
       constraints: const BoxConstraints(minHeight: Tokens.controlH),
       decoration: ShapeDecoration(
         color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
       child: Row(

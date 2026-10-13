@@ -37,7 +37,7 @@ class ShellToolButton extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: tap, minWidth: tap),
               child: expanded

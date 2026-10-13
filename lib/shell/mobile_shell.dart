@@ -189,11 +189,11 @@ class _Tab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mirror the desktop sidebar's _NavItem: a solid-accent squircle pill for
+    // Mirror the desktop sidebar's _NavItem: a solid-accent rounded pill for
     // the active tab with onAccent contents, inactive tabs in fgDim.
     final color = active ? Tokens.onAccent : Tokens.fgDim;
     // The inter-pill gap is a Padding OUTSIDE the InkWell so the ink and
-    // hover area (clipped to the same squircle) lines up exactly with the
+    // hover area (clipped to the same rounded) lines up exactly with the
     // visible pill: a margin inside the InkWell would make the highlight
     // overshoot.
     return Padding(
@@ -208,14 +208,14 @@ class _Tab extends StatelessWidget {
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              customBorder: Tokens.squircle(Tokens.rSm),
+              customBorder: Tokens.shape(Tokens.rSm),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
                 decoration: ShapeDecoration(
                   color: active ? Tokens.accent : Colors.transparent,
-                  shape: Tokens.squircle(Tokens.rSm),
+                  shape: Tokens.shape(Tokens.rSm),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -293,11 +293,11 @@ class _MoreItem extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: Ink(
               decoration: ShapeDecoration(
                 color: active ? Tokens.accent : Colors.transparent,
-                shape: Tokens.squircle(Tokens.rSm),
+                shape: Tokens.shape(Tokens.rSm),
               ),
               padding: const EdgeInsets.symmetric(
                 horizontal: Tokens.s16,

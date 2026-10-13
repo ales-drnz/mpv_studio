@@ -64,7 +64,7 @@ class PlaylistBanner extends StatelessWidget {
         padding: const EdgeInsets.only(left: Tokens.s12),
         decoration: ShapeDecoration(
           color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: Row(
           children: [

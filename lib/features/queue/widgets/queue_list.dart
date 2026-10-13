@@ -341,7 +341,7 @@ class _SwipeBackground extends StatelessWidget {
     child: DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.red.withValues(alpha: 0.18),
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       child: Align(
         alignment: Alignment.centerRight,

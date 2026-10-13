@@ -210,7 +210,7 @@ class OnboardingView extends StatelessWidget {
                     minimumSize: Size(layout.minTap, layout.minTap),
                     foregroundColor: Tokens.fg,
                     side: BorderSide(color: Tokens.line2),
-                    shape: Tokens.squircle(Tokens.rSm) as OutlinedBorder,
+                    shape: Tokens.shape(Tokens.rSm) as OutlinedBorder,
                   ),
                   child: Text(s.label),
                 ),
@@ -240,7 +240,7 @@ class OnboardingView extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: maxWidth),
                 child: Material(
                   color: Tokens.surface,
-                  shape: Tokens.squircle(Tokens.rLg),
+                  shape: Tokens.shape(Tokens.rLg),
                   child: Padding(
                     padding: const EdgeInsets.all(Tokens.s24),
                     child: content,
@@ -302,7 +302,7 @@ class _Choice extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Tokens.surface2,
-      shape: Tokens.squircle(Tokens.rMd),
+      shape: Tokens.shape(Tokens.rMd),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

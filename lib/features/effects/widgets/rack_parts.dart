@@ -53,7 +53,7 @@ class RackHeaderButton extends StatelessWidget {
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              customBorder: Tokens.squircle(Tokens.rSm),
+              customBorder: Tokens.shape(Tokens.rSm),
               child: Ink(
                 height: tap,
                 width: compact ? tap : null,
@@ -62,7 +62,7 @@ class RackHeaderButton extends StatelessWidget {
                     : const EdgeInsets.symmetric(horizontal: Tokens.s12),
                 decoration: ShapeDecoration(
                   color: active ? Tokens.amber : Tokens.surface2,
-                  shape: Tokens.squircle(Tokens.rSm),
+                  shape: Tokens.shape(Tokens.rSm),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -104,7 +104,7 @@ class RackErrorBanner extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: Tokens.red.withValues(alpha: 0.14),
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: Row(
           children: [
@@ -178,10 +178,7 @@ class EmptyRack extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
       padding: const EdgeInsets.all(Tokens.s20),
       decoration: ShapeDecoration(
-        shape: Tokens.squircle(
-          Tokens.rMd,
-          side: BorderSide(color: Tokens.line2),
-        ),
+        shape: Tokens.shape(Tokens.rMd, side: BorderSide(color: Tokens.line2)),
       ),
       child: Column(
         children: [
@@ -229,7 +226,7 @@ class RackCard extends StatelessWidget {
       padding: padding,
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: child,
     );

@@ -39,7 +39,7 @@ class EmptyPlayback extends StatelessWidget {
                 height: 96,
                 decoration: ShapeDecoration(
                   color: Tokens.surface2,
-                  shape: Tokens.squircle(Tokens.rLg),
+                  shape: Tokens.shape(Tokens.rLg),
                 ),
                 child: Icon(
                   Icons.graphic_eq_rounded,
@@ -169,7 +169,7 @@ class _Banner extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: Tokens.red.withValues(alpha: 0.12),
-          shape: Tokens.squircle(
+          shape: Tokens.shape(
             Tokens.rMd,
             side: BorderSide(color: Tokens.red.withValues(alpha: 0.4)),
           ),

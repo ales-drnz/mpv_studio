@@ -133,7 +133,7 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
             padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
             decoration: ShapeDecoration(
               color: Tokens.surface2,
-              shape: Tokens.squircle(Tokens.rSm),
+              shape: Tokens.shape(Tokens.rSm),
             ),
             child: Row(
               children: [
@@ -191,7 +191,7 @@ class _Entry extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         key: ValueKey('add-$id'),
-        customBorder: Tokens.squircle(Tokens.rSm),
+        customBorder: Tokens.shape(Tokens.rSm),
         onTap: onTap,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: context.layout.minTap),

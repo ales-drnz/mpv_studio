@@ -81,7 +81,7 @@ class SliderRow extends StatelessWidget {
   }
 }
 
-/// A flat custom slider: squircle track, accent fill, squircle thumb.
+/// A flat custom slider: rounded track, accent fill, rounded thumb.
 /// Tap or drag to set; reports continuously through [onChanged] and once
 /// through [onChangeEnd]. Snaps to [divisions] when given.
 ///
@@ -247,7 +247,7 @@ class _AppSliderState extends State<AppSlider> {
                         height: _track,
                         decoration: ShapeDecoration(
                           color: Tokens.surface3,
-                          shape: Tokens.squircle(Tokens.rPill),
+                          shape: Tokens.shape(Tokens.rPill),
                         ),
                       ),
                       // Accent fill up to the thumb centre.
@@ -256,7 +256,7 @@ class _AppSliderState extends State<AppSlider> {
                         width: thumb / 2 + frac * span,
                         decoration: ShapeDecoration(
                           color: enabled ? Tokens.accent : Tokens.fgFaint,
-                          shape: Tokens.squircle(Tokens.rPill),
+                          shape: Tokens.shape(Tokens.rPill),
                         ),
                       ),
                       // Thumb, ringed in the accent while focused.
@@ -267,7 +267,7 @@ class _AppSliderState extends State<AppSlider> {
                           height: thumb,
                           decoration: ShapeDecoration(
                             color: enabled ? Tokens.fg : Tokens.fgFaint,
-                            shape: Tokens.squircle(
+                            shape: Tokens.shape(
                               thumb / 2,
                               side: _focused
                                   ? BorderSide(color: Tokens.accent, width: 2)

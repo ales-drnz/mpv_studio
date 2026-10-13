@@ -36,7 +36,7 @@ class CoverArtView extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.squircle(radius)),
+        clipper: ShapeBorderClipper(shape: Tokens.shape(radius)),
         child: Live<Playlist>(
           stream: player.stream.playlist,
           initial: player.state.playlist,

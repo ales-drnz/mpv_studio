@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../ui/tokens.dart';
 
 /// One panel of the Engine view: a caption title with an optional trailing
-/// readout over a flat squircle card.
+/// readout over a flat rounded card.
 class EngineCard extends StatelessWidget {
   final String title;
   final String? caption;
@@ -29,7 +29,7 @@ class EngineCard extends StatelessWidget {
       ),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,7 +102,7 @@ class Spy extends StatelessWidget {
   }
 }
 
-/// A filled squircle chip naming a state, tinted by [color].
+/// A filled rounded chip naming a state, tinted by [color].
 class StatePill extends StatelessWidget {
   final String text;
   final Color color;
@@ -121,7 +121,7 @@ class StatePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s8, vertical: 3),
       decoration: ShapeDecoration(
         color: color.withValues(alpha: strong ? 0.18 : 0.08),
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       child: Text(
         text,

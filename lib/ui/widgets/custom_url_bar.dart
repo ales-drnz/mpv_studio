@@ -65,7 +65,7 @@ class _CustomUrlBarState extends State<CustomUrlBar> {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: Padding(
           padding: const EdgeInsets.only(left: Tokens.s12),

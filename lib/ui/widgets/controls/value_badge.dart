@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
 
-/// A read-only value, set in a small squircle chip and aligned flush to the
+/// A read-only value, set in a small rounded chip and aligned flush to the
 /// trailing edge. The single way settings values are shown.
 class ValueBadge extends StatelessWidget {
   final String text;
@@ -17,7 +17,7 @@ class ValueBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s8, vertical: 4),
       decoration: ShapeDecoration(
         color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       child: Text(
         text,
@@ -67,7 +67,7 @@ class TileButton extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onPressed,
-          customBorder: Tokens.squircle(Tokens.rSm),
+          customBorder: Tokens.shape(Tokens.rSm),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: context.layout.minTap,
@@ -82,7 +82,7 @@ class TileButton extends StatelessWidget {
                 ),
                 decoration: ShapeDecoration(
                   color: Tokens.surface2,
-                  shape: Tokens.squircle(Tokens.rSm),
+                  shape: Tokens.shape(Tokens.rSm),
                 ),
                 child: Text(
                   label,

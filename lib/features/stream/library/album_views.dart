@@ -42,7 +42,7 @@ class CoverArt extends StatelessWidget {
           );
     return ExcludeSemantics(
       child: ClipPath(
-        clipper: ShapeBorderClipper(shape: Tokens.squircle(Tokens.rSm)),
+        clipper: ShapeBorderClipper(shape: Tokens.shape(Tokens.rSm)),
         child: SizedBox(
           width: size,
           height: size,
@@ -213,7 +213,7 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = Tokens.squircle(Tokens.rMd);
+    final shape = Tokens.shape(Tokens.rMd);
     final sub = [
       album.artist,
       if (album.year != null) '${album.year}',

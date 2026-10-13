@@ -186,7 +186,7 @@ class _ExpirySwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Tokens.surface,
-      shape: Tokens.squircle(Tokens.rMd),
+      shape: Tokens.shape(Tokens.rMd),
       clipBehavior: Clip.antiAlias,
       child: SwitchListTile(
         value: value,
@@ -276,7 +276,7 @@ class ResolverLogTile extends StatelessWidget {
       padding: const EdgeInsets.all(Tokens.s12),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,7 +328,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s6, vertical: 1),
       decoration: ShapeDecoration(
-        shape: Tokens.squircle(Tokens.rSm, side: BorderSide(color: color)),
+        shape: Tokens.shape(Tokens.rSm, side: BorderSide(color: color)),
       ),
       child: Text(text, style: Tokens.caption.copyWith(color: color)),
     );

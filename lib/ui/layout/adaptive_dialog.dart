@@ -148,7 +148,7 @@ Future<T?> showStudioDialog<T>(
         backgroundColor: Tokens.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: Tokens.squircle(Tokens.rLg),
+        shape: Tokens.shape(Tokens.rLg),
         insetPadding: const EdgeInsets.all(Tokens.s24),
         child: ConstrainedBox(
           constraints: BoxConstraints(

@@ -180,7 +180,7 @@ class MiniPlayer extends StatelessWidget {
                             type: MaterialType.transparency,
                             child: InkWell(
                               onTap: onOpen,
-                              customBorder: Tokens.squircle(Tokens.rSm),
+                              customBorder: Tokens.shape(Tokens.rSm),
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
                                   minHeight: context.layout.minTap,
@@ -574,7 +574,7 @@ class FxBypassToggle extends StatelessWidget {
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: enabled ? _toggle : null,
-                customBorder: Tokens.squircle(Tokens.rSm),
+                customBorder: Tokens.shape(Tokens.rSm),
                 // The pill stays small; the tap area grows to a full target.
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -594,7 +594,7 @@ class FxBypassToggle extends StatelessWidget {
                         color: on
                             ? Tokens.amber.withValues(alpha: 0.16)
                             : Colors.transparent,
-                        shape: Tokens.squircle(
+                        shape: Tokens.shape(
                           Tokens.rSm,
                           side: BorderSide(
                             color: on ? Colors.transparent : Tokens.line2,

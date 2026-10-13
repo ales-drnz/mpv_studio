@@ -35,7 +35,7 @@ class SwitchRow extends StatelessWidget {
   }
 }
 
-/// A flat, theme-coloured toggle with a squircle track and knob. Purely
+/// A flat, theme-coloured toggle with a rounded track and knob. Purely
 /// visual: the surrounding [SwitchRow] (or card) owns the tap and the
 /// semantics.
 class AppSwitch extends StatelessWidget {
@@ -58,7 +58,7 @@ class AppSwitch extends StatelessWidget {
         width: 42,
         height: 24,
         padding: const EdgeInsets.all(3),
-        decoration: ShapeDecoration(color: track, shape: Tokens.squircle(12)),
+        decoration: ShapeDecoration(color: track, shape: Tokens.shape(12)),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
@@ -66,7 +66,7 @@ class AppSwitch extends StatelessWidget {
           child: Container(
             width: 18,
             height: 18,
-            decoration: ShapeDecoration(color: knob, shape: Tokens.squircle(9)),
+            decoration: ShapeDecoration(color: knob, shape: Tokens.shape(9)),
           ),
         ),
       ),

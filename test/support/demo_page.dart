@@ -67,7 +67,7 @@ class _Tile extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rLg),
+        shape: Tokens.shape(Tokens.rLg),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Tokens.s12),

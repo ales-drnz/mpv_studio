@@ -277,7 +277,7 @@ class AbLoopChip extends StatelessWidget {
                     type: MaterialType.transparency,
                     child: InkWell(
                       onTap: () => _menu(context, player, scope.guard),
-                      customBorder: Tokens.squircle(Tokens.rSm),
+                      customBorder: Tokens.shape(Tokens.rSm),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minHeight: context.layout.minTap,
@@ -313,7 +313,7 @@ class AbLoopChip extends StatelessWidget {
                                   ),
                                   decoration: ShapeDecoration(
                                     color: Tokens.amber.withValues(alpha: 0.18),
-                                    shape: Tokens.squircle(Tokens.rPill),
+                                    shape: Tokens.shape(Tokens.rPill),
                                   ),
                                   child: Text(
                                     badge,

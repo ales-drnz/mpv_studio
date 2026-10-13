@@ -51,13 +51,11 @@ class Tokens {
   static const double rLg = 16;
   static const double rPill = 999;
 
-  /// Squircle (superellipse) corner of visual radius [r]. Used app-wide so
-  /// every rounded surface shares the same continuous-curvature corner
-  /// instead of a plain circular arc. The 1.5× keeps the visual roundness
-  /// close to the old circular radii while reading as a squircle.
-  static ShapeBorder squircle(double r, {BorderSide side = BorderSide.none}) =>
-      ContinuousRectangleBorder(
-        borderRadius: BorderRadius.circular(r * 1.5),
+  /// A rounded rectangle with circular-arc corners of radius [r] (a pill
+  /// from [rPill]). The one shape helper of the app.
+  static ShapeBorder shape(double r, {BorderSide side = BorderSide.none}) =>
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(r),
         side: side,
       );
 

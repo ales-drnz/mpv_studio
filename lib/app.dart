@@ -185,7 +185,7 @@ class _RestartCover extends StatelessWidget {
               liveRegion: true,
               child: Material(
                 color: Tokens.surface2,
-                shape: Tokens.squircle(Tokens.rMd),
+                shape: Tokens.shape(Tokens.rMd),
                 child: Padding(
                   padding: const EdgeInsets.all(Tokens.s20),
                   child: Row(

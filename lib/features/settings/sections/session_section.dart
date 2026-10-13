@@ -237,7 +237,7 @@ class _SessionSectionState extends State<SessionSection> {
         alignment: Alignment.center,
         decoration: ShapeDecoration(
           color: Tokens.surface,
-          shape: Tokens.squircle(Tokens.rMd),
+          shape: Tokens.shape(Tokens.rMd),
         ),
         child: Text('No controls yet. Add some below.', style: Tokens.caption),
       );

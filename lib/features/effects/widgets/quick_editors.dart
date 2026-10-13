@@ -78,7 +78,7 @@ class _QuickChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = Tokens.squircle(Tokens.rSm);
+    final shape = Tokens.shape(Tokens.rSm);
     return Tooltip(
       message: kFeaturedSubtitles[d.filter] ?? d.title,
       child: Semantics(

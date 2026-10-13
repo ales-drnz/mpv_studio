@@ -34,7 +34,7 @@ class SettingsGroup extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: ShapeDecoration(
               color: Tokens.surface,
-              shape: Tokens.squircle(Tokens.rMd),
+              shape: Tokens.shape(Tokens.rMd),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

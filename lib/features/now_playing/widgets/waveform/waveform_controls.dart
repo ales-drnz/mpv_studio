@@ -26,7 +26,7 @@ class WaveformZoomControls extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.surface2,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -132,7 +132,7 @@ class WaveformScanIndicator extends StatelessWidget {
           ),
           decoration: ShapeDecoration(
             color: Tokens.surface2,
-            shape: Tokens.squircle(Tokens.rSm),
+            shape: Tokens.shape(Tokens.rSm),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

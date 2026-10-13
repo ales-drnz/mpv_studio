@@ -77,7 +77,7 @@ class _Stage extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: Tokens.accentWash,
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -107,7 +107,7 @@ class _End extends StatelessWidget {
     ),
     decoration: ShapeDecoration(
       color: Tokens.surface2,
-      shape: Tokens.squircle(Tokens.rSm),
+      shape: Tokens.shape(Tokens.rSm),
     ),
     child: Text(label, style: Tokens.numeric),
   );

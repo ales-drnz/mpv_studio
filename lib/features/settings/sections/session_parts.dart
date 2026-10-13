@@ -149,7 +149,7 @@ class ShownActionTile extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         child: Column(
           children: [
@@ -266,13 +266,13 @@ class SessionActionChip extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: Container(
               constraints: BoxConstraints(minHeight: context.layout.minTap),
               padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
               decoration: ShapeDecoration(
                 color: advertised ? Tokens.surface3 : Tokens.surface2,
-                shape: Tokens.squircle(Tokens.rSm),
+                shape: Tokens.shape(Tokens.rSm),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

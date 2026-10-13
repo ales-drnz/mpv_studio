@@ -141,7 +141,7 @@ class StreamButton extends StatelessWidget {
         disabledBackgroundColor: Tokens.surface3,
         disabledForegroundColor: Tokens.fgDim,
         minimumSize: Size(96, context.layout.minTap + 4),
-        shape: Tokens.squircle(Tokens.rSm) as OutlinedBorder,
+        shape: Tokens.shape(Tokens.rSm) as OutlinedBorder,
         textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
           fontSize: 13.5,
           fontWeight: FontWeight.w600,

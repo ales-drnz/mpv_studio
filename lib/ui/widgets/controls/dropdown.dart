@@ -49,7 +49,7 @@ class DropdownRow<T> extends StatelessWidget {
   }
 }
 
-/// A flat dropdown: a squircle trigger that opens the options as a menu
+/// A flat dropdown: a rounded trigger that opens the options as a menu
 /// under it with a pointer, and as a bottom sheet with full size rows on
 /// touch and on compact windows (see `LayoutScope`). Reuses
 /// [DropdownMenuItem] purely as a (value, child) pair so call sites stay
@@ -128,7 +128,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
       elevation: 0,
       menuPadding: const EdgeInsets.all(Tokens.s4),
       constraints: BoxConstraints(minWidth: width, maxWidth: width),
-      shape: Tokens.squircle(Tokens.rSm),
+      shape: Tokens.shape(Tokens.rSm),
       items: [
         for (final item in widget.items)
           PopupMenuItem<_Pick<T>>(
@@ -168,7 +168,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
               onTap: item.enabled
                   ? () => Navigator.of(context).pop(_Pick<T>(item.value))
                   : null,
-              customBorder: Tokens.squircle(Tokens.rSm),
+              customBorder: Tokens.shape(Tokens.rSm),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 48),
                 child: _MenuRow(
@@ -200,13 +200,13 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: enabled ? _show : null,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: Container(
               height: controlHeightOf(context),
               padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
               decoration: ShapeDecoration(
                 color: Tokens.surface2,
-                shape: Tokens.squircle(Tokens.rSm),
+                shape: Tokens.shape(Tokens.rSm),
               ),
               child: Row(
                 children: [
@@ -260,7 +260,7 @@ class _MenuRow extends StatelessWidget {
       alignment: Alignment.centerLeft,
       decoration: ShapeDecoration(
         color: active && enabled ? Tokens.accentWash : Colors.transparent,
-        shape: Tokens.squircle(Tokens.rSm - 2),
+        shape: Tokens.shape(Tokens.rSm - 2),
       ),
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s12, vertical: 10),
       child: Semantics(

@@ -127,7 +127,7 @@ class _ResultTile extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
-        customBorder: Tokens.squircle(Tokens.rSm),
+        customBorder: Tokens.shape(Tokens.rSm),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: context.layout.minTap),
           child: Padding(

@@ -194,7 +194,7 @@ class StageTile extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
         decoration: ShapeDecoration(
           color: open || selected ? Tokens.surface2 : Tokens.surface,
-          shape: Tokens.squircle(
+          shape: Tokens.shape(
             Tokens.rMd,
             side: selected
                 ? BorderSide(color: Tokens.accentDim)
@@ -252,7 +252,7 @@ class _Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: ShapeDecoration(
         color: Tokens.surface3,
-        shape: Tokens.squircle(4),
+        shape: Tokens.shape(4),
       ),
       child: Text(
         text,

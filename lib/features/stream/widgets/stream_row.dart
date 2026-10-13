@@ -5,7 +5,7 @@ import '../../../ui/tokens.dart';
 import '../stream_actions.dart';
 
 /// One row of every Stream list (reference streams, server tracks, Samba
-/// entries): a squircle card with a leading glyph, a title over an optional
+/// entries): a rounded card with a leading glyph, a title over an optional
 /// subtitle, and trailing buttons. The row that started the current track
 /// gets the accent wash and a speaker glyph.
 ///
@@ -49,7 +49,7 @@ class StreamRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final layout = context.layout;
     final glyph = current ? Icons.volume_up_rounded : icon;
-    final shape = Tokens.squircle(Tokens.rSm);
+    final shape = Tokens.shape(Tokens.rSm);
     Widget row = Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s6),
       child: Material(

@@ -87,7 +87,7 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
       constraints: BoxConstraints(maxHeight: visibleRows * rowHeight + 2),
       decoration: ShapeDecoration(
         color: Tokens.surface3,
-        shape: Tokens.squircle(Tokens.rSm),
+        shape: Tokens.shape(Tokens.rSm),
       ),
       clipBehavior: Clip.antiAlias,
       child: ListView.builder(

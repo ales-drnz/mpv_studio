@@ -30,7 +30,7 @@ class RestartBanner extends StatelessWidget {
             container: true,
             child: Material(
               color: Tokens.accentWash,
-              shape: Tokens.squircle(Tokens.rMd),
+              shape: Tokens.shape(Tokens.rMd),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   Tokens.s16,

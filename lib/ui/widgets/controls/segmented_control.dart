@@ -15,7 +15,7 @@ class SegmentOption<T> {
   const SegmentOption(this.value, this.label, {this.tooltip});
 }
 
-/// A flat squircle pill of mutually-exclusive options. Used for short enum
+/// A flat rounded pill of mutually-exclusive options. Used for short enum
 /// picks (loop, gapless, cache mode, normalization, FFT window).
 ///
 /// By default the segments share the width equally ([expand] `true`); set
@@ -55,7 +55,7 @@ class SegmentedControl<T> extends StatelessWidget {
         height: controlHeightOf(context),
         decoration: ShapeDecoration(
           color: Tokens.surface2,
-          shape: Tokens.squircle(Tokens.rSm),
+          shape: Tokens.shape(Tokens.rSm),
         ),
         padding: const EdgeInsets.all(3),
         child: Row(
@@ -100,7 +100,7 @@ class _Segment extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rSm - 2),
+          customBorder: Tokens.shape(Tokens.rSm - 2),
           child: Container(
             alignment: Alignment.center,
             padding: EdgeInsets.symmetric(
@@ -108,7 +108,7 @@ class _Segment extends StatelessWidget {
             ),
             decoration: ShapeDecoration(
               color: active ? Tokens.accent : Colors.transparent,
-              shape: Tokens.squircle(Tokens.rSm - 2),
+              shape: Tokens.shape(Tokens.rSm - 2),
             ),
             child: Text(
               label,

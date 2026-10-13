@@ -49,7 +49,7 @@ Future<T?> showStudioMenu<T>(
       color: Tokens.surface2,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      shape: Tokens.squircle(Tokens.rMd, side: BorderSide(color: Tokens.line2)),
+      shape: Tokens.shape(Tokens.rMd, side: BorderSide(color: Tokens.line2)),
       items: [
         for (final item in items)
           PopupMenuItem<T>(
@@ -87,7 +87,7 @@ Future<T?> showStudioMenu<T>(
             onTap: item.enabled
                 ? () => Navigator.of(context).pop(item.value)
                 : null,
-            customBorder: Tokens.squircle(Tokens.rSm),
+            customBorder: Tokens.shape(Tokens.rSm),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),
               child: Padding(

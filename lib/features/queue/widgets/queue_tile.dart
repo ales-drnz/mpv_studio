@@ -234,7 +234,7 @@ class _QueueTileState extends State<QueueTile> {
           child: Ink(
             decoration: ShapeDecoration(
               color: background,
-              shape: Tokens.squircle(
+              shape: Tokens.shape(
                 Tokens.rSm,
                 side: widget.selected && !current
                     ? BorderSide(color: Tokens.line2)
@@ -265,7 +265,7 @@ class _QueueTileState extends State<QueueTile> {
                         onLongPress: touch ? () => widget.onMore(null) : null,
                         child: InkWell(
                           onTap: widget.onTap,
-                          customBorder: Tokens.squircle(Tokens.rSm),
+                          customBorder: Tokens.shape(Tokens.rSm),
                           child: content,
                         ),
                       ),
@@ -336,7 +336,7 @@ class OutcomeBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Tokens.s6, vertical: 1),
       decoration: ShapeDecoration(
         color: failed ? Tokens.red.withValues(alpha: 0.14) : Tokens.surface3,
-        shape: Tokens.squircle(Tokens.rPill),
+        shape: Tokens.shape(Tokens.rPill),
       ),
       child: Text(
         label,
@@ -402,7 +402,7 @@ class QueueThumb extends StatelessWidget {
       image = const _ThumbPlaceholder();
     }
     return ClipPath(
-      clipper: ShapeBorderClipper(shape: Tokens.squircle(6)),
+      clipper: ShapeBorderClipper(shape: Tokens.shape(6)),
       child: SizedBox(width: size, height: size, child: image),
     );
   }

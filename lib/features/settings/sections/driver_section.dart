@@ -218,7 +218,7 @@ class _CodecChip extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
-          customBorder: Tokens.squircle(Tokens.rSm),
+          customBorder: Tokens.shape(Tokens.rSm),
           child: Container(
             constraints: BoxConstraints(
               minHeight: context.layout.minTap,
@@ -228,7 +228,7 @@ class _CodecChip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
             decoration: ShapeDecoration(
               color: active ? Tokens.accent : Tokens.surface2,
-              shape: Tokens.squircle(Tokens.rSm),
+              shape: Tokens.shape(Tokens.rSm),
             ),
             child: Text(
               label,

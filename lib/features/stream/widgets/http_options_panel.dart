@@ -88,7 +88,7 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
       padding: const EdgeInsets.all(Tokens.s12),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

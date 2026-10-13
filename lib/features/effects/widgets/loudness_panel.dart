@@ -89,7 +89,7 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
       padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
         color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
+        shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
