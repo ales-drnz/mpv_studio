@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/favorites_controller.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
+import 'package:mpv_studio/features/stream/samba/samba_login_store.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
 import 'package:mpv_studio/features/stream/signed_url_resolver.dart';
@@ -255,6 +256,52 @@ class FakeShare implements SambaShare {
   }
 }
 
+/// A keychain in memory; [failing] makes every call throw, like Linux
+/// without a running secret service.
+class FakeSecretStore implements SecretStore {
+  FakeSecretStore({this.failing = false});
+
+  bool failing;
+  final Map<String, String> values = {};
+
+  void _check() {
+    if (failing) throw Exception('no secret service');
+  }
+
+  @override
+  Future<String?> read(String key) async {
+    _check();
+    return values[key];
+  }
+
+  @override
+  Future<void> write(String key, String value) async {
+    _check();
+    values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    _check();
+    values.remove(key);
+  }
+}
+
+/// A login store with nothing saved that saves nothing, touching neither
+/// the preferences nor the keychain.
+class NoSambaLogin extends SambaLoginStore {
+  NoSambaLogin() : super(secrets: FakeSecretStore());
+
+  @override
+  Future<SambaLogin?> load() async => null;
+
+  @override
+  Future<void> save(SambaLogin login) async {}
+
+  @override
+  Future<void> clear() async {}
+}
+
 /// [StreamActions] on [player], unguarded.
 StreamActions actionsFor(PlayerApi player) =>
     StreamActions(player: player, guard: unguarded);
@@ -284,7 +331,7 @@ Widget streamView({
       resolver: resolver ?? SignedUrlResolver(),
       initialTab: tab,
       tabRequest: tabRequest,
-      samba: samba ?? SambaTab(actions: actions, restore: () async => null),
+      samba: samba ?? SambaTab(actions: actions, store: NoSambaLogin()),
     ),
   );
 }
