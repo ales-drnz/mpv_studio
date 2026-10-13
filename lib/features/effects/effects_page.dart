@@ -1,20 +1,26 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/player_scope.dart';
+import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
-import '../../ui/widgets/back_bar.dart';
-import '../../ui/widgets/controls.dart';
-import '../../ui/widgets/grid_card.dart';
-import '../../ui/widgets/section_body.dart';
 import '../../ui/widgets/section_header.dart';
 import '../../ui/widgets/section_switcher.dart';
 import '../../util/reactive.dart';
 import 'rack_catalog.dart';
 import 'rack_controller.dart';
 import 'rack_environment.dart';
+import 'rack_mode.dart';
+import 'stage_presets.dart';
+import 'widgets/add_stage_dialog.dart';
 import 'widgets/loudness_panel.dart';
-import 'widgets/stage_editor.dart';
+import 'widgets/quick_editors.dart';
+import 'widgets/rack_parts.dart';
+import 'widgets/stage_actions.dart';
+import 'widgets/stage_detail.dart';
 import 'widgets/stage_tile.dart';
 
 /// The Effects section: the signal chain as a rack of stages, in the
@@ -60,18 +66,182 @@ class EffectsPage extends StatelessWidget {
   }
 }
 
-/// The rack: a header with the global bypass and "Add stage", the quick
-/// editor tiles, then the chain from input to output, reorderable by
+/// The rack page: a header with the global bypass and "Add stage", the
+/// quick editors, then the chain from input to output, reorderable by
 /// drag. [footer] goes under the output (the loudness panel).
-class SignalChainView extends StatelessWidget {
+///
+/// Where an open stage is edited depends on the room ([RackMode]): in
+/// place on pointer windows, beside the chain on wide ones, and on its
+/// own over the chain on phones, touch screens and low windows.
+class SignalChainView extends StatefulWidget {
   final RackController rack;
   final Widget? footer;
 
   const SignalChainView({super.key, required this.rack, this.footer});
 
-  Future<void> _add(BuildContext context) async {
-    final e = await AddStageSheet.show(context);
-    if (e != null) rack.add(e);
+  @override
+  State<SignalChainView> createState() => _SignalChainViewState();
+}
+
+class _SignalChainViewState extends State<SignalChainView> {
+  /// One key per stage tile, to scroll an opened stage into view.
+  final _tiles = <int, GlobalKey>{};
+
+  /// The mode of the last build, for the callbacks.
+  RackMode _mode = RackMode.inline;
+
+  RackController get rack => widget.rack;
+
+  /// Opens stage [id] the way the current mode shows it.
+  void _open(int id) {
+    if (_mode == RackMode.inline) {
+      rack.open(id);
+      _reveal(id);
+    } else {
+      rack.open(id, only: true);
+    }
+  }
+
+  void _tap(int id) {
+    if (_mode == RackMode.inline && rack.isExpanded(id)) {
+      rack.toggleExpanded(id);
+    } else {
+      _open(id);
+    }
+  }
+
+  /// A quick editor: the first stage of [filter], added at the end of the
+  /// chain when there is none.
+  void _openFilter(AudioFilter filter) {
+    final first = rack.chain.stages
+        .where((s) => s.effect.filter == filter)
+        .firstOrNull;
+    _open(first?.id ?? rack.add(descriptorOf(filter)!.create()));
+  }
+
+  Future<void> _add({int? index}) async {
+    final e = await showAddStage(context);
+    if (e == null || !mounted) return;
+    _open(rack.add(e, index: index));
+  }
+
+  void _action(int id, StageAction action) {
+    final i = rack.chain.indexOf(id);
+    final stage = rack.chain.stage(id);
+    if (stage == null) return;
+    switch (action) {
+      case StageAction.power:
+        powerStage(rack, id, !stage.effect.enabled);
+      case StageAction.duplicate:
+        final copy = rack.duplicate(id);
+        if (copy != null && rack.isExpanded(copy)) _open(copy);
+      case StageAction.moveUp:
+        rack.move(i, i - 1);
+      case StageAction.moveDown:
+        rack.move(i, i + 1);
+      case StageAction.addBefore:
+        _add(index: i);
+      case StageAction.addAfter:
+        _add(index: i + 1);
+      case StageAction.remove:
+        rack.remove(id);
+    }
+  }
+
+  /// Scrolls stage [id] into view once laid out: the whole tile when it
+  /// fits, else its top, so the controls of a stage just opened are on
+  /// screen instead of under the bottom edge.
+  void _reveal(int id) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _tiles[id]?.currentContext;
+      if (ctx == null || !ctx.mounted) return;
+      final box = ctx.findRenderObject();
+      final scrollable = Scrollable.maybeOf(ctx);
+      if (box is! RenderBox || !box.attached || scrollable == null) return;
+      final viewport = RenderAbstractViewport.maybeOf(box);
+      if (viewport == null) return;
+      final position = scrollable.position;
+      final atTop = viewport.getOffsetToReveal(box, 0).offset;
+      final atBottom = viewport.getOffsetToReveal(box, 1).offset;
+      var target = position.pixels;
+      if (box.size.height > position.viewportDimension || target > atTop) {
+        target = atTop;
+      } else if (target < atBottom) {
+        target = atBottom;
+      }
+      target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+      if ((target - position.pixels).abs() < 1) return;
+      position.animateTo(
+        target,
+        duration: kNavTransition,
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  Widget _chain({required bool inline, required bool quick, double end = 0}) {
+    final stages = rack.chain.stages;
+    final focused = rack.focused;
+    return CustomScrollView(
+      key: const PageStorageKey('rack-chain'),
+      // Chains are short: building every tile lets a stage that opens
+      // off screen be found and scrolled to.
+      scrollCacheExtent: const ScrollCacheExtent.pixels(4000),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(0, Tokens.s8, end, 0),
+          sliver: SliverList.list(
+            children: [
+              if (quick) ...[
+                QuickEditors(rack: rack, onOpen: _openFilter),
+                const SizedBox(height: Tokens.s16),
+              ],
+              const RackNode(label: 'INPUT', detail: 'Decoded audio'),
+            ],
+          ),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.only(right: end),
+          sliver: stages.isEmpty
+              ? SliverToBoxAdapter(child: EmptyRack(onAdd: _add))
+              : SliverReorderableList(
+                  itemCount: stages.length,
+                  onReorderItem: rack.move,
+                  proxyDecorator: (child, _, _) =>
+                      Material(type: MaterialType.transparency, child: child),
+                  itemBuilder: (context, i) {
+                    final id = stages[i].id;
+                    return StageTile(
+                      key: _tiles.putIfAbsent(id, GlobalKey.new),
+                      rack: rack,
+                      id: id,
+                      index: i,
+                      inline: inline,
+                      selected: !inline && focused == id,
+                      onTap: () => _tap(id),
+                      onAction: (a) => _action(id, a),
+                    );
+                  },
+                ),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(0, 0, end, Tokens.s32),
+          sliver: SliverList.list(
+            children: [
+              const RackNode(
+                label: 'OUTPUT',
+                detail: 'Then volume and the device',
+              ),
+              if (widget.footer != null) ...[
+                const SizedBox(height: Tokens.s24),
+                const SectionHeader('Loudness'),
+                widget.footer!,
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -79,432 +249,194 @@ class SignalChainView extends StatelessWidget {
     return ListenableBuilder(
       listenable: rack,
       builder: (context, _) {
-        final stages = rack.chain.stages;
-        return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.s20,
-                Tokens.s8,
-                Tokens.s20,
-                0,
-              ),
-              sliver: SliverList.list(
-                children: [
-                  const SectionHeader('Quick editors'),
-                  _QuickTiles(rack: rack),
-                  const SizedBox(height: Tokens.s24),
-                  _RackHeader(rack: rack, onAdd: () => _add(context)),
-                  if (rack.error != null) _ErrorBanner(rack: rack),
-                  const _Node(label: 'INPUT', detail: 'Decoded audio'),
-                ],
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.s20),
-              sliver: stages.isEmpty
-                  ? SliverToBoxAdapter(
-                      child: _EmptyRack(onAdd: () => _add(context)),
-                    )
-                  : SliverReorderableList(
-                      itemCount: stages.length,
-                      onReorderItem: rack.move,
-                      proxyDecorator: (child, _, _) => Material(
-                        type: MaterialType.transparency,
-                        child: child,
+        final layout = context.layout;
+        return LayoutBuilder(
+          builder: (context, c) {
+            final gutter = layout.gutter;
+            final width = math.min(c.maxWidth - 2 * gutter, Breakpoints.wide);
+            final mode = _mode = RackMode.of(layout, width);
+            _tiles.removeWhere((id, _) => rack.chain.stage(id) == null);
+            final focus = mode == RackMode.inline ? null : rack.focused;
+            final covering = mode == RackMode.detail && focus != null;
+
+            final Widget content;
+            switch (mode) {
+              case RackMode.inline:
+                content = _chain(inline: true, quick: true);
+              case RackMode.detail:
+                content = TwoPane(
+                  listWidth: RackMode.listWidth,
+                  minDetailWidth: RackMode.minDetailWidth,
+                  list: _chain(inline: false, quick: true),
+                  detail: focus == null
+                      ? null
+                      : StageDetail(
+                          key: ValueKey('detail-$focus'),
+                          rack: rack,
+                          id: focus,
+                          showHeader: false,
+                          padding: EdgeInsets.only(
+                            top: Tokens.s8,
+                            bottom: layout.pagePadding.bottom,
+                          ),
+                          onClose: rack.closeAll,
+                          onAction: (a) => _action(focus, a),
+                        ),
+                  onCloseDetail: rack.closeAll,
+                );
+              case RackMode.split:
+                content = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: Tokens.s8,
+                        bottom: Tokens.s12,
                       ),
-                      itemBuilder: (context, i) => StageTile(
-                        key: ValueKey(stages[i].id),
-                        rack: rack,
-                        id: stages[i].id,
-                        index: i,
+                      child: QuickEditors(rack: rack, onOpen: _openFilter),
+                    ),
+                    Expanded(
+                      child: TwoPane(
+                        listWidth: RackMode.listWidth,
+                        minDetailWidth: RackMode.minDetailWidth,
+                        list: _chain(
+                          inline: false,
+                          quick: false,
+                          end: layout.gap,
+                        ),
+                        detail: focus == null
+                            ? null
+                            : StageDetail(
+                                key: ValueKey('detail-$focus'),
+                                rack: rack,
+                                id: focus,
+                                padding: EdgeInsets.fromLTRB(
+                                  layout.gap,
+                                  Tokens.s8,
+                                  0,
+                                  layout.pagePadding.bottom,
+                                ),
+                                onClose: rack.closeAll,
+                                onAction: (a) => _action(focus, a),
+                              ),
+                        placeholder: const _NoStageOpen(),
+                        onCloseDetail: rack.closeAll,
                       ),
                     ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.s20,
-                0,
-                Tokens.s20,
-                Tokens.s32,
-              ),
-              sliver: SliverList.list(
-                children: [
-                  const _Node(
-                    label: 'OUTPUT',
-                    detail: 'Then volume and the device',
-                  ),
-                  if (footer != null) ...[
-                    const SizedBox(height: Tokens.s24),
-                    const SectionHeader('Loudness'),
-                    footer!,
                   ],
+                );
+            }
+
+            final stage = focus == null ? null : rack.chain.stage(focus);
+            return PageFrame(
+              title: covering && stage != null
+                  ? stageTitle(stage.effect)
+                  : 'Effects',
+              onBack: covering ? rack.closeAll : null,
+              actions: covering
+                  ? [
+                      Builder(
+                        builder: (context) => IconButton(
+                          key: ValueKey('detail-menu-$focus'),
+                          tooltip: 'Stage actions',
+                          onPressed: () async {
+                            final picked = await showStageMenu(
+                              context,
+                              rack,
+                              focus,
+                              position: centreOf(context),
+                            );
+                            if (picked != null) _action(focus, picked);
+                          },
+                          icon: Icon(
+                            Icons.more_vert_rounded,
+                            color: Tokens.fgDim,
+                          ),
+                        ),
+                      ),
+                    ]
+                  : [
+                      RackHeaderButton(
+                        key: const ValueKey('rack-bypass'),
+                        icon: Icons.compare_arrows_rounded,
+                        label: rack.bypass ? 'Bypassed' : 'Bypass',
+                        tooltip: rack.bypass
+                            ? 'Play the chain again'
+                            : 'Hear the audio without the chain',
+                        active: rack.bypass,
+                        compact: layout.isCompact,
+                        onTap: () => rack.setBypass(!rack.bypass),
+                      ),
+                      RackHeaderButton(
+                        key: const ValueKey('rack-add'),
+                        icon: Icons.add_rounded,
+                        label: 'Add stage',
+                        tooltip: 'Add a stage to the chain',
+                        compact: layout.isCompact,
+                        onTap: _add,
+                      ),
+                    ],
+              bottom: covering
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: Tokens.s4),
+                      child: Text(
+                        chainSummary(rack, layout),
+                        style: Tokens.caption,
+                      ),
+                    ),
+              scrollable: false,
+              maxWidth: mode == RackMode.split
+                  ? Breakpoints.wide
+                  : Breakpoints.readable,
+              padding: EdgeInsets.symmetric(horizontal: gutter),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (rack.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: Tokens.s8),
+                      child: RackErrorBanner(rack: rack),
+                    ),
+                  Expanded(child: content),
                 ],
               ),
-            ),
-          ],
+            );
+          },
         );
       },
     );
   }
 }
 
-class _RackHeader extends StatelessWidget {
-  final RackController rack;
-  final VoidCallback onAdd;
-  const _RackHeader({required this.rack, required this.onAdd});
+/// The editor side of the split layout with no stage open.
+class _NoStageOpen extends StatelessWidget {
+  const _NoStageOpen();
 
   @override
   Widget build(BuildContext context) {
-    final n = rack.chain.length;
-    final on = rack.chain.effects.where((e) => e.enabled).length;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Signal chain', style: Tokens.heading),
-                const SizedBox(height: 2),
-                Text(
-                  n == 0
-                      ? 'No stages'
-                      : '$n ${n == 1 ? 'stage' : 'stages'}, $on on. '
-                            'Drag to reorder.',
-                  style: Tokens.caption,
-                ),
-              ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Tokens.s24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.tune_rounded, size: 28, color: Tokens.fgFaint),
+            const SizedBox(height: Tokens.s12),
+            Text(
+              'Pick a stage to edit it here.',
+              style: Tokens.body.copyWith(color: Tokens.fgDim),
+              textAlign: TextAlign.center,
             ),
-          ),
-          _PillButton(
-            key: const ValueKey('rack-bypass'),
-            icon: Icons.compare_arrows_rounded,
-            label: rack.bypass ? 'Bypassed' : 'Bypass',
-            active: rack.bypass,
-            tooltip: 'Hear the chain off and on',
-            onTap: () => rack.setBypass(!rack.bypass),
-          ),
-          const SizedBox(width: Tokens.s8),
-          _PillButton(
-            key: const ValueKey('rack-add'),
-            icon: Icons.add_rounded,
-            label: 'Add stage',
-            onTap: onAdd,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-  final String? tooltip;
-  final VoidCallback onTap;
-  const _PillButton({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.active = false,
-    this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final fg = active ? Tokens.onAccent : Tokens.fg;
-    final button = Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: Tokens.squircle(Tokens.rSm),
-        child: Ink(
-          height: Tokens.controlH,
-          padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
-          decoration: ShapeDecoration(
-            color: active ? Tokens.amber : Tokens.surface2,
-            shape: Tokens.squircle(Tokens.rSm),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: Tokens.s6),
-              Text(label, style: Tokens.label.copyWith(color: fg)),
-            ],
-          ),
+            const SizedBox(height: Tokens.s4),
+            Text(
+              'The chain stays in view while you edit.',
+              style: Tokens.caption,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
-    );
-    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  final RackController rack;
-  const _ErrorBanner({required this.rack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const ValueKey('rack-error'),
-      margin: const EdgeInsets.only(bottom: Tokens.s8),
-      padding: const EdgeInsets.fromLTRB(
-        Tokens.s12,
-        Tokens.s8,
-        Tokens.s4,
-        Tokens.s8,
-      ),
-      decoration: ShapeDecoration(
-        color: Tokens.red.withValues(alpha: 0.14),
-        shape: Tokens.squircle(Tokens.rSm),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded, size: 16, color: Tokens.red),
-          const SizedBox(width: Tokens.s8),
-          Expanded(child: Text(rack.error!, style: Tokens.label)),
-          IconButton(
-            tooltip: 'Dismiss',
-            visualDensity: VisualDensity.compact,
-            onPressed: rack.clearError,
-            icon: Icon(Icons.close_rounded, size: 16, color: Tokens.fgDim),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The ends of the chain, joined to the stages by the signal line.
-class _Node extends StatelessWidget {
-  final String label;
-  final String detail;
-  const _Node({required this.label, required this.detail});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
-      child: Row(
-        children: [
-          const SizedBox(width: Tokens.s16),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: ShapeDecoration(
-              color: Tokens.accentDim,
-              shape: CircleBorder(),
-            ),
-          ),
-          const SizedBox(width: Tokens.s12),
-          Text(
-            label,
-            style: Tokens.caption.copyWith(
-              letterSpacing: 1.2,
-              color: Tokens.fgDim,
-            ),
-          ),
-          const SizedBox(width: Tokens.s8),
-          Text(detail, style: Tokens.caption),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyRack extends StatelessWidget {
-  final VoidCallback onAdd;
-  const _EmptyRack({required this.onAdd});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: Tokens.s4),
-      padding: const EdgeInsets.all(Tokens.s20),
-      decoration: ShapeDecoration(
-        shape: Tokens.squircle(
-          Tokens.rMd,
-          side: BorderSide(color: Tokens.line2),
-        ),
-      ),
-      child: Column(
-        children: [
-          Text('The audio plays as decoded.', style: Tokens.body),
-          const SizedBox(height: Tokens.s4),
-          Text(
-            'Add a stage, or open a quick editor above.',
-            style: Tokens.caption,
-          ),
-          const SizedBox(height: Tokens.s12),
-          TextButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: const Text('Add stage'),
-            style: TextButton.styleFrom(
-              foregroundColor: Tokens.accent,
-              textStyle: Tokens.label,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The featured effects as tiles: one tap opens the first stage of that
-/// filter in its quick editor, adding the stage first when the chain has
-/// none.
-class _QuickTiles extends StatelessWidget {
-  final RackController rack;
-  const _QuickTiles({required this.rack});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 112,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: kFeaturedCatalog.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Tokens.s12),
-        itemBuilder: (context, i) {
-          final d = kFeaturedCatalog[i];
-          final first = rack.chain.stages
-              .where((s) => s.effect.filter == d.filter)
-              .firstOrNull;
-          return SizedBox(
-            width: 112,
-            child: GridCard(
-              key: ValueKey('quick-${d.name}'),
-              icon: d.icon,
-              title: d.title,
-              active: first?.effect.enabled ?? false,
-              onTap: () => openQuickEditor(context, rack, d.filter),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Opens the quick editor of the first [filter] stage, adding one at the
-/// end of the chain when there is none.
-void openQuickEditor(
-  BuildContext context,
-  RackController rack,
-  AudioFilter filter,
-) {
-  final d = descriptorOf(filter)!;
-  final id =
-      rack.chain.stages
-          .where((s) => s.effect.filter == filter)
-          .firstOrNull
-          ?.id ??
-      rack.add(d.create());
-  // Open in the rack too, so the editor gets its meters.
-  if (!rack.isExpanded(id)) rack.toggleExpanded(id);
-  final env = RackEnvironment.maybeOf(context);
-  final screen = QuickEditorScreen(rack: rack, id: id);
-  Navigator.of(context).push(
-    fadeSlidePageRoute(
-      env == null
-          ? screen
-          : RackEnvironment(
-              taps: env.taps,
-              pcm: env.pcm,
-              spectrum: env.spectrum,
-              loudness: env.loudness,
-              child: screen,
-            ),
-    ),
-  );
-}
-
-/// A featured stage on its own page: power, the stage editor, and where
-/// the stage sits in the chain.
-class QuickEditorScreen extends StatelessWidget {
-  final RackController rack;
-  final int id;
-  const QuickEditorScreen({super.key, required this.rack, required this.id});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Tokens.bg,
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: rack,
-          builder: (context, _) {
-            final stage = rack.chain.stage(id);
-            final title = stage == null ? 'Removed' : stageTitle(stage.effect);
-            return Column(
-              children: [
-                BackBar(
-                  title: title,
-                  onBack: () => Navigator.of(context).maybePop(),
-                ),
-                Expanded(
-                  child: stage == null
-                      ? Center(
-                          child: Text(
-                            'This stage is no longer in the chain.',
-                            style: Tokens.caption,
-                          ),
-                        )
-                      : SectionBody(
-                          children: [
-                            _Card(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: Tokens.s16,
-                              ),
-                              child: SwitchRow(
-                                label: 'Effect',
-                                subtitle:
-                                    'Stage ${rack.chain.indexOf(id) + 1} '
-                                    'of ${rack.chain.length}. '
-                                    '${stageSubtitle(stage.effect)}',
-                                value: stage.effect.enabled,
-                                onChanged: (on) => rack.setEnabled(id, on),
-                              ),
-                            ),
-                            _Card(
-                              child: StageEditor(rack: rack, id: id),
-                            ),
-                          ],
-                        ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _Card extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-  const _Card({
-    required this.child,
-    this.padding = const EdgeInsets.all(Tokens.s16),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s12),
-      padding: padding,
-      decoration: ShapeDecoration(
-        color: Tokens.surface,
-        shape: Tokens.squircle(Tokens.rMd),
-      ),
-      child: child,
     );
   }
 }
