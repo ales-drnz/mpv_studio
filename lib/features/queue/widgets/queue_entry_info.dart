@@ -37,8 +37,10 @@ class QueueEntryInfo extends StatelessWidget {
   final VoidCallback onRemove;
 
   String get _status {
-    if (current) return 'Now playing';
     final o = outcome;
+    // A current entry with an outcome failed to open: it is not playing.
+    if (o?.end == EntryEnd.failed) return 'Failed: ${o!.reason}';
+    if (current) return 'Now playing';
     if (o == null) return 'Not played yet';
     return switch (o.end) {
       EntryEnd.ended => 'Played to the end',
