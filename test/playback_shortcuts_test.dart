@@ -191,6 +191,96 @@ void main() {
       await settleToast(tester);
     });
 
+    testWidgets('[ and ] typed with AltGr on an Italian layout', (
+      tester,
+    ) async {
+      // AltGr+è types [ and AltGr++ types ]: the logical keys are the
+      // base keys of the layout (è and +, here stand-ins the simulator
+      // knows, neither bound), the characters are the brackets.
+      const eGrave = LogicalKeyboardKey.semicolon;
+      const plus = LogicalKeyboardKey.quote;
+      await _pump(tester, fake);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
+      await tester.sendKeyEvent(
+        plus,
+        physicalKey: PhysicalKeyboardKey.bracketRight,
+        character: ']',
+      );
+      await tester.sendKeyEvent(
+        eGrave,
+        physicalKey: PhysicalKeyboardKey.bracketLeft,
+        character: '[',
+      );
+      await tester.sendKeyEvent(
+        eGrave,
+        physicalKey: PhysicalKeyboardKey.bracketLeft,
+        character: '[',
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
+      expect(fake.calls, ['setRate 1.1', 'setRate 1.0', 'setRate 0.9']);
+      await settleToast(tester);
+    });
+
+    testWidgets('- and + (or =) are slower and faster too', (tester) async {
+      await _pump(tester, fake);
+      // Italian layout: + has a key of its own.
+      await tester.sendKeyEvent(LogicalKeyboardKey.quote, character: '+');
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal, character: '=');
+      await tester.sendKeyEvent(LogicalKeyboardKey.minus, character: '-');
+      // US layout: Shift and = types +.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal, character: '+');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.numpadSubtract);
+      expect(fake.calls, [
+        'setRate 1.1',
+        'setRate 1.2',
+        'setRate 1.1',
+        'setRate 1.2',
+        'setRate 1.1',
+      ]);
+      await settleToast(tester);
+    });
+
+    testWidgets('a speed key acts once per press, and not as a shortcut', (
+      tester,
+    ) async {
+      await _pump(tester, fake);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.minus, character: '-');
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.minus, character: '-');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.minus);
+      // Ctrl and - (a zoom shortcut) and Shift and [ (types {) are not.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.minus, character: '-');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal, character: '=');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.bracketLeft, character: '{');
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(fake.calls, ['setRate 0.9']);
+      await settleToast(tester);
+    });
+
+    testWidgets('speed keys typed in a text field are left alone', (
+      tester,
+    ) async {
+      await _pump(tester, fake);
+      await tester.tap(find.byKey(const ValueKey('field')));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.minus, character: '-');
+      await tester.sendKeyEvent(LogicalKeyboardKey.quote, character: '+');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altRight);
+      await tester.sendKeyEvent(
+        LogicalKeyboardKey.semicolon,
+        physicalKey: PhysicalKeyboardKey.bracketLeft,
+        character: '[',
+      );
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altRight);
+      expect(fake.calls, isEmpty);
+    });
+
     testWidgets('N at the end of the queue says so', (tester) async {
       fake.nextResult = false;
       await _pump(tester, fake);
