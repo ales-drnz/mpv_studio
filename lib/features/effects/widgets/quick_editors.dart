@@ -12,7 +12,8 @@ import '../../../ui/widgets/scroll_fade.dart';
 
 /// The featured effects as pill chips, one tap from their editor: wrapped
 /// over as many lines as they need on wide windows, a scrolling row on
-/// compact ones or with [singleRow], faded at the edge that has more and
+/// compact ones, on low touch screens (a phone in landscape, where two
+/// lines of chips would take half the page) or with [singleRow], faded at the edge that has more and
 /// with arrows on pointer while some chips are out of view.
 /// A chip is filled while the chain has that effect switched on.
 class QuickEditors extends StatelessWidget {
@@ -49,7 +50,7 @@ class QuickEditors extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionHeader('Quick editors'),
-        if (layout.isCompact || singleRow)
+        if (layout.isCompact || (layout.isShort && layout.isTouch) || singleRow)
           _ScrollingRow(height: layout.minTap, children: chips)
         else
           Wrap(spacing: Tokens.s8, runSpacing: Tokens.s8, children: chips),
