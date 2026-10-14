@@ -52,16 +52,12 @@ void main() {
               },
           launch: launch ?? () async => _Studio('fresh'),
           onChanged: (s) => changed.add(s.name),
+          busyBuilder: (_) => const Text('restarting'),
           errorBuilder: (context, error, retry) =>
               TextButton(onPressed: retry, child: Text('failed: $error')),
           builder: (context, studio, r) {
             restart = r;
-            return Column(
-              children: [
-                _Page(studio),
-                if (r.inProgress) const Text('restarting'),
-              ],
-            );
+            return _Page(studio);
           },
         ),
       ),
@@ -77,6 +73,8 @@ void main() {
     final done = restart.run();
     await tester.pump();
     expect(find.text('restarting'), findsOneWidget);
+    // The page is gone before the old studio shuts down.
+    expect(find.text('page on one'), findsNothing);
     expect(first.down, isTrue);
 
     next.complete(_Studio('two'));
@@ -103,6 +101,7 @@ void main() {
   ) async {
     await pump(tester);
     final done = restart.run();
+    await tester.pump();
     next.completeError(StateError('no device'));
     await done;
     await tester.pump();
@@ -118,7 +117,9 @@ void main() {
     tester,
   ) async {
     await pump(tester, restartWith: (_) => throw StateError('no engine'));
-    await restart.run();
+    final done = restart.run();
+    await tester.pump();
+    await done;
     await tester.pump();
     expect(find.textContaining('failed: Bad state: no engine'), findsOneWidget);
     // Not stuck: retry launches.
