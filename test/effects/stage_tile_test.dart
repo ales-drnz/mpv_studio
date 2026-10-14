@@ -19,7 +19,7 @@ void main() {
       tester,
       Scaffold(
         body: ReorderableListView(
-          onReorder: (_, _) {},
+          onReorderItem: (_, _) {},
           buildDefaultDragHandles: false,
           children: [
             StageTile(
