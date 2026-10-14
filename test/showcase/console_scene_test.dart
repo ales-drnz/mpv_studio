@@ -11,6 +11,7 @@ import 'package:mpv_studio/features/console/console_page.dart';
 import 'package:mpv_studio/shell/sections.dart';
 
 import '../../tool/showcase/showcase.dart';
+import '../support/finders.dart';
 import '../support/layout_harness.dart';
 import 'showcase_app.dart';
 import 'showcase_covers.dart';
@@ -139,7 +140,7 @@ void main() {
 
     // The level filter: verbose lines too, then back to info.
     Future<void> level(String from, String to) async {
-      await scene.moveOnto(find.widgetWithText(OutlinedButton, from));
+      await scene.moveOnto(buttonWithText<OutlinedButton>(from));
       await scene.click();
       await scene.wait(350);
       await scene.moveOnto(find.text(to).last);

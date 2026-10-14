@@ -14,6 +14,7 @@ import 'package:mpv_studio/studio/playback_issues.dart';
 
 import '../../tool/showcase/showcase.dart';
 import '../stream/stream_fakes.dart';
+import '../support/finders.dart';
 import '../support/layout_harness.dart';
 import 'showcase_app.dart';
 import 'showcase_library.dart';
@@ -133,7 +134,7 @@ void main() {
     await scene.click();
     await scene.wait(450);
     await scene.settleImages();
-    await scene.moveOnto(find.widgetWithText(FilledButton, 'Play').first);
+    await scene.moveOnto(buttonWithText<FilledButton>('Play').first);
     await scene.click();
     await scene.wait(500);
 

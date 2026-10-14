@@ -253,7 +253,7 @@ void main() {
       );
       expect(tester.widget(button('Play the queue')), isA<FilledButton>());
       expect(tester.widget(button('Open files')), isA<OutlinedButton>());
-      expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.bySubtype<FilledButton>(), findsOneWidget);
     });
 
     testWidgets('an empty queue makes opening files the primary', (
@@ -264,7 +264,7 @@ void main() {
       expect(
         find.ancestor(
           of: find.text('Open files'),
-          matching: find.byType(FilledButton),
+          matching: find.bySubtype<FilledButton>(),
         ),
         findsOneWidget,
       );

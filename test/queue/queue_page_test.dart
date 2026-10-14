@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 
+import '../support/finders.dart';
 import '../support/layout_harness.dart';
 import 'queue_fixture.dart';
 
@@ -17,10 +18,10 @@ void main() {
       final (player, details) = emptyQueue();
       await pumpQueue(tester, player, details, picked: ['/m/a.flac']);
       expect(find.text('The queue is empty'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Add files'), findsWidgets);
+      expect(buttonWithText<FilledButton>('Add files'), findsWidgets);
       expect(find.text('Load playlist'), findsWidgets);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Add files').last);
+      await tester.tap(buttonWithText<FilledButton>('Add files').last);
       await tester.pumpAndSettle();
       expect(player.calls, contains('openAll 1 play=true'));
       expect(find.text('a'), findsWidgets);
@@ -31,7 +32,7 @@ void main() {
       final (player, details) = emptyQueue();
       await pumpQueue(tester, player, details);
       final clear = tester.widget<TextButton>(
-        find.widgetWithText(TextButton, 'Clear queue'),
+        buttonWithText<TextButton>('Clear queue'),
       );
       expect(clear.onPressed, isNull);
     });
@@ -156,15 +157,15 @@ void main() {
     testWidgets('clearing asks first', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.widgetWithText(TextButton, 'Clear queue'));
+      await tester.tap(buttonWithText<TextButton>('Clear queue'));
       await tester.pumpAndSettle();
       expect(find.text('Clear the queue?'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(player.calls, isNot(contains('clearPlaylist')));
-      await tester.tap(find.widgetWithText(TextButton, 'Clear queue'));
+      await tester.tap(buttonWithText<TextButton>('Clear queue'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+      await tester.tap(buttonWithText<FilledButton>('Clear'));
       await tester.pumpAndSettle();
       expect(player.calls.last, 'clearPlaylist');
       expect(find.text('The queue is empty'), findsOneWidget);
@@ -268,7 +269,7 @@ void main() {
     await player.move(2, 0);
     await tester.pumpAndSettle();
     expect(find.text('1 of 3'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Play'));
+    await tester.tap(buttonWithText<FilledButton>('Play'));
     await tester.pumpAndSettle();
     expect(player.calls.last, 'jump 0');
   });
@@ -288,7 +289,13 @@ void main() {
     final row = find.bySemanticsLabel(RegExp('^Track 1, Peace Piece'));
     expect(
       tester.getSemantics(row),
-      isSemantics(isButton: true, hasTapAction: true, hasLongPressAction: true),
+      // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
+      // ignore: deprecated_member_use
+      containsSemantics(
+        isButton: true,
+        hasTapAction: true,
+        hasLongPressAction: true,
+      ),
     );
     final node = find.semantics.byLabel(RegExp('^Track 1, Peace Piece'));
     tester.semantics.tap(node);
@@ -311,7 +318,7 @@ void main() {
       details,
       picked: ['/m/a.flac', '/m/b.flac'],
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Add files').last);
+    await tester.tap(buttonWithText<FilledButton>('Add files').last);
     await tester.pump();
     expect(find.text('Adding 2 files'), findsOneWidget);
     player.openGate!.complete();

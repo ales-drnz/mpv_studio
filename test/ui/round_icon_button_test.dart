@@ -34,7 +34,9 @@ void main() {
     expect(fillOf(tester), Palette.light.accentContainer);
     expect(
       tester.getSemantics(find.bySemanticsLabel('Favorite')),
-      isSemantics(isButton: true, isSelected: true, hasTapAction: true),
+      // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
+      // ignore: deprecated_member_use
+      containsSemantics(isButton: true, isSelected: true, hasTapAction: true),
     );
     handle.dispose();
   });

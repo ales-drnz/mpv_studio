@@ -46,7 +46,9 @@ void main() {
       final node = find.semantics.byLabel(label);
       expect(
         tester.getSemantics(find.bySemanticsLabel(label)),
-        isSemantics(isButton: true, hasTapAction: true),
+        // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
+        // ignore: deprecated_member_use
+        containsSemantics(isButton: true, hasTapAction: true),
         reason: label,
       );
       tester.semantics.tap(node);
@@ -54,7 +56,9 @@ void main() {
     expect(taps, ['segment 1', 'choice 1', 'tile', 'rack']);
     expect(
       tester.getSemantics(find.bySemanticsLabel('Off')),
-      isSemantics(isSelected: true, hasSelectedState: true),
+      // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
+      // ignore: deprecated_member_use
+      containsSemantics(isSelected: true, hasSelectedState: true),
     );
     handle.dispose();
   });

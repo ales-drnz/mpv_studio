@@ -7,6 +7,7 @@ import 'package:mpv_studio/features/settings/settings_page.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/widgets/controls.dart';
 
+import '../support/finders.dart';
 import '../support/layout_harness.dart';
 import 'studio_fakes.dart';
 
@@ -130,7 +131,7 @@ void main() {
       find.text('Applies after a player restart: Normalize downmix.'),
       findsOneWidget,
     );
-    await tester.tap(find.widgetWithText(TextButton, 'Restart player'));
+    await tester.tap(buttonWithText<TextButton>('Restart player'));
     expect(h.restarts, 1);
     await drain(tester);
   });

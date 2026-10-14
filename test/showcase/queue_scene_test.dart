@@ -10,6 +10,7 @@ import 'package:mpv_studio/shell/sections.dart';
 import 'package:mpv_studio/studio/playback_issues.dart';
 
 import '../../tool/showcase/showcase.dart';
+import '../support/finders.dart';
 import '../support/layout_harness.dart';
 import 'showcase_app.dart';
 import 'showcase_covers.dart';
@@ -126,7 +127,7 @@ void main() {
     await scene.wait(900);
 
     // Add two files: they land at the end of the queue.
-    await scene.moveOnto(find.widgetWithText(FilledButton, 'Add files'));
+    await scene.moveOnto(buttonWithText<FilledButton>('Add files'));
     await scene.click();
     await scene.wait(500);
 

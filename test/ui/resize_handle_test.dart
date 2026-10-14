@@ -62,7 +62,9 @@ void main() {
     final node = tester.getSemantics(find.bySemanticsLabel('Waveform height'));
     expect(
       node,
-      isSemantics(
+      // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
+      // ignore: deprecated_member_use
+      containsSemantics(
         label: 'Waveform height',
         hasIncreaseAction: true,
         hasDecreaseAction: true,
