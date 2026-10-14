@@ -6,8 +6,9 @@ export 'palette.dart';
 
 /// Design tokens for MPV Studio, direction "Expressive tonal".
 ///
-/// No shadows, no glows, no gradients, and almost no hairlines: hierarchy
-/// is carried by tonal surface containers (`surface` to `surface4`),
+/// No shadows (but the [lift] of an item being dragged), no glows, no
+/// gradients, and almost no hairlines: hierarchy is carried by tonal
+/// surface containers (`surface` to `surface4`),
 /// shape and spacing. Every corner is a circular arc; interactive
 /// controls are pills or full circles. The single accent is used for the
 /// primary action, progress and the selected state.
@@ -70,6 +71,19 @@ class Tokens {
         borderRadius: BorderRadius.circular(r),
         side: side,
       );
+
+  /// The one shadow of the app: an item lifted by a drag, [t] of the way
+  /// up (0 at rest, 1 held). Soft and close, deeper in dark.
+  static List<BoxShadow> lift(double t) {
+    final dark = Palette.active.isDark;
+    return [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, (dark ? 0.45 : 0.18) * t),
+        blurRadius: 18 * t,
+        offset: Offset(0, 6 * t),
+      ),
+    ];
+  }
 
   /// The pill of a single line control: radius half its height.
   static const ShapeBorder pill = StadiumBorder();

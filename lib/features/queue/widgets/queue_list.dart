@@ -7,6 +7,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/reorder_proxy.dart';
 import '../queue_controller.dart';
 import '../queue_details.dart';
 import 'queue_tile.dart';
@@ -287,6 +288,11 @@ class _QueueListState extends State<QueueList> {
         padding: PageEnd.padding(context),
         // Each row brings its own handle.
         buildDefaultDragHandles: false,
+        // The row lifts in its own shape; the gap under it stays clear.
+        proxyDecorator: reorderProxy(
+          shape: Tokens.shape(Tokens.rMd),
+          inset: const EdgeInsets.only(bottom: Tokens.s4),
+        ),
         itemCount: rows.length,
         onReorderItem: (from, to) =>
             widget.controller.move(rows[from], rows[to]),

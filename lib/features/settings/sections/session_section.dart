@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/reorder_proxy.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../setting_anchor.dart';
@@ -246,6 +247,10 @@ class _SessionSectionState extends State<SessionSection> {
       physics: const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
       padding: EdgeInsets.zero,
+      proxyDecorator: reorderProxy(
+        shape: Tokens.shape(Tokens.rMd),
+        inset: const EdgeInsets.only(bottom: Tokens.s8),
+      ),
       onReorderItem: _reorder,
       children: [
         for (final (i, a) in shown.indexed)

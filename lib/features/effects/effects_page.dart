@@ -7,6 +7,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/reorder_proxy.dart';
 import '../../ui/widgets/section_header.dart';
 import '../../ui/widgets/section_switcher.dart';
 import '../../util/reactive.dart';
@@ -222,8 +223,10 @@ class _SignalChainViewState extends State<SignalChainView> {
               : SliverReorderableList(
                   itemCount: stages.length,
                   onReorderItem: rack.move,
-                  proxyDecorator: (child, _, _) =>
-                      Material(type: MaterialType.transparency, child: child),
+                  proxyDecorator: reorderProxy(
+                    shape: Tokens.shape(Tokens.rMd),
+                    inset: const EdgeInsets.symmetric(vertical: Tokens.s4),
+                  ),
                   itemBuilder: (context, i) {
                     final id = stages[i].id;
                     return StageTile(
