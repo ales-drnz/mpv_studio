@@ -163,23 +163,29 @@ class StageTile extends StatelessWidget {
       ],
     );
 
-    final header = Row(
-      children: [
-        handle,
-        Expanded(
-          child: Semantics(
-            button: true,
-            selected: selected,
-            expanded: inline ? open : null,
-            label: '$title, ${on ? 'on' : 'off'}',
-            child: StudioMenuRegion<StageAction>(
-              title: title,
-              items: () => stageMenuItems(rack, id),
-              onSelected: onAction,
-              child: InkWell(
-                key: ValueKey('stage-header-$id'),
-                customBorder: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
-                onTap: onTap,
+    // The ink spans the whole header, the handle included, so the hover
+    // and the splash fill the tile edge to edge and the tile's clip gives
+    // them its rounded corners. A tap on the handle does nothing.
+    final header = InkWell(
+      key: ValueKey('stage-header-$id'),
+      customBorder: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
+      onTap: onTap,
+      // The header's own button below carries the tap for assistive tech.
+      excludeFromSemantics: true,
+      child: Row(
+        children: [
+          GestureDetector(onTap: () {}, child: handle),
+          Expanded(
+            child: Semantics(
+              button: true,
+              selected: selected,
+              expanded: inline ? open : null,
+              label: '$title, ${on ? 'on' : 'off'}',
+              onTap: onTap,
+              child: StudioMenuRegion<StageAction>(
+                title: title,
+                items: () => stageMenuItems(rack, id),
+                onSelected: onAction,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: layout.minTap),
                   child: body,
@@ -187,8 +193,8 @@ class StageTile extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
 
     // An off stage reads by its dim title and glyphs and the missing
