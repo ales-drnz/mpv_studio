@@ -25,10 +25,15 @@ class SheetHandle extends StatelessWidget {
 /// handle, safe area, lifted above the soft keyboard and capped at 90% of
 /// the screen height. [builder] builds the content under the handle; it
 /// scrolls when taller than the sheet. Android back closes it.
+///
+/// It opens on the root navigator (unless [useRootNavigator] is false), so
+/// its barrier dims the whole screen, the mini-player and the tab bar
+/// included, as a dialog's does; a sheet on a section's own navigator
+/// would open under them.
 Future<T?> showStudioSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
-  bool useRootNavigator = false,
+  bool useRootNavigator = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
