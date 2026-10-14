@@ -78,9 +78,9 @@ class Tokens {
     final dark = Palette.active.isDark;
     return [
       BoxShadow(
-        color: Color.fromRGBO(0, 0, 0, (dark ? 0.45 : 0.18) * t),
-        blurRadius: 18 * t,
-        offset: Offset(0, 6 * t),
+        color: Color.fromRGBO(0, 0, 0, (dark ? 0.34 : 0.16) * t),
+        blurRadius: 24 * t,
+        offset: Offset(0, 8 * t),
       ),
     ];
   }
