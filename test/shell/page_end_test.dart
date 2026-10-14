@@ -488,7 +488,47 @@ void main() {
         await tester.pump(const Duration(seconds: 1));
       });
     });
+  }
 
+  // The open group beside the list, in desktop windows down to a low one,
+  // also after a search jump to its last section.
+  for (final size in const [Size(1024, 700), Size(939, 430), Size(715, 430)]) {
+    final name = '${size.width.round()}x${size.height.round()}';
+    group('Settings detail at $name', () {
+      Future<void> settings(WidgetTester tester) async {
+        final h = await SettingsHarness.create();
+        await pumpShell(
+          tester,
+          size: size,
+          section: Section.settings,
+          page: (sec) => sec == Section.settings
+              ? h.wrap(const Scaffold(body: SettingsPage()))
+              : DemoPage(section: sec),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('Advanced', (tester) async {
+        await settings(tester);
+        await tester.tap(find.text('Advanced').first);
+        await tester.pumpAndSettle();
+        await expectScrollEnds(tester, 'Advanced');
+        await tester.pump(const Duration(seconds: 1));
+      });
+
+      testWidgets('Advanced after the search jump', (tester) async {
+        await settings(tester);
+        await tester.enterText(find.byType(TextField).first, 'restart');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Restart player').first);
+        await tester.pumpAndSettle();
+        await expectScrollEnds(tester, 'search jump');
+        await tester.pump(const Duration(seconds: 1));
+      });
+    });
+  }
+
+  for (final size in sizes) {
     testWidgets('Console at $size', (tester) async {
       final player = consolePlayer();
       final log = consoleLog(player);
