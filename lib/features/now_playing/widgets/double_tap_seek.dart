@@ -53,7 +53,12 @@ class _DoubleTapSeekState extends State<DoubleTapSeek> {
     final flash = _flash;
     return LayoutBuilder(
       builder: (context, c) => GestureDetector(
-        onDoubleTapDown: (d) => _forward = d.localPosition.dx >= c.maxWidth / 2,
+        // The halves of the child as laid out: a centred cover gets loose
+        // constraints, so the widest it may be is not how wide it is.
+        onDoubleTapDown: (d) {
+          final width = context.size?.width ?? c.maxWidth;
+          _forward = d.localPosition.dx >= width / 2;
+        },
         onDoubleTap: _seek,
         child: Stack(
           fit: StackFit.passthrough,
