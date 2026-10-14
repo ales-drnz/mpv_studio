@@ -84,8 +84,9 @@ class StreamMessage extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         // Centred, so as far from the top as from the page end.
-        padding: PageEnd.centred(context)
-            .copyWith(left: Tokens.s16, right: Tokens.s16),
+        padding: PageEnd.centred(
+          context,
+        ).copyWith(left: Tokens.s16, right: Tokens.s16),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: streamCardWidth),
           child: Semantics(

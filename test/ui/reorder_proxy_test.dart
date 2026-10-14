@@ -13,10 +13,7 @@ import '../support/layout_harness.dart';
 /// While a drag holds it, the item keeps its own rounded shape, lifted by
 /// the token shadow: no Material box (a rectangle of the canvas colour
 /// with an elevation, which read as a dark box around the row).
-Future<void> _expectLiftedInShape(
-  WidgetTester tester,
-  Finder handle,
-) async {
+Future<void> _expectLiftedInShape(WidgetTester tester, Finder handle) async {
   final drag = await tester.startGesture(
     tester.getCenter(handle),
     kind: PointerDeviceKind.mouse,
