@@ -131,7 +131,7 @@ class _SnackObstacleState extends State<SnackObstacle> {
         .dependOnInheritedWidgetOfExactType<_SnackClearanceScope>()
         ?.host;
     if (host != _host) {
-      _host?._report(this, widget.edge, null);
+      _withdraw(_host, widget.edge);
       _host = host;
     }
   }
@@ -139,20 +139,23 @@ class _SnackObstacleState extends State<SnackObstacle> {
   @override
   void didUpdateWidget(SnackObstacle old) {
     super.didUpdateWidget(old);
-    if (old.edge != widget.edge) _host?._report(this, old.edge, null);
+    if (old.edge != widget.edge) _withdraw(_host, old.edge);
   }
 
   @override
   void dispose() {
-    final host = _host;
-    // The host may be rebuilding this very frame: report the removal
-    // after it.
-    if (host != null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => host._report(this, widget.edge, null),
-      );
-    }
+    _withdraw(_host, widget.edge);
     super.dispose();
+  }
+
+  /// Takes this obstacle's reach at [edge] off [host] after the frame:
+  /// the host may be building this very frame, and rebuilding it now
+  /// would mark an ancestor dirty during the build.
+  void _withdraw(_SnackClearanceHostState? host, SnackEdge edge) {
+    if (host == null) return;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => host._report(this, edge, null),
+    );
   }
 
   @override
