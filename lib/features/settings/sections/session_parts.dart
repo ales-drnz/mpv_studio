@@ -270,7 +270,7 @@ class SessionActionChip extends StatelessWidget {
               height: context.layout.minTap,
               padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
               decoration: ShapeDecoration(
-                color: advertised ? Tokens.accentContainer : Tokens.surface3,
+                color: advertised ? Tokens.accent : Tokens.surface3,
                 shape: Tokens.pill,
               ),
               child: Row(
@@ -280,7 +280,7 @@ class SessionActionChip extends StatelessWidget {
                     m.icon,
                     size: 16,
                     color: advertised
-                        ? Tokens.onAccentContainer
+                        ? Tokens.onAccent
                         : dim
                         ? Tokens.fgFaint
                         : Tokens.fgDim,
@@ -291,7 +291,7 @@ class SessionActionChip extends StatelessWidget {
                     style: Tokens.label.copyWith(
                       fontWeight: FontWeight.w600,
                       color: advertised
-                          ? Tokens.onAccentContainer
+                          ? Tokens.onAccent
                           : dim
                           ? Tokens.fgFaint
                           : Tokens.fg,
@@ -306,7 +306,7 @@ class SessionActionChip extends StatelessWidget {
                               : Icons.add_rounded),
                     size: 16,
                     color: advertised
-                        ? Tokens.onAccentContainer
+                        ? Tokens.onAccent
                         : dim
                         ? Tokens.fgFaint
                         : Tokens.fg,
