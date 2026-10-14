@@ -19,7 +19,8 @@ void main() {
       tester,
       Scaffold(
         body: ReorderableListView(
-          onReorderItem: (_, _) {},
+          // ignore: deprecated_member_use
+          onReorder: (_, _) {},
           buildDefaultDragHandles: false,
           children: [
             StageTile(

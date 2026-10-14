@@ -294,8 +294,10 @@ class _QueueListState extends State<QueueList> {
           inset: const EdgeInsets.only(bottom: Tokens.s4),
         ),
         itemCount: rows.length,
-        onReorderItem: (from, to) =>
-            widget.controller.move(rows[from], rows[to]),
+        // ignore: deprecated_member_use
+        onReorder: reorderTo(
+          (from, to) => widget.controller.move(rows[from], rows[to]),
+        ),
         itemBuilder: (context, row) {
           final i = rows[row];
           final item = items[i];

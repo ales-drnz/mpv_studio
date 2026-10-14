@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/rack_catalog.dart';
 import 'package:mpv_studio/ui/palette.dart';
+import 'package:mpv_studio/ui/widgets/reorder_proxy.dart';
 
 import '../effects/rack_harness.dart';
 import '../queue/queue_fixture.dart';
@@ -80,4 +81,16 @@ void main() {
       );
     });
   }
+
+  test('reorderTo passes the index the item ends up at', () {
+    final moves = <(int, int)>[];
+    final onReorder = reorderTo((from, to) => moves.add((from, to)));
+    // onReorder counts the moved item still in its old place: moving the
+    // first of three items to the end reports 3, which ends at 2.
+    onReorder(0, 3);
+    onReorder(0, 2);
+    onReorder(2, 0);
+    onReorder(1, 1);
+    expect(moves, [(0, 2), (0, 1), (2, 0), (1, 1)]);
+  });
 }
