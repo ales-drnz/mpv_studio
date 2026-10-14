@@ -59,10 +59,23 @@ class PlaybackSnapshot {
     if (opened != null &&
         await opened &&
         player.state.playlist.index == at &&
-        player.state.seekable) {
+        await _seekable(player)) {
       await player.seek(position);
     }
     if (playing) await player.play();
+  }
+
+  /// Whether the open entry can seek. The core is asked when the state
+  /// says no: mpv reports the playback restart ahead of the property
+  /// changes of the same load, so `seekable` can still be the idle core's
+  /// false at that moment.
+  static Future<bool> _seekable(PlayerApi player) async {
+    if (player.state.seekable) return true;
+    try {
+      return await player.getRawProperty('seekable') == 'yes';
+    } on Object {
+      return false;
+    }
   }
 
   /// Completes with true once the next entry has opened (mpv restarted
