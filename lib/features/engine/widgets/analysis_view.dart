@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../audio/pcm_analysis.dart';
 import '../../../ui/tokens.dart';
 import '../engine_snapshot.dart';
 import 'engine_parts.dart';
@@ -52,6 +53,10 @@ class AnalysisView extends StatelessWidget {
 
   static String _num(double? v, String unit) =>
       v == null || !v.isFinite ? 'n/a' : '${v.toStringAsFixed(1)} $unit';
+
+  /// A peak the scan reports as a linear amplitude, in decibels.
+  static String _peak(double? v, String unit) =>
+      v == null || !v.isFinite || v <= 0 ? 'n/a' : _num(amplitudeToDb(v), unit);
 
   @override
   Widget build(BuildContext context) {
@@ -140,8 +145,8 @@ class AnalysisView extends StatelessWidget {
             children: [
               Readout('Integrated', _num(scan?.integrated, 'LUFS')),
               Readout('Range', _num(scan?.range, 'LU')),
-              Readout('True peak', _num(scan?.truePeak, 'dBTP')),
-              Readout('Sample peak', _num(scan?.samplePeak, 'dBFS')),
+              Readout('True peak', _peak(scan?.truePeak, 'dBTP')),
+              Readout('Sample peak', _peak(scan?.samplePeak, 'dBFS')),
             ],
           ),
         ],
