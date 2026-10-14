@@ -35,6 +35,33 @@ import 'waveform_viewport.dart';
   return (top: top, bottom: bottom, body: (top: bodyTop, bottom: bodyBottom));
 }
 
+/// The times, in seconds, of the ruler's ticks in a view from [viewStart]
+/// to [viewEnd]: every multiple of [step] inside both the view and the
+/// timeline ([start] to [end]). A tick just before the view is left out,
+/// not drawn with its label pushed in from the edge over the next one.
+@visibleForTesting
+List<double> rulerTicks({
+  required double viewStart,
+  required double viewEnd,
+  required double step,
+  required double start,
+  required double end,
+}) {
+  if (step <= 0 || !viewStart.isFinite || !viewEnd.isFinite) return const [];
+  // A hair of tolerance, so a tick on an edge survives rounding.
+  const eps = 1e-6;
+  final from = viewStart < start ? start : viewStart;
+  final to = viewEnd > end ? end : viewEnd;
+  return [
+    for (
+      var t = ((from - eps) / step).ceilToDouble() * step;
+      t <= to + eps;
+      t += step
+    )
+      t,
+  ];
+}
+
 /// Paints the waveform meter: the time ruler, the envelope (played part in
 /// the accent, the rest in the secondary tone, each a solid RMS body in a
 /// lighter step of its peaks), the chapter and A-B loop marks, the hover
@@ -162,12 +189,13 @@ class WaveformPainter extends CustomPainter {
       ..color = palette.fgFaint
       ..strokeWidth = 1;
     final step = _niceStep(view.visibleSecs);
-    for (
-      var t = (tLeft / step).floorToDouble() * step;
-      t <= tRight;
-      t += step
-    ) {
-      if (t < start || t > end) continue;
+    for (final t in rulerTicks(
+      viewStart: tLeft,
+      viewEnd: tRight,
+      step: step,
+      start: start,
+      end: end,
+    )) {
       final x = (t - tLeft) * pxPerSec;
       canvas.drawLine(Offset(x, rulerHeight - 5), Offset(x, rulerHeight), tick);
       final tp = _label(
