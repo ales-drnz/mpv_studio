@@ -14,7 +14,12 @@ class PlaybackNoticeHost extends StatefulWidget {
     required this.consoleVisible,
     required this.onShowLog,
     required this.child,
+    this.issues,
   });
+
+  /// The issues to report the Console's visibility to; the studio's
+  /// ([PlayerScope.issuesOf]) when null.
+  final PlaybackIssues? issues;
 
   /// Whether the Console section is the one on screen.
   final bool consoleVisible;
@@ -34,8 +39,8 @@ class _PlaybackNoticeHostState extends State<PlaybackNoticeHost>
 
   @override
   void onSubscribe() {
-    _issues = PlayerScope.issuesOf(context);
-    _issues.consoleVisible = widget.consoleVisible;
+    _issues = widget.issues ?? PlayerScope.issuesOf(context);
+    _syncConsoleVisible();
     listen(_issues.notices, _show);
   }
 
@@ -43,8 +48,16 @@ class _PlaybackNoticeHostState extends State<PlaybackNoticeHost>
   void didUpdateWidget(PlaybackNoticeHost oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.consoleVisible != widget.consoleVisible) {
-      _issues.consoleVisible = widget.consoleVisible;
+      _syncConsoleVisible();
     }
+  }
+
+  /// Tells [PlaybackIssues] after this frame: clearing the badge rebuilds
+  /// it, which cannot happen while the shell is being built.
+  void _syncConsoleVisible() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _issues.consoleVisible = widget.consoleVisible;
+    });
   }
 
   void _show(PlaybackNotice notice) {

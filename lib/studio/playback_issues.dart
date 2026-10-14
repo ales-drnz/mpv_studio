@@ -107,8 +107,10 @@ class PlaybackIssues {
   bool _consoleVisible = false;
 
   /// Whether the Console is on screen. While it is, mpv errors are seen as
-  /// they arrive and the badge stays at zero.
+  /// they arrive and the badge stays at zero. Clearing the badge notifies
+  /// its listeners: never set this while a frame builds.
   set consoleVisible(bool visible) {
+    if (visible == _consoleVisible) return;
     _consoleVisible = visible;
     if (visible) _unseenLogErrors.value = 0;
   }
