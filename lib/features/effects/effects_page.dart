@@ -240,12 +240,15 @@ class _SignalChainViewState extends State<SignalChainView> {
                 ),
         ),
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(0, 0, end, Tokens.s32),
+          padding: EdgeInsets.fromLTRB(0, 0, end, PageEnd.of(context)),
           sliver: SliverList.list(
             children: [
-              const RackNode(
+              RackNode(
                 label: 'Output',
                 detail: 'Then volume and the device',
+                padding: widget.footer == null
+                    ? const EdgeInsets.only(top: Tokens.s4)
+                    : const EdgeInsets.symmetric(vertical: Tokens.s4),
               ),
               if (widget.footer != null) ...[
                 const SizedBox(height: Tokens.s24),
@@ -290,10 +293,7 @@ class _SignalChainViewState extends State<SignalChainView> {
                           rack: rack,
                           id: focus,
                           showHeader: false,
-                          padding: EdgeInsets.only(
-                            top: Tokens.s4,
-                            bottom: layout.pagePadding.bottom,
-                          ),
+                          padding: PageEnd.padding(context, top: Tokens.s4),
                           onClose: rack.closeAll,
                           onAction: (a) => _action(focus, a),
                         ),
@@ -333,7 +333,7 @@ class _SignalChainViewState extends State<SignalChainView> {
                                   layout.gap,
                                   Tokens.s8,
                                   0,
-                                  layout.pagePadding.bottom,
+                                  PageEnd.of(context),
                                 ),
                                 onClose: rack.closeAll,
                                 onAction: (a) => _action(focus, a),
@@ -392,7 +392,9 @@ class _SignalChainViewState extends State<SignalChainView> {
               maxWidth: mode == RackMode.split
                   ? Breakpoints.wide
                   : Breakpoints.readable,
-              padding: EdgeInsets.symmetric(horizontal: gutter),
+              // The chain and the editor scroll to the panel edge and end
+              // the gutter above it.
+              padding: layout.pagePadding.copyWith(top: 0),
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

@@ -220,7 +220,6 @@ class _SessionSectionState extends State<SessionSection> {
                     ],
                   ),
                 ],
-                const SizedBox(height: Tokens.s24),
               ],
             ),
           ),

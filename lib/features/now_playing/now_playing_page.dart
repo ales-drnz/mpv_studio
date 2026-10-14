@@ -268,25 +268,34 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
   }
 
   /// [above] at its own height, then [fill] taking what is left, at
-  /// least a strip of it: the whole scrolls when [above] does not fit (a
-  /// failure banner or a chapter line on a low window).
+  /// least a strip of it, down to the page end: the whole scrolls when
+  /// [above] does not fit (a failure banner or a chapter line on a low
+  /// window).
   Widget _fillBelow(List<Widget> above, Widget fill) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: above,
-          ),
-        ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: fill,
-          ),
-        ),
-      ],
+    return Builder(
+      builder: (context) {
+        final end = PageEnd.of(context);
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: above,
+              ),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: 48 + end),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: end),
+                  child: fill,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -307,6 +316,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
         final meter = (_meterHeight ?? h * 0.16)
             .clamp(least, math.max(least, h * 0.4))
             .toDouble();
+        final end = PageEnd.of(context);
         return CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
@@ -331,13 +341,14 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 88),
-                child: const Column(
+                constraints: BoxConstraints(minHeight: 88 + end),
+                child: Column(
                   children: [
-                    SizedBox(height: Tokens.s8),
-                    VuMeter(),
-                    SizedBox(height: Tokens.s8),
-                    Expanded(child: SpectrumCurve()),
+                    const SizedBox(height: Tokens.s8),
+                    const VuMeter(),
+                    const SizedBox(height: Tokens.s8),
+                    const Expanded(child: SpectrumCurve()),
+                    SizedBox(height: end),
                   ],
                 ),
               ),
@@ -360,6 +371,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             SizedBox(
               width: deck,
               child: SingleChildScrollView(
+                padding: PageEnd.padding(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -388,6 +400,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                   const FailedTrackBanner(),
                   Expanded(child: _waveform()),
                   const PositionBar(),
+                  SizedBox(height: PageEnd.of(context)),
                 ],
               ),
             ),
@@ -464,6 +477,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             SizedBox(
               width: deck,
               child: SingleChildScrollView(
+                padding: PageEnd.padding(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

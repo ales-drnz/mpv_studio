@@ -76,7 +76,7 @@ class SettingsSearchResults extends StatelessWidget {
     }
     return FocusTraversalGroup(
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: Tokens.s24),
+        padding: PageEnd.padding(context),
         itemCount: results.length + 1,
         itemBuilder: (context, i) {
           if (i == 0) {
@@ -99,10 +99,15 @@ class SettingsSearchResults extends StatelessWidget {
             );
           }
           final e = results[i - 1];
-          return _ResultTile(
-            entry: e,
-            words: query.toLowerCase().split(RegExp(r'\s+')),
-            onTap: () => onOpen(e),
+          // Gaps between the rows only, so the last one ends at the page
+          // end.
+          return Padding(
+            padding: EdgeInsets.only(top: i > 1 ? Tokens.s4 : 0),
+            child: _ResultTile(
+              entry: e,
+              words: query.toLowerCase().split(RegExp(r'\s+')),
+              onTap: () => onOpen(e),
+            ),
           );
         },
       ),
@@ -128,42 +133,39 @@ class _ResultTile extends StatelessWidget {
       label: '${entry.title}, in ${entry.group.title}, ${entry.section}',
       excludeSemantics: true,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: Tokens.s4),
-        child: Material(
-          color: Tokens.surface,
-          shape: Tokens.shape(Tokens.rMd),
-          child: InkWell(
-            onTap: onTap,
-            customBorder: Tokens.shape(Tokens.rMd),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: context.layout.minTap),
-              child: Padding(
-                padding: const EdgeInsets.all(Tokens.s16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      highlightMatches(entry.title, words, Tokens.body),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+      child: Material(
+        color: Tokens.surface,
+        shape: Tokens.shape(Tokens.rMd),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: Tokens.shape(Tokens.rMd),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: context.layout.minTap),
+            child: Padding(
+              padding: const EdgeInsets.all(Tokens.s16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    highlightMatches(entry.title, words, Tokens.body),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '${entry.group.title}, ${entry.section}',
+                    style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                  ),
+                  const SizedBox(height: Tokens.s4),
+                  Text.rich(
+                    highlightMatches(
+                      entry.description,
+                      words,
+                      Tokens.label.copyWith(color: Tokens.fgDim),
                     ),
-                    Text(
-                      '${entry.group.title}, ${entry.section}',
-                      style: Tokens.caption.copyWith(color: Tokens.fgDim),
-                    ),
-                    const SizedBox(height: Tokens.s4),
-                    Text.rich(
-                      highlightMatches(
-                        entry.description,
-                        words,
-                        Tokens.label.copyWith(color: Tokens.fgDim),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),

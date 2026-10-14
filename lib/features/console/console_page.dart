@@ -139,10 +139,25 @@ class _ConsoleViewState extends State<ConsoleView>
     _scrollScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollScheduled = false;
-      if (_scroll.hasClients) {
-        _scroll.jumpTo(_scroll.position.maxScrollExtent);
-      }
+      _jumpToEnd(3);
     });
+  }
+
+  /// Jumps to the end of the log. The lazy list only estimates its length
+  /// until the rows near the end are laid out, and a wrapped row is taller
+  /// than the estimate, so the jump repeats on the next frames (up to
+  /// [tries] times) until it lands on the real end and the last line sits
+  /// above the card's padding, not under the edge.
+  void _jumpToEnd(int tries) {
+    if (!mounted || !_autoscroll || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (position.pixels >= position.maxScrollExtent) return;
+    _scroll.jumpTo(position.maxScrollExtent);
+    if (tries > 1) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _jumpToEnd(tries - 1),
+      );
+    }
   }
 
   bool _visible(ConsoleLine l) {
@@ -339,7 +354,6 @@ class _ConsoleViewState extends State<ConsoleView>
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
     final visible = _lines.where(_visible).toList(growable: false);
     return CallbackShortcuts(
       bindings: {
@@ -381,9 +395,6 @@ class _ConsoleViewState extends State<ConsoleView>
           level: _level,
           onLevel: _setLevel,
         ),
-        // The page bottom padding would float the command line; keep it
-        // near the edge (and so near the keyboard).
-        padding: layout.pagePadding.copyWith(bottom: Tokens.s8),
         body: _body(visible),
       ),
     );
@@ -455,9 +466,13 @@ class _ConsoleViewState extends State<ConsoleView>
                 ),
               Padding(
                 // A stable key: the hint above comes and goes, and the
-                // field must keep its focus.
+                // field must keep its focus. The field ends the page, the
+                // gutter above its edge.
                 key: const ValueKey('console-input'),
-                padding: const EdgeInsets.only(top: Tokens.s8),
+                padding: EdgeInsets.only(
+                  top: Tokens.s8,
+                  bottom: PageEnd.of(context),
+                ),
                 child: ConsoleInput(
                   controller: _input,
                   focusNode: _inputFocus,

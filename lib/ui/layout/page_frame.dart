@@ -47,6 +47,15 @@ class ReadableWidth extends StatelessWidget {
 /// above the soft keyboard; inside the shell both are already consumed,
 /// so they cost nothing there.
 ///
+/// The body always reaches the bottom edge of the page (the stage panel
+/// edge, or the mini-player or tab bar on a phone), so nothing is cut by
+/// an invisible line above it, and the last item ends the bottom of
+/// [padding] (the gutter) above that edge. A scrolling frame puts that
+/// gap at the end of its scroll view; with `scrollable: false` the body
+/// places it itself, reading it with [PageEnd.of]: a scroll view at the
+/// foot of the body ends with [PageEnd.padding], fixed content at the
+/// foot sits on [PageEnd.inset].
+///
 /// ```dart
 /// PageFrame(
 ///   title: 'Queue',
@@ -144,14 +153,18 @@ class PageFrame extends StatelessWidget {
         ? SingleChildScrollView(
             controller: controller,
             padding: pad,
-            child: ReadableWidth(maxWidth: maxWidth, child: body),
+            // The frame already ends the scroll with the gap.
+            child: ReadableWidth(
+              maxWidth: maxWidth,
+              child: PageEnd(inset: 0, child: body),
+            ),
           )
         : Padding(
-            padding: pad,
+            padding: pad.copyWith(bottom: 0),
             child: ReadableWidth(
               maxWidth: maxWidth,
               fillHeight: true,
-              child: body,
+              child: PageEnd(inset: pad.bottom, child: body),
             ),
           );
 
@@ -176,6 +189,37 @@ class PageFrame extends StatelessWidget {
       ),
     );
   }
+}
+
+/// How far the last item of a page body ends above the bottom edge of the
+/// page: the gutter, set by the [PageFrame] around the body. Scroll views
+/// at the foot of a body end with [padding], so at the end of the scroll
+/// the last card or row sits that far above the stage panel edge (or the
+/// mini-player and tab bar on a phone) instead of against it, and the
+/// view itself still runs to the edge.
+///
+/// ```dart
+/// ListView(padding: PageEnd.padding(context), children: rows)
+/// ```
+class PageEnd extends InheritedWidget {
+  const PageEnd({super.key, required this.inset, required super.child});
+
+  /// The gap under the last item.
+  final double inset;
+
+  /// The gap under the last item of the body around [context]: the one
+  /// its [PageFrame] sets, else the gutter of the window.
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PageEnd>()?.inset ??
+      context.layout.gutter;
+
+  /// The padding of a scroll view at the foot of a page body: [of] at the
+  /// bottom, plus [top] above the first item.
+  static EdgeInsets padding(BuildContext context, {double top = 0}) =>
+      EdgeInsets.only(top: top, bottom: of(context));
+
+  @override
+  bool updateShouldNotify(PageEnd old) => old.inset != inset;
 }
 
 /// The header row of a [PageFrame]: back chevron, title and actions, at

@@ -249,7 +249,12 @@ class ResolverLog extends StatelessWidget {
                 ),
               )
             else
-              for (final entry in log) ResolverLogTile(entry: entry),
+              // Gaps between the tiles only: the last one ends at the
+              // page end.
+              for (final (i, entry) in log.indexed) ...[
+                if (i > 0) const SizedBox(height: Tokens.s4),
+                ResolverLogTile(entry: entry),
+              ],
           ],
         );
       },
@@ -281,7 +286,6 @@ class ResolverLogTile extends StatelessWidget {
     };
     final mono = Tokens.numeric;
     return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s4),
       padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
         color: Tokens.surface,

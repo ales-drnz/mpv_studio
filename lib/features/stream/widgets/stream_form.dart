@@ -118,8 +118,9 @@ class SignInCard extends StatelessWidget {
       alignment: Alignment.topCenter,
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.symmetric(
-          vertical: layout.isShort ? Tokens.s8 : Tokens.s16,
+        padding: PageEnd.padding(
+          context,
+          top: layout.isShort ? Tokens.s8 : Tokens.s16,
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: streamCardWidth),

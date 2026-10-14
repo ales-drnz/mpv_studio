@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 
@@ -82,9 +83,10 @@ class StreamMessage extends StatelessWidget {
     final message = this.message;
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
+        // Centred, so as far from the top as from the page end.
+        padding: EdgeInsets.symmetric(
           horizontal: Tokens.s16,
-          vertical: Tokens.s24,
+          vertical: PageEnd.of(context),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: streamCardWidth),

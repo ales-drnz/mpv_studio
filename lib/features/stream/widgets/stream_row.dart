@@ -11,7 +11,8 @@ import '../stream_actions.dart';
 /// current track takes the secondary selection fill and an equalizer glyph.
 ///
 /// With [menu] the row has a context menu: right click on a pointer, long
-/// press (a bottom sheet) on touch.
+/// press (a bottom sheet) on touch. The row has no margin: lists put
+/// [gap] between rows, so the last one ends at the page end.
 class StreamRow extends StatelessWidget {
   const StreamRow({
     super.key,
@@ -54,6 +55,9 @@ class StreamRow extends StatelessWidget {
   /// The diameter of the leading glyph circle.
   static const double leadSize = 40;
 
+  /// The space between two rows of a list.
+  static const double gap = Tokens.s4;
+
   /// Whether [context] sits inside the current row (its buttons and text
   /// take the colours that read on the selection fill).
   static bool onCurrent(BuildContext context) =>
@@ -77,27 +81,24 @@ class StreamRow extends StatelessWidget {
         ...trailing,
       ],
     );
-    Widget row = Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s4),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: shape,
-          // Ink so the hover wash shows over the card fill.
-          child: Ink(
-            decoration: ShapeDecoration(
-              color: current ? Tokens.accentContainer : Tokens.surface,
-              shape: shape,
+    Widget row = Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: shape,
+        // Ink so the hover wash shows over the card fill.
+        child: Ink(
+          decoration: ShapeDecoration(
+            color: current ? Tokens.accentContainer : Tokens.surface,
+            shape: shape,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: leadSize + 2 * Tokens.s8,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: leadSize + 2 * Tokens.s8,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(Tokens.s8),
-                child: current ? _CurrentRow(child: content) : content,
-              ),
+            child: Padding(
+              padding: const EdgeInsets.all(Tokens.s8),
+              child: current ? _CurrentRow(child: content) : content,
             ),
           ),
         ),

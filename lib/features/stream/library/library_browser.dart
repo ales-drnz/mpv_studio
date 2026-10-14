@@ -327,10 +327,12 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
         return PagingListener<int, ServerTrack>(
           controller: _songs,
           builder: (context, state, fetchNextPage) =>
-              PagedListView<int, ServerTrack>(
+              PagedListView<int, ServerTrack>.separated(
                 state: state,
                 fetchNextPage: fetchNextPage,
-                padding: const EdgeInsets.only(bottom: Tokens.s24),
+                padding: PageEnd.padding(context),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: StreamRow.gap),
                 builderDelegate: PagedChildBuilderDelegate<ServerTrack>(
                   itemBuilder: (context, track, index) => ServerTrackRow(
                     track: track,

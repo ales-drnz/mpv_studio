@@ -6,7 +6,8 @@ import 'section_header.dart';
 
 /// A labelled group of settings rows inside a single tonal card (radius
 /// [Tokens.rLg]). The label sits above the card, inset like the rows;
-/// rows sit flush, separated only by their own vertical rhythm.
+/// rows sit flush, separated only by their own vertical rhythm. It has no
+/// margin: the list it sits in spaces the groups.
 class SettingsGroup extends StatelessWidget {
   final String label;
   final List<Widget> children;
@@ -24,26 +25,23 @@ class SettingsGroup extends StatelessWidget {
           child: child,
         ),
     ];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionHeader(label),
-          Container(
-            clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
-            decoration: ShapeDecoration(
-              color: Tokens.surface,
-              shape: Tokens.shape(Tokens.rLg),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: rows,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(label),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
+          decoration: ShapeDecoration(
+            color: Tokens.surface,
+            shape: Tokens.shape(Tokens.rLg),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: rows,
+          ),
+        ),
+      ],
     );
   }
 }

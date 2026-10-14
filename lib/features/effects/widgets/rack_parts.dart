@@ -138,12 +138,21 @@ class RackErrorBanner extends StatelessWidget {
 class RackNode extends StatelessWidget {
   final String label;
   final String detail;
-  const RackNode({super.key, required this.label, required this.detail});
+  const RackNode({
+    super.key,
+    required this.label,
+    required this.detail,
+    this.padding = const EdgeInsets.symmetric(vertical: Tokens.s4),
+  });
+
+  /// The space around the line; the last item of the chain keeps none
+  /// below, so it ends at the page end.
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
+      padding: padding,
       child: Row(
         children: [
           const SizedBox(width: Tokens.s16),
@@ -231,7 +240,6 @@ class RackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: Tokens.s16),
       padding: padding,
       decoration: ShapeDecoration(
         color: Tokens.surface,
