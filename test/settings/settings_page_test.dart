@@ -73,6 +73,26 @@ void main() {
     expect(find.text(SettingsCatalog.speed.title), findsNothing);
   });
 
+  testWidgets('a search jump on a phone lets go of the search focus', (
+    tester,
+  ) async {
+    await pumpSettings(tester, size: '360x780');
+    await tester.tap(find.byType(TextField).first);
+    await tester.enterText(find.byType(TextField).first, 'proxy');
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final search = field.focusNode!;
+    expect(search.hasFocus, isTrue);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    await tester.tap(find.text('Network, Connection'));
+    await tester.pumpAndSettle();
+    expect(find.text(SettingsCatalog.tlsVerify.title), findsOneWidget);
+    expect(search.hasFocus, isFalse);
+    // The soft keyboard closes with it.
+    expect(tester.testTextInput.isVisible, isFalse);
+  });
+
   testWidgets('a narrow window pushes the group and back closes it', (
     tester,
   ) async {
