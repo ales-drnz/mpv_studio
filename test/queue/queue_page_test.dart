@@ -52,9 +52,15 @@ void main() {
       // The current row: tags, artist and source.
       expect(find.text('So What'), findsOneWidget);
       expect(find.text('Miles Davis · Web stream'), findsOneWidget);
-      // The failed row: badge and reason.
+      // The failed row: a red dot and a dim label; the reason is the
+      // label's tooltip (and the details'), not a second line of red.
       expect(find.text('Failed'), findsOneWidget);
-      expect(find.text('Could not open the file or stream'), findsOneWidget);
+      expect(find.byKey(const ValueKey('failed-dot')), findsOneWidget);
+      expect(find.text('Could not open the file or stream'), findsNothing);
+      expect(
+        find.byTooltip('Could not open the file or stream'),
+        findsOneWidget,
+      );
       expect(find.text('3 tracks, at least 14:59'), findsOneWidget);
     });
 
