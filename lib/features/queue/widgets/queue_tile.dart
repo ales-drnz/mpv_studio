@@ -155,14 +155,14 @@ class _QueueTileState extends State<QueueTile> {
               OutcomeBadge(widget.outcome!, onContainer: current),
               const SizedBox(width: Tokens.s8),
             ],
+            // The reason of a failure is in the badge's tooltip and the
+            // details: the row keeps its usual subtitle.
             Flexible(
               child: Text(
-                _failed ? widget.outcome!.reason : info.subtitle,
+                info.subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Tokens.caption.copyWith(
-                  color: on ?? (_failed ? Tokens.red : null),
-                ),
+                style: Tokens.caption.copyWith(color: on),
               ),
             ),
           ],
@@ -261,38 +261,40 @@ class _QueueTileState extends State<QueueTile> {
               color: background,
               shape: Tokens.shape(Tokens.rMd),
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 56),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      button: true,
-                      selected: widget.selected,
-                      label: _semanticLabel,
-                      // The row's own actions, since the children (and
-                      // their gestures) are hidden from the reader; the
-                      // long press menu also holds the hover buttons.
-                      onTap: widget.onTap,
-                      onTapHint: touch ? 'play' : 'select',
-                      onLongPress: () => widget.onMore(null),
-                      onLongPressHint: 'show actions',
-                      excludeSemantics: true,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onSecondaryTapUp: (d) =>
-                            widget.onMore(d.globalPosition),
-                        onLongPress: touch ? () => widget.onMore(null) : null,
-                        child: InkWell(
-                          onTap: widget.onTap,
-                          customBorder: Tokens.shape(Tokens.rMd),
-                          child: content,
+            // The ink spans the whole row, the handle included, so the
+            // hover fills the row edge to edge in every state and takes
+            // its rounded corners. A tap on the handle does nothing.
+            child: Semantics(
+              button: true,
+              selected: widget.selected,
+              label: _semanticLabel,
+              // The row's own actions, since the children (and their
+              // gestures) are hidden from the reader; the long press menu
+              // also holds the hover buttons.
+              onTap: widget.onTap,
+              onTapHint: touch ? 'play' : 'select',
+              onLongPress: () => widget.onMore(null),
+              onLongPressHint: 'show actions',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onSecondaryTapUp: (d) => widget.onMore(d.globalPosition),
+                onLongPress: touch ? () => widget.onMore(null) : null,
+                child: InkWell(
+                  onTap: widget.onTap,
+                  customBorder: Tokens.shape(Tokens.rMd),
+                  excludeFromSemantics: true,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 56),
+                    child: Row(
+                      children: [
+                        Expanded(child: ExcludeSemantics(child: content)),
+                        ExcludeSemantics(
+                          child: GestureDetector(onTap: () {}, child: handle),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  handle,
-                ],
+                ),
               ),
             ),
           ),
@@ -320,7 +322,8 @@ class _Handle extends StatelessWidget {
   );
 }
 
-/// How an entry's last play ended, as a small pill: red for a failure.
+/// How an entry's last play ended: a small pill for a play or a skip, a
+/// red dot and a dim label for a failure.
 /// [onContainer] draws it for the current row's secondary selection fill.
 class OutcomeBadge extends StatelessWidget {
   const OutcomeBadge(this.outcome, {super.key, this.onContainer = false});
@@ -336,31 +339,46 @@ class OutcomeBadge extends StatelessWidget {
       EntryEnd.stopped => 'Skipped',
       EntryEnd.failed => 'Failed',
     };
-    final color = onContainer
-        ? Tokens.onAccentContainer
-        : failed
-        ? Tokens.red
-        : Tokens.fgDim;
-    final badge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
-      decoration: ShapeDecoration(
-        color: onContainer
-            ? Tokens.onAccentContainer.withValues(alpha: 0.14)
-            : failed
-            ? Tokens.red.withValues(alpha: 0.14)
-            : Tokens.surface3,
-        shape: Tokens.pill,
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: Tokens.caption.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
+    final color = onContainer ? Tokens.onAccentContainer : Tokens.fgDim;
+    final text = Text(
+      label,
+      maxLines: 1,
+      style: Tokens.caption.copyWith(color: color, fontWeight: FontWeight.w600),
+    );
+    if (!failed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
+        decoration: ShapeDecoration(
+          color: onContainer
+              ? Tokens.onAccentContainer.withValues(alpha: 0.14)
+              : Tokens.surface3,
+          shape: Tokens.pill,
         ),
+        child: text,
+      );
+    }
+    // A failure: a red dot carries the meaning, the label stays in the
+    // row's dim tone (4.5:1 or more on rows and on the selection), and
+    // the reason is the tooltip's.
+    return Tooltip(
+      message: outcome.reason,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            key: const ValueKey('failed-dot'),
+            width: 6,
+            height: 6,
+            decoration: ShapeDecoration(
+              color: onContainer ? Tokens.onAccentContainer : Tokens.red,
+              shape: const CircleBorder(),
+            ),
+          ),
+          const SizedBox(width: Tokens.s4),
+          text,
+        ],
       ),
     );
-    return failed ? Tooltip(message: outcome.reason, child: badge) : badge;
   }
 }
 
