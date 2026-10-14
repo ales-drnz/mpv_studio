@@ -5,6 +5,7 @@ import 'package:mpv_studio/shell/mini_player.dart';
 import 'package:mpv_studio/shell/mobile_shell.dart';
 import 'package:mpv_studio/shell/rail_shell.dart';
 import 'package:mpv_studio/shell/sections.dart';
+import 'package:mpv_studio/shell/snack_clearance.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/widgets/studio_snack.dart';
 
@@ -108,5 +109,45 @@ void main() {
     final toast = await _showToast(tester);
     expect(toast.bottom, 900 - 8);
     await _dismiss(tester);
+  });
+
+  testWidgets('chrome that moves to another edge rebuilds its host after '
+      'the frame', (tester) async {
+    var edge = SnackEdge.bottom;
+    late StateSetter setShell;
+    late EdgeInsetsGeometry margin;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SnackClearanceHost(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              setShell = setState;
+              margin = Theme.of(context).snackBarTheme.insetPadding!;
+              return Align(
+                alignment: Alignment.bottomLeft,
+                child: SnackObstacle(
+                  edge: edge,
+                  child: const SizedBox(width: 80, height: 64),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      margin,
+      SnackClearanceHost.baseMargin + const EdgeInsets.only(bottom: 64),
+    );
+
+    setShell(() => edge = SnackEdge.left);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    await tester.pump();
+    expect(
+      margin,
+      SnackClearanceHost.baseMargin + const EdgeInsets.only(left: 80),
+    );
   });
 }
