@@ -50,9 +50,20 @@ flutter:
   assets:
     - assets/models/
 
+# App icons. Run `python3 tool/app_icons.py` first: it derives the sources
+# under assets/icon/ from the logo, plus the Windows .ico (every size) and
+# the Linux window icon, which this tool does not cover.
 flutter_launcher_icons:
-  android: true
-  windows:
-    generate: true
   image_path: "assets/mpv_studio.png"
+  android: true
   min_sdk_android: 24
+  adaptive_icon_background: "#24282D"
+  adaptive_icon_foreground: "assets/icon/android_foreground.png"
+  adaptive_icon_foreground_inset: 0
+  adaptive_icon_monochrome: "assets/icon/android_monochrome.png"
+  ios: true
+  image_path_ios: "assets/icon/ios.png"
+  remove_alpha_ios: true
+  macos:
+    generate: true
+    image_path: "assets/icon/macos.png"
