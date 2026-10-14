@@ -307,6 +307,27 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     });
 
+    testWidgets('the cover splits in its own halves, not the page\'s', (
+      tester,
+    ) async {
+      final player = playingTrack();
+      await _pumpPage(
+        tester,
+        player,
+        size: const Size(412, 915),
+        input: InputMode.touch,
+      );
+      final cover = tester.getRect(find.bySemanticsLabel('No cover art'));
+      for (final at in [0.6, 0.4]) {
+        final point = Offset(cover.left + cover.width * at, cover.center.dy);
+        await tester.tapAt(point);
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tapAt(point);
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(player.calls, ['seek +10000', 'seek -10000']);
+    });
+
     testWidgets('a tap on the waveform seeks once it is not a double tap', (
       tester,
     ) async {
