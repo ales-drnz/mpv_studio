@@ -17,7 +17,8 @@ import 'showcase_library.dart';
 import 'showcase_player.dart';
 
 /// The Queue showcase (imgs/queue.gif): an album playing, two tracks
-/// played and a stream that failed; two files are added, one is opened
+/// played; a played one opens in the details pane; two files are added,
+/// one is opened
 /// in the details pane, dragged up the queue, sent back down from its
 /// menu, then both are removed and the playing track starts over, which
 /// brings the scene back to its first frame.
@@ -38,18 +39,15 @@ void main() {
     final player = ShowcasePlayer.queue([
       ...album,
       ...showcaseAlbum('Fjord Sessions').files.take(1),
+      ...showcaseAlbum('Casa Azul').files.take(1),
     ], covers: covers);
     addTearDown(player.close);
-    const radio = Media(
-      'https://radio.example.test/late-night.mp3',
-      extras: {'title': 'Late Night Radio'},
-    );
     final details = player.details();
     addTearDown(details.dispose);
 
-    // The history the badges show: two tracks played to the end, then
-    // the stream failed to open. The playlist reaches the details a
-    // microtask later than the end events, so each step settles first.
+    // The history the badges show: two tracks played to the end. The
+    // playlist reaches the details a microtask later than the end events,
+    // so each step settles first.
     Future<void> at(int index) async {
       player.emit(
         (s) => s.copyWith(playlist: s.playlist.copyWith(index: index)),
@@ -57,10 +55,6 @@ void main() {
       await tester.pump();
     }
 
-    final items = [...player.items]..insert(4, radio);
-    player.emit(
-      (s) => s.copyWith(playlist: Playlist(List.unmodifiable(items))),
-    );
     for (final i in [0, 1]) {
       await at(i);
       player.loaded.add(null);
@@ -68,8 +62,6 @@ void main() {
         const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
       );
     }
-    await at(4);
-    player.failCurrent();
     await at(2);
 
     const added = [
@@ -125,9 +117,13 @@ void main() {
     final first = player.playhead + scene.step;
     await scene.wait(450);
 
-    // The failed stream says why on hover.
-    await scene.moveOnto(find.text('Failed'));
-    await scene.wait(700);
+    // A played track in the details pane.
+    await scene.moveOnto(
+      row('Paper Lanterns'),
+      alignment: const Alignment(-0.6, 0),
+    );
+    await scene.click();
+    await scene.wait(900);
 
     // Add two files: they land at the end of the queue.
     await scene.moveOnto(find.widgetWithText(FilledButton, 'Add files'));
