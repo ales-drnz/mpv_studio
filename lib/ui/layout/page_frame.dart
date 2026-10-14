@@ -114,6 +114,9 @@ class PageFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final layout = context.layout;
     final pad = padding ?? layout.pagePadding;
+    // Chrome floating over the foot of the page (the phone mini-player):
+    // the body runs on under it, and its end clears it by the gutter.
+    final floating = FloatingChrome.of(context);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final hasHeader =
         title != null ||
@@ -152,11 +155,11 @@ class PageFrame extends StatelessWidget {
     final Widget content = scrollable
         ? SingleChildScrollView(
             controller: controller,
-            padding: pad,
+            padding: pad.copyWith(bottom: pad.bottom + floating),
             // The frame already ends the scroll with the gap.
             child: ReadableWidth(
               maxWidth: maxWidth,
-              child: PageEnd(inset: 0, child: body),
+              child: PageEnd(inset: 0, floating: floating, child: body),
             ),
           )
         : Padding(
@@ -164,7 +167,11 @@ class PageFrame extends StatelessWidget {
             child: ReadableWidth(
               maxWidth: maxWidth,
               fillHeight: true,
-              child: PageEnd(inset: pad.bottom, child: body),
+              child: PageEnd(
+                inset: pad.bottom + floating,
+                floating: floating,
+                child: body,
+              ),
             ),
           );
 
@@ -192,34 +199,76 @@ class PageFrame extends StatelessWidget {
 }
 
 /// How far the last item of a page body ends above the bottom edge of the
-/// page: the gutter, set by the [PageFrame] around the body. Scroll views
-/// at the foot of a body end with [padding], so at the end of the scroll
-/// the last card or row sits that far above the stage panel edge (or the
-/// mini-player and tab bar on a phone) instead of against it, and the
-/// view itself still runs to the edge.
+/// page: the gutter, set by the [PageFrame] around the body, plus any
+/// [FloatingChrome] over the foot of the page. Scroll views at the foot of
+/// a body end with [padding], so at the end of the scroll the last card or
+/// row sits the gutter above the stage panel edge (or the mini-player on a
+/// phone) instead of against it or under it, and the view itself still
+/// runs to the edge, under the floating chrome.
 ///
 /// ```dart
 /// ListView(padding: PageEnd.padding(context), children: rows)
 /// ```
 class PageEnd extends InheritedWidget {
-  const PageEnd({super.key, required this.inset, required super.child});
+  const PageEnd({
+    super.key,
+    required this.inset,
+    this.floating = 0,
+    required super.child,
+  });
 
-  /// The gap under the last item.
+  /// The gap under the last item, the [floating] chrome included.
   final double inset;
 
+  /// How much of [inset] is chrome floating over the foot of the page,
+  /// which hides what scrolls under it.
+  final double floating;
+
   /// The gap under the last item of the body around [context]: the one
-  /// its [PageFrame] sets, else the gutter of the window.
+  /// its [PageFrame] sets, else the gutter of the window plus the
+  /// [FloatingChrome].
   static double of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<PageEnd>()?.inset ??
-      context.layout.gutter;
+      context.layout.gutter + FloatingChrome.of(context);
+
+  /// The height of the chrome floating over the foot of the body around
+  /// [context], which [of] already clears.
+  static double floatingOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PageEnd>()?.floating ??
+      FloatingChrome.of(context);
 
   /// The padding of a scroll view at the foot of a page body: [of] at the
   /// bottom, plus [top] above the first item.
   static EdgeInsets padding(BuildContext context, {double top = 0}) =>
       EdgeInsets.only(top: top, bottom: of(context));
 
+  /// The padding of content centred in a page body: the gap of [of] at
+  /// both ends, the bottom one clear of the floating chrome, so the
+  /// content centres in the part of the page left visible.
+  static EdgeInsets centred(BuildContext context) => EdgeInsets.only(
+    top: of(context) - floatingOf(context),
+    bottom: of(context),
+  );
+
   @override
-  bool updateShouldNotify(PageEnd old) => old.inset != inset;
+  bool updateShouldNotify(PageEnd old) =>
+      old.inset != inset || old.floating != floating;
+}
+
+/// The height of chrome that floats over the foot of the pages below
+/// (the phone mini-player): the page content runs on under it, and a
+/// [PageFrame] ends its body that far higher, so nothing stays hidden
+/// behind it at the end of a scroll. Zero without one.
+class FloatingChrome extends InheritedWidget {
+  const FloatingChrome({super.key, required this.height, required super.child});
+
+  final double height;
+
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<FloatingChrome>()?.height ?? 0;
+
+  @override
+  bool updateShouldNotify(FloatingChrome old) => old.height != height;
 }
 
 /// The header row of a [PageFrame]: back chevron, title and actions, at
