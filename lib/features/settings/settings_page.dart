@@ -52,8 +52,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _close() => setState(() => _open = null);
 
-  /// Opens [entry]'s group and reveals the row.
+  /// Opens [entry]'s group and reveals the row. The search field lets go
+  /// of the focus, so a soft keyboard closes over the row it jumped to.
   void _reveal(SettingEntry entry) {
+    _searchField.unfocus();
     setState(() => _open = entry.group);
     _focus.value = entry.id;
   }
