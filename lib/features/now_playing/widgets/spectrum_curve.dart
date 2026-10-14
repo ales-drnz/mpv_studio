@@ -10,6 +10,11 @@ import '../playback_scope.dart';
 /// to `player.stream.fft` and renders one continuous accent line through
 /// the perceptual bands, over a faint fill. Subscribing arms the
 /// analyzer; it disarms on unmount.
+///
+/// The curve runs edge to edge and its baseline sits on the bottom edge,
+/// so the Playback page lays it full bleed, out to the edges of the page:
+/// silent, the line rests whole on the edge, and the fill under it meets
+/// the edge.
 class SpectrumCurve extends StatelessWidget {
   /// Fixed height, or null to fill the parent (e.g. inside an [Expanded]).
   final double? height;
@@ -49,15 +54,18 @@ class _CurvePainter extends CustomPainter {
     final b = bands;
     final n = b?.length ?? 0;
 
-    // Baseline always drawn so the visualizer reads even when silent.
+    // Baseline always drawn so the visualizer reads even when silent: a
+    // hairline lying on the bottom edge.
     final baseline = Paint()
       ..color = palette.line
       ..strokeWidth = 1;
-    canvas.drawLine(Offset(0, h - 1), Offset(w, h - 1), baseline);
+    canvas.drawLine(Offset(0, h - 0.5), Offset(w, h - 0.5), baseline);
 
     if (b == null || n < 2) return;
 
-    double yOf(int i) => h - b[i].clamp(0.0, 1.0) * (h - 2);
+    // Silence puts the 2 px line whole on the bottom edge, its centre
+    // one pixel above it; full scale keeps it whole under the top.
+    double yOf(int i) => h - 1 - b[i].clamp(0.0, 1.0) * (h - 2);
     double xOf(int i) => n == 1 ? w / 2 : (i / (n - 1)) * w;
 
     final top = Path()..moveTo(xOf(0), yOf(0));

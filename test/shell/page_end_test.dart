@@ -10,6 +10,7 @@ import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/effects/rack_environment.dart';
 import 'package:mpv_studio/features/engine/engine_page.dart';
 import 'package:mpv_studio/features/now_playing/now_playing_page.dart';
+import 'package:mpv_studio/features/now_playing/widgets/spectrum_curve.dart';
 import 'package:mpv_studio/features/onboarding/onboarding.dart';
 import 'package:mpv_studio/features/queue/queue_page.dart';
 import 'package:mpv_studio/features/settings/settings_page.dart';
@@ -120,14 +121,24 @@ void main() {
     _ => false,
   };
 
-  /// The lowest bottom of anything painted under [of].
+  /// The lowest bottom of anything painted under [of]. The Playback
+  /// spectrum is not counted: it is the one part that runs full bleed,
+  /// down to the edge.
   double contentBottom(WidgetTester tester, Finder of) {
     final items = find.descendant(
       of: of,
       matching: find.byWidgetPredicate(visual),
     );
+    final bleed = find
+        .descendant(
+          of: find.byType(SpectrumCurve),
+          matching: find.byWidgetPredicate(visual),
+        )
+        .evaluate()
+        .toSet();
     var bottom = double.negativeInfinity;
     for (final e in items.evaluate()) {
+      if (bleed.contains(e)) continue;
       final box = e.renderObject;
       if (box is! RenderBox || !box.hasSize || box.size.isEmpty) continue;
       final rect = box.localToGlobal(Offset.zero) & box.size;
@@ -221,8 +232,28 @@ void main() {
         NowPlayingPage(player: player, onOpenFiles: () {}, onOpenStream: () {}),
         player: player,
       );
-      await expectScrollEnds(tester, 'playback', mustScroll: false);
-      expectPageEnds(tester, 'playback');
+      // The spectrum is the full-bleed exception: it reaches the edge;
+      // everything else ends at least the gutter above it.
+      // On a phone the column scrolls: to its end, where the spectrum is.
+      final scroll = find.ancestor(
+        of: find.byType(SpectrumCurve, skipOffstage: false),
+        matching: find.byType(Scrollable, skipOffstage: false),
+      );
+      if (scroll.evaluate().isNotEmpty) {
+        await scrollToEnd(tester, tester.state(scroll.first));
+      }
+      final edge = edgeOf(tester);
+      expect(
+        tester.getRect(find.byType(SpectrumCurve)).bottom,
+        moreOrLessEquals(edge, epsilon: 1),
+        reason: 'the spectrum ends on the edge',
+      );
+      final gap = edge - contentBottom(tester, find.byType(PageFrame));
+      expect(
+        gap,
+        greaterThanOrEqualTo(gutterOf(tester) - 1),
+        reason: 'the rest ends $gap above the edge',
+      );
     });
 
     testWidgets('Queue at $size', (tester) async {

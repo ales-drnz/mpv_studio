@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
@@ -38,7 +39,12 @@ import 'widgets/waveform/waveform_meter.dart';
 /// * a stage on medium windows: the waveform on top, the deck in a row,
 ///   the spectrum under it;
 /// * two columns on large and ultrawide windows: the deck on the left,
-///   the waveform and the spectrum filling the rest.
+///   the waveform on the right, the spectrum across the foot.
+///
+/// The spectrum is the one part that leaves the gutters: it runs full
+/// bleed to the sides and the bottom edge of the page (the stage panel,
+/// or the screen sides and the bottom chrome on a phone), while the rest
+/// keeps to the page padding.
 ///
 /// With no current track it shows how to start one. It reads the player
 /// from the app; tests hand one in with [player] and [guard].
@@ -174,6 +180,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
         return LayoutBuilder(
           builder: (context, c) {
             final shape = _shapeFor(c.biggest);
+            final page = c.maxWidth;
             // Phones keep the height for the player: the tab bar already
             // says where they are. The info button lives in the transport
             // on every shape, so the header has no actions.
@@ -189,10 +196,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                 _Shape.side || _Shape.split => double.infinity,
               },
               body: switch (shape) {
-                _Shape.column => _columnLayout(context),
+                _Shape.column => _columnLayout(context, page),
                 _Shape.side => _sideLayout(context),
-                _Shape.stage => _stageLayout(context),
-                _Shape.split => _splitLayout(context),
+                _Shape.stage => _stageLayout(context, page),
+                _Shape.split => _splitLayout(context, page),
               },
             );
           },
@@ -223,12 +230,14 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     );
   }
 
-  /// A waveform the user resizes by its bottom seam, above [below].
+  /// A waveform the user resizes by its bottom seam, above [below]; or
+  /// [pane] at that height, holding the waveform.
   Widget _resizable({
     required double initial,
     required double min,
     required double max,
     required Widget below,
+    Widget Function(double height)? pane,
   }) {
     final top = math.max(min, max);
     final height = (_meterHeight ?? initial).clamp(min, top).toDouble();
@@ -242,7 +251,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _waveform(height: height),
+            if (pane != null)
+              SizedBox(height: height, child: pane(height))
+            else
+              _waveform(height: height),
             SizedBox(height: grip),
             Expanded(child: below),
           ],
@@ -267,15 +279,16 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     );
   }
 
-  /// [above] at its own height, then [fill] taking what is left, at
-  /// least a strip of it, down to the page end: the whole scrolls when
-  /// [above] does not fit (a failure banner or a chapter line on a low
-  /// window).
-  Widget _fillBelow(List<Widget> above, Widget fill) {
+  /// [above] at its own height, then the spectrum taking what is left,
+  /// at least a strip of it, down to the bottom edge and [side] past the
+  /// body on both sides: the whole scrolls when [above] does not fit (a
+  /// failure banner or a chapter line on a low window).
+  Widget _fillBelow(List<Widget> above, double side) {
     return Builder(
       builder: (context) {
         final end = PageEnd.of(context);
-        return CustomScrollView(
+        return _bleedingScroll(
+          side: side,
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -287,10 +300,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               hasScrollBody: false,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: 48 + end),
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: end),
-                  child: fill,
-                ),
+                child: _spectrum(side),
               ),
             ),
           ],
@@ -299,6 +309,22 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     );
   }
 
+  /// The spectrum, full bleed: [side] wider than its slot on both sides,
+  /// out to the edges of the page. Its slot runs down to the bottom edge.
+  static Widget _spectrum(double side) =>
+      _Bleed(side: side, child: const SpectrumCurve());
+
+  /// A scroll view of [slivers] that clips top and bottom at its own
+  /// edges but [side] past them at the sides, so the spectrum in it
+  /// shows full bleed.
+  static Widget _bleedingScroll({
+    required double side,
+    required List<Widget> slivers,
+  }) => ClipRect(
+    clipper: _WideClip(side),
+    child: CustomScrollView(clipBehavior: Clip.none, slivers: slivers),
+  );
+
   /// The least waveform meter height: on touch its bottom row (the
   /// scrollbar and the zoom pill) is a touch target tall, so the meter
   /// grows by as much to keep the same wave.
@@ -306,18 +332,21 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       context.layout.isTouch ? 128 : 96;
 
   /// Phones in portrait, tall tablets: one column, the spectrum filling
-  /// what is left, scrolling when the content does not fit.
-  Widget _columnLayout(BuildContext context) {
+  /// what is left, scrolling when the content does not fit. [page] is the
+  /// width of the page, the spectrum's.
+  Widget _columnLayout(BuildContext context, double page) {
     return LayoutBuilder(
       builder: (context, c) {
         final h = c.maxHeight;
+        final side = math.max(0.0, (page - c.maxWidth) / 2);
         final cover = math.min(c.maxWidth * 0.62, h * 0.27).clamp(120.0, 320.0);
         final least = _leastMeter(context);
         final meter = (_meterHeight ?? h * 0.16)
             .clamp(least, math.max(least, h * 0.4))
             .toDouble();
         final end = PageEnd.of(context);
-        return CustomScrollView(
+        return _bleedingScroll(
+          side: side,
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -347,8 +376,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                     const SizedBox(height: Tokens.s8),
                     const VuMeter(),
                     const SizedBox(height: Tokens.s8),
-                    const Expanded(child: SpectrumCurve()),
-                    SizedBox(height: end),
+                    Expanded(child: _spectrum(side)),
                   ],
                 ),
               ),
@@ -412,10 +440,11 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
 
   /// Medium windows: the waveform on top, the deck in a row, the spectrum
   /// under it.
-  Widget _stageLayout(BuildContext context) {
+  Widget _stageLayout(BuildContext context, double page) {
     return LayoutBuilder(
       builder: (context, c) {
         final h = c.maxHeight;
+        final side = math.max(0.0, (page - c.maxWidth) / 2);
         final cover = (c.maxWidth * 0.18).clamp(120.0, 168.0);
         final tap = context.layout.minTap;
         // The title (56), the play row (80) and the mode row (a tap
@@ -457,67 +486,160 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               ),
             ),
             const SizedBox(height: Tokens.s12),
-          ], const SpectrumCurve()),
+          ], side),
         );
       },
     );
   }
 
   /// Large and ultrawide windows: the deck in a column on the left, the
-  /// waveform and the spectrum filling the rest.
-  Widget _splitLayout(BuildContext context) {
+  /// waveform on the right, and the spectrum across the foot of both,
+  /// under the seam that resizes them.
+  Widget _splitLayout(BuildContext context, double page) {
     return LayoutBuilder(
       builder: (context, c) {
         final h = c.maxHeight;
+        final side = math.max(0.0, (page - c.maxWidth) / 2);
         final deck = (c.maxWidth * 0.28).clamp(340.0, 440.0);
-        final cover = math.min(deck, h * 0.42);
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: deck,
-              child: SingleChildScrollView(
-                padding: PageEnd.padding(context),
+        // The spectrum starts at a quarter of the height.
+        final band = (h * 0.25).clamp(120.0, 280.0);
+        return _resizable(
+          initial: h - band - Tokens.s12,
+          min: math.min(360, h / 2),
+          max: h - 120,
+          pane: (height) => Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: deck,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // The cover takes what the deck leaves (the title,
+                      // the transport, the volume and the meter).
+                      Center(
+                        child: _cover(
+                          (height - _deckRest).clamp(
+                            96.0,
+                            math.max(96.0, math.min(deck, h * 0.42)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: Tokens.s16),
+                      const TrackInfo(),
+                      const SizedBox(height: Tokens.s16),
+                      const TransportControls(),
+                      const SizedBox(height: Tokens.s12),
+                      const VolumeControl(),
+                      const SizedBox(height: Tokens.s8),
+                      const VuMeter(),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: Tokens.s32),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(child: _cover(cover)),
-                    const SizedBox(height: Tokens.s16),
-                    const TrackInfo(),
-                    const SizedBox(height: Tokens.s16),
-                    const TransportControls(),
-                    const SizedBox(height: Tokens.s12),
-                    const VolumeControl(),
-                    const SizedBox(height: Tokens.s8),
-                    const VuMeter(),
+                    const FailedTrackBanner(),
+                    Expanded(child: _waveform()),
+                    const PositionBar(),
+                    const ChapterBar(),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(width: Tokens.s32),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const FailedTrackBanner(),
-                  Expanded(
-                    child: _resizable(
-                      initial: h * 0.5,
-                      min: 140,
-                      max: h - 220,
-                      below: _fillBelow(const [
-                        PositionBar(),
-                        ChapterBar(),
-                        SizedBox(height: Tokens.s12),
-                      ], const SpectrumCurve()),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
+          below: _spectrum(side),
         );
       },
     );
   }
+
+  /// The deck of the split layout under its cover: the title, the
+  /// transport, the volume and the meter, with the gaps between them.
+  static const double _deckRest = 312;
+}
+
+/// Lays its child [side] wider than its own slot on both sides, reaching
+/// past it: the spectrum's full bleed out of the page padding. Hit tests
+/// and the child's rect follow the wider box.
+class _Bleed extends SingleChildRenderObjectWidget {
+  const _Bleed({required this.side, super.child});
+
+  final double side;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderBleed(side);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderBleed renderObject) {
+    renderObject.side = side;
+  }
+}
+
+class _RenderBleed extends RenderShiftedBox {
+  _RenderBleed(this._side) : super(null);
+
+  double _side;
+  set side(double value) {
+    if (value == _side) return;
+    _side = value;
+    markNeedsLayout();
+  }
+
+  BoxConstraints _wider(BoxConstraints c) => c.copyWith(
+    minWidth: c.minWidth + 2 * _side,
+    maxWidth: c.maxWidth + 2 * _side,
+  );
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final child = this.child;
+    if (child == null) return constraints.smallest;
+    final s = child.getDryLayout(_wider(constraints));
+    return constraints.constrain(Size(s.width - 2 * _side, s.height));
+  }
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (child == null) {
+      size = constraints.smallest;
+      return;
+    }
+    child.layout(_wider(constraints), parentUsesSize: true);
+    size = constraints.constrain(
+      Size(child.size.width - 2 * _side, child.size.height),
+    );
+    (child.parentData! as BoxParentData).offset = Offset(-_side, 0);
+  }
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    // Inside the wider box, not just the slot.
+    final wide = Rect.fromLTRB(-_side, 0, size.width + _side, size.height);
+    if (!wide.contains(position)) return false;
+    if (hitTestChildren(result, position: position) || hitTestSelf(position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
+  }
+}
+
+/// Clips top and bottom at the box and [side] past it at the sides.
+class _WideClip extends CustomClipper<Rect> {
+  const _WideClip(this.side);
+
+  final double side;
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-side, 0, size.width + side, size.height);
+
+  @override
+  bool shouldReclip(_WideClip old) => old.side != side;
 }
