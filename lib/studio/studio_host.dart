@@ -1,26 +1,26 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 /// What a [StudioHost] tells its builder about restarting.
 @immutable
 class StudioRestart {
-  const StudioRestart({required this.run, required this.inProgress});
+  const StudioRestart({required this.run});
 
   /// Restarts the hosted studio. Completes once the new one is on screen;
   /// a second call while one runs waits for that one.
   final Future<void> Function() run;
-
-  /// Whether a restart is under way (the old studio may already be gone).
-  final bool inProgress;
 }
 
 /// Holds the running studio (the app's services around the player) and
 /// swaps it for a new one on restart.
 ///
-/// The subtree [builder] makes is keyed by the studio, so on a swap every
-/// page is built afresh and subscribes to the new player: nothing keeps a
-/// reference to the old one. When a restart fails (the old studio is shut
-/// down by then) [errorBuilder] shows the error with a retry that calls
-/// [launch].
+/// A restart first takes the studio's tree down, putting [busyBuilder] in
+/// its place, and only once that frame is on screen lets [restart] shut
+/// the old studio down: no page, notifier listener or route is left on
+/// services being disposed. The new studio's tree is keyed by it, so every
+/// page is built afresh and subscribes to the new player. When a restart
+/// fails (the old studio is shut down by then) [errorBuilder] shows the
+/// error with a retry that calls [launch].
 class StudioHost<T extends Object> extends StatefulWidget {
   const StudioHost({
     super.key,
@@ -29,6 +29,7 @@ class StudioHost<T extends Object> extends StatefulWidget {
     required this.launch,
     required this.builder,
     required this.errorBuilder,
+    required this.busyBuilder,
     this.onChanged,
   });
 
@@ -46,6 +47,10 @@ class StudioHost<T extends Object> extends StatefulWidget {
 
   final Widget Function(BuildContext context, Object error, VoidCallback retry)
   errorBuilder;
+
+  /// Shown while a restart or a retry runs, in place of the studio's tree.
+  /// It must not read the studio.
+  final WidgetBuilder busyBuilder;
 
   /// Called with each new studio, after it replaced the previous one.
   final ValueChanged<T>? onChanged;
@@ -79,9 +84,13 @@ class _StudioHostState<T extends Object> extends State<StudioHost<T>> {
   }
 
   Future<void> _swap(Future<T> Function() next) async {
-    // Let the caller record the swap as running before anything happens.
+    // Let the caller record the swap as running before anything happens,
+    // then wait for the frame that takes the studio's tree down: the old
+    // studio is shut down only once nothing on screen uses it.
     await null;
     try {
+      await SchedulerBinding.instance.endOfFrame;
+      if (!mounted) return;
       final studio = await next();
       if (!mounted) return;
       setState(() {
@@ -97,16 +106,11 @@ class _StudioHostState<T extends Object> extends State<StudioHost<T>> {
   @override
   Widget build(BuildContext context) {
     final error = _error;
-    if (error != null && _running == null) {
-      return widget.errorBuilder(context, error, _retry);
-    }
+    if (_running != null) return widget.busyBuilder(context);
+    if (error != null) return widget.errorBuilder(context, error, _retry);
     return KeyedSubtree(
       key: ObjectKey(_studio),
-      child: widget.builder(
-        context,
-        _studio,
-        StudioRestart(run: _restart, inProgress: _running != null),
-      ),
+      child: widget.builder(context, _studio, StudioRestart(run: _restart)),
     );
   }
 }

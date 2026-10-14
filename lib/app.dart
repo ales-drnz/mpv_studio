@@ -121,6 +121,15 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
         restart: (studio) => studio.restart(),
         launch: MpvStudio.launch,
         onChanged: _onStudio,
+        // The old studio's tree is taken down before it shuts down, so
+        // this screen, which reads no studio, stands in meanwhile.
+        busyBuilder: (context) => MaterialApp(
+          title: 'MPV Studio',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.of(palette, input: InputMode.platformDefault),
+          builder: (context, child) => LayoutScope(child: child!),
+          home: const _RestartingView(),
+        ),
         errorBuilder: (context, error, retry) => MaterialApp(
           title: 'MPV Studio',
           debugShowCheckedModeBanner: false,
@@ -147,14 +156,8 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
             routerConfig: _router,
             // Above the navigator, so pages, dialogs and sheets all share the
             // layout (and the debug viewport, when one is defined).
-            builder: (context, child) => DebugViewport(
-              child: LayoutScope(
-                child: _RestartCover(
-                  restarting: restart.inProgress,
-                  child: child!,
-                ),
-              ),
-            ),
+            builder: (context, child) =>
+                DebugViewport(child: LayoutScope(child: child!)),
           ),
         ),
       ),
@@ -162,52 +165,41 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
   }
 }
 
-/// Covers the app while the player restarts: the old player is going away,
-/// so nothing under it may be touched, by pointer or keyboard, until the
-/// new one is on screen.
-class _RestartCover extends StatelessWidget {
-  const _RestartCover({required this.restarting, required this.child});
-
-  final bool restarting;
-  final Widget child;
+/// Stands in for the app while the player restarts: the old player's
+/// tree is gone and the new one is not built yet.
+class _RestartingView extends StatelessWidget {
+  const _RestartingView();
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // The barrier stops the pointer; this stops the keyboard shortcuts.
-        ExcludeFocus(excluding: restarting, child: child),
-        if (restarting) ...[
-          ModalBarrier(color: Tokens.bg.withValues(alpha: 0.6)),
-          Center(
-            child: Semantics(
-              liveRegion: true,
-              child: Material(
-                color: Tokens.surface2,
-                shape: Tokens.shape(Tokens.rMd),
-                child: Padding(
-                  padding: const EdgeInsets.all(Tokens.s24),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Tokens.accent,
-                        ),
-                      ),
-                      const SizedBox(width: Tokens.s12),
-                      Text('Restarting the player', style: Tokens.body),
-                    ],
+    return ColoredBox(
+      color: Tokens.bg,
+      child: Center(
+        child: Semantics(
+          liveRegion: true,
+          child: Material(
+            color: Tokens.surface2,
+            shape: Tokens.shape(Tokens.rMd),
+            child: Padding(
+              padding: const EdgeInsets.all(Tokens.s24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Tokens.accent,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: Tokens.s12),
+                  Text('Restarting the player', style: Tokens.body),
+                ],
               ),
             ),
           ),
-        ],
-      ],
+        ),
+      ),
     );
   }
 }
