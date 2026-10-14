@@ -130,3 +130,17 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Freedesktop integration: the desktop entry and themed icon that let the
+# window manager map a running window (its app_id is APPLICATION_ID) to an
+# icon. Wayland has no per-window pixmap icon, so this is the only way the
+# app icon shows there. Packagers pass -DCMAKE_INSTALL_PREFIX=/usr so these
+# land in the system's XDG paths; the bundle default carries them under
+# share/. For a local build, run linux/packaging/install-linux-icon.sh
+# instead (it installs into ~/.local/share).
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/${APPLICATION_ID}.desktop"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
+  COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/${APPLICATION_ID}.png"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/512x512/apps"
+  COMPONENT Runtime)

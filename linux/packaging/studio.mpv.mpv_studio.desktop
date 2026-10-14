@@ -1,0 +1,19 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=MPV Studio
+GenericName=Audio Player
+Comment=Showcase player for mpv_audio_kit: streams, media servers and live effects
+# Exec is rewritten by install-linux-icon.sh to the built binary's absolute
+# path. Keep the bare binary name here for packaged installs where
+# `mpv_studio` lives on PATH.
+Exec=mpv_studio
+Icon=studio.mpv.mpv_studio
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+Keywords=music;player;audio;mpv;jellyfin;plex;
+# Wayland matches a window to this entry by its xdg-shell app_id, which the
+# GTK runner sets to APPLICATION_ID with g_set_prgname(). It must equal the
+# .desktop basename. StartupWMClass covers the X11 (WM_CLASS) path too.
+StartupWMClass=studio.mpv.mpv_studio
+StartupNotify=true
