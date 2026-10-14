@@ -35,6 +35,12 @@ class WaveformMeter extends StatefulWidget {
   /// The seek step of the accessibility actions.
   static const Duration semanticStep = Duration(seconds: 5);
 
+  /// Makes the stopwatch that runs the playhead on between position
+  /// events. Tests that render frames swap in one that stands still, so
+  /// the wall clock never shows in a frame.
+  @visibleForTesting
+  static Stopwatch Function() debugStopwatch = Stopwatch.new;
+
   @override
   State<WaveformMeter> createState() => _WaveformMeterState();
 }
@@ -53,7 +59,7 @@ class _WaveformMeterState extends State<WaveformMeter>
 
   /// The playhead between position events: [_anchor] plus the time the
   /// stopwatch has run, at the playback rate.
-  final _sw = Stopwatch();
+  final _sw = WaveformMeter.debugStopwatch();
   Duration _anchor = Duration.zero;
   double _rate = 1;
   bool _playWhenReady = false;
