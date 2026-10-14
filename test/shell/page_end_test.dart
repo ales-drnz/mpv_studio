@@ -40,6 +40,8 @@ import '../support/layout_harness.dart';
 /// the visible edge of the page (the stage panel edge on a desktop, the
 /// top of the mini-player over the tab bar on a phone), so no card is cut
 /// by the edge or by a line above it, and every page ends the same way.
+/// The scroll views themselves run on to the bottom of the page (on a
+/// phone under the floating mini-player, to the tab bar).
 void main() {
   setUpAll(loadStudioFonts);
 
@@ -88,6 +90,14 @@ void main() {
               .first,
         )
         .bottom;
+  }
+
+  /// Where the scroll views of the page end: the stage panel edge, or the
+  /// top of the tab bar on a phone, under the floating mini-player.
+  double viewEdgeOf(WidgetTester tester) {
+    final bar = find.byWidgetPredicate((w) => '${w.runtimeType}' == '_TabBar');
+    if (bar.evaluate().isNotEmpty) return tester.getRect(bar).top;
+    return edgeOf(tester);
   }
 
   double gutterOf(WidgetTester tester) =>
@@ -146,6 +156,7 @@ void main() {
     Finder? except,
   }) async {
     final edge = edgeOf(tester);
+    final viewEdge = viewEdgeOf(tester);
     final gutter = gutterOf(tester);
     final skip = except == null
         ? const <Element>{}
@@ -177,7 +188,7 @@ void main() {
           viewport.localToGlobal(Offset.zero).dy + viewport.size.height;
       expect(
         bottom,
-        moreOrLessEquals(edge, epsilon: 1),
+        moreOrLessEquals(viewEdge, epsilon: 1),
         reason: '$reason: the scroll view stops short of the edge',
       );
       final gap = edge - contentBottom(tester, find.byWidget(s.widget));

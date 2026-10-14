@@ -29,7 +29,7 @@ class EmptyPlayback extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         // Centred, so as far from the top as from the page end.
-        padding: EdgeInsets.symmetric(vertical: PageEnd.of(context)),
+        padding: PageEnd.centred(context),
         child: ReadableWidth(
           maxWidth: Breakpoints.medium,
           child: Column(

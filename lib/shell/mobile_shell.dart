@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/scroll_fade.dart';
 import 'nav_parts.dart';
 import 'sections.dart';
 import 'snack_clearance.dart';
@@ -15,8 +17,10 @@ import 'snack_clearance.dart';
 /// `resizeToAvoidBottomInset: false`, so this widget owns the keyboard inset.
 ///
 /// The bar has a tab per [Section.tabs] and a More tab that opens a sheet
-/// with the [Section.more] sections. [miniPlayer], when given, sits right
-/// above the bar and moves with it.
+/// with the [Section.more] sections. [miniPlayer], when given, floats right
+/// above the bar and moves with it: the body runs on under it, so the page
+/// shows around and behind its card, and the shell hands its height to the
+/// pages as [FloatingChrome], so they end their content above it.
 class MobileShell extends StatefulWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
@@ -37,30 +41,42 @@ class MobileShell extends StatefulWidget {
 
 class _MobileShellState extends State<MobileShell> {
   final GlobalKey _tabBarKey = GlobalKey();
-  // Measured height of the tab bar and the mini-player above it (includes
-  // the home-indicator inset). The body reserves this much at the bottom
-  // when the keyboard is down; the keyboard inset takes over when it's up,
-  // so the content clears whichever is taller.
+  final GlobalKey _miniKey = GlobalKey();
+  // Measured heights of the tab bar (includes the home-indicator inset)
+  // and of the mini-player floating above it.
   double _tabBarHeight = 0;
+  double _miniHeight = 0;
 
-  void _measureTabBar() {
-    final h = _tabBarKey.currentContext?.size?.height;
-    if (h != null && h != _tabBarHeight && mounted) {
-      setState(() => _tabBarHeight = h);
+  void _measure() {
+    if (!mounted) return;
+    final bar = _tabBarKey.currentContext?.size?.height ?? _tabBarHeight;
+    final mini = widget.miniPlayer == null
+        ? 0.0
+        : _miniKey.currentContext?.size?.height ?? _miniHeight;
+    if (bar != _tabBarHeight || mini != _miniHeight) {
+      setState(() {
+        _tabBarHeight = bar;
+        _miniHeight = mini;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // The bar height is stable after layout; re-measure post-frame (guarded
+    // The heights are stable after layout; re-measure post-frame (guarded
     // so it only commits on a real change, such as an orientation or inset
-    // change).
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measureTabBar());
+    // change, or the mini-player coming or going).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
 
     final keyboard = MediaQuery.of(context).viewInsets.bottom;
-    // Reserve the keyboard (when up) or the tab bar (when down) at the bottom,
-    // whichever is taller, so the body content is never hidden behind either.
+    // Reserve the keyboard (when up) or the tab bar (when down) at the
+    // bottom, whichever is taller, so the body is never hidden behind
+    // either. The mini-player is not reserved: the body runs on under it,
+    // and the pages end their content above whatever part of it the
+    // keyboard leaves showing.
     final bottomReserve = math.max(keyboard, _tabBarHeight);
+    final mini = widget.miniPlayer == null ? 0.0 : _miniHeight;
+    final floating = math.max(0.0, _tabBarHeight + mini - bottomReserve);
 
     // The top and sides are inset normally, but NOT the bottom: the tab bar itself
     // fills the bottom inset (home indicator) with its own surface so it reads
@@ -83,9 +99,12 @@ class _MobileShellState extends State<MobileShell> {
                   data: MediaQuery.of(inner)
                       .removePadding(removeBottom: true)
                       .removeViewInsets(removeBottom: true),
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: widget.body,
+                  child: FloatingChrome(
+                    height: floating,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: widget.body,
+                    ),
                   ),
                 ),
               ),
@@ -101,12 +120,29 @@ class _MobileShellState extends State<MobileShell> {
             child: SnackObstacle(
               edge: SnackEdge.bottom,
               child: Column(
-                key: _tabBarKey,
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (widget.miniPlayer != null) widget.miniPlayer!,
-                  _TabBar(section: widget.section, onSelect: widget.onSelect),
+                  // Only its card paints: the page shows around it,
+                  // fading into the page background towards the tab bar
+                  // so rows passing behind the margins stay quiet.
+                  if (widget.miniPlayer != null)
+                    KeyedSubtree(
+                      key: _miniKey,
+                      child: Stack(
+                        children: [
+                          const Positioned.fill(child: BackgroundFade()),
+                          widget.miniPlayer!,
+                        ],
+                      ),
+                    ),
+                  KeyedSubtree(
+                    key: _tabBarKey,
+                    child: _TabBar(
+                      section: widget.section,
+                      onSelect: widget.onSelect,
+                    ),
+                  ),
                 ],
               ),
             ),

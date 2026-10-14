@@ -31,7 +31,7 @@ class QueueEmpty extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         // Centred, so as far from the top as from the page end.
-        padding: EdgeInsets.symmetric(vertical: PageEnd.of(context)),
+        padding: PageEnd.centred(context),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 560),
           padding: const EdgeInsets.all(Tokens.s24),

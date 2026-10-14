@@ -79,3 +79,24 @@ class _ScrollFadeState extends State<ScrollFade> {
     );
   }
 }
+
+/// A fill that fades from clear at its top to the page background at its
+/// bottom, laid behind chrome that floats over a page (the phone
+/// mini-player), so content passing under its margins fades out instead
+/// of showing as slivers against the chrome below. It takes no taps.
+class BackgroundFade extends StatelessWidget {
+  const BackgroundFade({super.key});
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Tokens.bg.withValues(alpha: 0), Tokens.bg],
+        ),
+      ),
+    ),
+  );
+}
