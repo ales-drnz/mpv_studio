@@ -59,6 +59,10 @@ class ShowcaseStage extends StatelessWidget {
 /// person. The cursor itself is drawn by [ShowcaseStage], in the shape of
 /// the system cursor the app asks for.
 ///
+/// With [touch] the pointer is a finger instead: it shows as a soft
+/// circle only while it touches, and [tap], [doubleTap], [longPress],
+/// [swipe] and [fingerDrag] play the gestures.
+///
 /// [onFrame] runs before each frame with the scene time, to drive what a
 /// real player would (the position, the spectrum, the meters).
 class Scene {
@@ -68,10 +72,20 @@ class Scene {
     this.outDir,
     double? scale,
     this.onFrame,
+    this.touch = false,
     Offset start = Offset.zero,
   }) : fps = fps ?? showcaseFps,
        scale = scale ?? showcaseScale,
-       _pointerAt = start;
+       _pointerAt = start,
+       _mouse = TestPointer(
+         1,
+         touch ? PointerDeviceKind.touch : PointerDeviceKind.mouse,
+         null,
+         kPrimaryButton,
+       );
+
+  /// Whether the pointer is a finger on a touch screen.
+  final bool touch;
 
   final WidgetTester tester;
   final int fps;
@@ -87,17 +101,24 @@ class Scene {
   final ValueNotifier<OverlayFrame> _overlay = ValueNotifier(
     const OverlayFrame(time: Duration.zero),
   );
-  final TestPointer _mouse = TestPointer(
-    1,
-    PointerDeviceKind.mouse,
-    null,
-    kPrimaryButton,
-  );
+  TestPointer _mouse;
+
+  /// The next pointer id: each touch is a new pointer, as on a screen.
+  int _nextTouch = 2;
   final SceneRandom random = SceneRandom();
+
+  /// Where key caps show: top right by default, clear of the page title
+  /// and of the toasts at the foot; a scene moves them off its controls.
+  Alignment keyAlignment = Alignment.topRight;
 
   Offset _pointerAt;
   bool _pointerShown = false;
   double _press = 0;
+
+  /// The finger's fade: when it last lifted, or null while it touches or
+  /// before the first touch.
+  Duration? _liftedAt;
+  static const Duration _fingerFade = Duration(milliseconds: 220);
   final List<ClickRing> _rings = [];
   final List<KeyCap> _keys = [];
 
@@ -112,7 +133,7 @@ class Scene {
   /// The scene time of the next frame.
   Duration get time => step * _frame;
 
-  /// Frames written so far.
+  /// Frames recorded so far (written, when there is an [outDir]).
   int get written => _written;
 
   /// Where the pointer is.
@@ -146,14 +167,27 @@ class Scene {
     _overlay.value = OverlayFrame(
       time: time,
       pointer: _pointerShown ? _pointerAt : null,
-      shape: _shape(),
+      shape: touch ? CursorShape.finger : _shape(),
       press: _press,
+      opacity: _opacity(),
       rings: List.of(_rings),
       keys: List.of(_keys),
     );
     await tester.pump(step);
-    if (_recording && outDir != null) await _capture();
+    if (_recording) {
+      if (outDir != null) await _capture();
+      _written++;
+    }
     _frame++;
+  }
+
+  double _opacity() {
+    if (!touch) return 1;
+    if (_mouse.isDown) return 1;
+    final lifted = _liftedAt;
+    if (lifted == null) return 0;
+    final t = (time - lifted).inMicroseconds / _fingerFade.inMicroseconds;
+    return (1 - easeOut(t)).clamp(0.0, 1.0);
   }
 
   CursorShape _shape() {
@@ -169,13 +203,24 @@ class Scene {
     final boundary =
         _boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
     final name = '$outDir/frame_${_written.toString().padLeft(5, '0')}.png';
-    _written++;
     await tester.runAsync(() async {
       final image = await boundary.toImage(pixelRatio: scale);
       final png = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       await File(name).writeAsBytes(png!.buffer.asUint8List());
     });
+  }
+
+  /// Lets images that just appeared finish decoding, which happens off
+  /// the fake clock: real time passes, scene time does not, so the next
+  /// frame shows them on every run.
+  Future<void> settleImages() async {
+    for (var i = 0; i < 3; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 120)),
+      );
+      await tester.pump(Duration.zero);
+    }
   }
 
   /// Holds still for [ms] milliseconds.
@@ -187,6 +232,8 @@ class Scene {
 
   Future<void> _hoverTo(Offset at) async {
     _pointerAt = at;
+    // A lifted finger moves unseen and tells the app nothing.
+    if (touch && !_mouse.isDown) return;
     await tester.sendEventToBinding(
       _mouse.isDown
           ? _mouse.move(at, timeStamp: time)
@@ -230,6 +277,22 @@ class Scene {
     _press = 0.45;
     await frame();
     _press = 0;
+  }
+
+  /// A double click where the pointer is.
+  Future<void> doubleClick() async {
+    await wait(140);
+    for (var i = 0; i < 2; i++) {
+      _press = 1;
+      _rings.add(ClickRing(_pointerAt, time));
+      await tester.sendEventToBinding(
+        _mouse.down(_pointerAt, timeStamp: time, buttons: kPrimaryButton),
+      );
+      await wait(50);
+      await tester.sendEventToBinding(_mouse.up(timeStamp: time));
+      _press = 0;
+      await wait(70);
+    }
   }
 
   /// A right click where the pointer is.
@@ -290,18 +353,131 @@ class Scene {
     required String label,
     int holdMs = 650,
   }) async {
-    _keys.add(KeyCap(label, time, Duration(milliseconds: holdMs)));
+    _keys.add(
+      KeyCap(
+        label,
+        time,
+        Duration(milliseconds: holdMs),
+        alignment: keyAlignment,
+      ),
+    );
     await wait(80);
     await tester.sendKeyDownEvent(key);
     await wait(90);
     await tester.sendKeyUpEvent(key);
   }
 
+  Future<void> _touchDown(Offset at) async {
+    _mouse = TestPointer(_nextTouch++, PointerDeviceKind.touch);
+    _pointerAt = at;
+    _pointerShown = true;
+    _liftedAt = null;
+    _press = 1;
+    await tester.sendEventToBinding(_mouse.down(at, timeStamp: time));
+  }
+
+  Future<void> _touchUp() async {
+    await tester.sendEventToBinding(_mouse.up(timeStamp: time));
+    _press = 0;
+    _liftedAt = time;
+  }
+
+  /// A tap of the finger at [at], held [holdMs], with a ring as it lands.
+  Future<void> tap(Offset at, {int holdMs = 90}) async {
+    _rings.add(ClickRing(at, time));
+    await _touchDown(at);
+    await wait(holdMs);
+    await _touchUp();
+    await frame();
+  }
+
+  /// A tap on [finder]'s widget, at [alignment] inside it.
+  Future<void> tapOn(Finder finder, {Alignment alignment = Alignment.center}) =>
+      tap(alignment.withinRect(rectOf(finder)));
+
+  /// Two quick taps at [at].
+  Future<void> doubleTap(Offset at) async {
+    await tap(at, holdMs: 60);
+    await wait(60);
+    await tap(at, holdMs: 60);
+  }
+
+  /// Presses at [at] for [holdMs]; with [then], drags there afterwards
+  /// (a long press that picks something up), and lifts.
+  Future<void> longPress(
+    Offset at, {
+    int holdMs = 700,
+    Offset? then,
+    int? ms,
+  }) async {
+    await _touchDown(at);
+    await wait(holdMs);
+    if (then != null) await moveTo(then, ms: ms);
+    await wait(80);
+    await _touchUp();
+    await frame();
+  }
+
+  /// A swipe from [from] to [to] in [ms]: it speeds up and lets go while
+  /// moving, so lists and pages carry on with their own inertia. Without
+  /// [fling] it slows down before letting go.
+  Future<void> swipe(
+    Offset from,
+    Offset to, {
+    int ms = 260,
+    bool fling = true,
+  }) async {
+    await _touchDown(from);
+    await frame();
+    // Several moves a frame, the last one with the lift: Flutter's
+    // velocity tracker takes a pointer that pauses 40 ms as stopped, which
+    // would leave a swipe with no speed.
+    const perFrame = 5;
+    final n = framesFor(ms) * perFrame;
+    final sub = step ~/ perFrame;
+    for (var i = 1; i <= n; i++) {
+      final t = i / n;
+      final s = fling ? t * t : easeInOut(t);
+      final at = Offset.lerp(from, to, s)!;
+      final stamp = time - step + sub * ((i - 1) % perFrame + 1);
+      _pointerAt = at;
+      await tester.sendEventToBinding(_mouse.move(at, timeStamp: stamp));
+      if (i % perFrame == 0 && i < n) await frame();
+    }
+    await tester.sendEventToBinding(_mouse.up(timeStamp: time));
+    _press = 0;
+    _liftedAt = time;
+    await frame();
+  }
+
+  /// A finger that lands on [from], glides to [to] and lifts, with short
+  /// holds at both ends (dragging a slider or a handle).
+  Future<void> fingerDrag(Offset from, Offset to, {int? ms}) async {
+    await _touchDown(from);
+    await wait(120);
+    await moveTo(to, ms: ms);
+    await wait(100);
+    await _touchUp();
+    await frame();
+  }
+
+  /// Presses Enter in the focused text field: the key cap shows, the key
+  /// goes to the app's key handlers, then the field submits, as the
+  /// keyboard's action would.
+  Future<void> submit({
+    TextInputAction action = TextInputAction.done,
+    String label = 'Enter',
+  }) async {
+    await press(LogicalKeyboardKey.enter, label: label);
+    await tester.testTextInput.receiveAction(action);
+    await frame();
+  }
+
   /// Takes the pointer off screen and lets the remaining timers run out,
   /// so the test ends clean.
   Future<void> finish() async {
     stop();
-    if (_pointerShown) {
+    if (_pointerShown && !touch) {
       await tester.sendEventToBinding(_mouse.removePointer(timeStamp: time));
     }
     await tester.pumpWidget(const SizedBox());

@@ -32,3 +32,52 @@ class StillStopwatch implements Stopwatch {
   @override
   bool get isRunning => _running;
 }
+
+/// A [Stopwatch] that reads elapsed time from [now] (a test's fake
+/// clock, say `tester.binding.clock.now`), so whatever it times moves
+/// with scene time and the same way on every run.
+class ClockStopwatch implements Stopwatch {
+  ClockStopwatch(this.now);
+
+  final DateTime Function() now;
+  DateTime? _startedAt;
+  Duration _banked = Duration.zero;
+
+  @override
+  int get frequency => 1000000;
+
+  @override
+  void start() => _startedAt ??= now();
+
+  @override
+  void stop() {
+    final at = _startedAt;
+    if (at == null) return;
+    _banked += now().difference(at);
+    _startedAt = null;
+  }
+
+  @override
+  void reset() {
+    _banked = Duration.zero;
+    if (_startedAt != null) _startedAt = now();
+  }
+
+  @override
+  Duration get elapsed {
+    final at = _startedAt;
+    return at == null ? _banked : _banked + now().difference(at);
+  }
+
+  @override
+  int get elapsedTicks => elapsed.inMicroseconds;
+
+  @override
+  int get elapsedMicroseconds => elapsed.inMicroseconds;
+
+  @override
+  int get elapsedMilliseconds => elapsed.inMilliseconds;
+
+  @override
+  bool get isRunning => _startedAt != null;
+}

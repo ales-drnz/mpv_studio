@@ -7,7 +7,17 @@ import 'motion.dart';
 
 /// The shapes the drawn cursor takes, after the system cursor the app
 /// asks for at the pointer.
-enum CursorShape { arrow, hand, crosshair, text, resizeRow, resizeColumn }
+enum CursorShape {
+  arrow,
+  hand,
+  crosshair,
+  text,
+  resizeRow,
+  resizeColumn,
+
+  /// A fingertip on a touch screen: a soft circle.
+  finger,
+}
 
 /// The [CursorShape] for a system cursor kind, as Flutter names it
 /// (`SystemMouseCursor.kind`).
@@ -39,9 +49,17 @@ class ClickRing {
 /// A key shown on screen while it is pressed, for shortcuts the viewer
 /// cannot otherwise see.
 class KeyCap {
-  const KeyCap(this.label, this.start, this.hold);
+  const KeyCap(
+    this.label,
+    this.start,
+    this.hold, {
+    this.alignment = Alignment.topRight,
+  });
 
   final String label;
+
+  /// Where on screen the cap sits, inside a margin.
+  final Alignment alignment;
   final Duration start;
   final Duration hold;
 
@@ -58,6 +76,7 @@ class OverlayFrame {
     this.pointer,
     this.shape = CursorShape.arrow,
     this.press = 0,
+    this.opacity = 1,
     this.rings = const [],
     this.keys = const [],
   });
@@ -72,6 +91,9 @@ class OverlayFrame {
   /// How far the button is down: 0 up, 1 fully pressed (the cursor
   /// shrinks a little).
   final double press;
+
+  /// How visible the cursor is: a finger fades in and out with each touch.
+  final double opacity;
   final List<ClickRing> rings;
   final List<KeyCap> keys;
 }
@@ -115,7 +137,9 @@ class _OverlayPainter extends CustomPainter {
       _keyCap(canvas, size, key, f.time);
     }
     final p = f.pointer;
-    if (p != null) paintCursor(canvas, p, f.shape, press: f.press);
+    if (p != null && f.opacity > 0) {
+      paintCursor(canvas, p, f.shape, press: f.press, opacity: f.opacity);
+    }
   }
 
   void _ring(Canvas canvas, ClickRing ring, Duration now) {
@@ -164,8 +188,8 @@ class _OverlayPainter extends CustomPainter {
     )..layout();
     final w = math.max(48.0, text.width + 32);
     const h = 48.0;
-    // Top right, clear of the page title and of the toasts at the foot.
-    final rect = Rect.fromLTWH(size.width - w - 28, 24, w, h);
+    final area = Rect.fromLTRB(28, 24, size.width - 28, size.height - 24);
+    final rect = key.alignment.inscribe(Size(w, h), area);
     final cap = RRect.fromRectAndRadius(rect, const Radius.circular(12));
     canvas.drawRRect(
       cap.shift(const Offset(0, 3)),
@@ -197,7 +221,12 @@ void paintCursor(
   Offset at,
   CursorShape shape, {
   double press = 0,
+  double opacity = 1,
 }) {
+  if (shape == CursorShape.finger) {
+    _finger(canvas, at, press, opacity);
+    return;
+  }
   final scale = 1.0 - 0.14 * press.clamp(0.0, 1.0);
   canvas.save();
   canvas.translate(at.dx, at.dy);
@@ -216,8 +245,37 @@ void paintCursor(
     case CursorShape.resizeColumn:
       canvas.rotate(math.pi / 2);
       _filled(canvas, _resize, fill: Colors.black, edge: Colors.white);
+    case CursorShape.finger:
+      break; // drawn above
   }
   canvas.restore();
+}
+
+/// A fingertip: a translucent disc with a light rim, pressed a little
+/// smaller while down.
+void _finger(Canvas canvas, Offset at, double press, double opacity) {
+  final r = 19.0 * (1 - 0.12 * press.clamp(0.0, 1.0));
+  final a = opacity.clamp(0.0, 1.0);
+  canvas.drawCircle(
+    at + const Offset(0, 1.5),
+    r + 1,
+    Paint()
+      ..color = Colors.black.withValues(alpha: 0.22 * a)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+  );
+  canvas.drawCircle(
+    at,
+    r,
+    Paint()..color = Colors.white.withValues(alpha: 0.30 * a),
+  );
+  canvas.drawCircle(
+    at,
+    r,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = Colors.white.withValues(alpha: 0.75 * a),
+  );
 }
 
 void _filled(

@@ -22,8 +22,10 @@
 #   GIF_FPS=20          GIF frame rate (a divisor of 100: GIF delays are
 #                       in hundredths of a second)
 #   GIF_UPDATE_HZ=10    readout steps per second in the GIF
-#   COLORS=56           GIF palette size; fewer makes a smaller GIF (the
-#                       app is mostly greys, the cover art flat colours)
+#   MAX_MB=1.6          GIF size budget: the palette starts at 128 colours
+#                       and shrinks until the GIF fits (the app is mostly
+#                       greys, the cover art flat colours)
+#   COLORS=             a fixed palette size instead of the budget search
 #   STATS=full          palettegen stats_mode: full keeps the colours of
 #                       still parts (the cover); diff favours what moves
 #   DITHER=none         paletteuse dither (sierra2_4a, bayer...); none
@@ -45,7 +47,8 @@ out=$(cd "$out" && pwd)
 test_file="test/showcase/${scene}_scene_test.dart"
 gif_fps=${GIF_FPS:-20}
 gif_hz=${GIF_UPDATE_HZ:-10}
-colors=${COLORS:-56}
+colors=${COLORS:-}
+max_mb=${MAX_MB:-1.6}
 stats=${STATS:-full}
 dither=${DITHER:-none}
 bayer_scale=${BAYER_SCALE:-5}
@@ -104,9 +107,20 @@ if [[ "$dither" == bayer ]]; then
 else
   use="paletteuse=dither=${dither}:diff_mode=rectangle"
 fi
-ffmpeg -v error -y -framerate "$gif_fps" -i "$gif_frames/frame_%05d.png" \
-  -vf "${size},split[a][b];[a]palettegen=stats_mode=${stats}:max_colors=${colors}[p];[b][p]${use}" \
-  -loop 0 "$out/$scene.gif"
+encode_gif() {
+  ffmpeg -v error -y -framerate "$gif_fps" -i "$gif_frames/frame_%05d.png" \
+    -vf "${size},split[a][b];[a]palettegen=stats_mode=${stats}:max_colors=$1[p];[b][p]${use}" \
+    -loop 0 "$out/$scene.gif"
+}
+if [[ -n "$colors" ]]; then
+  encode_gif "$colors"
+else
+  limit=$(awk -v m="$max_mb" 'BEGIN { printf "%d", m * 1048576 }')
+  for colors in 128 96 72 56 48 40 32; do
+    encode_gif "$colors"
+    (( $(stat -c %s "$out/$scene.gif") <= limit )) && break
+  done
+fi
 
 n=$(count "$gif_frames")
 still() {
@@ -116,7 +130,7 @@ still() {
 still 0 start
 still $(( n / 2 )) middle
 still $(( n - 1 )) end
-echo "== $out/$scene.gif: $(mb "$out/$scene.gif"), $n frames at $gif_fps fps"
+echo "== $out/$scene.gif: $(mb "$out/$scene.gif"), $n frames at $gif_fps fps, $colors colours"
 
 if [[ "${MP4:-1}" != 0 ]]; then
   play "$mp4_frames" "$mp4_fps"
