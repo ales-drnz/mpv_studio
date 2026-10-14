@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../tokens.dart';
 import 'control_metrics.dart';
@@ -8,7 +9,9 @@ import 'control_metrics.dart';
 /// size hint in [Tokens.fgFaint], an accent ring while focused and a red
 /// one with the error under the pill when [validator] fails. A field of
 /// several lines ([maxLines] other than 1) keeps round corners instead of
-/// the pill.
+/// the pill. A field of several lines with [onSubmitted] holds one long
+/// line wrapped over those lines: Enter submits it, and a line break typed
+/// or pasted is dropped.
 ///
 /// [leading] sits before the text (a search glyph, a prompt), [action]
 /// after it (a clear or apply button). [label] names the field for screen
@@ -89,6 +92,10 @@ class AppTextField extends StatelessWidget {
   final int? minLines;
   final int? maxLines;
 
+  static final _noLineBreaks = FilteringTextInputFormatter.deny(
+    RegExp(r'[\n\r]'),
+  );
+
   /// The text style of a field: body text, monospace when [monospace].
   static TextStyle textStyle({bool monospace = false, bool enabled = true}) =>
       Tokens.body.copyWith(
@@ -103,6 +110,8 @@ class AppTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final h = controlHeightOf(context);
     final multiline = maxLines != 1;
+    // Several lines shown, one line of text: Enter submits.
+    final wrapped = multiline && onSubmitted != null;
     final radius = BorderRadius.circular(multiline ? Tokens.rMd : h / 2);
     OutlineInputBorder ring([Color? color]) => OutlineInputBorder(
       borderRadius: radius,
@@ -120,8 +129,10 @@ class AppTextField extends StatelessWidget {
       onFieldSubmitted: onSubmitted,
       onTap: onTap,
       onTapOutside: onTapOutside,
-      textInputAction: textInputAction,
-      keyboardType: keyboardType,
+      textInputAction:
+          textInputAction ?? (wrapped ? TextInputAction.done : null),
+      keyboardType: keyboardType ?? (wrapped ? TextInputType.text : null),
+      inputFormatters: wrapped ? [_noLineBreaks] : null,
       obscureText: obscureText,
       autocorrect: autocorrect,
       enableSuggestions: enableSuggestions,
