@@ -20,7 +20,8 @@ class StudioMenuItem<T> {
   final IconData? icon;
   final bool enabled;
 
-  /// Drawn in red (remove, delete, clear).
+  /// Marked with a red icon (remove, delete, clear); the label keeps the
+  /// menu's text tone, as red text would not reach 4.5:1 on the menu.
   final bool destructive;
 }
 
@@ -46,10 +47,14 @@ Future<T?> showStudioMenu<T>(
         Rect.fromLTWH(at.dx, at.dy, 0, 0),
         Offset.zero & overlay.size,
       ),
-      color: Tokens.surface3,
+      // The tonal step: it stands off the rows and cards under it in both
+      // themes, and its own text (onTonal) reads 8.5:1 or more.
+      color: Tokens.tonal,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: Tokens.shape(Tokens.rLg),
+      // The hover band of the first and last items keeps the corners.
+      clipBehavior: Clip.antiAlias,
       items: [
         for (final item in items)
           PopupMenuItem<T>(
@@ -111,18 +116,14 @@ class _MenuRow<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = !item.enabled
-        ? Tokens.fgFaint
-        : item.destructive
-        ? Tokens.red
-        : Tokens.fg;
+    final color = item.enabled ? Tokens.onTonal : Tokens.fgFaint;
     return Row(
       children: [
         if (item.icon != null) ...[
           Icon(
             item.icon,
             size: 18,
-            color: item.destructive ? color : Tokens.fgDim,
+            color: item.destructive && item.enabled ? Tokens.red : Tokens.fgDim,
           ),
           const SizedBox(width: Tokens.s12),
         ],

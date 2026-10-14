@@ -153,9 +153,10 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
     return showMenu<_Pick<T>>(
       context: context,
       position: RelativeRect.fromRect(rect, Offset.zero & overlay.size),
-      color: Tokens.surface3,
+      color: Tokens.tonal,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
       menuPadding: const EdgeInsets.all(Tokens.s4),
       constraints: BoxConstraints(minWidth: width, maxWidth: width),
       shape: Tokens.shape(Tokens.rMd),
@@ -269,8 +270,9 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
   }
 }
 
-/// One option row of the menu and the sheet: the current choice in the
-/// accent on a wash, a disabled one greyed.
+/// One option row of the menu and the sheet: the current choice on the
+/// accent fill in its own content tone (14.8:1 in both themes), the rest
+/// in the tonal surface's text tone, a disabled one greyed.
 class _MenuRow extends StatelessWidget {
   final bool active;
   final bool enabled;
@@ -286,12 +288,12 @@ class _MenuRow extends StatelessWidget {
     final color = !enabled
         ? Tokens.fgFaint
         : active
-        ? Tokens.accent
-        : Tokens.fg;
+        ? Tokens.onAccent
+        : Tokens.onTonal;
     return Container(
       alignment: Alignment.centerLeft,
       decoration: ShapeDecoration(
-        color: active && enabled ? Tokens.accentContainer : Colors.transparent,
+        color: active && enabled ? Tokens.accent : Colors.transparent,
         shape: Tokens.pill,
       ),
       padding: const EdgeInsets.symmetric(
