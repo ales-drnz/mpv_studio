@@ -218,7 +218,7 @@ A built-in mpv command console with a command catalog, autocomplete, history, mp
 <td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-playback.gif" width="100%" alt="Playback on a phone"></td>
 <td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-queue.gif" width="100%" alt="Queue on a phone"></td>
 <td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-effects.gif" width="100%" alt="Effects on a phone"></td>
-<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-stream.gif" width="100%" alt="Stream on a phone, light theme"></td>
+<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-stream.gif" width="100%" alt="Stream on a phone"></td>
 </tr>
 </table>
 
