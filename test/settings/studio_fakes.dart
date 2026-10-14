@@ -34,8 +34,15 @@ class StudioFakePlayer extends FakePlayer {
   /// The ends of entries, for `stream.endFile`.
   final ended = StreamController<MpvFileEndedEvent>.broadcast(sync: true);
 
+  /// What `getRawProperty` answers, by name (null when absent). Reads
+  /// are not recorded in [calls].
+  final Map<String, String> rawProperties = {};
+
   @override
   late final PlayerStream stream = _StudioFakeStream(this);
+
+  @override
+  Future<String?> getRawProperty(String name) async => rawProperties[name];
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -53,7 +60,6 @@ class StudioFakePlayer extends FakePlayer {
         MpvCommandException(name: name, code: -12, message: 'refused'),
       );
     }
-    if (name == 'getRawProperty') return Future<String?>.value();
     return Future<void>.value();
   }
 }

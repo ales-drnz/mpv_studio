@@ -62,6 +62,33 @@ void main() {
     expect(player.calls.sublist(1), ['play']);
   });
 
+  test('seeks when the core is seekable ahead of the state', () async {
+    // mpv reports the playback restart before the property changes of the
+    // same load: the state can still say not seekable.
+    final player = StudioFakePlayer()..rawProperties['seekable'] = 'yes';
+    final done = _atB.restore(player);
+    await pumpEventQueue();
+    _loaded(player, seekable: false);
+    player.opened.add(null);
+    await done;
+    expect(player.calls.sublist(1), ['seek 42000', 'play']);
+  });
+
+  test('a paused session comes back paused at its position', () async {
+    final player = StudioFakePlayer();
+    final done = const PlaybackSnapshot(
+      queue: [_a, _b],
+      index: 1,
+      position: Duration(seconds: 26),
+      playing: false,
+    ).restore(player);
+    await pumpEventQueue();
+    _loaded(player);
+    player.opened.add(null);
+    await done;
+    expect(player.calls.sublist(1), ['seek 26000']);
+  });
+
   test('an entry that failed and moved on keeps its position', () async {
     final player = StudioFakePlayer();
     final done = _atB.restore(player);
