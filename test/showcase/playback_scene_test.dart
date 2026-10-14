@@ -11,7 +11,7 @@ import '../../tool/showcase/showcase.dart';
 import '../support/layout_harness.dart';
 import 'showcase_app.dart';
 import 'showcase_player.dart';
-import 'showcase_track.dart';
+import 'showcase_covers.dart';
 
 /// The Playback showcase (imgs/playback.gif): the song plays with its
 /// spectrum, waveform and meters; the pointer seeks on the waveform,

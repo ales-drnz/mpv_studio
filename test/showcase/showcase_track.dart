@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 /// A made-up song for the showcase scenes: its loudness over time, beat
@@ -87,8 +85,9 @@ class ShowcaseSong {
   }
 
   /// The waveform the engine would hand over: [bins] min, max and RMS
-  /// points over the song.
-  static WaveformData waveform({int bins = 2920}) {
+  /// points over the song, or over a track of [duration] that follows
+  /// the same shape, stretched.
+  static WaveformData waveform({int bins = 2920, Duration? duration}) {
     final min = Float32List(bins);
     final max = Float32List(bins);
     final rms = Float32List(bins);
@@ -97,7 +96,7 @@ class ShowcaseSong {
       final t = (i + 0.5) * secs / bins;
       final e = energy(t);
       final d = drums(t);
-      final grain = 0.9 + 0.1 * _noise(t * 4.0, 3);
+      final grain = 0.9 + 0.1 * sceneNoise(t * 4.0, 3);
       final peak = (e * (0.7 + 0.16 * d.kick + 0.05 * d.snare) * grain)
           .clamp(0.015, 0.97)
           .toDouble();
@@ -106,7 +105,7 @@ class ShowcaseSong {
       rms[i] = peak * 0.45;
     }
     return WaveformData(
-      duration: length,
+      duration: duration ?? length,
       min: min,
       max: max,
       rms: rms,
@@ -128,8 +127,8 @@ class ShowcaseSong {
       final tilt = 0.94 - 0.6 * math.pow(x, 0.85);
       final body = (0.28 + 0.6 * e) * tilt;
       final shape =
-          0.13 * (_noise(i * 0.13 + t * 0.22, 23) - 0.5) +
-          0.05 * (_noise(i * 0.31 - t * 0.12, 17) - 0.5);
+          0.13 * (sceneNoise(i * 0.13 + t * 0.22, 23) - 0.5) +
+          0.05 * (sceneNoise(i * 0.31 - t * 0.12, 17) - 0.5);
       final kick = 0.09 * d.kick * math.exp(-math.pow(x / 0.14, 2));
       final snare = 0.05 * d.snare * math.exp(-math.pow((x - 0.46) / 0.2, 2));
       final hats = 0.035 * d.hats * _smoothstep(0.62, 0.86, x);
@@ -154,13 +153,71 @@ class ShowcaseSong {
     final d = drums(t);
     final db = -29 + 18 * e + 3 * d.kick + 1.5 * d.snare;
     final left = math.pow(10, db / 20).toDouble();
-    final right = left * (0.9 + 0.08 * _noise(t * 2.2, 29));
+    final right = left * (0.9 + 0.08 * sceneNoise(t * 2.2, 29));
     return PcmFrame(
       samples: Float32List.fromList([left, right]),
       timestamp: Duration(microseconds: (t * 1e6).round()),
       sampleRate: 48000,
       channels: 2,
     );
+  }
+
+  /// [n] stereo samples of the song from [t] seconds, interleaved, at
+  /// [rate] Hz: a kick and a bass line, a pad chord, the snare and the
+  /// hats on noise, all scaled by the energy. Plain synthesis, but with
+  /// a spectrum and a stereo image that look like music on the meters.
+  /// [brightness] tilts it (below 1 darker, above brighter) and [gain]
+  /// scales it, for the "after" side of a stage.
+  static Float32List block(
+    double t,
+    int n, {
+    int rate = 48000,
+    double gain = 1,
+    double brightness = 1,
+  }) {
+    final out = Float32List(n * 2);
+    const notes = [55.0, 65.41, 73.42, 49.0];
+    var lastNoise = 0.0;
+    for (var i = 0; i < n; i++) {
+      final ts = t + i / rate;
+      final e = energy(ts);
+      final b = ts / beat;
+      final inBeat = (b - b.floorToDouble()) * beat;
+      final bar = (b / 4).floor();
+      final drive = ((e - 0.25) / 0.5).clamp(0.0, 1.0);
+      final kickEnv = _hit(inBeat, 0.18);
+      final kick =
+          math.sin(
+            2 * math.pi * (48 + 60 * math.exp(-inBeat / 0.03)) * inBeat,
+          ) *
+          kickEnv *
+          0.55 *
+          drive;
+      final bassF = notes[bar % notes.length];
+      final bass = math.sin(2 * math.pi * bassF * ts) * 0.22 * e;
+      final sample = (ts * rate).floor();
+      final noise = sceneHash(sample, 71) * 2 - 1;
+      final snare = b.floor().isOdd ? noise * _hit(inBeat, 0.11) * 0.28 : 0.0;
+      final hiss = noise - lastNoise; // a crude high-pass for the hats
+      lastNoise = noise;
+      final half = beat / 2;
+      final hats = hiss * _hit(inBeat % half, 0.035) * 0.1 * drive * brightness;
+      double pad(double detune) =>
+          (math.sin(2 * math.pi * 220 * detune * ts) +
+              math.sin(2 * math.pi * 277.2 * detune * ts) * 0.8 +
+              math.sin(2 * math.pi * 329.6 * detune * ts) * 0.7 +
+              math.sin(2 * math.pi * 1318.5 * detune * ts) *
+                  0.12 *
+                  brightness) *
+          0.07 *
+          e;
+      final mid = kick + bass + snare;
+      out[i * 2] = ((mid + pad(1.0) + hats) * gain).clamp(-1.0, 1.0).toDouble();
+      out[i * 2 + 1] = ((mid + pad(1.004) - hats * 0.6) * gain)
+          .clamp(-1.0, 1.0)
+          .toDouble();
+    }
+    return out;
   }
 
   /// The loudness scan's result, as the info dialog shows it.
@@ -179,118 +236,17 @@ double _smoothstep(double a, double b, double x) {
 }
 
 /// Smooth 1D value noise in 0 to 1, from a [seed]ed integer hash.
-double _noise(double x, int seed) {
+double sceneNoise(double x, int seed) {
   final i = x.floor();
   final f = x - i;
   final u = f * f * (3 - 2 * f);
-  return _hash(i, seed) * (1 - u) + _hash(i + 1, seed) * u;
+  return sceneHash(i, seed) * (1 - u) + sceneHash(i + 1, seed) * u;
 }
 
-double _hash(int i, int seed) {
+/// A value in 0 to 1 from [i] and [seed], the same on every run.
+double sceneHash(int i, int seed) {
   var h = (i * 374761393 + seed * 668265263) & 0xFFFFFFFF;
   h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF;
   h ^= h >> 16;
   return (h & 0xFFFFFF) / 0xFFFFFF;
-}
-
-/// Paints the song's cover, a flat poster of a night harbour (a banded
-/// dusk sky, a low moon in rings of glow, its broken reflection, a
-/// ferry), [size] pixels square, and returns it as PNG bytes. Flat colours
-/// only: a GIF palette keeps them exact. Run it inside `tester.runAsync`.
-Future<Uint8List> paintShowcaseCover({int size = 600}) async {
-  final recorder = ui.PictureRecorder();
-  final s = size.toDouble();
-  final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, s, s));
-  Paint flat(int argb) => Paint()..color = Color(argb);
-  final horizon = s * 0.63;
-
-  // The sky in flat bands, deep blue at the top to a warm horizon.
-  const sky = [0xFF101633, 0xFF1A1E45, 0xFF2B2856, 0xFF4A3463, 0xFF7C4567];
-  const stops = [0.0, 0.26, 0.48, 0.66, 0.82];
-  for (var i = 0; i < sky.length; i++) {
-    final top = horizon * stops[i];
-    canvas.drawRect(Rect.fromLTRB(0, top, s, horizon), flat(sky[i]));
-  }
-  canvas.drawRect(
-    Rect.fromLTRB(0, horizon * 0.93, s, horizon),
-    flat(0xFFC46F63),
-  );
-
-  // A few stars, placed by a fixed hash.
-  for (var i = 0; i < 34; i++) {
-    final x = _hash(i, 3) * s;
-    final y = _hash(i, 7) * horizon * 0.5;
-    final r = (_hash(i, 9) < 0.8 ? 1.4 : 2.4) * s / 600;
-    canvas.drawCircle(Offset(x, y), r, flat(0xFFE9E4F5));
-  }
-
-  // The moon, low over the water, in rings of glow.
-  final moon = Offset(s * 0.62, horizon - s * 0.1);
-  canvas.drawCircle(moon, s * 0.25, flat(0x22FFC79A));
-  canvas.drawCircle(moon, s * 0.185, flat(0x2EFFC79A));
-  canvas.drawCircle(moon, s * 0.14, flat(0x3DFFD3A8));
-  canvas.drawCircle(moon, s * 0.105, flat(0xFFFFE6C4));
-
-  // Hills along the horizon, in front of the moon.
-  final hills = Path()..moveTo(0, horizon);
-  for (var i = 0; i <= 12; i++) {
-    final x = i / 12 * s;
-    final y = horizon - s * (0.02 + 0.035 * _noise(i * 0.9, 41));
-    hills.lineTo(x, y);
-  }
-  hills
-    ..lineTo(s, horizon)
-    ..close();
-  canvas.drawPath(hills, flat(0xFF211C3B));
-
-  // Water in flat bands, darker towards the front.
-  const water = [0xFF2A2446, 0xFF201C3A, 0xFF16152C, 0xFF0E0F20];
-  for (var i = 0; i < water.length; i++) {
-    final top = horizon + (s - horizon) * i / water.length;
-    canvas.drawRect(Rect.fromLTRB(0, top, s, s), flat(water[i]));
-  }
-
-  // The moon's reflection, broken into strokes that widen and dim.
-  for (var i = 0; i < 16; i++) {
-    final y = horizon + s * 0.02 + i * (s - horizon - s * 0.05) / 16;
-    final w = s * (0.05 + 0.013 * i) * (0.55 + 0.45 * _hash(i, 13));
-    final x = moon.dx + s * 0.03 * (_hash(i, 17) - 0.5);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(x, y), width: w, height: s * 0.008),
-        Radius.circular(s * 0.004),
-      ),
-      flat(i < 5 ? 0xFFFFD9AE : (i < 11 ? 0xFFD9A07E : 0xFF8C6170)),
-    );
-  }
-
-  // A small ferry crossing the light, its windows lit.
-  final deck = horizon + s * 0.05;
-  final boat = Path()
-    ..moveTo(s * 0.26, deck)
-    ..lineTo(s * 0.44, deck)
-    ..lineTo(s * 0.42, deck + s * 0.024)
-    ..lineTo(s * 0.28, deck + s * 0.024)
-    ..close()
-    ..addRect(Rect.fromLTWH(s * 0.3, deck - s * 0.026, s * 0.1, s * 0.026))
-    ..addRect(Rect.fromLTWH(s * 0.335, deck - s * 0.046, s * 0.012, s * 0.02));
-  canvas.drawPath(boat, flat(0xFF080912));
-  for (var i = 0; i < 5; i++) {
-    canvas.drawRect(
-      Rect.fromLTWH(
-        s * (0.308 + i * 0.018),
-        deck - s * 0.018,
-        s * 0.009,
-        s * 0.008,
-      ),
-      flat(0xFFFFD27F),
-    );
-  }
-
-  final picture = recorder.endRecording();
-  final image = await picture.toImage(size, size);
-  picture.dispose();
-  final png = await image.toByteData(format: ui.ImageByteFormat.png);
-  image.dispose();
-  return png!.buffer.asUint8List();
 }
