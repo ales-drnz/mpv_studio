@@ -70,4 +70,31 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('a toast with an action still times out', (tester) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) {
+            host = context;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    showStudioSnack(
+      host,
+      'Playback failed',
+      duration: const Duration(seconds: 6),
+      actionLabel: 'Show log',
+      onAction: () {},
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Playback failed'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpAndSettle();
+    expect(find.text('Playback failed'), findsNothing);
+  });
 }
