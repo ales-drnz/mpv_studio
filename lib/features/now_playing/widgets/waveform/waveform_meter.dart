@@ -49,7 +49,11 @@ class _WaveformMeterState extends State<WaveformMeter>
     with SingleTickerProviderStateMixin, StreamListenerState<WaveformMeter> {
   late PlayerApi _player;
   late CallGuard _guard;
-  late final Ticker _ticker = createTicker((_) {
+  // Made when playback first starts, not lazily on first use: dispose
+  // would otherwise make one for a meter that never played, and Flutter
+  // 3.38 fails to make a ticker from a deactivated widget.
+  Ticker? _ticker;
+  Ticker get _frames => _ticker ??= createTicker((_) {
     if (mounted) setState(() {});
   });
   late final WaveformPan _pan = WaveformPan(
@@ -98,7 +102,7 @@ class _WaveformMeterState extends State<WaveformMeter>
     _currentChapter = s.currentChapter;
     if (_playWhenReady) {
       _sw.start();
-      _ticker.start();
+      _frames.start();
     }
 
     void update(VoidCallback change) {
@@ -144,11 +148,11 @@ class _WaveformMeterState extends State<WaveformMeter>
         _sw
           ..reset()
           ..start();
-        if (!_ticker.isActive) _ticker.start();
+        if (!_frames.isActive) _frames.start();
       } else {
         _anchor = _livePos();
         _sw.stop();
-        if (_ticker.isActive) _ticker.stop();
+        if (_ticker?.isActive ?? false) _ticker!.stop();
       }
       update(() {});
     });
@@ -157,7 +161,7 @@ class _WaveformMeterState extends State<WaveformMeter>
   @override
   void dispose() {
     _pan.stop();
-    _ticker.dispose();
+    _ticker?.dispose();
     super.dispose();
   }
 

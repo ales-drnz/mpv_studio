@@ -38,7 +38,10 @@ class _VuMeterState extends State<VuMeter>
   final _left = LevelFollower(minDb: _minDb);
   final _right = LevelFollower(minDb: _minDb);
 
-  late final Ticker _ticker = createTicker(_onTick);
+  // Made on the first frame, not lazily on first use: dispose would
+  // otherwise make one for a meter that never ran, and Flutter 3.38 fails
+  // to make a ticker from a deactivated widget.
+  Ticker? _ticker;
   Duration _lastTick = Duration.zero;
 
   @override
@@ -50,9 +53,10 @@ class _VuMeterState extends State<VuMeter>
     final peaks = channelPeaks(f);
     _left.push(peaks.left);
     _right.push(peaks.right);
-    if (!_ticker.isActive) {
+    final ticker = _ticker ??= createTicker(_onTick);
+    if (!ticker.isActive) {
       _lastTick = Duration.zero;
-      _ticker.start();
+      ticker.start();
     }
   }
 
@@ -70,7 +74,7 @@ class _VuMeterState extends State<VuMeter>
     _right.tick(dtS, elapsed);
     // Silence and the bars back at the floor: nothing moves until the
     // next frame, so stop asking for frames.
-    if (_resting) _ticker.stop();
+    if (_resting) _ticker!.stop();
     setState(() {});
   }
 
@@ -81,7 +85,7 @@ class _VuMeterState extends State<VuMeter>
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _ticker?.dispose();
     super.dispose();
   }
 
