@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/shell/sections.dart';
-import 'package:mpv_studio/ui/palette.dart';
 
 import '../../tool/showcase/showcase.dart';
 import '../support/layout_harness.dart';
@@ -15,8 +14,8 @@ import 'showcase_player.dart';
 import 'showcase_servers.dart';
 import 'stream_scene_test.dart' show StreamSetup;
 
-/// The phone Stream showcase (imgs/mobile-stream.gif), in the light
-/// theme: a reference stream plays from the Lab; on Jellyfin an album
+/// The phone Stream showcase (imgs/mobile-stream.gif): a reference
+/// stream plays from the Lab; on Jellyfin an album
 /// opens over the grid and a track plays with its cover; back to the
 /// albums and the Lab, where the same stream starts again, which is
 /// where the scene began.
@@ -59,7 +58,6 @@ void main() {
       scene: scene,
       size: phoneShowcaseSize,
       section: Section.stream,
-      palette: Palette.light,
       page: (s) => setup.page(),
     );
     drivePlayer(scene, player);

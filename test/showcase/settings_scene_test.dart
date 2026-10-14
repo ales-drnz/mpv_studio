@@ -17,10 +17,10 @@ import 'showcase_covers.dart';
 import 'showcase_library.dart';
 import 'showcase_player.dart';
 
-/// The Settings showcase (imgs/settings.gif): a search jumps to the
-/// theme, which goes light and back to dark; the output device list
-/// shows the devices with their ids; the Left key takes the track back
-/// to where the scene began.
+/// The Settings showcase (imgs/settings.gif): a search jumps to the user
+/// agent, which lights up and takes a new name typed into it; the output
+/// device list shows the devices with their ids; the Left key takes the
+/// track back to where the scene began.
 ///
 /// Rendered by `tool/showcase/render.sh settings`; skipped otherwise.
 void main() {
@@ -117,15 +117,18 @@ void main() {
     final first = player.playhead + scene.step;
     await scene.wait(350);
 
-    // A search jumps to the theme, which lights up: light, then dark.
-    await jump('theme', 'Theme');
+    // A search jumps to the user agent, which lights up; a new name goes
+    // in, applied with Enter.
+    await jump('agent', 'User agent');
+    await scene.wait(700);
+    final agent = find.widgetWithText(TextField, 'libmpv');
+    await scene.moveOnto(agent, alignment: const Alignment(-0.7, 0));
+    await scene.click();
+    await scene.wait(200);
+    await scene.type('MPVStudio/0.3.0', msPerChar: 65);
+    await scene.wait(250);
+    await scene.submit();
     await scene.wait(600);
-    await scene.moveOnto(find.text('Light').last);
-    await scene.click();
-    await scene.wait(950);
-    await scene.moveOnto(find.text('Dark').last);
-    await scene.click();
-    await scene.wait(350);
     await scene.moveOnto(find.byTooltip('Clear search'));
     await scene.click();
     await scene.wait(200);
