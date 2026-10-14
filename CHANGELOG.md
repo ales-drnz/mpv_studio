@@ -19,7 +19,9 @@
 - An A-B loop repeat count with the loops left, and chapter titles with previous and next chapter.
 - Feedback when next or previous has nowhere to go, at the ends of the queue.
 - Album views for Jellyfin and Plex, and states for wrong credentials, an unreachable server, an expired session and an empty library.
+- Song and album search on Jellyfin and Plex also finds them by artist and album name.
 - Keyboard shortcuts on desktop for playback, volume, chapters, A-B loop and speed, listed with ? or F1.
+- The speed keys follow the character typed, so [ and ] work on every keyboard layout, and - and + change the speed too.
 - Right-click menus on desktop and long-press sheets on touch for queue rows, stream rows and rack stages.
 - The Android back button closes sheets and details first, then returns to Playback.
 - Screen reader labels and values on the waveform, meters, curves and queue rows.
@@ -29,6 +31,7 @@
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.5.0`.
+- The window title and the launcher read MPV Studio, and the logo is the app icon on every platform.
 - The YouTube tab is removed. The Resolver tab shows how any resolver, a YouTube one included, plugs into the library.
 - The Samba password is kept in the system keychain. A password saved by an older version moves there on first launch.
 - Console commands that change what plays, such as `loadfile` and `pause`, go through the Player API, so the play button stays right.
@@ -39,11 +42,13 @@
 - The waveform draws its body from the RMS level with a lighter peak outline and starts on the whole track.
 - Plex transcoded streams open through the player's source resolver and survive a player restart.
 - Building the app requires Flutter 3.38 and Dart 3.10. Linux builds need libsecret.
+- On phones the pages scroll behind the mini-player, and the Playback spectrum runs to the edges of the page.
+- The output device list shows each device's id under its name, so two devices with the same name can be told apart.
 
 ### Fixed
 - A server address typed with `https://` got the default port added.
 - Signing out of Samba with a dead connection left the login saved.
-- The Console and the resolver log no longer show credentials typed into a URL.
+- The Console, the resolver log and the app log no longer show credentials typed into a URL or server tokens such as `ApiKey` and `X-Plex-Token`.
 - A damaged settings value no longer blocks the launch, and a failed launch no longer leaves a player running.
 - Player calls that fail, such as a seek with nothing loaded, show a message instead of failing silently.
 
