@@ -1,4 +1,5 @@
 import 'package:dart_jellyfin/dart_jellyfin.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +9,13 @@ import 'media_server.dart';
 
 /// A Jellyfin library through `dart_jellyfin`.
 class JellyfinServer extends MediaServer {
+  JellyfinServer();
+
+  /// A server already signed in through [client], for tests that answer
+  /// its requests with a fake.
+  @visibleForTesting
+  JellyfinServer.withClient(JellyfinClient client) : _client = client;
+
   JellyfinClient? _client;
 
   // Built per access so it picks up the resolved device name. `client` is
@@ -110,12 +118,23 @@ class JellyfinServer extends MediaServer {
     return c;
   }
 
+  final _trackSearch = MergedSearch<ServerTrack>((t) => t.id);
+  final _albumSearch = MergedSearch<ServerAlbum>((a) => a.id);
+
   @override
   Future<LibraryPage<ServerTrack>> fetchTracks({
     required int startIndex,
     required int pageSize,
     String query = '',
   }) async {
+    if (query.isNotEmpty) {
+      return _trackSearch.page(
+        query,
+        startIndex: startIndex,
+        pageSize: pageSize,
+        load: () => _searchTracks(query),
+      );
+    }
     // `fields` stays at its default (the server's own projection): the
     // music field set is opt-in since dart_jellyfin 0.1.1 and none of it is
     // used here. Title, Artists, Album, AlbumArtist and RunTimeTicks are
@@ -126,12 +145,71 @@ class JellyfinServer extends MediaServer {
       sortBy: const ['SortName'],
       startIndex: startIndex,
       limit: pageSize,
-      searchTerm: query.isEmpty ? null : query,
     );
     return LibraryPage([
       for (final it in res.items) _track(it),
     ], res.totalRecordCount);
   }
+
+  // `searchTerm` on /Items matches the item's own name only, so a song
+  // search asks three things at once: songs by title, the artists and the
+  // albums whose name matches. Then the songs of those artists (ArtistIds
+  // covers artist and album artist) and albums (AlbumIds). Title matches
+  // come first; [MergedSearch] drops repeats.
+  Future<List<Iterable<ServerTrack>>> _searchTracks(String query) async {
+    final c = _connected;
+    final found = await Future.wait([
+      c.items.list(
+        includeItemTypes: const [JellyfinItemKind.audio],
+        recursive: true,
+        sortBy: const ['SortName'],
+        limit: MergedSearch.maxResults,
+        searchTerm: query,
+      ),
+      _matchingArtists(query),
+      _matchingAlbums(query),
+    ]);
+    final artistIds = [for (final a in found[1].items) a.id];
+    final albumIds = [for (final a in found[2].items) a.id];
+    const order = ['Album', 'ParentIndexNumber', 'IndexNumber', 'SortName'];
+    final owned = await Future.wait([
+      if (artistIds.isNotEmpty)
+        c.items.list(
+          includeItemTypes: const [JellyfinItemKind.audio],
+          recursive: true,
+          artistIds: artistIds,
+          sortBy: order,
+          limit: MergedSearch.maxResults,
+        ),
+      if (albumIds.isNotEmpty)
+        c.items.list(
+          includeItemTypes: const [JellyfinItemKind.audio],
+          recursive: true,
+          albumIds: albumIds,
+          sortBy: order,
+          limit: MergedSearch.maxResults,
+        ),
+    ]);
+    return [
+      for (final res in [found[0], ...owned]) res.items.map(_track),
+    ];
+  }
+
+  Future<JellyfinQueryResult<JellyfinItem>> _matchingArtists(String query) =>
+      _connected.artists.list(
+        searchTerm: query,
+        sortBy: const ['SortName'],
+        limit: MergedSearch.maxOwners,
+      );
+
+  Future<JellyfinQueryResult<JellyfinItem>> _matchingAlbums(String query) =>
+      _connected.items.list(
+        includeItemTypes: const [JellyfinItemKind.musicAlbum],
+        recursive: true,
+        sortBy: const ['SortName'],
+        limit: MergedSearch.maxOwners,
+        searchTerm: query,
+      );
 
   @override
   Future<LibraryPage<ServerAlbum>> fetchAlbums({
@@ -139,25 +217,61 @@ class JellyfinServer extends MediaServer {
     required int pageSize,
     String query = '',
   }) async {
+    if (query.isNotEmpty) {
+      return _albumSearch.page(
+        query,
+        startIndex: startIndex,
+        pageSize: pageSize,
+        load: () => _searchAlbums(query),
+      );
+    }
     final res = await _connected.items.list(
       includeItemTypes: const [JellyfinItemKind.musicAlbum],
       recursive: true,
       sortBy: const ['SortName'],
       startIndex: startIndex,
       limit: pageSize,
-      searchTerm: query.isEmpty ? null : query,
     );
     return LibraryPage([
-      for (final it in res.items)
-        ServerAlbum(
-          id: it.id,
-          title: it.name,
-          artist: it.albumArtist ?? it.artists.join(', '),
-          year: it.productionYear,
-          artUrl: _imageUrl(it.id),
-        ),
+      for (final it in res.items) _album(it),
     ], res.totalRecordCount);
   }
+
+  // Albums by title, then the albums of the artists whose name matches.
+  Future<List<Iterable<ServerAlbum>>> _searchAlbums(String query) async {
+    final c = _connected;
+    final found = await Future.wait([
+      c.items.list(
+        includeItemTypes: const [JellyfinItemKind.musicAlbum],
+        recursive: true,
+        sortBy: const ['SortName'],
+        limit: MergedSearch.maxResults,
+        searchTerm: query,
+      ),
+      _matchingArtists(query),
+    ]);
+    final artistIds = [for (final a in found[1].items) a.id];
+    final byArtist = artistIds.isEmpty
+        ? null
+        : await c.items.list(
+            includeItemTypes: const [JellyfinItemKind.musicAlbum],
+            recursive: true,
+            artistIds: artistIds,
+            sortBy: const ['AlbumArtist', 'ProductionYear', 'SortName'],
+            limit: MergedSearch.maxResults,
+          );
+    return [
+      for (final res in [found[0], ?byArtist]) res.items.map(_album),
+    ];
+  }
+
+  ServerAlbum _album(JellyfinItem it) => ServerAlbum(
+    id: it.id,
+    title: it.name,
+    artist: it.albumArtist ?? it.artists.join(', '),
+    year: it.productionYear,
+    artUrl: _imageUrl(it.id),
+  );
 
   @override
   Future<List<ServerTrack>> fetchAlbumTracks(ServerAlbum album) async {

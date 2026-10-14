@@ -232,7 +232,8 @@ abstract class MediaServer {
   Future<void> logout();
 
   /// A page of the user's songs. [query] empty browses all (sorted by
-  /// title); non-empty searches.
+  /// title); non-empty finds the songs whose title, artist or album
+  /// matches.
   Future<LibraryPage<ServerTrack>> fetchTracks({
     required int startIndex,
     required int pageSize,
@@ -240,7 +241,7 @@ abstract class MediaServer {
   });
 
   /// A page of the user's albums, sorted by title. [query] non-empty
-  /// searches album titles.
+  /// finds the albums whose title or artist matches.
   Future<LibraryPage<ServerAlbum>> fetchAlbums({
     required int startIndex,
     required int pageSize,
@@ -292,6 +293,74 @@ abstract class MediaServer {
 
   /// Playback of [itemId] stopped at [position].
   Future<void> reportStopped(String itemId, {required Duration position});
+}
+
+/// A library search whose matches come from several server queries (songs
+/// or albums whose title matches, plus those of the artists and albums whose
+/// name matches) merged into one list and paged locally. Neither Jellyfin's
+/// `searchTerm` nor Plex's title filter looks past the item's own name, so
+/// "Coldplay" alone finds no Coldplay song; the extra queries fill that in.
+///
+/// The merged list keeps the order of the groups [load] returns, drops
+/// repeats by [idOf] and stops at [maxResults]. Page 0 always runs the
+/// queries again (a refresh or a new query); later pages of the same query
+/// read the cached list. A failed load is not cached, so a retry runs it
+/// again.
+class MergedSearch<T> {
+  MergedSearch(this.idOf);
+
+  /// Upper bound on the merged list, and on each query feeding it.
+  static const maxResults = 500;
+
+  /// How many matching artists or albums contribute their songs.
+  static const maxOwners = 10;
+
+  final String Function(T item) idOf;
+
+  String? _query;
+  Future<List<T>>? _results;
+
+  Future<LibraryPage<T>> page(
+    String query, {
+    required int startIndex,
+    required int pageSize,
+    required Future<List<Iterable<T>>> Function() load,
+  }) async {
+    var results = _results;
+    if (startIndex == 0 || results == null || _query != query) {
+      _query = query;
+      results = _results = load().then(merge);
+    }
+    final List<T> all;
+    try {
+      all = await results;
+    } catch (_) {
+      if (identical(_results, results)) {
+        _results = null;
+        _query = null;
+      }
+      rethrow;
+    }
+    if (startIndex >= all.length) return LibraryPage(const [], all.length);
+    final end = startIndex + pageSize;
+    return LibraryPage(
+      all.sublist(startIndex, end > all.length ? all.length : end),
+      all.length,
+    );
+  }
+
+  /// [groups] flattened in order, without repeats, capped at [maxResults].
+  List<T> merge(List<Iterable<T>> groups) {
+    final seen = <String>{};
+    final out = <T>[];
+    for (final group in groups) {
+      for (final item in group) {
+        if (out.length >= maxResults) return out;
+        if (seen.add(idOf(item))) out.add(item);
+      }
+    }
+    return out;
+  }
 }
 
 /// Thrown by a [MediaServer] call that needs a session when there is none.
