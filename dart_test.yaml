@@ -1,0 +1,6 @@
+tags:
+  # Showcase scenes render the README's GIFs frame by frame: slow, and
+  # only useful through tool/showcase/render.sh, which runs them with
+  # --run-skipped.
+  showcase:
+    skip: "showcase scene: render it with tool/showcase/render.sh"
