@@ -11,7 +11,7 @@ import 'rack_catalog.dart';
 /// ```json
 /// {"version": 2, "chain": [
 ///   {"filter": "bass", "enabled": true, "params": {"gain": 4.0, ...}},
-///   {"raw": "lavfi-anull", "enabled": false}
+///   {"raw": "lavfi-aecho=0.8:0.9:500:0.3", "enabled": false}
 /// ]}
 /// ```
 ///

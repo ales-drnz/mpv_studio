@@ -73,3 +73,12 @@ AudioEffect withEnabled(AudioEffect e, bool on) {
   }
   return d.setEnabled(e, on);
 }
+
+/// Raw stage [e] with [entry] written in. A blank stage (fresh from the
+/// catalog) switches on with its first entry; a blank entry switches the
+/// stage off, since there is nothing for mpv to play.
+RawAudioEffect rawEntrySubmitted(RawAudioEffect e, String entry) {
+  final v = entry.trim();
+  if (v.isEmpty) return e.copyWith(entry: '', enabled: false);
+  return e.copyWith(entry: v, enabled: e.entry.trim().isEmpty ? true : null);
+}

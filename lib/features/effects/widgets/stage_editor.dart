@@ -68,7 +68,7 @@ class StageEditor extends StatelessWidget {
           value: e.entry,
           hint: 'lavfi-aecho=0.8:0.9:500:0.3',
           maxLines: 3,
-          onSubmit: (v) => change(e.copyWith(entry: v)),
+          onSubmit: (v) => change(rawEntrySubmitted(e, v)),
         ),
       );
     } else if (isMeterStage(e)) {

@@ -102,8 +102,12 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
           icon: Icons.code_rounded,
           title: 'Raw lavfi',
           subtitle: 'Any lavfi filter, written by hand',
-          onTap: () =>
-              Navigator.of(context).pop(const RawAudioEffect('lavfi-anull')),
+          // Blank and off: no filter name is safe to assume on every
+          // build of libmpv, so the stage opens for the user to write one
+          // and mpv never sees an empty entry.
+          onTap: () => Navigator.of(
+            context,
+          ).pop(const RawAudioEffect('', enabled: false)),
         ),
       for (final (title, list) in groups) ...[
         Padding(
