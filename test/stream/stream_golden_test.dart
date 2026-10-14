@@ -16,7 +16,7 @@ import 'stream_fakes.dart';
 /// time.
 SignedUrlResolver _resolverWithLog() {
   final resolver = SignedUrlResolver(
-    clock: () => DateTime(2026, 10, 13, 18, 42, 7),
+    clock: () => DateTime.utc(2026, 10, 13, 18, 42, 7),
     // A real stopwatch reads 1 ms now and then (a cold first call), which
     // changed the log text between runs.
     timer: (work) {
