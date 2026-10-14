@@ -1,0 +1,353 @@
+import 'package:dart_jellyfin/dart_jellyfin.dart';
+import 'package:dart_plex/dart_plex.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/stream/jellyfin_server.dart';
+import 'package:mpv_studio/features/stream/media_server.dart';
+import 'package:mpv_studio/features/stream/plex_server.dart';
+
+/// Answers each request with what [route] returns, and records the requests.
+class _Fake extends Interceptor {
+  _Fake(this.route);
+
+  final Object? Function(String path, Map<String, dynamic> query) route;
+  final requests = <RequestOptions>[];
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    requests.add(options);
+    final data = route(Uri.parse(options.path).path, options.queryParameters);
+    if (data == null) {
+      handler.reject(
+        DioException(requestOptions: options, message: 'unexpected'),
+      );
+      return;
+    }
+    handler.resolve(
+      Response(requestOptions: options, statusCode: 200, data: data),
+    );
+  }
+}
+
+// A tiny Jellyfin library: Coldplay has two songs on one album, neither
+// with "Coldplay" in its title; "Yellow Submarine" is by someone else.
+const _songs = [
+  {
+    'Id': 's1',
+    'Name': 'Yellow',
+    'Artists': ['Coldplay'],
+    'Album': 'Parachutes',
+  },
+  {
+    'Id': 's2',
+    'Name': 'Trouble',
+    'Artists': ['Coldplay'],
+    'Album': 'Parachutes',
+  },
+  {
+    'Id': 's3',
+    'Name': 'Yellow Submarine',
+    'Artists': ['The Beatles'],
+    'Album': 'Revolver',
+  },
+];
+
+Map<String, dynamic> _jfPage(List<Map<String, Object>> items) => {
+  'Items': items,
+  'TotalRecordCount': items.length,
+};
+
+List<String> _list(Object? v) => [
+  if (v is List) ...v.map((e) => '$e') else if (v != null) '$v',
+];
+
+Object? _jellyfin(String path, Map<String, dynamic> q) {
+  final term = (q['searchTerm'] as String?)?.toLowerCase();
+  if (path.endsWith('/Artists')) {
+    return _jfPage([
+      if (term != null && 'coldplay'.contains(term))
+        {'Id': 'a1', 'Name': 'Coldplay', 'Type': 'MusicArtist'},
+    ]);
+  }
+  if (!path.endsWith('/Items')) return null;
+  final types = _list(q['includeItemTypes']);
+  if (types.contains('MusicAlbum')) {
+    final albums = [
+      {'Id': 'al1', 'Name': 'Parachutes', 'AlbumArtist': 'Coldplay'},
+      {'Id': 'al2', 'Name': 'Revolver', 'AlbumArtist': 'The Beatles'},
+    ];
+    if (_list(q['artistIds']).contains('a1')) return _jfPage([albums[0]]);
+    return _jfPage([
+      for (final a in albums)
+        if (term == null || (a['Name']!).toLowerCase().contains(term)) a,
+    ]);
+  }
+  final artistIds = _list(q['artistIds']);
+  final albumIds = _list(q['albumIds']);
+  return _jfPage([
+    for (final s in _songs)
+      if (artistIds.isNotEmpty)
+        if (artistIds.contains('a1') &&
+            (s['Artists'] as List).contains('Coldplay'))
+          s
+        else
+          ...[]
+      else if (albumIds.isNotEmpty)
+        if (albumIds.contains('al2') && s['Album'] == 'Revolver') s else ...[]
+      else if (term == null ||
+          (s['Name'] as String).toLowerCase().contains(term))
+        s,
+  ]);
+}
+
+JellyfinServer _jellyfinServer(_Fake fake) {
+  final client = JellyfinClient(
+    baseUrl: 'http://jf.test:8096',
+    credentials: const JellyfinCredentials(
+      client: 'MPV Studio',
+      device: 'test',
+      deviceId: 'test-device',
+      version: '0.3.0',
+    ),
+    dio: Dio()..interceptors.add(fake),
+  );
+  client.setSession(token: 'token', userId: 'user');
+  return JellyfinServer.withClient(client);
+}
+
+// The same library as a Plex section: artist 8, album 9, tracks 10.
+Map<String, dynamic> _plexPage(List<Map<String, Object>> items) => {
+  'MediaContainer': {
+    'Metadata': items,
+    'totalSize': items.length,
+    'size': items.length,
+  },
+};
+
+const _plexTracks = [
+  {
+    'ratingKey': '11',
+    'type': 'track',
+    'title': 'Yellow',
+    'grandparentTitle': 'Coldplay',
+    'parentTitle': 'Parachutes',
+  },
+  {
+    'ratingKey': '12',
+    'type': 'track',
+    'title': 'Trouble',
+    'grandparentTitle': 'Coldplay',
+    'parentTitle': 'Parachutes',
+  },
+  {
+    'ratingKey': '13',
+    'type': 'track',
+    'title': 'Yellow Submarine',
+    'grandparentTitle': 'The Beatles',
+    'parentTitle': 'Revolver',
+  },
+];
+const _plexAlbums = [
+  {
+    'ratingKey': '21',
+    'type': 'album',
+    'title': 'Parachutes',
+    'parentTitle': 'Coldplay',
+  },
+  {
+    'ratingKey': '22',
+    'type': 'album',
+    'title': 'Revolver',
+    'parentTitle': 'The Beatles',
+  },
+];
+
+Object? _plex(String path, Map<String, dynamic> q) {
+  if (path == '/library/metadata/1/allLeaves') {
+    return _plexPage(_plexTracks.sublist(0, 2));
+  }
+  if (path == '/library/metadata/1/children') {
+    return _plexPage([_plexAlbums[0]]);
+  }
+  if (path == '/library/metadata/22/children') {
+    return _plexPage([_plexTracks[2]]);
+  }
+  if (path != '/library/sections/7/all') return null;
+  final title = (q['title'] as String?)?.toLowerCase() ?? '';
+  final pool = switch ('${q['type']}') {
+    '8' => [
+      {'ratingKey': '1', 'type': 'artist', 'title': 'Coldplay'},
+    ],
+    '9' => _plexAlbums,
+    _ => _plexTracks,
+  };
+  return _plexPage([
+    for (final m in pool)
+      if (m['title']!.toLowerCase().contains(title)) m,
+  ]);
+}
+
+PlexServer _plexServer(_Fake fake) {
+  final client = PlexClient(
+    credentials: const PlexCredentials(
+      clientIdentifier: 'test-client',
+      product: 'MPV Studio',
+      version: '0.3.0',
+      device: 'test',
+      deviceName: 'test',
+      platform: 'Generic',
+    ),
+    dio: Dio()..interceptors.add(fake),
+  );
+  client.setToken('token');
+  client.connect('http://plex.test:32400', accessToken: 'token');
+  return PlexServer.withClient(client, '7');
+}
+
+List<String> _titles(LibraryPage<ServerTrack> page) => [
+  for (final t in page.items) t.title,
+];
+
+void main() {
+  group('Jellyfin search', () {
+    test('an artist name finds that artist\'s songs', () async {
+      final server = _jellyfinServer(_Fake(_jellyfin));
+      final page = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'Coldplay',
+      );
+      expect(_titles(page), ['Yellow', 'Trouble']);
+      expect(page.total, 2);
+    });
+
+    test('title matches and album matches both count', () async {
+      final server = _jellyfinServer(_Fake(_jellyfin));
+      final yellow = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'yellow',
+      );
+      expect(_titles(yellow), ['Yellow', 'Yellow Submarine']);
+      final revolver = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'revolver',
+      );
+      expect(_titles(revolver), ['Yellow Submarine']);
+    });
+
+    test('an artist name finds that artist\'s albums', () async {
+      final server = _jellyfinServer(_Fake(_jellyfin));
+      final page = await server.fetchAlbums(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'Coldplay',
+      );
+      expect([for (final a in page.items) a.title], ['Parachutes']);
+    });
+
+    test('later pages of a search read the merged list', () async {
+      final fake = _Fake(_jellyfin);
+      final server = _jellyfinServer(fake);
+      final first = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 1,
+        query: 'Coldplay',
+      );
+      final calls = fake.requests.length;
+      final second = await server.fetchTracks(
+        startIndex: 1,
+        pageSize: 1,
+        query: 'Coldplay',
+      );
+      expect(_titles(first), ['Yellow']);
+      expect(_titles(second), ['Trouble']);
+      expect(second.total, 2);
+      expect(fake.requests.length, calls, reason: 'no new server query');
+    });
+
+    test('browsing without a query stays one paged server query', () async {
+      final fake = _Fake(_jellyfin);
+      final server = _jellyfinServer(fake);
+      final page = await server.fetchTracks(startIndex: 0, pageSize: 50);
+      expect(page.items, hasLength(3));
+      expect(fake.requests, hasLength(1));
+      expect(fake.requests.single.queryParameters['searchTerm'], isNull);
+    });
+  });
+
+  group('Plex search', () {
+    test('an artist name finds that artist\'s songs', () async {
+      final server = _plexServer(_Fake(_plex));
+      addTearDown(server.dispose);
+      final page = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'Coldplay',
+      );
+      expect(_titles(page), ['Yellow', 'Trouble']);
+    });
+
+    test('an album name finds its songs after the title matches', () async {
+      final server = _plexServer(_Fake(_plex));
+      addTearDown(server.dispose);
+      final page = await server.fetchTracks(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'revolver',
+      );
+      expect(_titles(page), ['Yellow Submarine']);
+    });
+
+    test('an artist name finds that artist\'s albums', () async {
+      final server = _plexServer(_Fake(_plex));
+      addTearDown(server.dispose);
+      final page = await server.fetchAlbums(
+        startIndex: 0,
+        pageSize: 50,
+        query: 'Coldplay',
+      );
+      expect([for (final a in page.items) a.title], ['Parachutes']);
+    });
+  });
+
+  group('MergedSearch', () {
+    test('drops repeats, keeps order and caps the list', () {
+      final search = MergedSearch<String>((s) => s);
+      expect(
+        search.merge([
+          ['a', 'b'],
+          ['b', 'c'],
+        ]),
+        ['a', 'b', 'c'],
+      );
+      final many = [for (var i = 0; i < 600; i++) '$i'];
+      expect(search.merge([many]), hasLength(MergedSearch.maxResults));
+    });
+
+    test('a failed search is not cached', () async {
+      final search = MergedSearch<String>((s) => s);
+      var fail = true;
+      Future<List<Iterable<String>>> load() async {
+        if (fail) throw StateError('offline');
+        return [
+          ['a', 'b'],
+        ];
+      }
+
+      await expectLater(
+        search.page('q', startIndex: 0, pageSize: 1, load: load),
+        throwsStateError,
+      );
+      fail = false;
+      final page = await search.page(
+        'q',
+        startIndex: 1,
+        pageSize: 1,
+        load: load,
+      );
+      expect(page.items, ['b']);
+    });
+  });
+}

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/features/effects/widgets/rack_parts.dart';
 import 'package:mpv_studio/features/stream/widgets/choice_row.dart';
+import 'package:mpv_studio/ui/palette.dart';
 import 'package:mpv_studio/ui/widgets/controls.dart';
 
 import '../support/layout_harness.dart';
@@ -57,6 +58,37 @@ void main() {
     );
     handle.dispose();
   });
+
+  for (final palette in [Palette.light, Palette.dark]) {
+    testWidgets('the picked choice pill takes the accent fill '
+        '(${palette.brightness.name})', (tester) async {
+      await pumpStudio(
+        tester,
+        Scaffold(
+          body: ChoiceRow<int>(
+            label: 'Mode',
+            choices: const [Choice(0, 'Direct'), Choice(1, 'Transcode')],
+            selected: 1,
+            onSelected: (_) {},
+          ),
+        ),
+        palette: palette,
+      );
+      Color fill(String label) {
+        final ink = tester.widget<Ink>(
+          find.ancestor(of: find.text(label), matching: find.byType(Ink)),
+        );
+        return (ink.decoration! as ShapeDecoration).color!;
+      }
+
+      Color? ink(String label) =>
+          tester.widget<Text>(find.text(label)).style?.color;
+      expect(fill('Transcode'), palette.accent);
+      expect(ink('Transcode'), palette.onAccent);
+      expect(fill('Direct'), palette.surface3);
+      expect(ink('Direct'), palette.fg);
+    });
+  }
 
   test('no excluding Semantics drops the tap of the InkWell under it', () {
     final offences = <String>[];

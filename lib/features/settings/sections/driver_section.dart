@@ -224,7 +224,7 @@ class _CodecChip extends StatelessWidget {
             height: context.layout.minTap,
             padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
             decoration: ShapeDecoration(
-              color: active ? Tokens.accentContainer : Tokens.surface3,
+              color: active ? Tokens.accent : Tokens.surface3,
               shape: Tokens.pill,
             ),
             child: Center(
@@ -233,7 +233,7 @@ class _CodecChip extends StatelessWidget {
                 label,
                 style: Tokens.label.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: active ? Tokens.onAccentContainer : Tokens.fg,
+                  color: active ? Tokens.onAccent : Tokens.fg,
                 ),
               ),
             ),

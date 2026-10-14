@@ -15,7 +15,8 @@ class Choice<T> {
 }
 
 /// A labelled row of single-select pills that wraps on narrow widths: the
-/// picked one in the secondary selection fill, the others tonal.
+/// picked one in the accent fill, as in [SegmentedControl], the others
+/// tonal.
 class ChoiceRow<T> extends StatelessWidget {
   const ChoiceRow({
     super.key,
@@ -96,7 +97,7 @@ class _ChoicePill<T> extends StatelessWidget {
             height: controlHeightOf(context),
             padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
             decoration: ShapeDecoration(
-              color: on ? Tokens.accentContainer : Tokens.surface3,
+              color: on ? Tokens.accent : Tokens.surface3,
               shape: Tokens.pill,
             ),
             child: Center(
@@ -110,7 +111,7 @@ class _ChoicePill<T> extends StatelessWidget {
                   color: !enabled
                       ? Tokens.fgFaint
                       : on
-                      ? Tokens.onAccentContainer
+                      ? Tokens.onAccent
                       : Tokens.fg,
                 ),
               ),

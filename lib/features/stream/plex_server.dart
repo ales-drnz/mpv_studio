@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:dart_plex/dart_plex.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show LogLevel, SourceResolveRequest;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,15 @@ import 'plex_transcode_session_manager.dart';
 /// `plex-transcode://` marker that [resolveSource] turns into the real URL
 /// right before mpv opens it (see [PlexTranscodeSessionManager]).
 class PlexServer extends MediaServer {
+  PlexServer();
+
+  /// A server already signed in through [client] on the music section
+  /// [musicSectionId], for tests that answer its requests with a fake.
+  @visibleForTesting
+  PlexServer.withClient(PlexClient client, String musicSectionId) {
+    _attach(client, musicSectionId);
+  }
+
   PlexClient? _client;
   String? _musicSectionId;
   PlexTranscodeSessionManager? _transcodes;
@@ -173,21 +183,70 @@ class PlexServer extends MediaServer {
     return s;
   }
 
+  final _trackSearch = MergedSearch<ServerTrack>((t) => t.id);
+  final _albumSearch = MergedSearch<ServerAlbum>((a) => a.id);
+
   @override
   Future<LibraryPage<ServerTrack>> fetchTracks({
     required int startIndex,
     required int pageSize,
     String query = '',
   }) async {
+    if (query.isNotEmpty) {
+      return _trackSearch.page(
+        query,
+        startIndex: startIndex,
+        pageSize: pageSize,
+        load: () => _searchTracks(query),
+      );
+    }
     final res = await _connected.library.allByType(
       sectionId: _section,
       type: PlexMetadataType.track,
       start: startIndex,
       size: pageSize,
       sort: 'titleSort',
-      filters: [if (query.isNotEmpty) PlexFilter.titleContains(query)],
     );
     return LibraryPage([for (final m in res.items) _track(m)], res.totalSize);
+  }
+
+  // The title filter matches the item's own title only, so a song search
+  // also looks up the artists and albums whose title matches and adds
+  // their tracks (allLeaves and children, plain metadata routes every PMS
+  // serves). Title matches come first; [MergedSearch] drops repeats.
+  Future<List<Iterable<ServerTrack>>> _searchTracks(String query) async {
+    final c = _connected;
+    final found = await Future.wait([
+      _byTitle(PlexMetadataType.track, query, MergedSearch.maxResults),
+      _byTitle(PlexMetadataType.artist, query, MergedSearch.maxOwners),
+      _byTitle(PlexMetadataType.album, query, MergedSearch.maxOwners),
+    ]);
+    final owned = await Future.wait([
+      for (final a in found[1]) c.library.allLeaves(a.ratingKey),
+      for (final a in found[2]) c.library.children(a.ratingKey),
+    ]);
+    return [
+      for (final group in [found[0], ...owned])
+        [
+          for (final m in group)
+            if (m.type == PlexMetadataType.track) _track(m),
+        ],
+    ];
+  }
+
+  Future<List<PlexMetadata>> _byTitle(
+    PlexMetadataType type,
+    String query,
+    int size,
+  ) async {
+    final res = await _connected.library.allByType(
+      sectionId: _section,
+      type: type,
+      size: size,
+      sort: 'titleSort',
+      filters: [PlexFilter.titleContains(query)],
+    );
+    return res.items;
   }
 
   @override
@@ -196,25 +255,49 @@ class PlexServer extends MediaServer {
     required int pageSize,
     String query = '',
   }) async {
+    if (query.isNotEmpty) {
+      return _albumSearch.page(
+        query,
+        startIndex: startIndex,
+        pageSize: pageSize,
+        load: () => _searchAlbums(query),
+      );
+    }
     final res = await _connected.library.allByType(
       sectionId: _section,
       type: PlexMetadataType.album,
       start: startIndex,
       size: pageSize,
       sort: 'titleSort',
-      filters: [if (query.isNotEmpty) PlexFilter.titleContains(query)],
     );
-    return LibraryPage([
-      for (final m in res.items)
-        ServerAlbum(
-          id: m.ratingKey,
-          title: m.title,
-          artist: m.parentTitle ?? '',
-          year: m.year,
-          artUrl: _imageUrl(m.thumb),
-        ),
-    ], res.totalSize);
+    return LibraryPage([for (final m in res.items) _album(m)], res.totalSize);
   }
+
+  // Albums by title, then the albums of the artists whose title matches.
+  Future<List<Iterable<ServerAlbum>>> _searchAlbums(String query) async {
+    final found = await Future.wait([
+      _byTitle(PlexMetadataType.album, query, MergedSearch.maxResults),
+      _byTitle(PlexMetadataType.artist, query, MergedSearch.maxOwners),
+    ]);
+    final owned = await Future.wait([
+      for (final a in found[1]) _connected.library.children(a.ratingKey),
+    ]);
+    return [
+      for (final group in [found[0], ...owned])
+        [
+          for (final m in group)
+            if (m.type == PlexMetadataType.album) _album(m),
+        ],
+    ];
+  }
+
+  ServerAlbum _album(PlexMetadata m) => ServerAlbum(
+    id: m.ratingKey,
+    title: m.title,
+    artist: m.parentTitle ?? '',
+    year: m.year,
+    artUrl: _imageUrl(m.thumb),
+  );
 
   @override
   Future<List<ServerTrack>> fetchAlbumTracks(ServerAlbum album) async {

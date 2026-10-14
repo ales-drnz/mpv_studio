@@ -59,15 +59,21 @@ Future<T?> showStudioSheet<T>(
                 Tokens.s16,
                 Tokens.s16,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SheetHandle(),
-                  Flexible(
-                    child: SingleChildScrollView(child: builder(context)),
-                  ),
-                ],
+              // Bottom anchored, so the buttons at the bottom stay put
+              // when the content changes height; the top edge follows,
+              // animated.
+              child: _Resizing(
+                alignment: Alignment.bottomCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SheetHandle(),
+                    Flexible(
+                      child: SingleChildScrollView(child: builder(context)),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -79,7 +85,9 @@ Future<T?> showStudioSheet<T>(
 
 /// Opens a dialog that adapts to the window: a centred dialog at most
 /// [maxWidth] wide on medium and wider windows, a bottom sheet on compact
-/// ones. [title] heads it, [builder] builds the (scrolling) content and
+/// ones. The dialog hangs from a fixed top ([dialogTopInset]) and the
+/// sheet from the bottom, so neither jumps when its content changes
+/// height. [title] heads it, [builder] builds the (scrolling) content and
 /// [actions] builds the buttons, which sit at the bottom right. Pop the
 /// dialog's own context with a result to close it.
 ///
@@ -150,23 +158,61 @@ Future<T?> showStudioDialog<T>(
     context: context,
     builder: (context) {
       final height = MediaQuery.sizeOf(context).height;
+      final top = dialogTopInset(height);
       return Dialog(
         backgroundColor: Tokens.surface2,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: Tokens.shape(Tokens.rXl),
-        insetPadding: const EdgeInsets.all(Tokens.s24),
+        // Hung from a fixed top instead of centred: when the content grows
+        // or shrinks (a choice that hides rows), the title stays put and
+        // only the bottom edge moves, animated, instead of the whole
+        // dialog jumping and its buttons sliding under the pointer.
+        alignment: Alignment.topCenter,
+        insetPadding: EdgeInsets.fromLTRB(
+          Tokens.s24,
+          top,
+          Tokens.s24,
+          Tokens.s24,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: maxWidth,
-            maxHeight: math.max(height - 48, 120),
+            maxHeight: math.max(height - top - Tokens.s24, 120),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(Tokens.s24),
-            child: body(context, sheet: false),
+          child: _Resizing(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(Tokens.s24),
+              child: body(context, sheet: false),
+            ),
           ),
         ),
       );
     },
+  );
+}
+
+/// Where a [showStudioDialog] dialog's top edge sits in a window [height]
+/// tall: a tenth of the way down, never under 24.
+@visibleForTesting
+double dialogTopInset(double height) => math.max(Tokens.s24, height * 0.1);
+
+/// Animates its size when its child's changes, so a dialog or sheet whose
+/// content grows or shrinks moves its free edge smoothly instead of
+/// snapping.
+class _Resizing extends StatelessWidget {
+  const _Resizing({required this.alignment, required this.child});
+
+  final Alignment alignment;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSize(
+    duration: const Duration(milliseconds: 180),
+    curve: Curves.easeOutCubic,
+    alignment: alignment,
+    child: child,
   );
 }
