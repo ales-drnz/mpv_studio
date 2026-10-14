@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 extension StudioSnack on ScaffoldMessengerState {
   /// Shows [message] for [duration]. With [replace] (the default) the
   /// toast on screen goes first, so a burst shows the latest only;
-  /// without, toasts queue. [actionLabel] and [onAction] add a button.
+  /// without, toasts queue. [actionLabel] and [onAction] add a button;
+  /// a toast with one still goes after [duration].
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showStudioSnack(
     String message, {
     Duration duration = const Duration(seconds: 4),
@@ -20,6 +21,10 @@ extension StudioSnack on ScaffoldMessengerState {
         content: Text(message),
         behavior: SnackBarBehavior.floating,
         duration: duration,
+        // Every toast times out, an action or not (Flutter keeps one with
+        // an action up until it is dismissed by default); a swipe still
+        // dismisses it sooner.
+        persist: false,
         action: actionLabel == null || onAction == null
             ? null
             : SnackBarAction(label: actionLabel, onPressed: onAction),
