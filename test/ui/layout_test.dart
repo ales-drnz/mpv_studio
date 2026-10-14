@@ -5,6 +5,8 @@ import 'package:mpv_studio/ui/layout/layout.dart';
 
 import '../support/layout_harness.dart';
 
+var tall = true;
+
 void main() {
   test('width and height classes', () {
     expect(WidthClass.of(360), WidthClass.compact);
@@ -189,6 +191,93 @@ void main() {
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(find.byType(Dialog), findsNothing);
+    });
+
+    // A dialog whose content shrinks when "Shrink" is pressed, as picking
+    // Direct hides the codec rows in the playback options.
+    Widget resizer() => Builder(
+      builder: (context) => TextButton(
+        onPressed: () => showStudioDialog<void>(
+          context,
+          title: 'Playback',
+          builder: (_) => StatefulBuilder(
+            builder: (context, setState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => tall = !tall),
+                  child: const Text('Shrink'),
+                ),
+                SizedBox(height: tall ? 300 : 40),
+              ],
+            ),
+          ),
+          actions: (context) => [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+        child: const Text('open'),
+      ),
+    );
+
+    testWidgets('a dialog keeps its top edge when its content shrinks', (
+      tester,
+    ) async {
+      tall = true;
+      await pumpStudio(tester, resizer());
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      Rect dialog() => tester.getRect(
+        find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      final before = dialog();
+      final title = tester.getTopLeft(find.text('Playback'));
+      expect(
+        before.top,
+        closeTo(
+          dialogTopInset(
+            tester.view.physicalSize.height / tester.view.devicePixelRatio,
+          ),
+          0.5,
+        ),
+      );
+      await tester.tap(find.text('Shrink'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(dialog().top, before.top, reason: 'mid animation');
+      expect(dialog().height, lessThan(before.height));
+      expect(dialog().height, greaterThan(before.height - 260));
+      await tester.pumpAndSettle();
+      expect(dialog().top, before.top);
+      expect(tester.getTopLeft(find.text('Playback')), title);
+      expect(dialog().height, closeTo(before.height - 260, 0.5));
+    });
+
+    testWidgets('a sheet keeps its buttons put when its content shrinks', (
+      tester,
+    ) async {
+      tall = true;
+      await pumpStudio(
+        tester,
+        resizer(),
+        size: const Size(360, 780),
+        input: InputMode.touch,
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final done = tester.getCenter(find.text('Done'));
+      await tester.tap(find.text('Shrink'));
+      await tester.pumpAndSettle();
+      expect(tester.getCenter(find.text('Done')), done);
+      expectNoOverflow(tester);
     });
 
     testWidgets('is a bottom sheet on a phone', (tester) async {
