@@ -254,4 +254,6 @@ jobs:
           libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
           token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
       - run: flutter build ios --release --no-codesign
-      - run: test -d build/ios/iphoneos/Runner.app/Frameworks/libmpv_audio_kit.framework
+      - run: |
+          app=$(find build/ios/iphoneos -maxdepth 1 -name '*.app' | head -n 1)
+          test -d "$app/Frameworks/libmpv_audio_kit.framework"
