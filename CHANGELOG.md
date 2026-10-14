@@ -1,4 +1,4 @@
-## [0.3.0] - unreleased
+## [0.3.0] - 14-10-2026
 
 ### Added
 - A new design built on the logo's colours: graphite, ring grey and white, with tonal surfaces, pill controls and round buttons.
