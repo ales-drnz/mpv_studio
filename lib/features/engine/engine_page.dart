@@ -56,12 +56,18 @@ class EnginePanel extends StatefulWidget {
     this.interval = const Duration(milliseconds: 200),
   });
 
+  /// Makes the stopwatch that times the history charts. Tests that render
+  /// frames swap in one that follows the test's clock, so the charts move
+  /// with test time instead of the wall clock.
+  @visibleForTesting
+  static Stopwatch Function() debugStopwatch = Stopwatch.new;
+
   @override
   State<EnginePanel> createState() => _EnginePanelState();
 }
 
 class _EnginePanelState extends State<EnginePanel> {
-  final Stopwatch _clock = Stopwatch()..start();
+  final Stopwatch _clock = EnginePanel.debugStopwatch()..start();
   final List<StreamSubscription<dynamic>> _subs = [];
   Timer? _timer;
 
