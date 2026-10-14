@@ -49,7 +49,7 @@ void main() {
       bass,
       eqHigh.copyWith(enabled: false),
       eqLow,
-      const RawAudioEffect('lavfi-anull'),
+      const RawAudioEffect('lavfi-aecho'),
     ]);
     final ids = [for (final s in c.stages) s.id];
     expect(c.tapInstance(ids[0]), 0);
@@ -78,12 +78,12 @@ void main() {
   test('bypassed switches every stage off but the meters', () {
     final c = RackChain.of([
       eqLow,
-      const RawAudioEffect('lavfi-anull'),
+      const RawAudioEffect('lavfi-aecho'),
       kMeterStage,
     ]);
     expect(c.bypassed, [
       eqLow.copyWith(enabled: false),
-      const RawAudioEffect('lavfi-anull', enabled: false),
+      const RawAudioEffect('lavfi-aecho', enabled: false),
       kMeterStage,
     ]);
     expect(c.bypassed.length, c.length, reason: 'same shape, same taps');

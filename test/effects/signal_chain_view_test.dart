@@ -112,17 +112,30 @@ void main() {
       expect(find.byType(Dialog), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('add-raw')));
       await tester.pumpAndSettle();
-      expect(engine.current, [bass, const RawAudioEffect('lavfi-anull')]);
+      expect(engine.current, [bass, const RawAudioEffect('', enabled: false)]);
+      expect(find.byKey(const ValueKey('rack-error')), findsNothing);
+      // Nothing mpv would refuse reaches it: no blank entry switched on,
+      // no filter name assumed (anull is missing from some libmpv builds).
+      for (final fx in engine.applied) {
+        for (final e in fx.whereType<RawAudioEffect>()) {
+          expect(e.entry, isNot(contains('anull')));
+          expect(e.enabled && e.entry.trim().isEmpty, isFalse);
+        }
+      }
       final id = rack.chain.stages.last.id;
       expect(rack.isExpanded(id), isTrue);
       expect(find.text('lavfi entry'), findsOneWidget);
       await tester.enterText(
-        find.widgetWithText(TextField, 'lavfi-anull'),
-        'lavfi-volume=0.5',
+        find.byType(TextField),
+        'lavfi-aecho=0.8:0.9:500:0.3',
       );
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(engine.current.last, const RawAudioEffect('lavfi-volume=0.5'));
+      expect(
+        engine.current.last,
+        const RawAudioEffect('lavfi-aecho=0.8:0.9:500:0.3'),
+        reason: 'the first entry switches the stage on',
+      );
     });
 
     testWidgets('search the catalog and add a filter', (tester) async {
@@ -167,22 +180,49 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('add-raw')));
       await tester.pumpAndSettle();
-      expect(engine.current, [bass, const RawAudioEffect('lavfi-anull'), comp]);
+      expect(engine.current, [
+        bass,
+        const RawAudioEffect('', enabled: false),
+        comp,
+      ]);
     });
 
     testWidgets('a refused chain shows an error and rolls back', (
       tester,
     ) async {
+      // Like mpv: a blank or disabled raw stage is never sent, an entry
+      // naming a filter the build lacks is refused.
       final engine = FakeEngine([bass])
-        ..refuse = (fx) => fx.any((e) => e is RawAudioEffect);
+        ..refuse = (fx) => fx.any(
+          (e) =>
+              e is RawAudioEffect &&
+              e.enabled &&
+              !e.entry.startsWith('lavfi-aecho'),
+        );
       final rack = await pumpRack(tester, engine);
       await tester.tap(find.byKey(const ValueKey('rack-add')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('add-raw')));
       await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('rack-error')), findsNothing);
+      final id = rack.chain.stages.last.id;
+      expect(rack.isExpanded(id), isTrue);
+      final field = find.byType(TextField);
+      expect(field, findsOneWidget, reason: 'the raw entry');
+      await tester.enterText(field, 'lavfi-nonsense=1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('rack-error')), findsOneWidget);
       expect(find.textContaining('invalid parameter'), findsOneWidget);
-      expect(rack.chain.effects, [bass]);
+      expect(rack.chain.effects, [
+        bass,
+        const RawAudioEffect('', enabled: false),
+      ]);
+      expect(
+        find.descendant(of: field, matching: find.text('lavfi-nonsense=1')),
+        findsOneWidget,
+        reason: 'the entry stays in the field to be corrected',
+      );
       await tester.tap(find.byTooltip('Dismiss'));
       await tester.pump();
       expect(find.byKey(const ValueKey('rack-error')), findsNothing);

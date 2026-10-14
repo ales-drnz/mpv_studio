@@ -42,11 +42,27 @@ void main() {
     expect(isMeterStage(kMeterStage), isTrue);
     expect(isMeterStage(const Ebur128Effect()), isFalse);
     expect(stageTitle(kMeterStage), 'Loudness meter');
-    expect(stageTitle(const RawAudioEffect('lavfi-anull')), 'Raw lavfi');
+    expect(stageTitle(const RawAudioEffect('lavfi-aecho')), 'Raw lavfi');
     expect(stageTitle(const BassEffect()), 'Bass');
     expect(
-      withEnabled(const RawAudioEffect('lavfi-anull'), false).enabled,
+      withEnabled(const RawAudioEffect('lavfi-aecho'), false).enabled,
       isFalse,
     );
+  });
+
+  test('a raw entry switches a blank stage on, a blank entry off', () {
+    const blank = RawAudioEffect('', enabled: false);
+    expect(
+      rawEntrySubmitted(blank, ' lavfi-aecho=0.8:0.9:500:0.3 '),
+      const RawAudioEffect('lavfi-aecho=0.8:0.9:500:0.3'),
+    );
+    expect(rawEntrySubmitted(blank, '  '), blank);
+    const off = RawAudioEffect('lavfi-aecho', enabled: false);
+    expect(
+      rawEntrySubmitted(off, 'lavfi-aecho=0.8:0.9:500:0.3').enabled,
+      isFalse,
+      reason: 'a stage the user switched off stays off',
+    );
+    expect(rawEntrySubmitted(const RawAudioEffect('lavfi-aecho'), ''), blank);
   });
 }

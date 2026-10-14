@@ -202,7 +202,7 @@ void main() {
   test('taps go to the stages opened last, within the budget', () {
     final engine = FakeEngine([
       for (var i = 0; i < 5; i++) BassEffect(gain: i.toDouble()),
-      const RawAudioEffect('lavfi-anull'),
+      const RawAudioEffect('lavfi-aecho'),
     ]);
     final rack = RackController(engine, maxTappedStages: 3);
     final ids = [for (final s in rack.chain.stages) s.id];

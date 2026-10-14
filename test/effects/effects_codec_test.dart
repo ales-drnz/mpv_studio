@@ -51,6 +51,14 @@ void main() {
     expect(roundTrip(fx), fx);
   });
 
+  test('a blank raw stage, fresh from the catalog, restores as it was', () {
+    final fx = <AudioEffect>[
+      const BassEffect(gain: 3),
+      const RawAudioEffect('', enabled: false),
+    ];
+    expect(roundTrip(fx), fx);
+  });
+
   test('unknown stages and bad values are skipped, not fatal', () {
     final fx = EffectsCodec.decode({
       'version': 2,
