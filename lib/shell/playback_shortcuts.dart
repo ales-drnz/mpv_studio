@@ -14,6 +14,10 @@ import '../ui/tokens.dart';
 /// Keys are left alone while a text field has focus, while a menu, dialog
 /// or sheet is open, when a modifier is held (so system and app shortcuts
 /// keep working; Shift is allowed for the ?) and when [enabled] is false.
+/// The speed keys match the character the key types, so [ and ] work on
+/// layouts that reach them with AltGr or Option (Italian, German), and
+/// - and + (or =) do the same for layouts with no brackets at hand; the
+/// modifiers that type those characters are allowed there.
 /// Space goes to a focused button, switch or other control that
 /// activates (it has an enabled `ActivateIntent`), and plays or pauses
 /// only otherwise. The player calls run through [guard]; what the
@@ -37,7 +41,7 @@ class PlaybackShortcuts extends StatelessWidget {
   /// The volume step of Up and Down, in percent.
   static const double volumeStep = 5;
 
-  /// The speed step of [ and ].
+  /// The speed step of [ and ] (also - and +).
   static const double rateStep = 0.1;
 
   @override
@@ -77,6 +81,7 @@ const List<(String, String)> playbackShortcutList = [
   ('Page Down', 'Next chapter'),
   ('L', 'A-B loop: set A, then B, then clear'),
   ('[ and ]', 'Slower or faster'),
+  ('- and +', 'Also slower or faster (= too)'),
   ('Backspace', 'Normal speed'),
   ('? or F1', 'Show these shortcuts'),
 ];
@@ -136,6 +141,19 @@ KeyEventResult handlePlaybackKey(
   if (event is KeyUpEvent) return KeyEventResult.ignored;
   if (_focusElsewhere()) return KeyEventResult.ignored;
   final keys = HardwareKeyboard.instance;
+
+  // The speed keys go by the character typed, before the modifier check:
+  // AltGr (Ctrl and Alt on Windows), Option or Shift may be what types it.
+  final rate = _rateDelta(event);
+  if (rate != null) {
+    final typedWith =
+        !keys.isMetaPressed && (!keys.isControlPressed || keys.isAltPressed);
+    if (!typedWith) return KeyEventResult.ignored;
+    if (event is! KeyRepeatEvent) {
+      stepRate(player, guard, delta: rate, notify: notify);
+    }
+    return KeyEventResult.handled;
+  }
   if (keys.isControlPressed ||
       keys.isMetaPressed ||
       keys.isAltPressed ||
@@ -194,13 +212,35 @@ final Map<LogicalKeyboardKey, _Action> _pressActions = {
   LogicalKeyboardKey.pageUp: (p, g, n) => stepChapter(p, g, -1, notify: n),
   LogicalKeyboardKey.pageDown: (p, g, n) => stepChapter(p, g, 1, notify: n),
   LogicalKeyboardKey.keyL: (p, g, n) => cycleAbLoop(p, g, notify: n),
-  LogicalKeyboardKey.bracketLeft: (p, g, n) =>
-      stepRate(p, g, delta: -PlaybackShortcuts.rateStep, notify: n),
-  LogicalKeyboardKey.bracketRight: (p, g, n) =>
-      stepRate(p, g, delta: PlaybackShortcuts.rateStep, notify: n),
   LogicalKeyboardKey.backspace: (p, g, n) =>
       stepRate(p, g, reset: true, notify: n),
 };
+
+/// The speed step [event] asks for, or `null`. The character typed
+/// decides when there is one: the key that types [ on one layout types
+/// something else on another, and Shift with [ types {. Without a
+/// character, the logical key does.
+double? _rateDelta(KeyEvent event) {
+  const step = PlaybackShortcuts.rateStep;
+  final c = event.character;
+  if (c != null && c.isNotEmpty) {
+    return switch (c) {
+      '[' || '-' => -step,
+      ']' || '+' || '=' => step,
+      _ => null,
+    };
+  }
+  return switch (event.logicalKey) {
+    LogicalKeyboardKey.bracketLeft ||
+    LogicalKeyboardKey.minus ||
+    LogicalKeyboardKey.numpadSubtract => -step,
+    LogicalKeyboardKey.bracketRight ||
+    LogicalKeyboardKey.equal ||
+    LogicalKeyboardKey.add ||
+    LogicalKeyboardKey.numpadAdd => step,
+    _ => null,
+  };
+}
 
 /// Whether the keys belong to something else: a text field has the
 /// focus, or the focus is in a menu, dialog or sheet (which use the
