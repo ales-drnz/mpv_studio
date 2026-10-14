@@ -18,7 +18,7 @@ import 'media_server.dart';
 class PlaybackReporter {
   PlaybackReporter(this._player, this._servers, this._favorites);
 
-  final Player _player;
+  final PlayerApi _player;
   final Map<ServerKind, MediaServer> _servers;
   final FavoritesController _favorites;
 
@@ -29,12 +29,18 @@ class PlaybackReporter {
   String? _itemId;
   bool _started = false;
 
+  /// The last position the current track reached, for its stop report:
+  /// by the time the playlist moves on, the player's position can already
+  /// be the next entry's (or reset to zero).
+  Duration _lastPosition = Duration.zero;
+
   Timer? _progressTimer;
   final List<StreamSubscription<dynamic>> _subs = [];
 
   /// Begin listening. Safe to call once at app start.
   void start() {
     _subs.add(_player.stream.playlist.listen((_) => _onPlaylist()));
+    _subs.add(_player.stream.position.listen(_onPosition));
     // Actual-output axis: only to detect that real playback has begun.
     _subs.add(_player.stream.playing.listen(_onPlaying));
     // Intent axis (stable across seeks/buffering): drives the server
@@ -71,6 +77,7 @@ class PlaybackReporter {
     _kind = kind;
     _itemId = id;
     _started = false;
+    _lastPosition = Duration.zero;
     _maybeStart();
     _syncSessionFavorite(); // reflect the new track's favourite on the OS star
   }
@@ -122,6 +129,16 @@ class PlaybackReporter {
     unawaited(_favorites.setFavorite(kind, id, !current));
   }
 
+  void _onPosition(Duration position) {
+    // A zero is a reset (the entry ending or the next one loading), not
+    // where the track stopped; a position read while the playlist already
+    // points elsewhere belongs to the next entry.
+    if (_itemId == null || position <= Duration.zero) return;
+    final (kind, id) = _currentTrack();
+    if (kind != _kind || id != _itemId) return;
+    _lastPosition = position;
+  }
+
   void _onPlaying(bool playing) {
     if (_itemId == null) return;
     // First real output → start the session. Pause/resume reporting is driven
@@ -171,10 +188,10 @@ class PlaybackReporter {
     if (!_started || _itemId == null) return;
     StudioLog.write(
       'PlaybackReporter: stop ${_kind!.name} $_itemId '
-      '@ ${_player.state.position}',
+      '@ $_lastPosition',
       level: LogLevel.v,
     );
-    _servers[_kind]?.reportStopped(_itemId!, position: _player.state.position);
+    _servers[_kind]?.reportStopped(_itemId!, position: _lastPosition);
     _started = false;
     _progressTimer?.cancel();
   }
