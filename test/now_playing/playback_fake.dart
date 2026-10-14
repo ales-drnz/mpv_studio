@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
@@ -13,6 +14,9 @@ class PlaybackFake extends FakePlayer {
 
   bool nextResult = true;
   bool previousResult = true;
+
+  /// The spectrum frame the fft stream hands over, or none.
+  FftFrame? spectrum;
 
   @override
   late final PlayerStream stream = PlaybackFakeStream(this);
@@ -141,7 +145,10 @@ class PlaybackFakeStream extends FakePlayerStream {
   @override
   Stream<PcmFrame> get pcm => const Stream.empty();
   @override
-  Stream<FftFrame> get fft => const Stream.empty();
+  Stream<FftFrame> get fft {
+    final frame = _fake.spectrum;
+    return frame == null ? const Stream.empty() : Stream.value(frame);
+  }
 }
 
 /// A track with a title, an artist, a waveform and two chapters, a third
@@ -174,7 +181,30 @@ PlaybackFake playingTrack() {
     ),
   );
   fake.waveform = demoWaveform(const Duration(minutes: 5, seconds: 37));
+  fake.spectrum = demoSpectrum();
   return fake;
+}
+
+/// A deterministic spectrum: loud low bands, a bump in the mids and a
+/// falling top, so the curve reaches both sides of its box.
+FftFrame demoSpectrum() {
+  const n = 64;
+  final bands = Float32List(n);
+  for (var i = 0; i < n; i++) {
+    final x = i / (n - 1);
+    final bump = 0.25 * math.exp(-math.pow((x - 0.45) / 0.12, 2));
+    bands[i] = (0.75 - 0.6 * x + bump + 0.05 * math.sin(i * 1.7))
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+  return FftFrame(
+    bins: Float32List(0),
+    bands: bands,
+    timestamp: Duration.zero,
+    sampleRate: 48000,
+    bandLowHz: 20,
+    bandHighHz: 20000,
+  );
 }
 
 /// A deterministic envelope of [duration]: a slow swell with a beat.
