@@ -4,6 +4,7 @@ import '../ui/tokens.dart';
 import 'nav_parts.dart';
 import 'shell_tools.dart';
 import 'sections.dart';
+import 'snack_clearance.dart';
 
 /// The sidebar chrome (expanded windows and up): a tonal sidebar on the
 /// left, the section body in a rounded [StagePanel] beside it, and the
@@ -75,7 +76,11 @@ class _DesktopShellState extends State<DesktopShell> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(child: panels),
-                  SafeArea(top: false, child: mini),
+                  // Toasts float above the mini-player.
+                  SnackObstacle(
+                    edge: SnackEdge.bottom,
+                    child: SafeArea(top: false, child: mini),
+                  ),
                 ],
               ),
       ),

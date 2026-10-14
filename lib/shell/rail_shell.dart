@@ -6,6 +6,7 @@ import '../ui/widgets/scroll_fade.dart';
 import 'nav_parts.dart';
 import 'sections.dart';
 import 'shell_tools.dart';
+import 'snack_clearance.dart';
 
 /// The rail chrome (medium windows, and any low window such as a phone in
 /// landscape): a slim icon rail with every section on the left and the
@@ -132,7 +133,12 @@ class RailShell extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            rail,
+            // With the mini-player at its foot, toasts float beside the
+            // rail, over the stage.
+            if (railMini != null)
+              SnackObstacle(edge: SnackEdge.left, child: rail)
+            else
+              rail,
             // The rail covers the left inset, so the stage must not see it.
             Expanded(
               child: withoutLeftInset(
@@ -142,7 +148,11 @@ class RailShell extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(child: stage),
-                          SafeArea(top: false, child: mini),
+                          // Toasts float above the mini-player.
+                          SnackObstacle(
+                            edge: SnackEdge.bottom,
+                            child: SafeArea(top: false, child: mini),
+                          ),
                         ],
                       ),
               ),

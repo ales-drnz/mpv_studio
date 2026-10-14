@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../ui/tokens.dart';
 import 'nav_parts.dart';
 import 'sections.dart';
+import 'snack_clearance.dart';
 
 /// The bottom bar chrome (compact windows): the section body with a bottom
 /// tab bar that stays **pinned** to the screen edge. The soft keyboard
@@ -96,14 +97,18 @@ class _MobileShellState extends State<MobileShell> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Column(
-              key: _tabBarKey,
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.miniPlayer != null) widget.miniPlayer!,
-                _TabBar(section: widget.section, onSelect: widget.onSelect),
-              ],
+            // Toasts float above the bar and the mini-player.
+            child: SnackObstacle(
+              edge: SnackEdge.bottom,
+              child: Column(
+                key: _tabBarKey,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.miniPlayer != null) widget.miniPlayer!,
+                  _TabBar(section: widget.section, onSelect: widget.onSelect),
+                ],
+              ),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../ui/tokens.dart';
 import 'sections.dart';
 import 'shell_frame.dart';
+import 'snack_clearance.dart';
 
 /// The navigation behaviour of the app around the routed section bodies
 /// ([navigationShell]): section switching, the re-tap of the active
@@ -84,16 +85,19 @@ class _StudioShellState extends State<StudioShell> {
         onBackButtonPressed: _onBack,
         // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars
         // on (the shells themselves are custom, not Scaffolds). The shells
-        // handle the soft keyboard themselves, so it must not resize.
-        child: Scaffold(
-          backgroundColor: Tokens.bg,
-          resizeToAvoidBottomInset: false,
-          body: ShellFrame(
-            section: section,
-            onSelect: _select,
-            body: _shell,
-            // Playback already shows the full transport.
-            miniPlayer: section == Section.nowPlaying ? null : mini,
+        // handle the soft keyboard themselves, so it must not resize. The
+        // clearance host floats the SnackBars above the shell chrome.
+        child: SnackClearanceHost(
+          child: Scaffold(
+            backgroundColor: Tokens.bg,
+            resizeToAvoidBottomInset: false,
+            body: ShellFrame(
+              section: section,
+              onSelect: _select,
+              body: _shell,
+              // Playback already shows the full transport.
+              miniPlayer: section == Section.nowPlaying ? null : mini,
+            ),
           ),
         ),
       ),
