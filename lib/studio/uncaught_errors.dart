@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../util/redact.dart';
 import 'mpv_studio.dart';
 
 /// Catches the errors nothing else handled (framework errors, async
@@ -21,7 +22,7 @@ class UncaughtErrors {
       errors._report(details.exception, details.stack);
     };
     PlatformDispatcher.instance.onError = (error, stack) {
-      debugPrint('Uncaught error: $error\n$stack');
+      debugPrint('Uncaught error: ${redactSecrets('$error')}\n$stack');
       errors._report(error, stack);
       return true;
     };
@@ -40,7 +41,7 @@ class UncaughtErrors {
     try {
       target?.reportUncaught(error, stack);
     } on Object catch (e) {
-      debugPrint('Could not report an uncaught error: $e');
+      debugPrint('Could not report an uncaught error: ${redactSecrets('$e')}');
     } finally {
       _reporting = false;
     }

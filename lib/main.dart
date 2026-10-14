@@ -8,6 +8,7 @@ import 'studio/uncaught_errors.dart';
 import 'ui/layout/layout.dart';
 import 'ui/palette.dart';
 import 'ui/theme.dart';
+import 'util/redact.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,7 @@ Future<void> _start(UncaughtErrors errors) async {
     errors.target = studio;
     runApp(MpvStudioApp(studio: studio, errors: errors));
   } on Object catch (error) {
-    debugPrint('MPV Studio did not start: $error');
+    debugPrint('MPV Studio did not start: ${redactSecrets('$error')}');
     runApp(
       MaterialApp(
         title: 'MPV Studio',

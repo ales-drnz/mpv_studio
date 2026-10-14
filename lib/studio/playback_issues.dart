@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../util/media_labels.dart';
+import '../util/redact.dart';
 
 /// Runs a player call for a control: [PlaybackIssues.guard] in the app,
 /// so what the call throws becomes a toast. Completes with the call's
@@ -146,7 +147,9 @@ class PlaybackIssues {
   }
 
   void _onError(PlayerError error) {
-    debugPrint('mpv error: ${error.message}');
+    // mpv's message names the URL it failed on, server token included:
+    // masked, and only in debug builds.
+    if (kDebugMode) debugPrint('mpv error: ${redactSecrets(error.message)}');
     switch (error) {
       case EndFileError():
         final entry = _lastFailed;
@@ -184,7 +187,9 @@ class PlaybackIssues {
 
   /// Shows [error] as a notice, for failures caught outside [guard].
   void report(Object error) {
-    debugPrint('player call failed: $error');
+    if (kDebugMode) {
+      debugPrint('player call failed: ${redactSecrets('$error')}');
+    }
     _add(PlaybackNotice(describeCallError(error)));
   }
 

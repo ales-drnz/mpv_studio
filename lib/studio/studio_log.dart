@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/console/console_log.dart';
+import '../util/redact.dart';
 
 /// Where the app's own diagnostics go: the Console log of the running
 /// studio (as `studio` lines next to the engine's), and the debug console
@@ -20,7 +21,7 @@ abstract final class StudioLog {
 
   /// Logs [text] at [level].
   static void write(String text, {LogLevel level = LogLevel.info}) {
-    if (kDebugMode) debugPrint('studio: $text');
+    if (kDebugMode) debugPrint('studio: ${redactSecrets(text)}');
     _sink?.add(MpvLogEntry(prefix: 'studio', level: level, text: text));
   }
 }

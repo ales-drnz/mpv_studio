@@ -8,6 +8,7 @@ import '../features/effects/rack_controller.dart';
 import '../features/queue/queue_details.dart';
 import '../features/stream/favorites_controller.dart';
 import '../features/stream/media_server.dart';
+import '../util/redact.dart';
 import 'app_settings.dart';
 import 'audio_engine.dart';
 import 'loudness_normalizer.dart';
@@ -156,7 +157,7 @@ class MpvStudio {
       try {
         await step();
       } on Object catch (e) {
-        debugPrint('Cleanup after a failed launch: $e');
+        debugPrint('Cleanup after a failed launch: ${redactSecrets('$e')}');
       }
     }
   }
@@ -171,7 +172,7 @@ class MpvStudio {
 
   /// A line of the app's own in the Console log.
   void _log(LogLevel level, String text) {
-    if (kDebugMode) debugPrint('studio: $text');
+    if (kDebugMode) debugPrint('studio: ${redactSecrets(text)}');
     consoleLog.add(MpvLogEntry(prefix: 'studio', level: level, text: text));
   }
 

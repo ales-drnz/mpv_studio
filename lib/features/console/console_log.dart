@@ -51,9 +51,10 @@ class ConsoleLog {
   void add(MpvLogEntry entry) => _onEntry(entry);
 
   void _onEntry(MpvLogEntry raw) {
-    // mpv logs the URLs it opens, credentials included (an SMB share's
-    // smb2://user:password@host): the Console never shows them.
-    final text = withoutCredentials(raw.text);
+    // mpv logs the URLs it opens, credentials and tokens included (an SMB
+    // share's smb2://user:password@host, a Jellyfin ApiKey, a Plex
+    // X-Plex-Token): the Console never shows them.
+    final text = redactSecrets(raw.text);
     final entry = text == raw.text
         ? raw
         : MpvLogEntry(prefix: raw.prefix, level: raw.level, text: text);
