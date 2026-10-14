@@ -161,10 +161,13 @@ class _InfoBody extends StatelessWidget {
               'Range',
               s?.range != null ? '${s!.range!.toStringAsFixed(1)} LU' : '-',
             ),
-            ('True peak', s?.truePeak != null ? _peakDb(s!.truePeak!) : '-'),
+            (
+              'True peak',
+              s?.truePeak != null ? _peakDb(s!.truePeak!, 'dBTP') : '-',
+            ),
             (
               'Sample peak',
-              s?.samplePeak != null ? _peakDb(s!.samplePeak!) : '-',
+              s?.samplePeak != null ? _peakDb(s!.samplePeak!, 'dBFS') : '-',
             ),
           ]),
         );
@@ -172,10 +175,12 @@ class _InfoBody extends StatelessWidget {
     );
   }
 
-  String _peakDb(double linear) {
+  /// A linear peak in decibels: dBTP for the true (inter-sample) peak,
+  /// dBFS for the sample peak.
+  String _peakDb(double linear, String unit) {
     if (linear <= 0) return '-';
     final db = 20 * math.log(linear) / math.ln10;
-    return '${db.toStringAsFixed(1)} dBFS';
+    return '${db.toStringAsFixed(1)} $unit';
   }
 
   // ── Output (device side): stat grid ────────────────────────────────
