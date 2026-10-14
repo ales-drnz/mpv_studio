@@ -183,6 +183,10 @@ Each stage draws its own live diagram (a compressor curve, a frequency response 
 
 ### 5. Engine
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/engine.gif" width="100%">
+</p>
+
 What the engine is doing right now: play request and audio state, the demuxer cache around the playhead, prefetch, the waveform and loudness scans, the decoder and device formats, the effects chain and the library builds.
 
 ---
@@ -208,6 +212,15 @@ A built-in mpv command console with a command catalog, autocomplete, history, mp
 ---
 
 ### 8. Desktop and mobile
+
+<table>
+<tr>
+<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-playback.gif" width="100%" alt="Playback on a phone"></td>
+<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-queue.gif" width="100%" alt="Queue on a phone"></td>
+<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-effects.gif" width="100%" alt="Effects on a phone"></td>
+<td width="25%"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/mobile-stream.gif" width="100%" alt="Stream on a phone, light theme"></td>
+</tr>
+</table>
 
 Phones get bottom tabs, sheets, gestures and the Android back button; tablets and phones in landscape get a navigation rail; desktop gets a collapsible sidebar, hover, right-click menus and keyboard shortcuts (press ? or F1 for the list). The theme follows the logo's graphite, ring grey and white, in dark, light or the system's choice. A welcome screen on first launch helps you start.
 
