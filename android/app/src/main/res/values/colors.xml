@@ -4,4 +4,7 @@
          background (Palette.light.bg) here, graphite in values-night, so
          neither theme opens on a jarring flash. -->
     <color name="launch_background">#FFEBEEF5</color>
+    <!-- Graphite #24282D, the adaptive launcher icon background layer: the
+         logo disc in the foreground layer melts into it. -->
+    <color name="ic_launcher_background">#24282D</color>
 </resources>

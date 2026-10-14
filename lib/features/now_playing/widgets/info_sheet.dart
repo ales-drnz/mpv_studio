@@ -309,14 +309,14 @@ class _InfoBody extends StatelessWidget {
     return Column(children: rows);
   }
 
-  /// A card tone box holding dense key and value rows.
+  /// A tonal box holding dense key and value rows.
   Widget _card(List<Widget> rows) => Container(
     padding: const EdgeInsets.symmetric(
       horizontal: Tokens.s16,
       vertical: Tokens.s8,
     ),
     decoration: ShapeDecoration(
-      color: Tokens.surface,
+      color: _boxFill,
       shape: Tokens.shape(Tokens.rSm),
     ),
     child: Column(children: rows),
@@ -430,8 +430,15 @@ class _InfoBody extends StatelessWidget {
   }
 }
 
-/// A small stat cell: a caption label over a numeric value, in a card
-/// tone box (it reads on the sheet and dialog chrome in both themes).
+/// The tonal fill of the stat cells and the row boxes, one step off the
+/// sheet and dialog chrome ([Tokens.surface2]) in both themes: the card
+/// tone on the dark chrome, the stage tone on the white light chrome,
+/// where the white card tone would vanish. The text keeps its contrast
+/// (light: fg 12.8:1, the caption 6.7:1 on the stage).
+Color get _boxFill => Palette.active.isDark ? Tokens.surface : Tokens.bg;
+
+/// A small stat cell: a caption label over a numeric value, in a tonal
+/// box that reads on the sheet and dialog chrome in both themes.
 class _StatCell extends StatelessWidget {
   final String label;
   final String value;
@@ -445,7 +452,7 @@ class _StatCell extends StatelessWidget {
         vertical: Tokens.s8,
       ),
       decoration: ShapeDecoration(
-        color: Tokens.surface,
+        color: _boxFill,
         shape: Tokens.shape(Tokens.rSm),
       ),
       child: Column(

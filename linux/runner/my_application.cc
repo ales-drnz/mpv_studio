@@ -14,6 +14,25 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+// The user-visible name, in the title bar, the task switcher and the dock.
+static const char kApplicationName[] = "MPV Studio";
+
+// Sets the logo as the window icon, from data/app_icon.png next to the
+// binary, where linux/CMakeLists.txt installs it.
+static void set_window_icon(GtkWindow* window) {
+  g_autofree gchar* executable = g_file_read_link("/proc/self/exe", nullptr);
+  if (executable == nullptr) {
+    return;
+  }
+  g_autofree gchar* directory = g_path_get_dirname(executable);
+  g_autofree gchar* icon =
+      g_build_filename(directory, "data", "app_icon.png", nullptr);
+  g_autoptr(GError) error = nullptr;
+  if (!gtk_window_set_icon_from_file(window, icon, &error)) {
+    g_warning("Failed to load the window icon: %s", error->message);
+  }
+}
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
@@ -45,12 +64,14 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "mpv_studio");
+    gtk_header_bar_set_title(header_bar, kApplicationName);
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
-  } else {
-    gtk_window_set_title(window, "mpv_studio");
   }
+  // The window title names the app in the task switcher and the dock, also
+  // when a header bar draws the visible one.
+  gtk_window_set_title(window, kApplicationName);
+  set_window_icon(window);
 
   gtk_window_set_default_size(window, 1280, 720);
 
@@ -141,6 +162,7 @@ MyApplication* my_application_new() {
   // corresponding .desktop file. This ensures better integration by allowing
   // the application to be recognized beyond its binary name.
   g_set_prgname(APPLICATION_ID);
+  g_set_application_name(kApplicationName);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",
