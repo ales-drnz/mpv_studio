@@ -30,7 +30,8 @@ class QueueEmpty extends StatelessWidget {
     final buttonSize = Size(0, layout.minTap);
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: Tokens.s24),
+        // Centred, so as far from the top as from the page end.
+        padding: EdgeInsets.symmetric(vertical: PageEnd.of(context)),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 560),
           padding: const EdgeInsets.all(Tokens.s24),

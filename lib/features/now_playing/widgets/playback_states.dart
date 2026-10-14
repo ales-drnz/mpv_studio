@@ -28,7 +28,8 @@ class EmptyPlayback extends StatelessWidget {
     final queued = onPlayQueue != null;
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: Tokens.s24),
+        // Centred, so as far from the top as from the page end.
+        padding: EdgeInsets.symmetric(vertical: PageEnd.of(context)),
         child: ReadableWidth(
           maxWidth: Breakpoints.medium,
           child: Column(

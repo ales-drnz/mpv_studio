@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
 import '../../../studio/studio_log.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../source_failure.dart';
@@ -403,9 +404,10 @@ class _SambaTabState extends State<SambaTab> {
         final playing = currentMedia(pl)?.uri ?? '';
         return Stack(
           children: [
-            ListView.builder(
-              padding: const EdgeInsets.only(bottom: Tokens.s24),
+            ListView.separated(
+              padding: PageEnd.padding(context),
               itemCount: entries.length,
+              separatorBuilder: (_, _) => const SizedBox(height: StreamRow.gap),
               itemBuilder: (context, i) {
                 final e = entries[i];
                 if (e.isDirectory) {

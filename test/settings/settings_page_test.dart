@@ -230,4 +230,52 @@ void main() {
     expect(row.value, isFalse);
     await drain(tester);
   });
+
+  testWidgets('devices with the same description show their ids', (
+    tester,
+  ) async {
+    final h = await SettingsHarness.create();
+    const pipewire = Device(
+      name: 'pipewire/alsa_output.usb-Focusrite_Scarlett_Solo',
+      description: 'Scarlett Solo USB',
+    );
+    const pulse = Device(
+      name: 'pulse/alsa_output.usb-Focusrite_Scarlett_Solo',
+      description: 'Scarlett Solo USB',
+    );
+    h.player.emit(
+      (s) => s.copyWith(
+        audioDevices: const [Device.auto, pipewire, pulse],
+        audioDevice: pipewire,
+      ),
+    );
+    await pumpStudio(
+      tester,
+      h.wrap(const Scaffold(body: SettingsPage())),
+      size: studioSize('1440x900').size,
+    );
+    await tester.tap(find.text('Output').first);
+    await tester.pumpAndSettle();
+    // Closed, the control reads the description alone.
+    expect(find.text(pipewire.name), findsNothing);
+    final control = find.descendant(
+      of: find.ancestor(
+        of: find.text(SettingsCatalog.device.title),
+        matching: find.byType(DropdownRow<Device>),
+      ),
+      matching: find.byType(AppDropdown<Device>),
+    );
+    await tester.tap(control);
+    await tester.pumpAndSettle();
+    // Open, every device carries its id under the description.
+    expect(find.text('Scarlett Solo USB'), findsNWidgets(3));
+    expect(find.text(pipewire.name), findsOneWidget);
+    expect(find.text(pulse.name), findsOneWidget);
+    await tester.tap(find.text(pulse.name));
+    await tester.pumpAndSettle();
+    // The pick still sets the device by its name.
+    expect(h.player.calls.last, startsWith('setAudioDevice'));
+    expect(h.player.calls.last, contains(pulse.name));
+    await drain(tester);
+  });
 }

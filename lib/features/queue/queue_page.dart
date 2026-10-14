@@ -356,9 +356,7 @@ class _QueueViewState extends State<QueueView> {
                                 detail: shown == null
                                     ? null
                                     : SingleChildScrollView(
-                                        padding: const EdgeInsets.only(
-                                          bottom: Tokens.s16,
-                                        ),
+                                        padding: PageEnd.padding(context),
                                         child: Container(
                                           padding: const EdgeInsets.all(
                                             Tokens.s16,

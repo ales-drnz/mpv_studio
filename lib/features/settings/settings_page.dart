@@ -149,11 +149,13 @@ class _GroupList extends StatelessWidget {
   Widget build(BuildContext context) {
     return FocusTraversalGroup(
       child: ListView(
-        padding: const EdgeInsets.only(bottom: Tokens.s24),
+        padding: PageEnd.padding(context),
         children: [
           for (final g in SettingsGroupId.values)
             Padding(
-              padding: const EdgeInsets.only(bottom: Tokens.s8),
+              // Gaps between the tiles only: the last one ends at the
+              // page end.
+              padding: EdgeInsets.only(top: g.index > 0 ? Tokens.s8 : 0),
               child: _GroupTile(
                 group: g,
                 selected: g == selected,
@@ -256,7 +258,7 @@ class _GroupDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     return FocusTraversalGroup(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: Tokens.s24),
+        padding: PageEnd.padding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -274,7 +276,12 @@ class _GroupDetail extends StatelessWidget {
                   child: Text(group.title, style: Tokens.heading),
                 ),
               ),
-            ...settingsSections(group),
+            // Gaps between the cards only: the last one ends at the page
+            // end.
+            for (final (i, section) in settingsSections(group).indexed) ...[
+              if (i > 0) const SizedBox(height: Tokens.s24),
+              section,
+            ],
           ],
         ),
       ),

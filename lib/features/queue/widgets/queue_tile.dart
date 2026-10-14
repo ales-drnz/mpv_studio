@@ -42,6 +42,7 @@ class QueueTile extends StatefulWidget {
     required this.onPlay,
     required this.onRemove,
     required this.onMore,
+    this.gap = Tokens.s4,
   });
 
   /// The entry's position in the queue, shown on the row.
@@ -65,6 +66,10 @@ class QueueTile extends StatefulWidget {
 
   /// Opens the row's menu, at the global position when there is one.
   final void Function(Offset? position) onMore;
+
+  /// The space under the row, before the next one; 0 for the last row,
+  /// which ends at the page end.
+  final double gap;
 
   @override
   State<QueueTile> createState() => _QueueTileState();
@@ -245,7 +250,7 @@ class _QueueTileState extends State<QueueTile> {
           );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: Tokens.s4),
+      padding: EdgeInsets.only(bottom: widget.gap),
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),

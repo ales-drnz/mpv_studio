@@ -232,7 +232,8 @@ class OnboardingView extends StatelessWidget {
     final Widget body = card
         ? Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(Tokens.s24),
+              // The gutter all round, as a page ends its scroll.
+              padding: EdgeInsets.all(layout.gutter),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: maxWidth),
                 child: Material(

@@ -174,9 +174,9 @@ class _StreamViewState extends State<StreamView> {
     return PageFrame(
       title: 'Stream',
       scrollable: false,
-      // The tabs scroll themselves, each with the gutter at its sides; the
-      // header and the tab row share it.
-      padding: EdgeInsets.symmetric(horizontal: layout.gutter),
+      // The tabs scroll themselves, each with the gutter at its sides and
+      // under its last item; the header and the tab row share it.
+      padding: layout.pagePadding.copyWith(top: 0),
       bottom: StreamTabRow(
         selected: selected,
         onSelect: (t) => setState(() => _tab = t),

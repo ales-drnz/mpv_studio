@@ -75,14 +75,10 @@ class StudioLayout {
   /// The gap between cards in a grid or a two-pane split.
   double get gap => isCompact ? Tokens.s12 : Tokens.s16;
 
-  /// The standard padding of a page body: [gutter] at the sides, a short
-  /// top and a longer bottom so the last item clears the edge.
-  EdgeInsets get pagePadding => EdgeInsets.fromLTRB(
-    gutter,
-    Tokens.s8,
-    gutter,
-    isShort ? Tokens.s16 : Tokens.s32,
-  );
+  /// The standard padding of a page body: [gutter] at the sides and
+  /// under the last item, a short top under the header.
+  EdgeInsets get pagePadding =>
+      EdgeInsets.fromLTRB(gutter, Tokens.s8, gutter, gutter);
 
   /// Whether menus and pickers open as bottom sheets instead of popups:
   /// on touch, and on any compact window.

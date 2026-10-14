@@ -284,7 +284,7 @@ class _QueueListState extends State<QueueList> {
       onKeyEvent: _onKey,
       child: ReorderableListView.builder(
         scrollController: _scroll,
-        padding: const EdgeInsets.only(bottom: Tokens.s12),
+        padding: PageEnd.padding(context),
         // Each row brings its own handle.
         buildDefaultDragHandles: false,
         itemCount: rows.length,
@@ -294,6 +294,8 @@ class _QueueListState extends State<QueueList> {
           final i = rows[row];
           final item = items[i];
           final rowKey = _rowKeys.putIfAbsent(i, GlobalKey.new);
+          // Gaps between the rows only: the last one ends at the page end.
+          final gap = row < rows.length - 1 ? Tokens.s4 : 0.0;
           final tile = KeyedSubtree(
             key: rowKey,
             child: QueueTile(
@@ -309,6 +311,7 @@ class _QueueListState extends State<QueueList> {
               onPlay: () => widget.onAction(QueueAction.play, i),
               onRemove: () => widget.onAction(QueueAction.remove, i),
               onMore: (position) => _openMenu(i, position),
+              gap: gap,
             ),
           );
           final key = ValueKey('${item.uri}#$i');
@@ -317,7 +320,7 @@ class _QueueListState extends State<QueueList> {
             key: key,
             direction: DismissDirection.endToStart,
             onDismissed: (_) => _dismiss(i),
-            background: _SwipeBackground(),
+            background: _SwipeBackground(gap: gap),
             child: tile,
           );
         },
@@ -327,9 +330,14 @@ class _QueueListState extends State<QueueList> {
 }
 
 class _SwipeBackground extends StatelessWidget {
+  const _SwipeBackground({required this.gap});
+
+  /// The row's space below, left clear.
+  final double gap;
+
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: Tokens.s4),
+    padding: EdgeInsets.only(bottom: gap),
     child: DecoratedBox(
       decoration: ShapeDecoration(
         color: Tokens.red.withValues(alpha: 0.14),

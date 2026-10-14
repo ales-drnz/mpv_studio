@@ -70,7 +70,7 @@ class AlbumGrid extends StatelessWidget {
             return false;
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.only(top: Tokens.s4, bottom: Tokens.s24),
+            padding: PageEnd.padding(context, top: Tokens.s4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -322,9 +322,12 @@ class _AlbumDetailState extends State<AlbumDetail> {
       player: p.actions.player,
       builder: (context, pl) {
         final (id, server) = currentServerTrack(pl);
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: Tokens.s24),
+        return ListView.separated(
+          padding: PageEnd.padding(context),
           itemCount: tracks.length + 1,
+          // The header brings its own space below.
+          separatorBuilder: (_, i) =>
+              SizedBox(height: i == 0 ? 0 : StreamRow.gap),
           itemBuilder: (context, i) {
             if (i == 0) return _header(context, tracks);
             final t = tracks[i - 1];

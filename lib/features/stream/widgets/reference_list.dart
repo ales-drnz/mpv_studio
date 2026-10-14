@@ -40,8 +40,8 @@ class PlaylistBuilder extends StatelessWidget {
   );
 }
 
-/// A tab body: a scrolling column at the page's gutter, the last item clear
-/// of the bottom edge.
+/// A tab body: a scrolling column at the page's gutter, the last item at
+/// the page end ([PageEnd]).
 class StreamTabBody extends StatelessWidget {
   const StreamTabBody({super.key, required this.children, this.controller});
 
@@ -50,13 +50,9 @@ class StreamTabBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.layout;
     return ListView(
       controller: controller,
-      padding: EdgeInsets.only(
-        top: Tokens.s8,
-        bottom: layout.isShort ? Tokens.s16 : Tokens.s32,
-      ),
+      padding: PageEnd.padding(context, top: Tokens.s8),
       children: children,
     );
   }
@@ -73,10 +69,14 @@ List<Widget> referenceRows({
   IconData icon = Icons.podcasts_rounded,
 }) {
   final toMedia = mediaFor ?? streamMedia;
+  // Gaps between the categories and the rows only: the last row ends at
+  // the page end.
   return [
-    for (final cat in categories) ...[
+    for (final (c, cat) in categories.indexed) ...[
+      if (c > 0) const SizedBox(height: Tokens.s16),
       SectionHeader(cat.name),
-      for (final item in cat.items)
+      for (final (i, item) in cat.items.indexed) ...[
+        if (i > 0) const SizedBox(height: StreamRow.gap),
         _ReferenceRow(
           item: item,
           media: toMedia(item),
@@ -84,7 +84,7 @@ List<Widget> referenceRows({
           icon: icon,
           current: toMedia(item).uri == origin,
         ),
-      const SizedBox(height: Tokens.s16),
+      ],
     ],
   ];
 }
