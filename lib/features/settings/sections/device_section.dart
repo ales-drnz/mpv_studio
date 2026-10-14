@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
 import '../settings_catalog.dart';
@@ -59,8 +60,17 @@ class DeviceSection extends StatelessWidget {
                 value: known ? current : null,
                 hint: known ? null : current.description,
                 items: [
+                  // The same device often shows up once per driver with
+                  // the same description: its id (driver and node) under
+                  // it tells them apart.
                   for (final d in devices)
-                    DropdownMenuItem(value: d, child: Text(d.description)),
+                    DropdownMenuItem(
+                      value: d,
+                      child: DropdownOption(
+                        label: d.description,
+                        caption: d == Device.auto ? null : d.name,
+                      ),
+                    ),
                 ],
                 set: p.setAudioDevice,
               );

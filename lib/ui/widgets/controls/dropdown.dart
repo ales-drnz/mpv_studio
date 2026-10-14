@@ -49,6 +49,36 @@ class DropdownRow<T> extends StatelessWidget {
   }
 }
 
+/// A choice of an [AppDropdown] with a second, smaller line under its
+/// [label] in the menu and the sheet, such as the device id under a device
+/// name, to tell apart choices that read the same. The closed control
+/// shows the [label] alone.
+class DropdownOption extends StatelessWidget {
+  const DropdownOption({super.key, required this.label, this.caption});
+
+  final String label;
+
+  /// The second line; null for none.
+  final String? caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final caption = this.caption;
+    if (caption == null) return Text(label);
+    // The caption takes the row's colour, so it reads on the selection
+    // wash too.
+    final color = DefaultTextStyle.of(context).style.color;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label),
+        Text(caption, style: Tokens.caption.copyWith(color: color)),
+      ],
+    );
+  }
+}
+
 /// A flat dropdown: a pill trigger that opens the options as a menu
 /// under it with a pointer, and as a bottom sheet with full size rows on
 /// touch and on compact windows (see `LayoutScope`). Reuses
@@ -185,7 +215,9 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = _selectedChild();
+    final child = _selectedChild();
+    // The closed control has one line: an option shows its label only.
+    final selected = child is DropdownOption ? Text(child.label) : child;
     final enabled = widget.enabled;
     final valueText = selected is Text ? selected.data : widget.hint;
     return Semantics(
