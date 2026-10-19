@@ -105,9 +105,14 @@ class QueueFakePlayer extends FakePlayer {
   }
 
   @override
-  Future<void> clearPlaylist() async {
-    calls.add('clearPlaylist');
-    _set(const [], -1);
+  Future<void> clearPlaylist({bool keepCurrent = false}) async {
+    calls.add(keepCurrent ? 'clearPlaylist keepCurrent' : 'clearPlaylist');
+    final index = state.playlist.index;
+    if (keepCurrent && index >= 0) {
+      _set([state.playlist.items[index]], 0);
+    } else {
+      _set(const [], -1);
+    }
   }
 
   @override

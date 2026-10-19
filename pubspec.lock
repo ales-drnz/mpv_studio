@@ -524,10 +524,10 @@ packages:
     dependency: "direct main"
     description:
       name: mpv_audio_kit
-      sha256: "854159fd3b1298b6add7bb255fa974a112581896c5f1cc1fb234b664a5cb8739"
+      sha256: "818d85d212e47d85e89f047e5a00deb753df914934e6822b11ad7e17deb9f01a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.1"
+    version: "0.5.2"
   objective_c:
     dependency: transitive
     description:
