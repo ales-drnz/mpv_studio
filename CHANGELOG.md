@@ -1,3 +1,12 @@
+## [0.3.1] - 19-10-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.5.2`.
+- On Linux the taskbar shows the logo, through a desktop entry and a themed icon.
+
+### Fixed
+- The meters no longer throw when a page closes before they ran, and reordering lists works on Flutter 3.38.
+
 ## [0.3.0] - 14-10-2026
 
 ### Added
