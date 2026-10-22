@@ -133,8 +133,6 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
 
   Future<void> _show() async {
     setState(() => _open = true);
-    // Read before any await: Flutter 3.38's analyzer flags the context in
-    // the condition of an awaited conditional.
     final sheets = context.layout.prefersSheets;
     final picked = sheets ? await _sheet() : await _menu();
     if (!mounted) return;

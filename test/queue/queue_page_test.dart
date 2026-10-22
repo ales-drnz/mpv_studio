@@ -289,13 +289,7 @@ void main() {
     final row = find.bySemanticsLabel(RegExp('^Track 1, Peace Piece'));
     expect(
       tester.getSemantics(row),
-      // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
-      // ignore: deprecated_member_use
-      containsSemantics(
-        isButton: true,
-        hasTapAction: true,
-        hasLongPressAction: true,
-      ),
+      isSemantics(isButton: true, hasTapAction: true, hasLongPressAction: true),
     );
     final node = find.semantics.byLabel(RegExp('^Track 1, Peace Piece'));
     tester.semantics.tap(node);

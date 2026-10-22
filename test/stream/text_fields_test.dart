@@ -80,9 +80,7 @@ void main() {
     final named = find.bySemanticsLabel(RegExp('Host'));
     expect(named, findsOneWidget);
     final node = tester.getSemantics(named);
-    // isSemantics replaces it from Flutter 3.40; the app still supports 3.38.
-    // ignore: deprecated_member_use
-    expect(node, containsSemantics(isTextField: true));
+    expect(node, isSemantics(isTextField: true));
     // The name once, then the hint.
     expect(node.label, 'Host\nnas');
     final field = tester.widget<TextField>(find.byType(TextField));

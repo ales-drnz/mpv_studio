@@ -202,10 +202,7 @@ class _SignalChainViewState extends State<SignalChainView> {
       key: const PageStorageKey('rack-chain'),
       // Chains are short: building every tile lets a stage that opens
       // off screen be found and scrolled to.
-      // scrollCacheExtent replaces it from Flutter 3.41; the app still
-      // supports 3.38.
-      // ignore: deprecated_member_use
-      cacheExtent: 4000,
+      scrollCacheExtent: const ScrollCacheExtent.pixels(4000),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(0, Tokens.s8, end, 0),
@@ -225,8 +222,7 @@ class _SignalChainViewState extends State<SignalChainView> {
               ? SliverToBoxAdapter(child: EmptyRack(onAdd: _add))
               : SliverReorderableList(
                   itemCount: stages.length,
-                  // ignore: deprecated_member_use
-                  onReorder: reorderTo(rack.move),
+                  onReorderItem: rack.move,
                   proxyDecorator: reorderProxy(
                     shape: Tokens.shape(Tokens.rMd),
                     inset: const EdgeInsets.symmetric(vertical: Tokens.s4),

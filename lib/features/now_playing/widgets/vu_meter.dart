@@ -39,8 +39,8 @@ class _VuMeterState extends State<VuMeter>
   final _right = LevelFollower(minDb: _minDb);
 
   // Made on the first frame, not lazily on first use: dispose would
-  // otherwise make one for a meter that never ran, and Flutter 3.38 fails
-  // to make a ticker from a deactivated widget.
+  // otherwise make one for a meter that never ran, and a ticker cannot be
+  // made from a deactivated widget.
   Ticker? _ticker;
   Duration _lastTick = Duration.zero;
 

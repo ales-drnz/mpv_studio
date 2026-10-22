@@ -251,8 +251,7 @@ class _SessionSectionState extends State<SessionSection> {
         shape: Tokens.shape(Tokens.rMd),
         inset: const EdgeInsets.only(bottom: Tokens.s8),
       ),
-      // ignore: deprecated_member_use
-      onReorder: reorderTo(_reorder),
+      onReorderItem: _reorder,
       children: [
         for (final (i, a) in shown.indexed)
           ShownActionTile(

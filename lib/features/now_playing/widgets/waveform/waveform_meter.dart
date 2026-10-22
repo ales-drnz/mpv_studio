@@ -50,8 +50,8 @@ class _WaveformMeterState extends State<WaveformMeter>
   late PlayerApi _player;
   late CallGuard _guard;
   // Made when playback first starts, not lazily on first use: dispose
-  // would otherwise make one for a meter that never played, and Flutter
-  // 3.38 fails to make a ticker from a deactivated widget.
+  // would otherwise make one for a meter that never played, and a ticker
+  // cannot be made from a deactivated widget.
   Ticker? _ticker;
   Ticker get _frames => _ticker ??= createTicker((_) {
     if (mounted) setState(() {});

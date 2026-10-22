@@ -38,14 +38,3 @@ Widget Function(Widget, int, Animation<double>) reorderProxy({
     },
   );
 }
-
-/// Adapts [onMove], which takes the index the item ends up at, to a
-/// reorderable list's `onReorder`, whose new index counts the moved item
-/// still in its old place (one past the final index when the item moves
-/// down). Flutter 3.41 added `onReorderItem`, which passes the final
-/// index, and deprecated `onReorder`; the app keeps `onReorder` while it
-/// supports Flutter 3.38.
-///
-/// Use it as `onReorder: reorderTo(move)`.
-ReorderCallback reorderTo(void Function(int from, int to) onMove) =>
-    (from, to) => onMove(from, to > from ? to - 1 : to);
