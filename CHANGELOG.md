@@ -1,3 +1,11 @@
+## [0.3.2] - 22-10-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.5.3` and `dart_smb2` to version `0.2.2`.
+
+### Fixed
+- A Samba user with an empty password signs in as that user, not anonymously.
+
 ## [0.3.1] - 19-10-2026
 
 ### Changed
