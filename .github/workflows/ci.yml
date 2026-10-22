@@ -69,9 +69,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The floor declared in pubspec.yaml (flutter >=3.38.0, Dart
+        # The floor declared in pubspec.yaml (flutter >=3.47.0, Dart
         # ^3.10.0) and the current stable.
-        flutter: ['3.38.x', 'any']
+        flutter: ['3.47.x', 'any']
     steps:
       - uses: actions/checkout@v4
         with:

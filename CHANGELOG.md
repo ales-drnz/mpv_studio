@@ -2,6 +2,7 @@
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.5.3` and `dart_smb2` to version `0.2.2`.
+- Building the app requires Flutter 3.47, which `dart_smb2` 0.2 needs.
 
 ### Fixed
 - A Samba user with an empty password signs in as that user, not anonymously.

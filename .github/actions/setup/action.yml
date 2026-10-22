@@ -6,7 +6,7 @@ description: >-
   Expects the app checked out in mpv_studio/ under the workspace.
 inputs:
   flutter-version:
-    description: The Flutter version on the stable channel, like 3.38.x, or any for the latest.
+    description: The Flutter version on the stable channel, like 3.47.x, or any for the latest.
     required: false
     default: any
   mpv-audio-kit-ref:
