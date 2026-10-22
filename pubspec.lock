@@ -117,10 +117,10 @@ packages:
     dependency: "direct main"
     description:
       name: dart_smb2
-      sha256: cd7fbb5e21b188e2b098c16fea18ef2a8028e937592259f57b1c3eccfd63d85a
+      sha256: d139f1bf69a86836c68d6b2120d2d983ccd3384ec1ab90f16f83a0c0b60d0fd3
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.3"
+    version: "0.2.2"
   dbus:
     dependency: transitive
     description:
@@ -524,10 +524,10 @@ packages:
     dependency: "direct main"
     description:
       name: mpv_audio_kit
-      sha256: "818d85d212e47d85e89f047e5a00deb753df914934e6822b11ad7e17deb9f01a"
+      sha256: "28a3a1497a43de36e9f9f1bad5638fe0b072cd24e65eaa6e04fe55a42e1c102a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.2"
+    version: "0.5.3"
   objective_c:
     dependency: transitive
     description:

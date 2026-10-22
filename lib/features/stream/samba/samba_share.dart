@@ -54,8 +54,10 @@ Future<SambaShare> connectSmb2(SambaLogin login) async {
   final pool = await Smb2Pool.connect(
     host: login.host,
     share: login.share,
+    // With a user, an empty password logs on as that user; without one,
+    // the logon is anonymous.
     user: login.user.isEmpty ? null : login.user,
-    password: login.password.isEmpty ? null : login.password,
+    password: login.user.isEmpty ? null : login.password,
     domain: login.domain.isEmpty ? null : login.domain,
   );
   return _Smb2Share(pool);
@@ -84,7 +86,7 @@ FailureKind classifySambaError(Object error) {
         error.type == Smb2ErrorType.accessDenied) {
       return FailureKind.auth;
     }
-    if (error.isConnectionError) return FailureKind.network;
+    if (error.isNetworkFailure) return FailureKind.network;
   }
   return commonFailureKind(error) ?? FailureKind.other;
 }
