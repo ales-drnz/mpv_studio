@@ -1,0 +1,114 @@
+name: Web demo
+
+# Builds the web app and publishes it on GitHub Pages, the demo linked from
+# the README of mpv_audio_kit. Run by hand: the published page changes only
+# when someone asks for it.
+#
+# libmpv runs on threads, so the page must be cross-origin isolated. Pages
+# cannot send the COOP and COEP headers that make it so: web/index.html
+# loads coi-serviceworker.js, which adds them from a service worker, and
+# web/flutter_bootstrap.js keeps Flutter from registering a worker of its
+# own on the same scope. Before the deploy, tool/web_smoke.sh opens the
+# build as Pages serves it and checks that the page is isolated and loads
+# libmpv.
+#
+# Setup, once: Settings > Pages > Build and deployment > Source: GitHub
+# Actions. A run from a branch other than the default one needs that branch
+# in the deployment branches of the github-pages environment.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mpv_audio_kit_ref:
+        description: mpv_audio_kit branch, tag or commit, used while the app depends on it by path
+        type: string
+        default: release/0.6.0
+      libmpv_scripts_run:
+        description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty for the libmpv release)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer run waits for the one in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || vars.LIBMPV_SCRIPTS_RUN }}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: mpv_studio
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+
+      # mpv_audio_kit serves libmpv.mjs, libmpv.wasm and
+      # mak_webaudio_processor.js from its web/ folder, which a checkout of
+      # the library does not have (the published package does). They come
+      # from the run's libmpv_web.zip, checked against its manifest.
+      - name: Web module
+        run: |
+          kit=../mpv_audio_kit
+          if [[ ! -d "$kit" ]]; then
+            echo "mpv_audio_kit comes from pub.dev, with its web module"
+          elif [[ -f "$RUNNER_TEMP/libmpv/libmpv_web.zip" ]]; then
+            (cd "$kit" && python3 scripts/web_module.py \
+              "$RUNNER_TEMP/libmpv/manifest.json" \
+              "$RUNNER_TEMP/libmpv/libmpv_web.zip" web)
+          elif [[ ! -f "$kit/web/libmpv.mjs" ]]; then
+            echo "::error::mpv_audio_kit at $MPV_AUDIO_KIT_REF has no web module: set libmpv_scripts_run to a libmpv-scripts Build of libmpv-r20 or later."
+            exit 1
+          fi
+
+      # Flutter's engine files (skwasm, CanvasKit) are served by the site
+      # instead of Google's CDN, so the isolated page loads nothing of
+      # another origin to start.
+      - run: flutter build web --wasm --no-web-resources-cdn --base-href /mpv_studio/
+
+      - name: Smoke test
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1
+          npx playwright install --with-deps chromium
+          tool/web_smoke.sh "$RUNNER_TEMP/web_smoke.png"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke
+          path: ${{ runner.temp }}/web_smoke.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: mpv_studio/build/web
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
