@@ -1,8 +1,9 @@
 name: Web demo
 
 # Builds the web app and publishes it on GitHub Pages, the demo linked from
-# the README of mpv_audio_kit. Run by hand: the published page changes only
-# when someone asks for it.
+# the README of mpv_audio_kit. Until mpv_audio_kit 0.6.0 is on pub.dev the
+# web app lives on wip/web, and a push there publishes it; main gets it with
+# the release. Otherwise it runs by hand.
 #
 # libmpv runs on threads, so the page must be cross-origin isolated. Pages
 # cannot send the COOP and COEP headers that make it so: web/index.html
@@ -13,10 +14,13 @@ name: Web demo
 # libmpv.
 #
 # Setup, once: Settings > Pages > Build and deployment > Source: GitHub
-# Actions. A run from a branch other than the default one needs that branch
-# in the deployment branches of the github-pages environment.
+# Actions, and wip/web in the deployment branches of the github-pages
+# environment (Settings > Environments), which allows the default branch
+# only.
 
 on:
+  push:
+    branches: [wip/web]
   workflow_dispatch:
     inputs:
       mpv_audio_kit_ref:
@@ -38,7 +42,11 @@ concurrency:
 
 env:
   MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
-  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || vars.LIBMPV_SCRIPTS_RUN }}
+  # The web module comes from libmpv-r20 on, and r20 is not released yet:
+  # until it is, the Build of libmpv-scripts release/r20 that has it (run
+  # artifacts expire after 90 days). Not vars.LIBMPV_SCRIPTS_RUN, which the
+  # native builds of ci.yml may point at an older libmpv.
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || '40943202304' }}
 
 defaults:
   run:
