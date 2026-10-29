@@ -41,7 +41,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
+  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0.
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
   # The web module comes from libmpv-r20 on, and r20 is not released yet:
   # until it is, the Build of libmpv-scripts release/r20 that has it (run
   # artifacts expire after 90 days). Not vars.LIBMPV_SCRIPTS_RUN, which the
