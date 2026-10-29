@@ -64,6 +64,7 @@ class StreamPage extends StatelessWidget {
       actions: StreamActions(
         player: PlayerScope.of(context),
         guard: issues.guard,
+        notify: (message) => issues.notify(message, isError: true),
       ),
       // The servers live at app scope, so their sessions and the playback
       // reporting outlive this page.

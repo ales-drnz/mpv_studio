@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show LogLevel;
 
 import '../../../studio/studio_log.dart';
+import '../../../util/mixed_content.dart';
 import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
@@ -162,6 +163,7 @@ class ServerSignInForm extends StatelessWidget {
     if (v.isEmpty) return 'The server address is required.';
     try {
       final uri = Uri.parse(normalizeServerBase(v, 1));
+      if (isBlockedMixedContent(uri)) return mixedContentMessage;
       if (uri.host.isNotEmpty) return null;
     } on FormatException {
       // Falls through to the message below.

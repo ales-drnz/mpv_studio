@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../ui/layout/layout.dart';
+import '../../util/mixed_content.dart';
 
 /// What a row of the Stream page can do with its media, the entries of its
 /// context menu.
@@ -28,28 +29,45 @@ enum RowAction {
 /// The player calls of the Stream page, every one through the app's
 /// [CallGuard] so a refused call becomes a toast instead of an uncaught
 /// error. Each tab gets one from the page.
+///
+/// In a browser page served over HTTPS an `http://` entry would only fail
+/// on a request the browser blocks: it is not sent to the player, and
+/// [notify] says why instead.
 class StreamActions {
-  const StreamActions({required this.player, required this.guard});
+  const StreamActions({required this.player, required this.guard, this.notify});
 
   final PlayerApi player;
   final CallGuard guard;
 
+  /// Shows an error notice; the notices of the app's [PlaybackIssues].
+  final void Function(String message)? notify;
+
   bool get _queueEmpty => player.state.playlist.items.isEmpty;
+
+  /// Whether every one of [medias] can be loaded from this page.
+  bool _loadable(List<Media> medias) {
+    final blocked = medias.any(
+      (m) => isBlockedMixedContent(Uri.tryParse(m.uri) ?? Uri()),
+    );
+    if (blocked) notify?.call(mixedContentMessage);
+    return !blocked;
+  }
 
   /// Replaces the queue with [media] and plays it.
   Future<void> play(Media media) async {
+    if (!_loadable([media])) return;
     await guard(() => player.open(media, play: true));
   }
 
   /// Replaces the queue with [medias] and plays the one at [index].
   Future<void> playAll(List<Media> medias, {int index = 0}) async {
-    if (medias.isEmpty) return;
+    if (medias.isEmpty || !_loadable(medias)) return;
     await guard(() => player.openAll(medias, play: true, index: index));
   }
 
   /// Appends [medias] to the queue, or plays them when the queue is empty.
   Future<void> enqueue(List<Media> medias) async {
-    if (medias.isEmpty) return;
+    if (medias.isEmpty || !_loadable(medias)) return;
     await guard(() async {
       if (_queueEmpty) return player.openAll(medias, play: true);
       for (final m in medias) {
@@ -61,7 +79,7 @@ class StreamActions {
   /// Inserts [medias] right after the current entry, or plays them when
   /// the queue is empty.
   Future<void> playNext(List<Media> medias) async {
-    if (medias.isEmpty) return;
+    if (medias.isEmpty || !_loadable(medias)) return;
     await guard(() async {
       final pl = player.state.playlist;
       if (pl.items.isEmpty) return player.openAll(medias, play: true);
