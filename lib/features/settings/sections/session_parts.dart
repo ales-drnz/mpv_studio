@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -16,6 +17,16 @@ import '../../../ui/widgets/round_icon_button.dart';
 /// desktop (Linux KDE seek, repeat, shuffle and rate) are treated as
 /// supported and left enabled.
 Set<MediaAction> unsupportedSessionActions() {
+  if (kIsWeb) {
+    // navigator.mediaSession: play, pause, stop, previous, next, seek and
+    // the skips. It has no repeat, shuffle, rate or like action.
+    return const {
+      MediaAction.setRepeatMode,
+      MediaAction.setShuffle,
+      MediaAction.setPlaybackRate,
+      MediaAction.like,
+    };
+  }
   if (Platform.isMacOS) {
     return const {
       MediaAction.stop,
@@ -68,6 +79,7 @@ Set<MediaAction> unsupportedSessionActions() {
 
 /// The running platform's name, for the Session settings' captions.
 String sessionPlatformLabel() {
+  if (kIsWeb) return 'the browser';
   if (Platform.isMacOS) return 'macOS';
   if (Platform.isIOS) return 'iOS';
   if (Platform.isAndroid) return 'Android';

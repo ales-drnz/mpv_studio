@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -58,7 +59,7 @@ class _SessionSectionState extends State<SessionSection> {
 
   // Interruption handling is a real audio-session behaviour only on mobile.
   static final bool _interruptionSupported =
-      Platform.isIOS || Platform.isAndroid;
+      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
   /// Advertised actions the running OS renders: the only ones in the
   /// reorderable "Shown controls" list (advertised order preserved).

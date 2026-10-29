@@ -66,6 +66,7 @@ abstract final class DeviceIdentity {
   static Future<String> _platformName() async {
     try {
       final info = DeviceInfoPlugin();
+      if (kIsWeb) return '';
       if (Platform.isMacOS) return (await info.macOsInfo).computerName;
       if (Platform.isIOS) return (await info.iosInfo).name;
       if (Platform.isWindows) return (await info.windowsInfo).computerName;

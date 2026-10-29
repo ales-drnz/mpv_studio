@@ -1,0 +1,35 @@
+{
+    "name": "MPV Studio",
+    "short_name": "MPV Studio",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#24282D",
+    "theme_color": "#24282D",
+    "description": "MPV Studio, the demo app of mpv_audio_kit.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

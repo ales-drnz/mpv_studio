@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:dart_plex/dart_plex.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart'
     show LogLevel, SourceResolveRequest;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,6 +57,7 @@ class PlexServer extends MediaServer {
   // platform reported for profile matching; the app's identity stays in
   // product and deviceName.
   static String get _platform {
+    if (kIsWeb) return 'Generic';
     if (Platform.isIOS) return 'iOS';
     if (Platform.isAndroid) return 'Android';
     if (Platform.isWindows) return 'Windows';

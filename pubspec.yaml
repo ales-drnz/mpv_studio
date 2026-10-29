@@ -12,8 +12,8 @@ dependencies:
     sdk: flutter
 
   # mpv_audio_kit
-  #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.5.3
+  mpv_audio_kit: {path: ../mpv_audio_kit}
+  #mpv_audio_kit: ^0.5.3
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}

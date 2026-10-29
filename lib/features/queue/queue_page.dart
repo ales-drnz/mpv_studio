@@ -280,7 +280,7 @@ class _QueueViewState extends State<QueueView> {
       onDragExited: (_) => setState(() => _dragging = false),
       onDragDone: (detail) {
         setState(() => _dragging = false);
-        _queue.enqueue(resolveDroppedPaths(detail.files.map((f) => f.path)));
+        _queue.enqueue(resolveDroppedFiles(detail.files));
       },
       child: ColoredBox(
         // A drag-over wash signals the drop target.

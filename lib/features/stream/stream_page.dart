@@ -10,7 +10,8 @@ import 'lab_tab.dart';
 import 'library/server_library_tab.dart';
 import 'media_server.dart';
 import 'resolver_tab.dart';
-import 'samba/samba_tab.dart';
+import 'samba/samba_tab.dart'
+    if (dart.library.js_interop) 'samba/samba_tab_web.dart';
 import 'signed_url_resolver.dart';
 import 'stream_actions.dart';
 import 'widgets/stream_tab_scope.dart';

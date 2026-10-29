@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Audio container/extension whitelist used for both the file picker
 /// filter and folder scanning. Lower-case, no leading dot.
@@ -43,9 +44,13 @@ bool isAudioPath(String path) {
   return kAudioExtensions.contains(path.substring(dot + 1).toLowerCase());
 }
 
+/// The file names of the files picked or dropped in the browser, by their
+/// `blob:` URL: the URL names no file, so the title comes from here.
+final Map<String, String> _webFileNames = {};
+
 /// The file's base name without its directory or extension.
 String baseNameNoExt(String path) {
-  final name = path.split(RegExp(r'[/\\]')).last;
+  final name = _webFileNames[path] ?? path.split(RegExp(r'[/\\]')).last;
   final dot = name.lastIndexOf('.');
   return dot > 0 ? name.substring(0, dot) : name;
 }
@@ -65,7 +70,14 @@ Future<List<String>> pickAudioFiles() async {
     acceptedTypeGroups: [typeGroup],
     confirmButtonText: 'Add audio files',
   );
-  return files.map((f) => f.path).toList();
+  return [for (final f in files) _pickedPath(f)];
+}
+
+/// The path of a picked or dropped file, remembering its name on the web,
+/// where the path is a `blob:` URL of the page that mpv_audio_kit opens.
+String _pickedPath(XFile file) {
+  if (kIsWeb) _webFileNames[file.path] = file.name;
+  return file.path;
 }
 
 /// Opens a folder picker and returns every audio file inside it,
@@ -99,6 +111,16 @@ List<String> resolveDroppedPaths(Iterable<String> paths) {
     }
   }
   return out;
+}
+
+/// [resolveDroppedPaths] for the files of a drop. In the browser a drop
+/// gives files only, each with its name and a `blob:` URL.
+List<String> resolveDroppedFiles(Iterable<XFile> files) {
+  if (!kIsWeb) return resolveDroppedPaths(files.map((f) => f.path));
+  return [
+    for (final f in files)
+      if (isAudioPath(f.name)) _pickedPath(f),
+  ];
 }
 
 /// Recursively lists audio files under [dirPath]. Tolerates unreadable

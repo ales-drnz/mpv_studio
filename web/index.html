@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Replaced by the value of `flutter build --base-href`. -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MPV Studio, the demo app of mpv_audio_kit, running libmpv in the browser.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="MPV Studio">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>MPV Studio</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!--
+    libmpv runs on threads, which need a cross-origin isolated page: COOP
+    and COEP headers on every response. A host that cannot set headers
+    (GitHub Pages) gets them from this service worker, which reloads the
+    page once on the first visit. It does nothing where the server already
+    sends them. It must stay a plain script of its own, before Flutter's.
+  -->
+  <script src="coi-serviceworker.js"></script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
