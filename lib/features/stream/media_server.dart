@@ -281,18 +281,26 @@ abstract class MediaServer {
   // "Now Playing", advances play progress, and scrobbles. All best effort:
   // failures are logged so a reporting hiccup never disrupts playback.
 
+  // Each report carries the track's [duration], zero while the player does
+  // not know it: Plex counts no play reported without it.
+
   /// Playback of [itemId] has started.
-  Future<void> reportStart(String itemId);
+  Future<void> reportStart(String itemId, {required Duration duration});
 
   /// Periodic progress for [itemId]: current [position] and whether [paused].
   Future<void> reportProgress(
     String itemId, {
     required Duration position,
+    required Duration duration,
     required bool paused,
   });
 
   /// Playback of [itemId] stopped at [position].
-  Future<void> reportStopped(String itemId, {required Duration position});
+  Future<void> reportStopped(
+    String itemId, {
+    required Duration position,
+    required Duration duration,
+  });
 }
 
 /// A library search whose matches come from several server queries (songs

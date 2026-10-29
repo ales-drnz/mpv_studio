@@ -1,33 +1,38 @@
 import 'package:dart_jellyfin/dart_jellyfin.dart';
 import 'package:dart_plex/dart_plex.dart';
-import 'package:dio/dio.dart';
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mpv_studio/features/stream/jellyfin_server.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/features/stream/plex_server.dart';
 
 /// Answers each request with what [route] returns, and records the requests.
-class _Fake extends Interceptor {
+class _Fake {
   _Fake(this.route);
 
   final Object? Function(String path, Map<String, dynamic> query) route;
-  final requests = <RequestOptions>[];
+  final requests = <http.BaseRequest>[];
 
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    requests.add(options);
-    final data = route(Uri.parse(options.path).path, options.queryParameters);
-    if (data == null) {
-      handler.reject(
-        DioException(requestOptions: options, message: 'unexpected'),
-      );
-      return;
-    }
-    handler.resolve(
-      Response(requestOptions: options, statusCode: 200, data: data),
+  late final client = MockClient((request) async {
+    requests.add(request);
+    final data = route(request.url.path, _query(request.url));
+    if (data == null) throw http.ClientException('unexpected', request.url);
+    return http.Response(
+      jsonEncode(data),
+      200,
+      headers: {'content-type': 'application/json'},
     );
-  }
+  });
 }
+
+/// The query of [url], a list for a key given more than once.
+Map<String, dynamic> _query(Uri url) => {
+  for (final e in url.queryParametersAll.entries)
+    e.key: e.value.length == 1 ? e.value.single : e.value,
+};
 
 // A tiny Jellyfin library: Coldplay has two songs on one album, neither
 // with "Coldplay" in its title; "Yellow Submarine" is by someone else.
@@ -57,8 +62,9 @@ Map<String, dynamic> _jfPage(List<Map<String, Object>> items) => {
   'TotalRecordCount': items.length,
 };
 
+/// A list query value, sent repeated or comma-separated.
 List<String> _list(Object? v) => [
-  if (v is List) ...v.map((e) => '$e') else if (v != null) '$v',
+  if (v is List) ...v.map((e) => '$e') else if (v != null) ...'$v'.split(','),
 ];
 
 Object? _jellyfin(String path, Map<String, dynamic> q) {
@@ -109,7 +115,7 @@ JellyfinServer _jellyfinServer(_Fake fake) {
       deviceId: 'test-device',
       version: '0.3.0',
     ),
-    dio: Dio()..interceptors.add(fake),
+    httpClient: fake.client,
   );
   client.setSession(token: 'token', userId: 'user');
   return JellyfinServer.withClient(client);
@@ -197,7 +203,7 @@ PlexServer _plexServer(_Fake fake) {
       deviceName: 'test',
       platform: 'Generic',
     ),
-    dio: Dio()..interceptors.add(fake),
+    httpClient: fake.client,
   );
   client.setToken('token');
   client.connect('http://plex.test:32400', accessToken: 'token');
@@ -273,7 +279,7 @@ void main() {
       final page = await server.fetchTracks(startIndex: 0, pageSize: 50);
       expect(page.items, hasLength(3));
       expect(fake.requests, hasLength(1));
-      expect(fake.requests.single.queryParameters['searchTerm'], isNull);
+      expect(fake.requests.single.url.queryParameters['searchTerm'], isNull);
     });
   });
 

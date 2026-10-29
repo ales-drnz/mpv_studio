@@ -167,7 +167,7 @@ class PlexServer extends MediaServer {
   FailureKind classify(Object error) {
     if (error is PlexException) {
       if (error.type.isAuthError) return FailureKind.auth;
-      if (error.type.isRetriable) return FailureKind.network;
+      if (error.isNetworkFailure) return FailureKind.network;
     }
     return commonFailureKind(error) ?? FailureKind.other;
   }
@@ -223,8 +223,8 @@ class PlexServer extends MediaServer {
       _byTitle(PlexMetadataType.album, query, MergedSearch.maxOwners),
     ]);
     final owned = await Future.wait([
-      for (final a in found[1]) c.library.allLeaves(a.ratingKey),
-      for (final a in found[2]) c.library.children(a.ratingKey),
+      for (final a in found[1]) c.library.allLeaves(ratingKey: a.ratingKey),
+      for (final a in found[2]) c.library.children(ratingKey: a.ratingKey),
     ]);
     return [
       for (final group in [found[0], ...owned])
@@ -281,7 +281,8 @@ class PlexServer extends MediaServer {
       _byTitle(PlexMetadataType.artist, query, MergedSearch.maxOwners),
     ]);
     final owned = await Future.wait([
-      for (final a in found[1]) _connected.library.children(a.ratingKey),
+      for (final a in found[1])
+        _connected.library.children(ratingKey: a.ratingKey),
     ]);
     return [
       for (final group in [found[0], ...owned])
@@ -302,7 +303,7 @@ class PlexServer extends MediaServer {
 
   @override
   Future<List<ServerTrack>> fetchAlbumTracks(ServerAlbum album) async {
-    final children = await _connected.library.children(album.id);
+    final children = await _connected.library.children(ratingKey: album.id);
     return [
       for (final m in children)
         if (m.type == PlexMetadataType.track) _track(m),
@@ -404,51 +405,60 @@ class PlexServer extends MediaServer {
   // targets.
 
   @override
-  Future<void> reportStart(String itemId) =>
-      _timeline(itemId, PlexPlaybackApi.statePlaying, Duration.zero);
+  Future<void> reportStart(String itemId, {required Duration duration}) =>
+      _timeline(itemId, PlexPlayState.playing, Duration.zero, duration);
 
   @override
   Future<void> reportProgress(
     String itemId, {
     required Duration position,
+    required Duration duration,
     required bool paused,
   }) => _timeline(
     itemId,
-    paused ? PlexPlaybackApi.statePaused : PlexPlaybackApi.statePlaying,
+    paused ? PlexPlayState.paused : PlexPlayState.playing,
     position,
+    duration,
   );
 
   // `continuing: true` mirrors Plex Web's track-transition report so the
   // server does not reap the still-warm transcode session when the next
   // track starts.
   @override
-  Future<void> reportStopped(String itemId, {required Duration position}) =>
-      _timeline(
-        itemId,
-        PlexPlaybackApi.stateStopped,
-        position,
-        continuing: true,
-      );
+  Future<void> reportStopped(
+    String itemId, {
+    required Duration position,
+    required Duration duration,
+  }) => _timeline(
+    itemId,
+    PlexPlayState.stopped,
+    position,
+    duration,
+    continuing: true,
+  );
 
+  // PMS counts no play reported without the track's length, and
+  // dart_plex refuses one: while the length is unknown nothing is sent.
   Future<void> _timeline(
     String ratingKey,
-    String state,
-    Duration position, {
+    PlexPlayState state,
+    Duration position,
+    Duration duration, {
     bool continuing = false,
   }) async {
     final c = _client;
-    if (c == null) return;
+    if (c == null || duration <= Duration.zero) return;
     try {
       await c.playback.timeline(
         ratingKey: ratingKey,
-        state: state,
+        playState: state,
         timeMs: position.inMilliseconds,
-        durationMs: 0,
+        durationMs: duration.inMilliseconds,
         continuing: continuing,
       );
     } catch (e) {
       StudioLog.write(
-        'PlexServer: timeline($state) failed: $e',
+        'PlexServer: timeline(${state.name}) failed: $e',
         level: LogLevel.warn,
       );
     }

@@ -107,7 +107,7 @@ class JellyfinServer extends MediaServer {
   FailureKind classify(Object error) {
     if (error is JellyfinException) {
       if (error.type.isAuthError) return FailureKind.auth;
-      if (error.type.isRetriable) return FailureKind.network;
+      if (error.isNetworkFailure) return FailureKind.network;
     }
     return commonFailureKind(error) ?? FailureKind.other;
   }
@@ -142,7 +142,7 @@ class JellyfinServer extends MediaServer {
     final res = await _connected.items.list(
       includeItemTypes: const [JellyfinItemKind.audio],
       recursive: true,
-      sortBy: const ['SortName'],
+      sortBy: const [JellyfinSortField.sortName],
       startIndex: startIndex,
       limit: pageSize,
     );
@@ -162,7 +162,7 @@ class JellyfinServer extends MediaServer {
       c.items.list(
         includeItemTypes: const [JellyfinItemKind.audio],
         recursive: true,
-        sortBy: const ['SortName'],
+        sortBy: const [JellyfinSortField.sortName],
         limit: MergedSearch.maxResults,
         searchTerm: query,
       ),
@@ -171,7 +171,12 @@ class JellyfinServer extends MediaServer {
     ]);
     final artistIds = [for (final a in found[1].items) a.id];
     final albumIds = [for (final a in found[2].items) a.id];
-    const order = ['Album', 'ParentIndexNumber', 'IndexNumber', 'SortName'];
+    const order = [
+      JellyfinSortField.album,
+      JellyfinSortField.parentIndexNumber,
+      JellyfinSortField.indexNumber,
+      JellyfinSortField.sortName,
+    ];
     final owned = await Future.wait([
       if (artistIds.isNotEmpty)
         c.items.list(
@@ -198,7 +203,7 @@ class JellyfinServer extends MediaServer {
   Future<JellyfinQueryResult<JellyfinItem>> _matchingArtists(String query) =>
       _connected.artists.list(
         searchTerm: query,
-        sortBy: const ['SortName'],
+        sortBy: const [JellyfinSortField.sortName],
         limit: MergedSearch.maxOwners,
       );
 
@@ -206,7 +211,7 @@ class JellyfinServer extends MediaServer {
       _connected.items.list(
         includeItemTypes: const [JellyfinItemKind.musicAlbum],
         recursive: true,
-        sortBy: const ['SortName'],
+        sortBy: const [JellyfinSortField.sortName],
         limit: MergedSearch.maxOwners,
         searchTerm: query,
       );
@@ -228,7 +233,7 @@ class JellyfinServer extends MediaServer {
     final res = await _connected.items.list(
       includeItemTypes: const [JellyfinItemKind.musicAlbum],
       recursive: true,
-      sortBy: const ['SortName'],
+      sortBy: const [JellyfinSortField.sortName],
       startIndex: startIndex,
       limit: pageSize,
     );
@@ -244,7 +249,7 @@ class JellyfinServer extends MediaServer {
       c.items.list(
         includeItemTypes: const [JellyfinItemKind.musicAlbum],
         recursive: true,
-        sortBy: const ['SortName'],
+        sortBy: const [JellyfinSortField.sortName],
         limit: MergedSearch.maxResults,
         searchTerm: query,
       ),
@@ -257,7 +262,11 @@ class JellyfinServer extends MediaServer {
             includeItemTypes: const [JellyfinItemKind.musicAlbum],
             recursive: true,
             artistIds: artistIds,
-            sortBy: const ['AlbumArtist', 'ProductionYear', 'SortName'],
+            sortBy: const [
+              JellyfinSortField.albumArtist,
+              JellyfinSortField.productionYear,
+              JellyfinSortField.sortName,
+            ],
             limit: MergedSearch.maxResults,
           );
     return [
@@ -279,7 +288,11 @@ class JellyfinServer extends MediaServer {
       parentId: album.id,
       includeItemTypes: const [JellyfinItemKind.audio],
       recursive: true,
-      sortBy: const ['ParentIndexNumber', 'IndexNumber', 'SortName'],
+      sortBy: const [
+        JellyfinSortField.parentIndexNumber,
+        JellyfinSortField.indexNumber,
+        JellyfinSortField.sortName,
+      ],
     );
     return [for (final it in res.items) _track(it)];
   }
@@ -311,7 +324,10 @@ class JellyfinServer extends MediaServer {
 
   @override
   Future<void> setFavorite(String trackId, bool isFavorite) async {
-    await _connected.userData.setFavorite(trackId, isFavorite);
+    await _connected.userData.setFavorite(
+      itemId: trackId,
+      isFavorite: isFavorite,
+    );
   }
 
   @override
@@ -364,18 +380,20 @@ class JellyfinServer extends MediaServer {
       options.transcodes ? const {'seg_max_retry': '5'} : null;
 
   @override
-  Future<void> reportStart(String itemId) => _report(
-    'reportStart',
-    (c) => c.playback.start(
-      itemId: itemId,
-      playSessionId: _playSessionByItem[itemId],
-    ),
-  );
+  Future<void> reportStart(String itemId, {required Duration duration}) =>
+      _report(
+        'reportStart',
+        (c) => c.playback.start(
+          itemId: itemId,
+          playSessionId: _playSessionByItem[itemId],
+        ),
+      );
 
   @override
   Future<void> reportProgress(
     String itemId, {
     required Duration position,
+    required Duration duration,
     required bool paused,
   }) => _report(
     'reportProgress',
@@ -390,15 +408,18 @@ class JellyfinServer extends MediaServer {
   // Carries the track's PlaySessionId so Jellyfin reaps THIS transcode now,
   // instead of leaving it warm to pile up against the next track's.
   @override
-  Future<void> reportStopped(String itemId, {required Duration position}) =>
-      _report(
-        'reportStopped',
-        (c) => c.playback.stopped(
-          itemId: itemId,
-          position: position,
-          playSessionId: _playSessionByItem.remove(itemId),
-        ),
-      );
+  Future<void> reportStopped(
+    String itemId, {
+    required Duration position,
+    required Duration duration,
+  }) => _report(
+    'reportStopped',
+    (c) => c.playback.stopped(
+      itemId: itemId,
+      position: position,
+      playSessionId: _playSessionByItem.remove(itemId),
+    ),
+  );
 
   Future<void> _report(
     String what,

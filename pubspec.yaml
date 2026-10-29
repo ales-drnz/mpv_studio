@@ -17,11 +17,11 @@ dependencies:
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}
-  dart_jellyfin: ^0.2.1
+  dart_jellyfin: ^0.3.1
 
   # dart_plex
   #dart_plex: {path: ../../Tools/dart_plex}
-  dart_plex: ^0.1.3
+  dart_plex: ^0.2.1
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}
@@ -32,7 +32,7 @@ dependencies:
   desktop_drop: ^0.8.4
   shared_preferences: ^2.5.5
   flutter_secure_storage: ^11.2.0
-  go_router: ^17.5.0
+  go_router: ^18.1.2
   infinite_scroll_pagination: ^5.1.1
   device_info_plus: ^13.2.0
   uuid: ^4.6.0
@@ -42,7 +42,7 @@ dev_dependencies:
     sdk: flutter
   fake_async: ^1.3.3
   flutter_lints: ^6.0.0
-  dio: ^5.11.1
+  http: ^1.6.0
   flutter_launcher_icons: ^0.14.4
 
 flutter:

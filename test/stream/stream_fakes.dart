@@ -207,12 +207,13 @@ class FakeServer extends MediaServer {
       log.add('favorite $trackId $isFavorite');
 
   @override
-  Future<void> reportStart(String itemId) async {}
+  Future<void> reportStart(String itemId, {required Duration duration}) async {}
 
   @override
   Future<void> reportProgress(
     String itemId, {
     required Duration position,
+    required Duration duration,
     required bool paused,
   }) async {}
 
@@ -220,6 +221,7 @@ class FakeServer extends MediaServer {
   Future<void> reportStopped(
     String itemId, {
     required Duration position,
+    required Duration duration,
   }) async {}
 }
 
