@@ -1,30 +1,29 @@
+import 'dart:convert';
+
 import 'package:dart_plex/dart_plex.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/plex_transcode_session_manager.dart';
 
 /// Answers every `/decision` with a playable code and counts the calls.
-class _FakePlex extends Interceptor {
+class _FakePlex {
   int decisions = 0;
 
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.path.contains('/transcode/universal/decision')) {
+  late final client = MockClient((request) async {
+    if (request.url.path.contains('/transcode/universal/decision')) {
       decisions++;
-      handler.resolve(
-        Response(
-          requestOptions: options,
-          statusCode: 200,
-          data: <String, dynamic>{
-            'MediaContainer': <String, dynamic>{'generalDecisionCode': 1001},
-          },
-        ),
+      return http.Response(
+        jsonEncode({
+          'MediaContainer': {'generalDecisionCode': 1001},
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
       );
-      return;
     }
-    handler.reject(DioException(requestOptions: options, message: 'offline'));
-  }
+    throw http.ClientException('offline', request.url);
+  });
 }
 
 SourceResolveRequest _request(String uri, {bool isRetry = false}) =>
@@ -39,7 +38,6 @@ void main() {
 
   setUp(() {
     fake = _FakePlex();
-    final dio = Dio()..interceptors.add(fake);
     client = PlexClient(
       credentials: const PlexCredentials(
         clientIdentifier: 'test-client',
@@ -49,7 +47,7 @@ void main() {
         deviceName: 'test',
         platform: 'Generic',
       ),
-      dio: dio,
+      httpClient: fake.client,
     );
     client.setToken('token');
     client.connect('http://plex.test:32400', accessToken: 'token');

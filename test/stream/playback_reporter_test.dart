@@ -14,12 +14,14 @@ class _ReportingServer extends FakeServer {
   final reports = <String>[];
 
   @override
-  Future<void> reportStart(String itemId) async => reports.add('start $itemId');
+  Future<void> reportStart(String itemId, {required Duration duration}) async =>
+      reports.add('start $itemId');
 
   @override
   Future<void> reportStopped(
     String itemId, {
     required Duration position,
+    required Duration duration,
   }) async => reports.add('stop $itemId ${position.inSeconds}');
 }
 

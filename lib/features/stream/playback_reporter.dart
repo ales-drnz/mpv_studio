@@ -34,6 +34,10 @@ class PlaybackReporter {
   /// be the next entry's (or reset to zero).
   Duration _lastPosition = Duration.zero;
 
+  /// The current track's length, kept for the same reason: zero until the
+  /// player knows it.
+  Duration _duration = Duration.zero;
+
   Timer? _progressTimer;
   final List<StreamSubscription<dynamic>> _subs = [];
 
@@ -78,6 +82,7 @@ class PlaybackReporter {
     _itemId = id;
     _started = false;
     _lastPosition = Duration.zero;
+    _duration = Duration.zero;
     _maybeStart();
     _syncSessionFavorite(); // reflect the new track's favourite on the OS star
   }
@@ -137,6 +142,12 @@ class PlaybackReporter {
     final (kind, id) = _currentTrack();
     if (kind != _kind || id != _itemId) return;
     _lastPosition = position;
+    _readDuration();
+  }
+
+  void _readDuration() {
+    final d = _player.state.duration;
+    if (d > Duration.zero) _duration = d;
   }
 
   void _onPlaying(bool playing) {
@@ -171,15 +182,18 @@ class PlaybackReporter {
       'PlaybackReporter: start ${_kind!.name} $_itemId',
       level: LogLevel.v,
     );
-    server.reportStart(_itemId!);
+    _readDuration();
+    server.reportStart(_itemId!, duration: _duration);
     _restartTimer();
   }
 
   void _reportProgress({required bool paused}) {
     if (!_started || _itemId == null) return;
+    _readDuration();
     _servers[_kind]?.reportProgress(
       _itemId!,
       position: _player.state.position,
+      duration: _duration,
       paused: paused,
     );
   }
@@ -191,7 +205,11 @@ class PlaybackReporter {
       '@ $_lastPosition',
       level: LogLevel.v,
     );
-    _servers[_kind]?.reportStopped(_itemId!, position: _lastPosition);
+    _servers[_kind]?.reportStopped(
+      _itemId!,
+      position: _lastPosition,
+      duration: _duration,
+    );
     _started = false;
     _progressTimer?.cancel();
   }

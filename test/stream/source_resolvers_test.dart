@@ -1,5 +1,8 @@
 import 'package:dart_plex/dart_plex.dart';
-import 'package:dio/dio.dart';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/plex_transcode_session_manager.dart';
@@ -13,24 +16,18 @@ import '../settings/studio_fakes.dart';
 import 'stream_fakes.dart';
 
 /// Answers every Plex `/decision` with a playable code.
-class _PlayablePlex extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.path.contains('/transcode/universal/decision')) {
-      handler.resolve(
-        Response(
-          requestOptions: options,
-          statusCode: 200,
-          data: <String, dynamic>{
-            'MediaContainer': <String, dynamic>{'generalDecisionCode': 1001},
-          },
-        ),
-      );
-      return;
-    }
-    handler.reject(DioException(requestOptions: options, message: 'offline'));
+final _playablePlex = MockClient((request) async {
+  if (request.url.path.contains('/transcode/universal/decision')) {
+    return http.Response(
+      jsonEncode({
+        'MediaContainer': {'generalDecisionCode': 1001},
+      }),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
   }
-}
+  throw http.ClientException('offline', request.url);
+});
 
 SourceResolveRequest _first(String uri) =>
     SourceResolveRequest(media: Media(uri), uri: uri, isRetry: false);
@@ -50,7 +47,7 @@ void main() {
         deviceName: 'test',
         platform: 'Generic',
       ),
-      dio: Dio()..interceptors.add(_PlayablePlex()),
+      httpClient: _playablePlex,
     );
     client.setToken('token');
     client.connect('http://plex.test:32400', accessToken: 'token');

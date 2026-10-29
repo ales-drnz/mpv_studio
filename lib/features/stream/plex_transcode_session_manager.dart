@@ -171,7 +171,10 @@ class PlexTranscodeSessionManager {
   }
 
   /// Plex's universal direct-play URL for [ratingKey]: the last resort when
-  /// the media Part cannot be found.
+  /// the media Part cannot be found. dart_plex 0.2 deprecates it, since a
+  /// recent PMS refuses it without a decision for its session; the
+  /// transcodes above make that decision, and only this fallback keeps it.
+  // ignore: deprecated_member_use
   String _fallbackFor(String ratingKey) => _client.streaming.universalAudioUrl(
     ratingKey: ratingKey,
     protocol: 'http',
@@ -341,7 +344,7 @@ class PlexTranscodeSessionManager {
   Future<String> _directPlayUrl(String metadataPath, String lastResort) async {
     final ratingKey = metadataPath.split('/').last;
     try {
-      final meta = await _client.library.item(ratingKey);
+      final meta = await _client.library.item(ratingKey: ratingKey);
       final media = (meta?.media.isNotEmpty ?? false)
           ? meta!.media.first
           : null;
@@ -370,7 +373,7 @@ class PlexTranscodeSessionManager {
     final session = _pending[marker]?.session;
     if (session == null) return;
     try {
-      await _client.streaming.pingUniversal(session);
+      await _client.streaming.pingUniversal(session: session);
     } catch (_) {
       // Silent: the next tick retries; logging would spam on hiccups.
     }
