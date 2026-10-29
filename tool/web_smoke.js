@@ -5,19 +5,27 @@
 // screenshot, and says whether the demo stream answers a page of another
 // origin (CORS), which the browser needs to play it.
 //
+// chromium runs the WebAssembly build (Chrome and Edge), firefox the
+// JavaScript one Flutter falls back to elsewhere.
+//
 // The site must be served without COOP and COEP headers, as Pages does, at
 // <url>; tool/web_smoke.sh does that.
 //
-//   node tool/web_smoke.js <url> <screenshot.png>
+//   node tool/web_smoke.js <chromium|firefox> <url> <screenshot.png>
 
-const { chromium } = require('playwright');
+const playwright = require('playwright');
 
 const DEMO_STREAM = 'https://streams.radiomast.io/ref-128k-mp3-stereo';
 
 (async () => {
-  const [url, shot] = process.argv.slice(2);
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const [engine, url, shot] = process.argv.slice(2);
+  const browser = await playwright[engine].launch();
+  // A language as a user's browser has: on the runner the headless browser
+  // takes the system's C locale, which Flutter's Intl.Locale refuses.
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+    locale: 'en-US',
+  });
   const failures = [];
   const module = new Map();
   page.on('pageerror', (e) => failures.push(`uncaught error: ${e.message}`));
@@ -27,7 +35,7 @@ const DEMO_STREAM = 'https://streams.radiomast.io/ref-128k-mp3-stereo';
   });
   page.on('response', (r) => {
     const name = r.url().split('/').pop();
-    if (/^(libmpv\.(mjs|wasm)|mak_webaudio_processor\.js)$/.test(name)) {
+    if (/^(libmpv\.(mjs|wasm)|mak_webaudio_processor\.js|main\.dart\.(wasm|js))$/.test(name)) {
       module.set(name, r.status());
     }
   });
@@ -43,7 +51,7 @@ const DEMO_STREAM = 'https://streams.radiomast.io/ref-128k-mp3-stereo';
       (r) => r.active?.scriptURL ?? null,
     ),
   }));
-  console.log(JSON.stringify({ ...state, module: Object.fromEntries(module) }));
+  console.log(JSON.stringify({ engine, ...state, loaded: Object.fromEntries(module) }));
 
   if (!state.isolated) failures.push('the page is not cross-origin isolated');
   if (!state.controller?.endsWith('/coi-serviceworker.js')) {

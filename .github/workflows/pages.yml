@@ -91,16 +91,23 @@ jobs:
       # another origin to start.
       - run: flutter build web --wasm --no-web-resources-cdn --base-href /mpv_studio/
 
+      # Chromium 137 or later runs the WebAssembly build (Playwright 1.53
+      # has Chromium 138), as Chrome and Edge do: it must boot. Firefox runs
+      # the JavaScript build Flutter falls back to, which mpv_audio_kit's
+      # own CI does not play: reported, not required.
       - name: Smoke test
         run: |
-          npm install --no-save --no-package-lock playwright@1.49.1
-          npx playwright install --with-deps chromium
-          tool/web_smoke.sh "$RUNNER_TEMP/web_smoke.png"
+          npm install --no-save --no-package-lock playwright@1.53.0
+          npx playwright install --with-deps chromium firefox
+          tool/web_smoke.sh chromium "$RUNNER_TEMP/web_smoke_chromium.png"
+      - name: Smoke test (Firefox, not required)
+        continue-on-error: true
+        run: tool/web_smoke.sh firefox "$RUNNER_TEMP/web_smoke_firefox.png"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: web-smoke
-          path: ${{ runner.temp }}/web_smoke.png
+          path: ${{ runner.temp }}/web_smoke_*.png
           if-no-files-found: ignore
           retention-days: 7
 

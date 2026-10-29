@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Serves build/web as GitHub Pages does, under /mpv_studio/ and without
-# COOP or COEP headers, and runs tool/web_smoke.js against it. Needs a
-# build made with --base-href /mpv_studio/ and the playwright package.
+# COOP or COEP headers, and runs tool/web_smoke.js against it in a browser
+# of playwright (chromium or firefox). Needs a build made with
+# --base-href /mpv_studio/ and the playwright package.
 #
-#   tool/web_smoke.sh <screenshot.png>
+#   tool/web_smoke.sh <chromium|firefox> <screenshot.png>
 set -euo pipefail
 
-shot="${1:?usage: tool/web_smoke.sh <screenshot.png>}"
+engine="${1:?usage: tool/web_smoke.sh <chromium|firefox> <screenshot.png>}"
+shot="${2:?usage: tool/web_smoke.sh <chromium|firefox> <screenshot.png>}"
 root="$(mktemp -d)"
 trap 'kill "$server" 2>/dev/null; rm -rf "$root"' EXIT
 cp -r build/web "$root/mpv_studio"
@@ -27,4 +29,4 @@ PY
 server=$!
 sleep 1
 
-node tool/web_smoke.js http://127.0.0.1:8765/mpv_studio/ "$shot"
+node tool/web_smoke.js "$engine" http://127.0.0.1:8765/mpv_studio/ "$shot"
