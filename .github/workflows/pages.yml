@@ -47,7 +47,7 @@ env:
   # until it is, the Build of libmpv-scripts release/r20 that has it (run
   # artifacts expire after 90 days). Not vars.LIBMPV_SCRIPTS_RUN, which the
   # native builds of ci.yml may point at an older libmpv.
-  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || '40943202304' }}
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || '41031772801' }}
 
 defaults:
   run:
