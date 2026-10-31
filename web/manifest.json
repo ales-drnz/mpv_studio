@@ -6,7 +6,6 @@
     "background_color": "#24282D",
     "theme_color": "#24282D",
     "description": "MPV Studio, the demo app of mpv_audio_kit.",
-    "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
