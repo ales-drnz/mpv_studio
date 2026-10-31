@@ -13,7 +13,7 @@ on:
       mpv_audio_kit_ref:
         description: mpv_audio_kit branch, tag or commit, used while the app depends on it by path
         type: string
-        default: release/0.5.0
+        default: release/0.6.0
       libmpv_scripts_run:
         description: libmpv-scripts run id whose libmpv-release artifact to bundle (empty for the libmpv release)
         type: string
@@ -39,9 +39,9 @@ env:
   # library is checked out beside the app from this ref (the workflow input,
   # else the repository variable MPV_AUDIO_KIT_REF). Once the app depends on
   # a pub.dev version the ref is ignored.
-  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.5.0' }}
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
   # mpv_audio_kit's build hook downloads libmpv from its pinned GitHub
-  # release (libmpv-r16 for 0.5.0) whenever Flutter builds native assets:
+  # release (libmpv-r20 for 0.6.0) whenever Flutter builds native assets:
   # flutter test and flutter build, not flutter pub get or flutter analyze.
   # Until that release exists, set this (the workflow input, else the
   # repository variable LIBMPV_SCRIPTS_RUN) to the libmpv-scripts run that
