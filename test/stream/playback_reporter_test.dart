@@ -15,14 +15,15 @@ class _ReportingServer extends FakeServer {
 
   @override
   Future<void> reportStart(String itemId, {required Duration duration}) async =>
-      reports.add('start $itemId');
+      reports.add('start $itemId ${duration.inSeconds}');
 
   @override
   Future<void> reportStopped(
     String itemId, {
     required Duration position,
     required Duration duration,
-  }) async => reports.add('stop $itemId ${position.inSeconds}');
+  }) async =>
+      reports.add('stop $itemId ${position.inSeconds} ${duration.inSeconds}');
 }
 
 class _Player extends FakePlayer {
@@ -78,7 +79,45 @@ void main() {
       await pumpEventQueue();
 
       await reporter.dispose();
-      expect(server.reports, ['start 3217', 'stop 3217 48']);
+      expect(server.reports, ['start 3217 0', 'stop 3217 48 0']);
+    });
+
+    test('${kind.name} reports each track with its own length', () async {
+      final server = _ReportingServer(kind);
+      final servers = {kind: server};
+      final player = _Player();
+      final reporter = PlaybackReporter(
+        player,
+        servers,
+        FavoritesController(servers),
+      )..start();
+      final tracks = [_track(kind, 'a'), _track(kind, 'b')];
+
+      player.emit(
+        (s) => s.copyWith(
+          playlist: Playlist(tracks, index: 0),
+          duration: const Duration(seconds: 200),
+          playing: true,
+          playWhenReady: true,
+        ),
+      );
+      await pumpEventQueue();
+      player.emit((s) => s.copyWith(position: const Duration(seconds: 48)));
+      await pumpEventQueue();
+
+      // The next track's length is not known yet: the previous one stops
+      // with its own, and the next one starts without one.
+      player.emit(
+        (s) => s.copyWith(
+          playlist: Playlist(tracks, index: 1),
+          duration: Duration.zero,
+          position: Duration.zero,
+        ),
+      );
+      await pumpEventQueue();
+
+      await reporter.dispose();
+      expect(server.reports, ['start a 200', 'stop a 48 200', 'start b 0']);
     });
   }
 }

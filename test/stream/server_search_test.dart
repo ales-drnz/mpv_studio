@@ -1,7 +1,7 @@
-import 'package:dart_jellyfin/dart_jellyfin.dart';
-import 'package:dart_plex/dart_plex.dart';
 import 'dart:convert';
 
+import 'package:dart_jellyfin/dart_jellyfin.dart';
+import 'package:dart_plex/dart_plex.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
