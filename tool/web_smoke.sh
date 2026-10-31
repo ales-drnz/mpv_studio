@@ -10,7 +10,7 @@ set -euo pipefail
 engine="${1:?usage: tool/web_smoke.sh <chromium|firefox> <screenshot.png>}"
 shot="${2:?usage: tool/web_smoke.sh <chromium|firefox> <screenshot.png>}"
 root="$(mktemp -d)"
-trap 'kill "${server:-}" 2>/dev/null; rm -rf "$root"' EXIT
+trap 'kill "${server:-}" 2>/dev/null || true; rm -rf "$root"' EXIT
 cp -r build/web "$root/mpv_studio"
 
 python3 - "$root" <<'PY' &
@@ -33,5 +33,7 @@ for _ in $(seq 50); do
   curl -sf -o /dev/null http://127.0.0.1:8765/mpv_studio/ && break
   sleep 0.2
 done
+curl -sf -o /dev/null http://127.0.0.1:8765/mpv_studio/ ||
+  { echo "web_smoke: the server did not start" >&2; exit 1; }
 
 node tool/web_smoke.js "$engine" http://127.0.0.1:8765/mpv_studio/ "$shot"
