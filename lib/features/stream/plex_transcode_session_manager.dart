@@ -271,9 +271,9 @@ class PlexTranscodeSessionManager {
       // Accept any playable decision. With directPlay=0 and directStream=0
       // Plex can't direct-play, so a successful decision comes back as a
       // 1xxx code (e.g. 1001 "Direct play not available; Conversion OK"),
-      // which spins up a transcode session and a valid start.mpd. As of
-      // dart_plex 0.1.0 isPlayable is true for any 1xxx decision; only a
-      // genuinely non-playable decision (an error code) falls through to
+      // which spins up a transcode session and a valid start.mpd.
+      // isPlayable is true for any 1xxx decision; only a genuinely
+      // non-playable decision (an error code) falls through to
       // the direct part URL.
       if (!decision.isPlayable) {
         StudioLog.write(
@@ -293,9 +293,9 @@ class PlexTranscodeSessionManager {
       );
 
       // ffmpeg/lavf opens the manifest directly and does NOT inherit the
-      // Dio request's X-Plex-* base headers, so we embed the full client
-      // identity + profile in the query string, otherwise Plex returns
-      // 400 "Unable to find client profile for device".
+      // X-Plex-* headers of dart_plex's own requests, so we embed the full
+      // client identity + profile in the query string, otherwise Plex
+      // returns 400 "Unable to find client profile for device".
       final queryString = params.entries
           .map(
             (e) =>

@@ -56,7 +56,7 @@ String baseNameNoExt(String path) {
 }
 
 /// Opens a multi-select audio file picker. Returns the chosen absolute
-/// paths (empty if the user cancelled).
+/// paths, or `blob:` URLs in the browser (empty if the user cancelled).
 Future<List<String>> pickAudioFiles() async {
   // Carry both filters: `extensions` for desktop/Android/web, `uniformType-
   // Identifiers` for Apple platforms (which ignore extensions, and on iOS
