@@ -27,6 +27,9 @@
 | **macOS** | 12.0 | arm64, x86_64 |
 | **Windows**| 10 | arm64, x86_64 |
 | **Linux** | glibc 2.31 (Ubuntu 20.04, Debian 11) | aarch64, x86_64 |
+| **Web** | Chrome or Edge 137 (WebAssembly) | wasm32 |
+
+A live demo runs on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
 
 ---
 
@@ -159,7 +162,7 @@ await player.open(Media('yt:dQw4w9WgXcQ', extras: {
 
 #### 3.3 Jellyfin, Plex and Samba
 
-Sign in to a Jellyfin or Plex server and browse its songs and albums, or walk a Samba share. Plex transcode sessions open through the same source resolver, and playback progress is reported back to the server. The Samba password is kept in the system keychain.
+Sign in to a Jellyfin or Plex server and browse its songs and albums, or walk a Samba share. Plex transcode sessions open through the same source resolver, and playback progress is reported back to the server. The Samba password is kept in the system keychain. Samba is not available in the browser, which cannot open an SMB connection.
 
 ---
 
@@ -244,9 +247,11 @@ flutter run -d macos        # or windows, linux, <android-device>, <ios-device>
 
 To build a release artifact, use the standard `flutter build <platform>`.
 
+For the browser, run with `flutter run -d chrome --wasm --cross-origin-isolation` and build with `flutter build web --wasm --no-web-resources-cdn`. libmpv runs on threads, so the page must be cross-origin isolated: `web/coi-serviceworker.js` makes it so where the server cannot send the COOP and COEP headers, as on GitHub Pages. While the app depends on `mpv_audio_kit` by path, the library's web module comes from `scripts/update_libmpv.sh`, run in its checkout.
+
 #### 9.3 Continuous integration
 
-GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. Nothing is published: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week.
+GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. That workflow publishes nothing: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week. A separate workflow, `pages.yml`, builds the web app, checks with `tool/web_smoke.sh` that it boots in Chromium and publishes it on GitHub Pages.
 
 ---
 
