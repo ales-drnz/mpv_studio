@@ -273,6 +273,8 @@ The code of MPV Studio is BSD-3-Clause ([LICENSE](LICENSE)). The app bundles lib
 
 `web/coi-serviceworker.js` is coi-serviceworker v0.1.7 by Guido Zuidhof and contributors, under the MIT license (see [web/coi-serviceworker.LICENSE](web/coi-serviceworker.LICENSE)).
 
+`assets/models/general.rnnn` and `speech.rnnn` are the `mp` and `sh` models of [rnnoise-models](https://github.com/GregorR/rnnoise-models) by Gregor Richards, whose README says they are not subject to copyright.
+
 ---
 
 ## Project background
