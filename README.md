@@ -275,7 +275,7 @@ GitHub Actions (`ci.yml`) checks and builds the app, and publishes nothing:
 
 ## License
 
-The code of MPV Studio is BSD-3-Clause ([LICENSE](LICENSE)), except the command docs of `lib/features/console/command_catalog.dart`, which are excerpts of mpv's manual (GPL, version 2 or later). The app bundles libmpv through `mpv_audio_kit` (LGPL, version 3 or later, from libmpv-r20 on) and libsmb2 through `dart_smb2` (LGPL, version 2.1 or later), each under its own license.
+The code of MPV Studio is BSD-3-Clause ([LICENSE](LICENSE)). The app bundles libmpv through `mpv_audio_kit` (LGPL, version 3 or later, from libmpv-r20 on) and libsmb2 through `dart_smb2` (LGPL, version 2.1 or later), each under its own license.
 
 ---
 
