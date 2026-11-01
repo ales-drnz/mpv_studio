@@ -251,7 +251,7 @@ For the browser, run with `flutter run -d chrome --wasm --cross-origin-isolation
 
 #### 9.3 Continuous integration
 
-GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. That workflow publishes nothing: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week. A separate workflow, `pages.yml`, builds the web app, checks with `tool/web_smoke.sh` that it boots in Chromium and publishes it on GitHub Pages.
+GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app, an Android APK and the web app, checking with `tool/web_smoke.sh` that the web app boots in Chromium, on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. That workflow publishes nothing: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week. A separate workflow, `pages.yml`, makes the same web build and publishes it on GitHub Pages.
 
 ---
 

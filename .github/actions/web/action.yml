@@ -1,0 +1,61 @@
+name: Build and smoke-test the web app
+description: >-
+  Gives mpv_audio_kit its web module, builds the web app with WebAssembly as
+  GitHub Pages serves it, and checks with tool/web_smoke.sh that it boots.
+  Expects the setup action to have run, with a libmpv-scripts run whose
+  libmpv-release artifact has libmpv_web.zip (libmpv-r20 or later) while the
+  library is a checkout. Leaves the build in mpv_studio/build/web.
+runs:
+  using: composite
+  steps:
+    # mpv_audio_kit serves libmpv.mjs, libmpv.wasm and
+    # mak_webaudio_processor.js from its web/ folder, which a checkout of
+    # the library does not have (the published package does). They come
+    # from the run's libmpv_web.zip, checked against its manifest.
+    - name: Web module
+      shell: bash
+      working-directory: mpv_studio
+      run: |
+        kit=../mpv_audio_kit
+        if [[ ! -d "$kit" ]]; then
+          echo "mpv_audio_kit comes from pub.dev, with its web module"
+        elif [[ -f "$RUNNER_TEMP/libmpv/libmpv_web.zip" ]]; then
+          (cd "$kit" && python3 scripts/web_module.py \
+            "$RUNNER_TEMP/libmpv/manifest.json" \
+            "$RUNNER_TEMP/libmpv/libmpv_web.zip" web)
+        elif [[ ! -f "$kit/web/libmpv.mjs" ]]; then
+          echo "::error::mpv_audio_kit at $MPV_AUDIO_KIT_REF has no web module: set libmpv_scripts_run to a libmpv-scripts Build of libmpv-r20 or later."
+          exit 1
+        fi
+
+    # Flutter's engine files (skwasm, CanvasKit) are served by the site
+    # instead of Google's CDN, so the isolated page loads nothing of
+    # another origin to start. The base href is the one Pages serves the
+    # app under, and the one tool/web_smoke.sh serves it under.
+    - shell: bash
+      working-directory: mpv_studio
+      run: flutter build web --wasm --no-web-resources-cdn --base-href /mpv_studio/
+
+    # Chromium 137 or later runs the WebAssembly build (Playwright 1.53
+    # has Chromium 138), as Chrome and Edge do: it must boot. Firefox runs
+    # the JavaScript build Flutter falls back to, which mpv_audio_kit's
+    # own CI does not play: reported, not required.
+    - name: Smoke test
+      shell: bash
+      working-directory: mpv_studio
+      run: |
+        npm install --no-save --no-package-lock playwright@1.53.0
+        npx playwright install --with-deps chromium firefox
+        tool/web_smoke.sh chromium "$RUNNER_TEMP/web_smoke_chromium.png"
+    - name: Smoke test (Firefox, not required)
+      continue-on-error: true
+      shell: bash
+      working-directory: mpv_studio
+      run: tool/web_smoke.sh firefox "$RUNNER_TEMP/web_smoke_firefox.png"
+    - if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-smoke
+        path: ${{ runner.temp }}/web_smoke_*.png
+        if-no-files-found: ignore
+        retention-days: 7
