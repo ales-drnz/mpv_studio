@@ -193,7 +193,7 @@ What the engine is doing right now:
 
 A search finds any setting and jumps to it. Settings read only at startup apply with **Restart player**, which keeps the queue and the position. Your choices are saved.
 
-**Open source licenses**, under About, opens Flutter's license page: the license texts of every Dart package and, from libmpv-r20 on, those of the bundled libmpv, which `mpv_audio_kit` registers: mpv, FFmpeg and the libraries they link, each under its own license. libmpv as built by [libmpv-scripts](https://github.com/ales-drnz/libmpv-scripts) is LGPL, version 3 or later; the `README.txt` of its release's `licenses.zip` names the sources it was built from. The app also bundles libsmb2 (LGPL, version 2.1 or later) through `dart_smb2` on Android, iOS, macOS, Windows and Linux, whose texts the page does not list yet.
+**Open source licenses**, under About, opens Flutter's license page: the license texts of every Dart package and, from libmpv-r20 on, those of the bundled libmpv, which `mpv_audio_kit` registers: mpv, FFmpeg and the libraries they link, each under its own license. libmpv as built by [libmpv-scripts](https://github.com/ales-drnz/libmpv-scripts) is LGPL, version 3 or later; the `README.txt` of its release's `licenses.zip` names the sources it was built from. The app also bundles libsmb2 (LGPL, version 2.1 or later) through `dart_smb2` on Android, iOS, macOS, Windows and Linux: the page lists it under libsmb2, with where the source of that build is.
 
 ---
 

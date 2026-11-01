@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import 'app.dart';
+import 'studio/app_licenses.dart';
 import 'studio/mpv_studio.dart';
 import 'studio/startup_error_view.dart';
 import 'studio/uncaught_errors.dart';
@@ -13,6 +14,7 @@ import 'util/redact.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MpvAudioKit.ensureInitialized();
+  registerAppLicenses();
 
   // Installed first, so even an error during the launch is reported.
   await _start(UncaughtErrors.install());

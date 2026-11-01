@@ -5,6 +5,7 @@
 - In the browser, picked and dropped files play with their file names as titles, and the OS media controls come from the browser.
 - In the browser, an `http://` server address or stream says the HTTPS page cannot open it, instead of failing as a server that cannot be found.
 - **Open source licenses** in Settings, under About, opens the license page: the texts of every Dart package, and of the bundled libmpv that `mpv_audio_kit` registers from libmpv-r20 on (mpv, FFmpeg and the libraries they link, each under its own license).
+- The license page lists the libsmb2 of `dart_smb2`, with where the source of that build is.
 - A LICENSE (BSD 3-Clause) and a License section in the README.
 
 ### Changed

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/features/settings/settings_catalog.dart';
+import 'package:mpv_studio/studio/app_licenses.dart';
 import 'package:mpv_studio/studio/app_info.dart';
 
 import 'settings_page_test.dart' show pumpSettings, tapVisible;
@@ -34,6 +35,15 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('libmpv'), findsWidgets);
+  });
+
+  test('the libsmb2 of dart_smb2 says where its source is', () async {
+    registerAppLicenses();
+    final entries = await LicenseRegistry.licenses.toList();
+    final entry = entries.singleWhere((e) => e.packages.contains('libsmb2'));
+    final text = entry.paragraphs.map((p) => p.text).join(' ');
+    expect(text, contains('GNU Lesser General Public License'));
+    expect(text, contains('https://github.com/ales-drnz/libsmb2-scripts'));
   });
 
   test('search finds the licenses', () {

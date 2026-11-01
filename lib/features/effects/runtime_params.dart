@@ -3,7 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../generated/filter_catalog.dart';
 import 'rack_catalog.dart';
 
-/// The options mpv_audio_kit 0.5.2 moves on the running filter graph
+/// The options mpv_audio_kit moves on the running filter graph
 /// (`af-command`), by filter: a change to any other option, or to a filter
 /// missing here, rebuilds the filter. Read off the library's typed
 /// effects; test/effects/runtime_params_test.dart checks it against them.
