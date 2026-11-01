@@ -15,7 +15,7 @@ on:
         type: string
         default: release/0.6.0
       libmpv_scripts_run:
-        description: libmpv-scripts run id whose libmpv-release artifact to bundle (empty for the libmpv release)
+        description: libmpv-scripts run id whose libmpv-release artifact to bundle (empty for the repository variable, else the Build found by itself)
         type: string
         default: ''
       all_platforms:
@@ -44,17 +44,19 @@ env:
   # release (libmpvRelease in lib/src/internals/libmpv_release.dart; 0.6.0
   # is to pin libmpv-r20) whenever Flutter builds native assets:
   # flutter test and flutter build, not flutter pub get or flutter analyze.
-  # Until that release exists, set this (the workflow input, else the
-  # repository variable LIBMPV_SCRIPTS_RUN) to a libmpv-scripts run of the
-  # LGPL build (its manifest says "license": "LGPL-3.0-or-later"): the hook
-  # then bundles that run's libmpv-release artifact
-  # through the `libmpv` user define, added to pubspec.yaml on the runner.
-  # Downloading another repository's artifacts needs the secret
+  # While the library is a checkout and the release it needs is not
+  # published, the setup action finds the libmpv-scripts Build of it with
+  # the library's scripts/ci/resolve_libmpv_run.sh, and the hook bundles
+  # that run's libmpv-release artifact through the `libmpv` user define,
+  # added to pubspec.yaml on the runner. This (the workflow input, else the
+  # repository variable LIBMPV_SCRIPTS_RUN) forces a run instead; leave the
+  # variable unset otherwise, since run artifacts expire after 90 days. A
+  # forced run must be of the LGPL build (its manifest says "license":
+  # "LGPL-3.0-or-later").
+  # Finding and downloading another repository's runs needs the secret
   # LIBMPV_SCRIPTS_TOKEN, a token with Actions read access on
   # ales-drnz/libmpv-scripts: GITHUB_TOKEN only reaches this repository,
   # and the artifact API refuses anonymous downloads even when public.
-  # Unset the variable once the release is out: run artifacts expire after
-  # 90 days.
   LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || vars.LIBMPV_SCRIPTS_RUN }}
 
 defaults:
@@ -172,6 +174,34 @@ jobs:
           name: mpv_studio-android
           path: mpv_studio/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
+
+  # The build pages.yml publishes, without the deploy, so that a change the
+  # web cannot run (dart:io, Platform without kIsWeb) fails here and not
+  # only on the next push to wip/web. No analyze or test of its own: the
+  # analyzer does not know the target platform and flutter test runs on
+  # the VM, so the analyze and test jobs above already say all they can.
+  build-web:
+    name: Build web
+    runs-on: ubuntu-24.04
+    # As in pages.yml, and not the workflow's values: the web needs
+    # mpv_audio_kit 0.6.0 whatever vars.MPV_AUDIO_KIT_REF says, and libmpv
+    # from r20 on, which vars.LIBMPV_SCRIPTS_RUN may predate for the
+    # native builds. Without the input the library checkout finds the
+    # Build itself. The ref's fallback goes at the release, with
+    # pages.yml's.
+    env:
+      MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
+      LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mpv_studio
+      - uses: ./mpv_studio/.github/actions/setup
+        with:
+          mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
+          libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
+          token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
+      - uses: ./mpv_studio/.github/actions/web
 
   # Windows, macOS and iOS run on pushes to main and on demand, not on pull
   # requests: their runners start slower, macOS runners are few per

@@ -28,7 +28,7 @@ on:
         type: string
         default: release/0.6.0
       libmpv_scripts_run:
-        description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty for the libmpv release)
+        description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty to find the Build of the libmpv release mpv_audio_kit needs while it is not published)
         type: string
         default: ''
 
@@ -41,15 +41,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0.
+  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0. The fallback
+  # goes at the release, with the same one in the web job of ci.yml.
   MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
-  # The web module comes from libmpv-r20 on, and r20 is not released yet:
-  # until it is, a Build of libmpv-scripts with the LGPL default (its
-  # manifest says "license": "LGPL-3.0-or-later") that has it (run artifacts
-  # expire after 90 days), given as the input; the Web module step refuses
-  # another. No run is the default: the Build of release/r20 that was is GPL
-  # with Rubber Band. Not vars.LIBMPV_SCRIPTS_RUN, which the native builds of
-  # ci.yml may point at an older libmpv.
+  # The web module comes from libmpv-r20 on. Empty, the setup action lets
+  # the library checkout find the libmpv-scripts Build of the release it
+  # needs while that release is not published
+  # (scripts/ci/resolve_libmpv_run.sh of mpv_audio_kit); the input forces
+  # one. The web action refuses a Build that is not LGPL (its manifest
+  # must say "license": "LGPL-3.0-or-later"). Not vars.LIBMPV_SCRIPTS_RUN, which the native builds of ci.yml may
+  # point at an older libmpv.
   LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run }}
 
 defaults:
@@ -71,53 +72,9 @@ jobs:
           libmpv-run: ${{ env.LIBMPV_SCRIPTS_RUN }}
           token: ${{ secrets.LIBMPV_SCRIPTS_TOKEN }}
 
-      # mpv_audio_kit serves libmpv.mjs, libmpv.wasm and
-      # mak_webaudio_processor.js from its web/ folder, which a checkout of
-      # the library does not have (the published package does). They come
-      # from the run's libmpv_web.zip, checked against its manifest.
-      - name: Web module
-        run: |
-          kit=../mpv_audio_kit
-          if [[ ! -d "$kit" ]]; then
-            echo "mpv_audio_kit comes from pub.dev, with its web module"
-          elif [[ -f "$RUNNER_TEMP/libmpv/libmpv_web.zip" ]]; then
-            license=$(jq -r '.license // empty' "$RUNNER_TEMP/libmpv/manifest.json")
-            if [[ "$license" != "LGPL-3.0-or-later" ]]; then
-              echo "::error::the libmpv of run $LIBMPV_SCRIPTS_RUN is ${license:-of no stated license}, not LGPL-3.0-or-later: the demo ships only the LGPL build."
-              exit 1
-            fi
-            (cd "$kit" && python3 scripts/web_module.py \
-              "$RUNNER_TEMP/libmpv/manifest.json" \
-              "$RUNNER_TEMP/libmpv/libmpv_web.zip" web)
-          elif [[ ! -f "$kit/web/libmpv.mjs" ]]; then
-            echo "::error::mpv_audio_kit at $MPV_AUDIO_KIT_REF has no web module: set libmpv_scripts_run to a libmpv-scripts Build of libmpv-r20 or later."
-            exit 1
-          fi
-
-      # Flutter's engine files (skwasm, CanvasKit) are served by the site
-      # instead of Google's CDN, so the isolated page loads nothing of
-      # another origin to start.
-      - run: flutter build web --wasm --no-web-resources-cdn --base-href /mpv_studio/
-
-      # Chromium 137 or later runs the WebAssembly build (Playwright 1.53
-      # has Chromium 138), as Chrome and Edge do: it must boot. Firefox runs
-      # the JavaScript build Flutter falls back to, which mpv_audio_kit's
-      # own CI does not play: reported, not required.
-      - name: Smoke test
-        run: |
-          npm install --no-save --no-package-lock playwright@1.53.0
-          npx playwright install --with-deps chromium firefox
-          tool/web_smoke.sh chromium "$RUNNER_TEMP/web_smoke_chromium.png"
-      - name: Smoke test (Firefox, not required)
-        continue-on-error: true
-        run: tool/web_smoke.sh firefox "$RUNNER_TEMP/web_smoke_firefox.png"
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-smoke
-          path: ${{ runner.temp }}/web_smoke_*.png
-          if-no-files-found: ignore
-          retention-days: 7
+      # The web module, the build and the smoke test, shared with the web
+      # job of ci.yml so that it checks the build published here.
+      - uses: ./mpv_studio/.github/actions/web
 
       - uses: actions/upload-pages-artifact@v4
         with:
