@@ -734,6 +734,23 @@ abstract final class SettingsCatalog {
     'The app, engine and FFmpeg versions',
     keywords: ['about', 'version', 'mpv', 'ffmpeg', 'build'],
   );
+  static const licenses = SettingEntry(
+    'licenses',
+    _a,
+    SettingsSections.about,
+    'Open source licenses',
+    'The licenses of libmpv, mpv, FFmpeg and the libraries they link, '
+        'and of every Dart package',
+    keywords: [
+      'license',
+      'licence',
+      'open source',
+      'legal',
+      'notices',
+      'third party',
+      'lgpl',
+    ],
+  );
 
   /// Every entry, in page order.
   static const all = <SettingEntry>[
@@ -810,5 +827,6 @@ abstract final class SettingsCatalog {
     welcome,
     reset,
     about,
+    licenses,
   ];
 }

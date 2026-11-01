@@ -9,6 +9,7 @@ import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
+import '../../../studio/app_info.dart';
 import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
@@ -262,7 +263,7 @@ class PlayerSection extends StatelessWidget {
   }
 }
 
-/// The app and engine versions.
+/// The app and engine versions, and the open source licenses.
 class AboutSection extends StatelessWidget {
   const AboutSection({super.key});
 
@@ -275,10 +276,29 @@ class AboutSection extends StatelessWidget {
       children: [
         SettingAnchor(
           entry: SettingsCatalog.about,
-          child: const InfoRow(label: 'App', value: 'MPV Studio'),
+          child: const InfoRow(label: 'App', value: appName),
         ),
         InfoRow(label: 'Engine', value: or(state.mpvVersion)),
         InfoRow(label: 'FFmpeg', value: or(state.ffmpegVersion)),
+        SettingAnchor(
+          entry: SettingsCatalog.licenses,
+          child: SettingTile(
+            title: SettingsCatalog.licenses.title,
+            description: SettingsCatalog.licenses.description,
+            trailing: TileButton(
+              label: 'View',
+              tooltip: 'Show the open source licenses',
+              // Flutter's license page: the libmpv texts mpv_audio_kit
+              // registers at MpvAudioKit.ensureInitialized, and those of
+              // every Dart package.
+              onPressed: () => showLicensePage(
+                context: context,
+                applicationName: appName,
+                applicationVersion: appVersion,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

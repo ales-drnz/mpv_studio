@@ -192,6 +192,8 @@ What the engine is doing right now:
 
 A search finds any setting and jumps to it. Settings read only at startup apply with **Restart player**, which keeps the queue and the position. Your choices are saved.
 
+**Open source licenses**, under About, opens Flutter's license page: the license texts of the bundled libmpv (mpv, FFmpeg and the libraries they link, LGPL, version 3 or later), which mpv_audio_kit registers, and those of every Dart package.
+
 ---
 
 ### 7. Console

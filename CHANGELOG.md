@@ -4,6 +4,7 @@
 - The app runs in the browser, with libmpv as WebAssembly through `mpv_audio_kit` 0.6.0, and a live demo on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
 - In the browser, picked and dropped files play with their file names as titles, and the OS media controls come from the browser.
 - In the browser, an `http://` server address or stream says the HTTPS page cannot open it, instead of failing as a server that cannot be found.
+- **Open source licenses** in Settings, under About, opens the license page: the texts of the bundled libmpv that `mpv_audio_kit` registers (mpv, FFmpeg and the libraries they link) and those of every Dart package.
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.6.0`, `dart_jellyfin` to `0.3.1`, `dart_plex` to `0.2.1`, `dart_smb2` to `0.2.3` and `go_router` to `18`. Jellyfin and Plex talk `package:http` instead of Dio.
