@@ -28,6 +28,15 @@
     page once on the first visit. It does nothing where the server already
     sends them. It must stay a plain script of its own, before Flutter's.
   -->
+  <!-- The first visit reloads once the worker is active, not on
+       updatefound: a reload that beats the worker gives a page it does not
+       control, without isolation, and the script never reloads again. -->
+  <script>
+    window.coi = {
+      doReload: () =>
+        navigator.serviceWorker.ready.then(() => window.location.reload()),
+    };
+  </script>
   <script src="coi-serviceworker.js"></script>
 </head>
 <body>
