@@ -28,7 +28,7 @@ on:
         type: string
         default: release/0.6.0
       libmpv_scripts_run:
-        description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty for the libmpv release)
+        description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty to find the Build of the libmpv release mpv_audio_kit needs while it is not published)
         type: string
         default: ''
 
@@ -41,14 +41,16 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0. Both fallbacks
-  # go at the release, with the same ones in the web job of ci.yml.
+  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0. The fallback
+  # goes at the release, with the same one in the web job of ci.yml.
   MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
-  # The web module comes from libmpv-r20 on, and r20 is not released yet:
-  # until it is, the Build of libmpv-scripts release/r20 that has it (run
-  # artifacts expire after 90 days). Not vars.LIBMPV_SCRIPTS_RUN, which the
-  # native builds of ci.yml may point at an older libmpv.
-  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || '41250968768' }}
+  # The web module comes from libmpv-r20 on. Empty, the setup action lets
+  # the library checkout find the libmpv-scripts Build of the release it
+  # needs while that release is not published
+  # (scripts/ci/resolve_libmpv_run.sh of mpv_audio_kit); the input forces
+  # one. Not vars.LIBMPV_SCRIPTS_RUN, which the native builds of ci.yml may
+  # point at an older libmpv.
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run }}
 
 defaults:
   run:

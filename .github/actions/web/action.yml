@@ -2,9 +2,9 @@ name: Build and smoke-test the web app
 description: >-
   Gives mpv_audio_kit its web module, builds the web app with WebAssembly as
   GitHub Pages serves it, and checks with tool/web_smoke.sh that it boots.
-  Expects the setup action to have run, with a libmpv-scripts run whose
-  libmpv-release artifact has libmpv_web.zip (libmpv-r20 or later) while the
-  library is a checkout. Leaves the build in mpv_studio/build/web.
+  Expects the setup action to have run, with a libmpv-scripts run (given,
+  or found by the library checkout) whose libmpv-release artifact has
+  libmpv_web.zip (libmpv-r20 or later) while the library is a checkout. Leaves the build in mpv_studio/build/web.
 runs:
   using: composite
   steps:
@@ -24,7 +24,7 @@ runs:
             "$RUNNER_TEMP/libmpv/manifest.json" \
             "$RUNNER_TEMP/libmpv/libmpv_web.zip" web)
         elif [[ ! -f "$kit/web/libmpv.mjs" ]]; then
-          echo "::error::mpv_audio_kit at $MPV_AUDIO_KIT_REF has no web module: set libmpv_scripts_run to a libmpv-scripts Build of libmpv-r20 or later."
+          echo "::error::mpv_audio_kit at $MPV_AUDIO_KIT_REF has no web module and no libmpv-scripts run gave one: set libmpv_scripts_run to a Build of libmpv-r20 or later, or take an mpv_audio_kit ref with scripts/ci/resolve_libmpv_run.sh."
           exit 1
         fi
 

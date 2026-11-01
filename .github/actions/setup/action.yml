@@ -1,8 +1,9 @@
 name: Set up mpv_studio
 description: >-
   Installs Flutter, provides mpv_audio_kit (a checkout of the library when
-  the app's pubspec has a path dependency on it), optionally points its
-  build hook at the libmpv of a libmpv-scripts run, and runs flutter pub get.
+  the app's pubspec has a path dependency on it), points its build hook at
+  the libmpv of a libmpv-scripts run when one is given or the checkout
+  finds one, and runs flutter pub get.
   Expects the app checked out in mpv_studio/ under the workspace.
 inputs:
   flutter-version:
@@ -18,15 +19,20 @@ inputs:
   libmpv-run:
     description: >-
       A libmpv-scripts workflow run whose libmpv-release artifact the build
-      hook should bundle instead of the pinned libmpv release. Empty for the
-      pinned release, and for jobs that never run the hook.
+      hook should bundle instead of the pinned libmpv release. Empty to let
+      a checkout of the library find it (its
+      scripts/ci/resolve_libmpv_run.sh: the Build of the libmpv release it
+      needs while that release is not published, else none), and for a
+      pub.dev dependency or a job that never runs the hook.
     required: false
     default: ''
   token:
     description: >-
       A token with Actions read access on ales-drnz/libmpv-scripts, needed
-      with libmpv-run. The workflow's own GITHUB_TOKEN cannot download
-      another repository's artifacts, even a public one.
+      to find or download a run. The workflow's own GITHUB_TOKEN cannot
+      download another repository's artifacts, even a public one. Jobs
+      that run the build hook pass it; without it (a job that never runs
+      the hook, a pull request from a fork) no run is looked up.
     required: false
     default: ''
 runs:
@@ -75,12 +81,37 @@ runs:
         ref: ${{ inputs.mpv-audio-kit-ref }}
         path: mpv_audio_kit
 
+    # The run to bundle: the one given, else the one the library checkout
+    # finds. A library ref from before resolve_libmpv_run.sh bundles the
+    # pinned release, as when no run is given.
+    - id: run
+      shell: bash
+      env:
+        GIVEN: ${{ inputs.libmpv-run }}
+        CHECKOUT: ${{ steps.dep.outputs.path }}
+        GH_TOKEN: ${{ inputs.token }}
+        RELEASE_TOKEN: ${{ github.token }}
+        REF: ${{ inputs.mpv-audio-kit-ref }}
+      run: |
+        resolve="$GITHUB_WORKSPACE/mpv_audio_kit/scripts/ci/resolve_libmpv_run.sh"
+        if [[ -n "$GIVEN" ]]; then
+          run="$GIVEN"
+        elif [[ "$CHECKOUT" != true || -z "$GH_TOKEN" ]]; then
+          run=""
+        elif [[ ! -f "$resolve" ]]; then
+          echo "::notice::mpv_audio_kit at $REF has no scripts/ci/resolve_libmpv_run.sh: using its pinned libmpv release."
+          run=""
+        else
+          run="$(KIT_ROOT="$GITHUB_WORKSPACE/mpv_audio_kit" bash "$resolve")"
+        fi
+        echo "id=$run" >> "$GITHUB_OUTPUT"
+
     - id: libmpv
-      if: inputs.libmpv-run != ''
+      if: steps.run.outputs.id != ''
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
-        RUN_ID: ${{ inputs.libmpv-run }}
+        RUN_ID: ${{ steps.run.outputs.id }}
         FORK: ${{ github.event.pull_request.head.repo.fork }}
       run: |
         if [[ -z "$GH_TOKEN" ]]; then
@@ -108,7 +139,7 @@ runs:
       with:
         name: libmpv-release
         repository: ales-drnz/libmpv-scripts
-        run-id: ${{ inputs.libmpv-run }}
+        run-id: ${{ steps.run.outputs.id }}
         github-token: ${{ inputs.token }}
         path: ${{ runner.temp }}/libmpv
     # The user define is added here, on the runner, and never committed.
