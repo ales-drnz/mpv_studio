@@ -12,9 +12,11 @@
 <table>
 <tr>
 <td valign="middle" width="90"><img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/assets/mpv_studio.png" width="70" alt="logo"></td>
-<td valign="middle"><b>MPV Studio</b> is the standalone reference client for the <a href="https://pub.dev/packages/mpv_audio_kit"><code>mpv_audio_kit</code></a> engine: a cross-platform audio player with a signal chain rack, real-time visualizers, Jellyfin, Plex and Samba streaming, an engine inspector and a built-in mpv command console. It adapts to every window, from a phone in portrait to an ultrawide desktop, in a dark and a light theme.</td>
+<td valign="middle"><b>MPV Studio</b> is the reference app for the <a href="https://pub.dev/packages/mpv_audio_kit"><code>mpv_audio_kit</code></a> engine: an audio player with an effects rack, live visualizers, Jellyfin, Plex and Samba streaming, an engine inspector and an mpv console. It fits any window, from a phone to an ultrawide desktop, in dark or light.</td>
 </tr>
 </table>
+
+**[Try it in your browser](https://ales-drnz.github.io/mpv_studio/)**: the full app, with libmpv running as WebAssembly. Best in Chrome or Edge.
 
 ---
 
@@ -23,73 +25,33 @@
 | Platform  | Minimum | Architectures |
 | :--- | :--- | :--- |
 | **Android** | 7.0 (SDK 24) | arm64-v8a, armeabi-v7a, x86_64 |
-| **iOS** | 15.0 | arm64, x86_64 |
+| **iOS** | 15.6 | arm64, x86_64 |
 | **macOS** | 12.0 | arm64, x86_64 |
 | **Windows**| 10 | arm64, x86_64 |
 | **Linux** | glibc 2.31 (Ubuntu 20.04, Debian 11) | aarch64, x86_64 |
 | **Web** | Chrome or Edge 137 (WebAssembly) | wasm32 |
 
-A live demo runs on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
+In the browser a few things are not available:
+
+- **Samba**: a web page cannot open an SMB connection.
+- **`http://` addresses**: the HTTPS page blocks them as mixed content (only the machine itself is allowed: `localhost`, `127.0.0.1`, `::1`). Use the server's `https://` address.
+- **Add folder**: pick or drop the files instead.
 
 ---
 
 ## Contents
 
-*   [Guide](#guide)
-    <details>
-    <summary><a href="#1-playback"><b>1. Playback</b></a></summary>
-
-    * [1.1 Now playing](#11-now-playing)
-    * [1.2 Visualizers](#12-visualizers)
-
-    </details>
-
-    <details>
-    <summary><a href="#2-queue"><b>2. Queue</b></a></summary>
-    </details>
-
-    <details>
-    <summary><a href="#3-stream"><b>3. Stream</b></a></summary>
-
-    * [3.1 Lab and chapters](#31-lab-and-chapters)
-    * [3.2 Source resolver](#32-source-resolver)
-    * [3.3 Jellyfin, Plex and Samba](#33-jellyfin-plex-and-samba)
-
-    </details>
-
-    <details>
-    <summary><a href="#4-effects"><b>4. Effects</b></a></summary>
-
-    * [4.1 The signal chain rack](#41-the-signal-chain-rack)
-    * [4.2 Interactive editors](#42-interactive-editors)
-
-    </details>
-
-    <details>
-    <summary><a href="#5-engine"><b>5. Engine</b></a></summary>
-    </details>
-
-    <details>
-    <summary><a href="#6-settings"><b>6. Settings</b></a></summary>
-    </details>
-
-    <details>
-    <summary><a href="#7-console"><b>7. Console</b></a></summary>
-    </details>
-
-    <details>
-    <summary><a href="#8-desktop-and-mobile"><b>8. Desktop and mobile</b></a></summary>
-    </details>
-
-    <details>
-    <summary><a href="#9-building-from-source"><b>9. Building from source</b></a></summary>
-
-    * [9.1 Requirements](#91-requirements)
-    * [9.2 Run](#92-run)
-    * [9.3 Continuous integration](#93-continuous-integration)
-
-    </details>
-*   [Project background](#project-background)
+- [Guide](#guide)
+  - [1. Playback](#1-playback)
+  - [2. Queue](#2-queue)
+  - [3. Stream](#3-stream)
+  - [4. Effects](#4-effects)
+  - [5. Engine](#5-engine)
+  - [6. Settings](#6-settings)
+  - [7. Console](#7-console)
+  - [8. Desktop and mobile](#8-desktop-and-mobile)
+  - [9. Building from source](#9-building-from-source)
+- [Project background](#project-background)
 
 ---
 
@@ -101,16 +63,20 @@ A live demo runs on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/playback.gif" width="100%">
 </p>
 
-The home screen: cover art, metadata and transport bound to mpv_audio_kit's play-pause **intent**, so the controls never flicker while you scrub.
-
+The home screen: cover art, track info and transport controls that stay steady while you scrub.
 
 #### 1.1 Now playing
 
-Cover art, track info, a scrubbable waveform, chapters with their titles, an A-B loop with a repeat count, speed and volume, driven entirely by the engine's reactive streams. Next and previous say so when there is nowhere to go.
+- A scrubbable waveform with chapters and their titles.
+- An A-B loop with a repeat count.
+- Speed and volume.
+- Next and previous tell you when there is nowhere to go.
 
 #### 1.2 Visualizers
 
-Three real-time meters fed by mpv_audio_kit's FFT and PCM streams: a log-spaced **spectrum** curve, a **VU** meter, and a progressive **waveform** seekbar that fills in as network tracks decode.
+- **Spectrum**: a smooth real-time curve.
+- **VU meter**: the live level.
+- **Waveform**: the seekbar, which fills in as a network track decodes.
 
 ---
 
@@ -120,7 +86,10 @@ Three real-time meters fed by mpv_audio_kit's FFT and PCM streams: a log-spaced 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/queue.gif" width="100%">
 </p>
 
-A reorderable queue with gapless transitions. Each row shows the tags as soon as the engine reads them, where the track comes from, and whether it played, was skipped or failed and why. On desktop a details pane sits beside the list, rows have a right-click menu and the keyboard moves and plays the selection; on phones a long press opens the actions and a swipe removes a row.
+A reorderable queue. Each row shows the track's tags and source, and whether it played, was skipped or failed (and why).
+
+- **Desktop**: a details pane beside the list, right-click menus, and the keyboard to move and play the selection.
+- **Phones**: long press for actions, swipe to remove (with undo).
 
 ---
 
@@ -130,28 +99,29 @@ A reorderable queue with gapless transitions. Each row shows the tags as soon as
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/stream.gif" width="100%">
 </p>
 
-Network sources, one tab each.
+Network sources, one tab each: Lab, Chapters, Resolver, Jellyfin, Plex and Samba.
 
 #### 3.1 Lab and chapters
 
-Reference streams in every common codec, and any URL with its own HTTP options: a user agent, custom headers and a chunk size, sent through `Media.httpHeaders` and `Media.httpChunkSize`. The Chapters tab plays streams with embedded chapters.
+**Lab** has reference streams in every common codec, and plays any URL with its own user agent, headers and chunk size (`Media.httpHeaders`, `Media.httpChunkSize`).
+
+**Chapters** plays streams with embedded chapters.
 
 #### 3.2 Source resolver
 
-The Resolver tab shows `setSourceResolver` at work: it plays signed links that expire, and with Simulate expiry the first link fails, so the retry (`isRetry`) gets a fresh one. A live log shows every call. Any resolver plugs in the same way, a YouTube one included:
+The **Resolver** tab shows `setSourceResolver` renewing signed links that expire. Turn on Simulate expiry and the first link fails, so the retry (`isRetry`) fetches a fresh one. A live log shows every call.
+
+Any resolver plugs in the same way, a YouTube one included:
 
 ```dart
-// Entries carry the page URL; the resolver turns it into a direct audio URL
-// right before mpv opens it, and again when that URL has expired.
 final cache = <String, String>{};
 
 await player.setSourceResolver((request) async {
   final page = request.media.extras?['pageUrl'] as String?;
-  if (page == null) return null; // not ours: keep the URL as is
+  if (page == null) return null; // not ours: keep the URL
   if (!request.isRetry && cache[page] != null) return cache[page];
-  // Your extractor of choice: a web API, a script, a library.
-  final direct = await myExtractor.audioUrlFor(page);
-  return cache[page] = direct; // a fresh link on every retry
+  final direct = await myExtractor.audioUrlFor(page); // your extractor
+  return cache[page] = direct;
 });
 
 await player.open(Media('yt:dQw4w9WgXcQ', extras: {
@@ -162,7 +132,8 @@ await player.open(Media('yt:dQw4w9WgXcQ', extras: {
 
 #### 3.3 Jellyfin, Plex and Samba
 
-Sign in to a Jellyfin or Plex server and browse its songs and albums, or walk a Samba share. Plex transcode sessions open through the same source resolver, and playback progress is reported back to the server. The Samba password is kept in the system keychain. Samba is not available in the browser, which cannot open an SMB connection.
+- **Jellyfin** and **Plex**: sign in, then browse and search songs and albums. Playback is reported back to the server.
+- **Samba**: browse a share. The password is kept in the system keychain.
 
 ---
 
@@ -172,15 +143,20 @@ Sign in to a Jellyfin or Plex server and browse its songs and albums, or walk a 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/effects.gif" width="100%">
 </p>
 
-A live signal chain on top of mpv_audio_kit's effects: stages in play order that you add, drag, duplicate, switch off and edit while the music plays.
+A signal chain you edit while the music plays: add, drag, duplicate, switch off and remove stages.
 
 #### 4.1 The signal chain rack
 
-Quick editors for an 18-band equalizer, compressor, bass, treble, sub boost, stereo width, crossfeed, clarity and loudness, the whole lavfi catalog, and raw lavfi stages. A global bypass compares the chain on and off, and the chain is saved in order.
+Quick editors for:
+
+- 18-band equalizer, compressor, bass, treble, sub boost
+- stereo width, crossfeed, clarity, loudness
+
+Beyond those, the whole lavfi catalog and raw lavfi stages. A global bypass compares the chain on and off, and the chain is saved in order.
 
 #### 4.2 Interactive editors
 
-Each stage draws its own live diagram (a compressor curve, a frequency response curve, a crossfeed diagram, a stereo scope, a loudness gauge) with before and after meters fed by per-stage taps, so the picture follows the actual signal.
+Each stage draws its own live view: a compressor curve, a frequency response, a crossfeed diagram, a stereo scope or a loudness gauge. Before and after meters show what the stage does to the signal.
 
 ---
 
@@ -190,7 +166,14 @@ Each stage draws its own live diagram (a compressor curve, a frequency response 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/engine.gif" width="100%">
 </p>
 
-What the engine is doing right now: play request and audio state, the demuxer cache around the playhead, prefetch, the waveform and loudness scans, the decoder and device formats, the effects chain and the library builds.
+What the engine is doing right now:
+
+- playback and audio state
+- the cache around the playhead, and prefetch
+- the waveform and loudness scans
+- decoder and output formats
+- the effects chain
+- the library builds
 
 ---
 
@@ -200,7 +183,14 @@ What the engine is doing right now: play request and audio state, the demuxer ca
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/settings.gif" width="100%">
 </p>
 
-Every setting grouped by purpose: Listening, Output, Network (cache, streaming, proxy, cookies, certificates, user agent) and Advanced. A search finds any setting and jumps to it. Settings the player reads only at startup apply with a Restart player button that keeps the queue and the position. Choices persist across launches.
+| Group | What it holds |
+| :--- | :--- |
+| **Listening** | Playback, volume, normalization, tracks, visuals and theme |
+| **Output** | Device, driver, sample format and buffer |
+| **Network** | Cache, streaming, proxy, cookies, certificates and user agent |
+| **Advanced** | Logging, engine options, restart, reset and about |
+
+A search finds any setting and jumps to it. Settings read only at startup apply with **Restart player**, which keeps the queue and the position. Your choices are saved.
 
 ---
 
@@ -210,7 +200,12 @@ Every setting grouped by purpose: Listening, Output, Network (cache, streaming, 
   <img src="https://raw.githubusercontent.com/ales-drnz/mpv_studio/main/imgs/console.gif" width="100%">
 </p>
 
-A built-in mpv command console with a command catalog, autocomplete, history, mpv's own quoting and the live engine log, captured from boot. Commands that change what plays go through the Player API, so the controls stay in step, and credentials in URLs never show in the log.
+An mpv command console with the live engine log since launch.
+
+- A command catalog with autocomplete and history.
+- mpv's own quoting rules.
+- Commands that change what plays keep the app's controls in step.
+- Credentials in URLs never show in the log.
 
 ---
 
@@ -225,7 +220,13 @@ A built-in mpv command console with a command catalog, autocomplete, history, mp
 </tr>
 </table>
 
-Phones get bottom tabs, sheets, gestures and the Android back button; tablets and phones in landscape get a navigation rail; desktop gets a collapsible sidebar, hover, right-click menus and keyboard shortcuts (press ? or F1 for the list). The theme follows the logo's graphite, ring grey and white, in dark, light or the system's choice. A welcome screen on first launch helps you start.
+| Window | Layout |
+| :--- | :--- |
+| **Phone** | Bottom tabs, sheets, gestures and the Android back button |
+| **Tablet, phone in landscape** | A navigation rail |
+| **Desktop** | A collapsible sidebar, right-click menus and keyboard shortcuts (press **?** or **F1** for the list) |
+
+The theme is dark, light or follows the system. A welcome screen helps you start on first launch.
 
 ---
 
@@ -233,10 +234,9 @@ Phones get bottom tabs, sheets, gestures and the Android back button; tablets an
 
 #### 9.1 Requirements
 
-- **Flutter** 3.47 or newer. Building for iOS needs Flutter 3.47.4 or newer.
-- **Android** SDK 24 (Android 7.0) or newer on the device.
-- **Linux** glibc 2.31 or newer, with ALSA; PipeWire or PulseAudio when installed. Building needs libsecret (`libsecret-1-dev` on Debian and Ubuntu), and saving the Samba password needs a secret service such as GNOME Keyring or KWallet; without one the password is kept for the session only.
-- The native toolchain for your target platform (Xcode for Apple, Android SDK and NDK for Android, the desktop build tools for Linux and Windows).
+- **Flutter** 3.47 or newer (3.47.4 or newer for iOS).
+- The toolchain for your target: Xcode for Apple, the Android SDK and NDK, or the desktop build tools for Linux and Windows.
+- **Linux**: `libsecret-1-dev` to build. At runtime, ALSA, plus PipeWire or PulseAudio when installed. To save the Samba password you need a secret service such as GNOME Keyring or KWallet; without one it is kept for the session only.
 
 #### 9.2 Run
 
@@ -245,13 +245,28 @@ flutter pub get
 flutter run -d macos        # or windows, linux, <android-device>, <ios-device>
 ```
 
-To build a release artifact, use the standard `flutter build <platform>`.
+Build a release with `flutter build <platform>`.
 
-For the browser, run with `flutter run -d chrome --wasm --cross-origin-isolation` and build with `flutter build web --wasm --no-web-resources-cdn`. libmpv runs on threads, so the page must be cross-origin isolated: `web/coi-serviceworker.js` makes it so where the server cannot send the COOP and COEP headers, as on GitHub Pages. While the app depends on `mpv_audio_kit` by path, the library's web module comes from `scripts/update_libmpv.sh`, run in its checkout.
+For the browser:
+
+```bash
+flutter run -d chrome --wasm --cross-origin-isolation
+flutter build web --wasm --no-web-resources-cdn
+```
+
+The page must be cross-origin isolated. Where the server cannot send the COOP and COEP headers, as on GitHub Pages, `web/coi-serviceworker.js` adds them.
+
+While the app depends on `mpv_audio_kit` by path, get the library's web files by running `scripts/update_libmpv.sh <release>` (for example `scripts/update_libmpv.sh r20`) in its checkout.
 
 #### 9.3 Continuous integration
 
-GitHub Actions analyzes the code on the oldest supported Flutter and on the current stable, checks formatting, runs the widget and golden tests, and builds the Linux app and an Android APK on every push to main and every pull request. Pushes to main also build Windows, macOS and iOS. That workflow publishes nothing: each run keeps its Linux, Android, Windows and macOS builds as artifacts for a week. A separate workflow, `pages.yml`, builds the web app, checks with `tool/web_smoke.sh` that it boots in Chromium and publishes it on GitHub Pages.
+GitHub Actions (`ci.yml`) checks and builds the app, and publishes nothing:
+
+- **Every push to main and pull request**: analyze (oldest supported and current stable Flutter), format check, widget and golden tests, Linux and Android builds.
+- **Pushes to main**: also Windows, macOS and iOS builds.
+- The Linux, Android, Windows and macOS builds are kept as run artifacts for a week.
+
+`pages.yml` builds the web app, checks with `tool/web_smoke.sh` that it boots in Chromium, and publishes it on GitHub Pages.
 
 ---
 
