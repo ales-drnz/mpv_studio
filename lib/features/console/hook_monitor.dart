@@ -22,10 +22,10 @@ class HookReport {
 /// reports. One monitor per player, see [of].
 ///
 /// The library keeps one timeout per hook name, shared with the source
-/// resolver, which runs inside `on_load` and `on_load_fail` before the
-/// event reaches the monitor. Those two are registered without a timeout
-/// so the resolver's own (15 s by default) stays in force; the others get
-/// [timeout] as a safety net should a continue get lost.
+/// resolver, which runs inside `on_load`, `on_load_fail` and `on_prefetch`
+/// before the event reaches the monitor. Those three are registered without
+/// a timeout so the resolver's own (15 s by default) stays in force; the
+/// others get [timeout] as a safety net should a continue get lost.
 class HookMonitor {
   HookMonitor._(this._player);
 
@@ -38,7 +38,7 @@ class HookMonitor {
   static const timeout = Duration(seconds: 2);
 
   /// The hooks the source resolver also runs in.
-  static const resolverHooks = {Hook.load, Hook.loadFail};
+  static const resolverHooks = {Hook.load, Hook.loadFail, Hook.prefetch};
 
   final PlayerApi _player;
   StreamSubscription<MpvHookEvent>? _sub;

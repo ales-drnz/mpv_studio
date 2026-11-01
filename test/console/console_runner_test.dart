@@ -235,9 +235,10 @@ void main() {
 
   test('the resolver hooks keep the resolver timeout', () async {
     await run('hooks on');
-    // A short timeout on on_load would cut a slow source resolve short.
+    // A short timeout on one of them would cut a slow source resolve short.
     expect(player.hookTimeouts[Hook.load], isNull);
     expect(player.hookTimeouts[Hook.loadFail], isNull);
+    expect(player.hookTimeouts[Hook.prefetch], isNull);
     expect(player.hookTimeouts[Hook.unload], HookMonitor.timeout);
   });
 
