@@ -4,12 +4,13 @@
 - The app runs in the browser, with libmpv as WebAssembly through `mpv_audio_kit` 0.6.0, and a live demo on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
 - In the browser, picked and dropped files play with their file names as titles, and the OS media controls come from the browser.
 - In the browser, an `http://` server address or stream says the HTTPS page cannot open it, instead of failing as a server that cannot be found.
-- **Open source licenses** in Settings, under About, opens the license page: the texts of the bundled libmpv that `mpv_audio_kit` registers (mpv, FFmpeg and the libraries they link) and those of every Dart package.
+- **Open source licenses** in Settings, under About, opens the license page: the texts of every Dart package, and of the bundled libmpv that `mpv_audio_kit` registers from libmpv-r20 on (mpv, FFmpeg and the libraries they link, each under its own license).
+- A LICENSE (BSD 3-Clause) and a License section in the README; the header of `command_catalog.dart` says its command docs are excerpts of mpv's manual, under the GPL, version 2 or later.
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.6.0`, `dart_jellyfin` to `0.3.1`, `dart_plex` to `0.2.1`, `dart_smb2` to `0.2.3` and `go_router` to `18`. Jellyfin and Plex talk `package:http` instead of Dio.
 - Samba is not available in the browser, which cannot open an SMB connection: its tab says so.
-- The rubberband stage is gone from the rack, as `mpv_audio_kit` 0.6.0 ships an LGPL libmpv without Rubber Band. A saved rack that holds one loads without it; for pitch and tempo, use the player's speed and pitch or the `atempo` and `asetrate` stages.
+- The rubberband stage is gone from the rack, as `mpv_audio_kit` 0.6.0 bundles libmpv-r20, built under the LGPL, version 3 or later, without Rubber Band (GPL). A saved rack that holds one loads without it; for pitch and tempo, use the player's speed and pitch or the `atempo` and `asetrate` stages.
 
 ### Fixed
 - Plex counts the plays the app reports: each report carries the track's length, without which the server ignores it, and none is sent while the length is unknown.

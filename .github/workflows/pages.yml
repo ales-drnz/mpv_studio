@@ -44,10 +44,13 @@ env:
   # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0.
   MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
   # The web module comes from libmpv-r20 on, and r20 is not released yet:
-  # until it is, the Build of libmpv-scripts release/r20 that has it (run
-  # artifacts expire after 90 days). Not vars.LIBMPV_SCRIPTS_RUN, which the
-  # native builds of ci.yml may point at an older libmpv.
-  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run || '41250968768' }}
+  # until it is, a Build of libmpv-scripts with the LGPL default (its
+  # manifest says "license": "LGPL-3.0-or-later") that has it (run artifacts
+  # expire after 90 days), given as the input; the Web module step refuses
+  # another. No run is the default: the Build of release/r20 that was is GPL
+  # with Rubber Band. Not vars.LIBMPV_SCRIPTS_RUN, which the native builds of
+  # ci.yml may point at an older libmpv.
+  LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run }}
 
 defaults:
   run:
@@ -78,6 +81,11 @@ jobs:
           if [[ ! -d "$kit" ]]; then
             echo "mpv_audio_kit comes from pub.dev, with its web module"
           elif [[ -f "$RUNNER_TEMP/libmpv/libmpv_web.zip" ]]; then
+            license=$(jq -r '.license // empty' "$RUNNER_TEMP/libmpv/manifest.json")
+            if [[ "$license" != "LGPL-3.0-or-later" ]]; then
+              echo "::error::the libmpv of run $LIBMPV_SCRIPTS_RUN is ${license:-of no stated license}, not LGPL-3.0-or-later: the demo ships only the LGPL build."
+              exit 1
+            fi
             (cd "$kit" && python3 scripts/web_module.py \
               "$RUNNER_TEMP/libmpv/manifest.json" \
               "$RUNNER_TEMP/libmpv/libmpv_web.zip" web)

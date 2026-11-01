@@ -41,11 +41,13 @@ env:
   # a pub.dev version the ref is ignored.
   MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
   # mpv_audio_kit's build hook downloads libmpv from its pinned GitHub
-  # release (libmpv-r20 for 0.6.0) whenever Flutter builds native assets:
+  # release (libmpvRelease in lib/src/internals/libmpv_release.dart; 0.6.0
+  # is to pin libmpv-r20) whenever Flutter builds native assets:
   # flutter test and flutter build, not flutter pub get or flutter analyze.
   # Until that release exists, set this (the workflow input, else the
-  # repository variable LIBMPV_SCRIPTS_RUN) to the libmpv-scripts run that
-  # built it: the hook then bundles that run's libmpv-release artifact
+  # repository variable LIBMPV_SCRIPTS_RUN) to a libmpv-scripts run of the
+  # LGPL build (its manifest says "license": "LGPL-3.0-or-later"): the hook
+  # then bundles that run's libmpv-release artifact
   # through the `libmpv` user define, added to pubspec.yaml on the runner.
   # Downloading another repository's artifacts needs the secret
   # LIBMPV_SCRIPTS_TOKEN, a token with Actions read access on

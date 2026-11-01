@@ -740,7 +740,7 @@ abstract final class SettingsCatalog {
     SettingsSections.about,
     'Open source licenses',
     'The licenses of libmpv, mpv, FFmpeg and the libraries they link, '
-        'and of every Dart package',
+        'and of the Dart packages',
     keywords: [
       'license',
       'licence',

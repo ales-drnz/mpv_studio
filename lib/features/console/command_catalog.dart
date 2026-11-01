@@ -1,6 +1,12 @@
 // Copyright © 2026 & onwards, Alessandro Di Ronza <ales.drnz@gmail.com>.
 // All rights reserved.
 //
+// The one-line docs and the argument signatures are excerpts of mpv's
+// manual, DOCS/man/input.rst (Copyright the mpv developers), which mpv's
+// Copyright file lists as GPLv2+: that text keeps mpv's license, the GPL,
+// version 2 or later. The rest of the file is by Alessandro Di Ronza, under
+// the BSD 3-Clause license (LICENSE).
+//
 // AUTO-GENERATED from mpv's DOCS/man/input.rst (command reference) and the
 // mp_cmds[] table in player/command.c. Do not edit by hand, with one
 // exception: the generator is not in this repository, so four docs were

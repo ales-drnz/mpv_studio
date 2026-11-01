@@ -11,4 +11,4 @@ PRODUCT_NAME = MPV Studio
 PRODUCT_BUNDLE_IDENTIFIER = studio.mpv.mpvStudio
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 studio.mpv. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Alessandro Di Ronza.

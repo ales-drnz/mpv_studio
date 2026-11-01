@@ -51,6 +51,7 @@ In the browser a few things are not available:
   - [7. Console](#7-console)
   - [8. Desktop and mobile](#8-desktop-and-mobile)
   - [9. Building from source](#9-building-from-source)
+- [License](#license)
 - [Project background](#project-background)
 
 ---
@@ -192,7 +193,7 @@ What the engine is doing right now:
 
 A search finds any setting and jumps to it. Settings read only at startup apply with **Restart player**, which keeps the queue and the position. Your choices are saved.
 
-**Open source licenses**, under About, opens Flutter's license page: the license texts of the bundled libmpv (mpv, FFmpeg and the libraries they link, LGPL, version 3 or later), which mpv_audio_kit registers, and those of every Dart package.
+**Open source licenses**, under About, opens Flutter's license page: the license texts of every Dart package and, from libmpv-r20 on, those of the bundled libmpv, which `mpv_audio_kit` registers: mpv, FFmpeg and the libraries they link, each under its own license. libmpv as built by [libmpv-scripts](https://github.com/ales-drnz/libmpv-scripts) is LGPL, version 3 or later; the `README.txt` of its release's `licenses.zip` names the sources it was built from. The app also bundles libsmb2 (LGPL, version 2.1 or later) through `dart_smb2` on Android, iOS, macOS, Windows and Linux, whose texts the page does not list yet.
 
 ---
 
@@ -269,6 +270,12 @@ GitHub Actions (`ci.yml`) checks and builds the app, and publishes nothing:
 - The Linux, Android, Windows and macOS builds are kept as run artifacts for a week.
 
 `pages.yml` builds the web app, checks with `tool/web_smoke.sh` that it boots in Chromium, and publishes it on GitHub Pages.
+
+---
+
+## License
+
+The code of MPV Studio is BSD-3-Clause ([LICENSE](LICENSE)), except the command docs of `lib/features/console/command_catalog.dart`, which are excerpts of mpv's manual (GPL, version 2 or later). The app bundles libmpv through `mpv_audio_kit` (LGPL, version 3 or later, from libmpv-r20 on) and libsmb2 through `dart_smb2` (LGPL, version 2.1 or later), each under its own license.
 
 ---
 
