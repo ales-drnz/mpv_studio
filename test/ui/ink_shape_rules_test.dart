@@ -129,7 +129,7 @@ void main() {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details, palette: palette);
       // A selected row, a hovered failed row, the playing row.
-      await tester.tap(find.text('Peace Piece'));
+      await tester.tap(find.text('Kveld'));
       await tester.pumpAndSettle();
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: tester.getCenter(find.text('Failed')));
@@ -208,7 +208,7 @@ void main() {
     testWidgets('$theme a row menu', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details, palette: palette);
-      await tester.tap(find.text('Peace Piece'), buttons: kSecondaryButton);
+      await tester.tap(find.text('Kveld'), buttons: kSecondaryButton);
       await tester.pumpAndSettle();
       expectInkFollowsShapes(tester);
     });

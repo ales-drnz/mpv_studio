@@ -307,7 +307,8 @@ abstract class MediaServer {
 /// or albums whose title matches, plus those of the artists and albums whose
 /// name matches) merged into one list and paged locally. Neither Jellyfin's
 /// `searchTerm` nor Plex's title filter looks past the item's own name, so
-/// "Coldplay" alone finds no Coldplay song; the extra queries fill that in.
+/// an artist's name alone finds none of that artist's songs; the extra
+/// queries fill that in.
 ///
 /// The merged list keeps the order of the groups [load] returns, drops
 /// repeats by [idOf] and stops at [maxResults]. Page 0 always runs the

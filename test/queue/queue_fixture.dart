@@ -11,15 +11,15 @@ import '../support/layout_harness.dart';
 import 'queue_fake.dart';
 
 const localSong = Media(
-  '/music/Bill Evans/Peace Piece.flac',
-  extras: {'title': 'Peace Piece'},
+  '/music/Halvorsen Trio/Kveld.flac',
+  extras: {'title': 'Kveld'},
 );
-const webSong = Media('https://music.example.test/kind-of-blue/so-what.mp3');
+const webSong = Media('https://music.example.test/night-ferry/departures.mp3');
 const serverSong = Media(
   'https://jf.example.test/Audio/42/stream?api_key=secret',
   extras: {
-    'title': 'Blue in Green',
-    'artist': 'Bill Evans Trio',
+    'title': 'Paper Lanterns',
+    'artist': 'Halvorsen Trio',
     'server': 'jellyfin',
     'durationMs': 337000,
   },
@@ -49,9 +49,9 @@ Future<(QueueFakePlayer, QueueDetails)> threeEntries(
     (s) => s.copyWith(
       playlist: const Playlist([localSong, webSong, serverSong], index: 1),
       metadata: const {
-        'title': 'So What',
-        'artist': 'Miles Davis',
-        'album': 'Kind of Blue',
+        'title': 'Departures',
+        'artist': 'Juniper Avenue',
+        'album': 'Night Ferry',
       },
       duration: const Duration(minutes: 9, seconds: 22),
     ),

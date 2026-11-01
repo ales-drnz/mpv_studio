@@ -48,11 +48,11 @@ void main() {
         size: const Size(412, 915),
         input: InputMode.touch,
       );
-      expect(find.text('Peace Piece'), findsOneWidget);
+      expect(find.text('Kveld'), findsOneWidget);
       expect(find.text('Local file'), findsOneWidget);
       // The current row: tags, artist and source.
-      expect(find.text('So What'), findsOneWidget);
-      expect(find.text('Miles Davis · Web stream'), findsOneWidget);
+      expect(find.text('Departures'), findsOneWidget);
+      expect(find.text('Juniper Avenue · Web stream'), findsOneWidget);
       // The failed row: a red dot and a dim label; the reason is the
       // label's tooltip (and the details'), not a second line of red.
       expect(find.text('Failed'), findsOneWidget);
@@ -70,7 +70,7 @@ void main() {
     ) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Peace Piece'), buttons: kSecondaryButton);
+      await tester.tap(find.text('Kveld'), buttons: kSecondaryButton);
       await tester.pumpAndSettle();
       expect(find.text('Play next'), findsOneWidget);
       expect(find.byType(BottomSheet), findsNothing);
@@ -90,7 +90,7 @@ void main() {
         size: const Size(412, 915),
         input: InputMode.touch,
       );
-      await tester.longPress(find.text('Peace Piece'));
+      await tester.longPress(find.text('Kveld'));
       await tester.pumpAndSettle();
       expect(find.byType(BottomSheet), findsOneWidget);
       await tester.tap(find.text('Move to bottom'));
@@ -102,7 +102,7 @@ void main() {
     testWidgets('keyboard selects, plays and removes', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Peace Piece'));
+      await tester.tap(find.text('Kveld'));
       await tester.pumpAndSettle();
       // One click selects (and shows the details beside the list).
       expect(player.calls, isNot(contains('jump 0')));
@@ -123,9 +123,9 @@ void main() {
     testWidgets('a double click plays', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Peace Piece'));
+      await tester.tap(find.text('Kveld'));
       await tester.pump(const Duration(milliseconds: 50));
-      await tester.tap(find.text('Peace Piece').first);
+      await tester.tap(find.text('Kveld').first);
       await tester.pumpAndSettle();
       expect(player.calls.last, 'jump 0');
     });
@@ -141,14 +141,14 @@ void main() {
         size: const Size(412, 915),
         input: InputMode.touch,
       );
-      await tester.tap(find.text('Peace Piece'));
+      await tester.tap(find.text('Kveld'));
       await tester.pumpAndSettle();
       expect(player.calls.last, 'jump 0');
 
-      await tester.drag(find.text('Blue in Green'), const Offset(-400, 0));
+      await tester.drag(find.text('Paper Lanterns'), const Offset(-400, 0));
       await tester.pumpAndSettle();
       expect(player.calls.last, 'remove 2');
-      expect(find.text('Removed "Blue in Green"'), findsOneWidget);
+      expect(find.text('Removed "Paper Lanterns"'), findsOneWidget);
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
       expect(player.items.last, serverSong);
@@ -182,7 +182,7 @@ void main() {
         size: const Size(412, 915),
         input: InputMode.touch,
       );
-      await tester.longPress(find.text('Blue in Green'));
+      await tester.longPress(find.text('Paper Lanterns'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Show info'));
       await tester.pumpAndSettle();
@@ -214,7 +214,7 @@ void main() {
     testWidgets('through a move made elsewhere', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Peace Piece').first);
+      await tester.tap(find.text('Kveld').first);
       await tester.pump(const Duration(milliseconds: 400));
       // The Console (or a shuffle) moves it to the end.
       await player.move(0, 3);
@@ -228,7 +228,7 @@ void main() {
     testWidgets('through a removal above it', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Blue in Green').first);
+      await tester.tap(find.text('Paper Lanterns').first);
       await tester.pump(const Duration(milliseconds: 400));
       await player.remove(0);
       await tester.pumpAndSettle();
@@ -241,13 +241,13 @@ void main() {
     testWidgets('to the next entry when it is removed', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
-      await tester.tap(find.text('Peace Piece').first);
+      await tester.tap(find.text('Kveld').first);
       await tester.pump(const Duration(milliseconds: 400));
       await tester.sendKeyEvent(LogicalKeyboardKey.delete);
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
-      // So What is now first and selected.
+      // The next track is now first and selected.
       expect(player.calls.last, 'jump 0');
     });
   });
@@ -261,7 +261,7 @@ void main() {
       size: const Size(412, 915),
       input: InputMode.touch,
     );
-    await tester.longPress(find.text('Blue in Green'));
+    await tester.longPress(find.text('Paper Lanterns'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Show info'));
     await tester.pumpAndSettle();
@@ -286,12 +286,12 @@ void main() {
       size: const Size(412, 915),
       input: InputMode.touch,
     );
-    final row = find.bySemanticsLabel(RegExp('^Track 1, Peace Piece'));
+    final row = find.bySemanticsLabel(RegExp('^Track 1, Kveld'));
     expect(
       tester.getSemantics(row),
       isSemantics(isButton: true, hasTapAction: true, hasLongPressAction: true),
     );
-    final node = find.semantics.byLabel(RegExp('^Track 1, Peace Piece'));
+    final node = find.semantics.byLabel(RegExp('^Track 1, Kveld'));
     tester.semantics.tap(node);
     await tester.pumpAndSettle();
     expect(player.calls.last, 'jump 0');

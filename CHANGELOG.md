@@ -68,7 +68,7 @@
 ### Changed
 - Updated `mpv_audio_kit` to version `0.5.0`.
 - The window title and the launcher read MPV Studio, and the logo is the app icon on every platform.
-- The YouTube tab is removed. The Resolver tab shows how any resolver, a YouTube one included, plugs into the library.
+- The YouTube tab is removed. The Resolver tab shows how any resolver plugs into the library.
 - The Samba password is kept in the system keychain. A password saved by an older version moves there on first launch.
 - Console commands that change what plays, such as `loadfile` and `pause`, go through the Player API, so the play button stays right.
 - The Console reads quotes, escapes and comments like mpv, and expands `${property}` in `print-text` and `show-text`.

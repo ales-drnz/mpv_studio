@@ -16,7 +16,7 @@ import 'waveform_painter.dart';
 import 'waveform_pan.dart';
 import 'waveform_viewport.dart';
 
-/// A Reaper-style tape meter: a time ruler on top, the track's envelope
+/// A tape-style meter: a time ruler on top, the track's envelope
 /// below with the chapter starts and the A-B loop marked, and a scrollbar
 /// at the bottom. It starts on the whole track; once zoomed in, the
 /// playhead moves through the view and the view itself moves only when the

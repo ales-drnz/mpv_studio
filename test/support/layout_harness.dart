@@ -191,7 +191,7 @@ FakePlayer demoPlayer() => FakePlayer(
     playlist: Playlist([
       Media(
         'https://example.test/one.flac',
-        extras: {'title': 'Blue in Green', 'artist': 'Bill Evans Trio'},
+        extras: {'title': 'Paper Lanterns', 'artist': 'Halvorsen Trio'},
       ),
     ]),
     duration: Duration(minutes: 5, seconds: 37),

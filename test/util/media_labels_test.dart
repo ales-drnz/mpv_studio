@@ -12,8 +12,8 @@ void main() {
 
     test('a URL gives its last decoded path segment', () {
       expect(
-        nameFromUri('https://example.com/radio/Jazz%20FM.mp3?token=abc'),
-        'Jazz FM.mp3',
+        nameFromUri('https://example.com/radio/Night%20Radio.mp3?token=abc'),
+        'Night Radio.mp3',
       );
       expect(nameFromUri('https://example.com/live/'), 'live');
     });

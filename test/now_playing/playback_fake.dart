@@ -160,8 +160,8 @@ PlaybackFake playingTrack() {
         Media(
           'https://example.test/one.flac',
           extras: {
-            'title': 'Blue in Green',
-            'artist': 'Bill Evans Trio',
+            'title': 'Paper Lanterns',
+            'artist': 'Halvorsen Trio',
             'album': 'Portrait in Jazz',
           },
         ),

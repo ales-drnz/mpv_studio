@@ -34,26 +34,26 @@ Map<String, dynamic> _query(Uri url) => {
     e.key: e.value.length == 1 ? e.value.single : e.value,
 };
 
-// A tiny Jellyfin library: Coldplay has two songs on one album, neither
-// with "Coldplay" in its title; "Yellow Submarine" is by someone else.
+// A tiny Jellyfin library: Lantern Coast has two songs on one album,
+// neither with "Lantern Coast" in its title; "Amber Road" is by someone else.
 const _songs = [
   {
     'Id': 's1',
-    'Name': 'Yellow',
-    'Artists': ['Coldplay'],
-    'Album': 'Parachutes',
+    'Name': 'Amber',
+    'Artists': ['Lantern Coast'],
+    'Album': 'Harbour Lights',
   },
   {
     'Id': 's2',
-    'Name': 'Trouble',
-    'Artists': ['Coldplay'],
-    'Album': 'Parachutes',
+    'Name': 'Low Tide',
+    'Artists': ['Lantern Coast'],
+    'Album': 'Harbour Lights',
   },
   {
     'Id': 's3',
-    'Name': 'Yellow Submarine',
-    'Artists': ['The Beatles'],
-    'Album': 'Revolver',
+    'Name': 'Amber Road',
+    'Artists': ['The Weavers'],
+    'Album': 'Loom',
   },
 ];
 
@@ -71,16 +71,16 @@ Object? _jellyfin(String path, Map<String, dynamic> q) {
   final term = (q['searchTerm'] as String?)?.toLowerCase();
   if (path.endsWith('/Artists')) {
     return _jfPage([
-      if (term != null && 'coldplay'.contains(term))
-        {'Id': 'a1', 'Name': 'Coldplay', 'Type': 'MusicArtist'},
+      if (term != null && 'lantern coast'.contains(term))
+        {'Id': 'a1', 'Name': 'Lantern Coast', 'Type': 'MusicArtist'},
     ]);
   }
   if (!path.endsWith('/Items')) return null;
   final types = _list(q['includeItemTypes']);
   if (types.contains('MusicAlbum')) {
     final albums = [
-      {'Id': 'al1', 'Name': 'Parachutes', 'AlbumArtist': 'Coldplay'},
-      {'Id': 'al2', 'Name': 'Revolver', 'AlbumArtist': 'The Beatles'},
+      {'Id': 'al1', 'Name': 'Harbour Lights', 'AlbumArtist': 'Lantern Coast'},
+      {'Id': 'al2', 'Name': 'Loom', 'AlbumArtist': 'The Weavers'},
     ];
     if (_list(q['artistIds']).contains('a1')) return _jfPage([albums[0]]);
     return _jfPage([
@@ -94,12 +94,12 @@ Object? _jellyfin(String path, Map<String, dynamic> q) {
     for (final s in _songs)
       if (artistIds.isNotEmpty)
         if (artistIds.contains('a1') &&
-            (s['Artists'] as List).contains('Coldplay'))
+            (s['Artists'] as List).contains('Lantern Coast'))
           s
         else
           ...[]
       else if (albumIds.isNotEmpty)
-        if (albumIds.contains('al2') && s['Album'] == 'Revolver') s else ...[]
+        if (albumIds.contains('al2') && s['Album'] == 'Loom') s else ...[]
       else if (term == null ||
           (s['Name'] as String).toLowerCase().contains(term))
         s,
@@ -134,37 +134,37 @@ const _plexTracks = [
   {
     'ratingKey': '11',
     'type': 'track',
-    'title': 'Yellow',
-    'grandparentTitle': 'Coldplay',
-    'parentTitle': 'Parachutes',
+    'title': 'Amber',
+    'grandparentTitle': 'Lantern Coast',
+    'parentTitle': 'Harbour Lights',
   },
   {
     'ratingKey': '12',
     'type': 'track',
-    'title': 'Trouble',
-    'grandparentTitle': 'Coldplay',
-    'parentTitle': 'Parachutes',
+    'title': 'Low Tide',
+    'grandparentTitle': 'Lantern Coast',
+    'parentTitle': 'Harbour Lights',
   },
   {
     'ratingKey': '13',
     'type': 'track',
-    'title': 'Yellow Submarine',
-    'grandparentTitle': 'The Beatles',
-    'parentTitle': 'Revolver',
+    'title': 'Amber Road',
+    'grandparentTitle': 'The Weavers',
+    'parentTitle': 'Loom',
   },
 ];
 const _plexAlbums = [
   {
     'ratingKey': '21',
     'type': 'album',
-    'title': 'Parachutes',
-    'parentTitle': 'Coldplay',
+    'title': 'Harbour Lights',
+    'parentTitle': 'Lantern Coast',
   },
   {
     'ratingKey': '22',
     'type': 'album',
-    'title': 'Revolver',
-    'parentTitle': 'The Beatles',
+    'title': 'Loom',
+    'parentTitle': 'The Weavers',
   },
 ];
 
@@ -182,7 +182,7 @@ Object? _plex(String path, Map<String, dynamic> q) {
   final title = (q['title'] as String?)?.toLowerCase() ?? '';
   final pool = switch ('${q['type']}') {
     '8' => [
-      {'ratingKey': '1', 'type': 'artist', 'title': 'Coldplay'},
+      {'ratingKey': '1', 'type': 'artist', 'title': 'Lantern Coast'},
     ],
     '9' => _plexAlbums,
     _ => _plexTracks,
@@ -221,26 +221,26 @@ void main() {
       final page = await server.fetchTracks(
         startIndex: 0,
         pageSize: 50,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
-      expect(_titles(page), ['Yellow', 'Trouble']);
+      expect(_titles(page), ['Amber', 'Low Tide']);
       expect(page.total, 2);
     });
 
     test('title matches and album matches both count', () async {
       final server = _jellyfinServer(_Fake(_jellyfin));
-      final yellow = await server.fetchTracks(
+      final amber = await server.fetchTracks(
         startIndex: 0,
         pageSize: 50,
-        query: 'yellow',
+        query: 'amber',
       );
-      expect(_titles(yellow), ['Yellow', 'Yellow Submarine']);
-      final revolver = await server.fetchTracks(
+      expect(_titles(amber), ['Amber', 'Amber Road']);
+      final loom = await server.fetchTracks(
         startIndex: 0,
         pageSize: 50,
-        query: 'revolver',
+        query: 'loom',
       );
-      expect(_titles(revolver), ['Yellow Submarine']);
+      expect(_titles(loom), ['Amber Road']);
     });
 
     test('an artist name finds that artist\'s albums', () async {
@@ -248,9 +248,9 @@ void main() {
       final page = await server.fetchAlbums(
         startIndex: 0,
         pageSize: 50,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
-      expect([for (final a in page.items) a.title], ['Parachutes']);
+      expect([for (final a in page.items) a.title], ['Harbour Lights']);
     });
 
     test('later pages of a search read the merged list', () async {
@@ -259,16 +259,16 @@ void main() {
       final first = await server.fetchTracks(
         startIndex: 0,
         pageSize: 1,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
       final calls = fake.requests.length;
       final second = await server.fetchTracks(
         startIndex: 1,
         pageSize: 1,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
-      expect(_titles(first), ['Yellow']);
-      expect(_titles(second), ['Trouble']);
+      expect(_titles(first), ['Amber']);
+      expect(_titles(second), ['Low Tide']);
       expect(second.total, 2);
       expect(fake.requests.length, calls, reason: 'no new server query');
     });
@@ -290,9 +290,9 @@ void main() {
       final page = await server.fetchTracks(
         startIndex: 0,
         pageSize: 50,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
-      expect(_titles(page), ['Yellow', 'Trouble']);
+      expect(_titles(page), ['Amber', 'Low Tide']);
     });
 
     test('an album name finds its songs after the title matches', () async {
@@ -301,9 +301,9 @@ void main() {
       final page = await server.fetchTracks(
         startIndex: 0,
         pageSize: 50,
-        query: 'revolver',
+        query: 'loom',
       );
-      expect(_titles(page), ['Yellow Submarine']);
+      expect(_titles(page), ['Amber Road']);
     });
 
     test('an artist name finds that artist\'s albums', () async {
@@ -312,9 +312,9 @@ void main() {
       final page = await server.fetchAlbums(
         startIndex: 0,
         pageSize: 50,
-        query: 'Coldplay',
+        query: 'Lantern Coast',
       );
-      expect([for (final a in page.items) a.title], ['Parachutes']);
+      expect([for (final a in page.items) a.title], ['Harbour Lights']);
     });
   });
 

@@ -294,14 +294,14 @@ void main() {
           ServerTrack(
             id: '$i',
             title: 'Track $i',
-            artist: 'Miles Davis',
-            album: 'Kind of Blue',
+            artist: 'Juniper Avenue',
+            album: 'Night Ferry',
             duration: const Duration(minutes: 5),
           ),
       ];
       final albums = [
         for (var i = 0; i < 30; i++)
-          ServerAlbum(id: '$i', title: 'Album $i', artist: 'Bill Evans'),
+          ServerAlbum(id: '$i', title: 'Album $i', artist: 'Halvorsen Trio'),
       ];
 
       Future<void> stream(WidgetTester tester, Widget view) =>

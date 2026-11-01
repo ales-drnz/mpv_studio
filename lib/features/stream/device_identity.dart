@@ -21,7 +21,7 @@ abstract final class DeviceIdentity {
   static const _kDeviceIdPref = 'media.deviceId';
 
   /// Human-readable device name shown in the servers' "Now Playing" (for
-  /// example "Alex's MacBook Pro"). The app name until [resolve] runs.
+  /// example "Living-room Mac"). The app name until [resolve] runs.
   static String get deviceName => _deviceName;
   static String _deviceName = product;
 

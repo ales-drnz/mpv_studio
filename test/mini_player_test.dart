@@ -14,7 +14,7 @@ import 'support/fake_player.dart';
 const _queue = Playlist([
   Media(
     'https://example.test/one.flac',
-    extras: {'title': 'Blue Train', 'artist': 'John Coltrane'},
+    extras: {'title': 'Glasshouse', 'artist': 'Mira Okafor'},
   ),
   Media('https://example.test/two.flac'),
 ]);
@@ -60,8 +60,8 @@ void main() {
 
   testWidgets('shows the current track from the queue extras', (tester) async {
     await _pump(tester, MiniPlayer(player: player));
-    expect(find.text('Blue Train'), findsOneWidget);
-    expect(find.text('John Coltrane'), findsOneWidget);
+    expect(find.text('Glasshouse'), findsOneWidget);
+    expect(find.text('Mira Okafor'), findsOneWidget);
   });
 
   testWidgets('play and pause follow playWhenReady', (tester) async {
@@ -156,7 +156,7 @@ void main() {
   testWidgets('the cover and title open Playback on tap', (tester) async {
     var opened = 0;
     await _pump(tester, MiniPlayer(player: player, onOpen: () => opened++));
-    await tester.tap(find.text('Blue Train'));
+    await tester.tap(find.text('Glasshouse'));
     expect(opened, 1);
     expect(find.byTooltip('Open Playback'), findsOneWidget);
   });

@@ -134,7 +134,7 @@ class _ResolverControlsState extends State<_ResolverControls> {
               'A source resolver runs right before each stream opens, and '
               'once more after a failed open with isRetry set, so an expired '
               'link can be renewed. Any resolver plugs into setSourceResolver '
-              'the same way, a YouTube one included. This one signs links on '
+              'the same way. This one signs links on '
               'the device; the app chains it after the Plex resolver.',
               style: Tokens.body.copyWith(color: Tokens.fgDim),
             ),

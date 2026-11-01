@@ -5,7 +5,7 @@ import '../../ui/tokens.dart';
 import 'completion_engine.dart';
 
 /// The autocomplete popup: a flat list of [Suggestion]s that sits just
-/// above the console input and grows upward, Minecraft-style: a tonal
+/// above the console input and grows upward: a tonal
 /// panel of pill rows, the selected one in the secondary selection fill.
 /// The typed match is bold.
 ///

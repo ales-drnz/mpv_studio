@@ -5,7 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/queue/queue_details.dart';
 import 'package:mpv_studio/util/media_labels.dart';
 
-const _url = Media('https://radio.example.com/live/Jazz%20FM.mp3');
+const _url = Media('https://radio.example.com/live/Night%20Radio.mp3');
 const _song = Media('/music/a.flac', extras: {'title': 'From extras'});
 const _server = Media(
   'plex-transcode://mpv-1',
@@ -69,7 +69,7 @@ void main() {
 
   test('before loading, a URL is named after its last path segment', () {
     final row = h.row(_url);
-    expect(row.title, 'Jazz FM.mp3');
+    expect(row.title, 'Night Radio.mp3');
     expect(row.artist, isNull);
     expect(row.origin, MediaOrigin.http);
     expect(row.duration, isNull);
@@ -97,15 +97,15 @@ void main() {
 
   test('the media title names a stream without tags', () async {
     await h.play([_song, _url], 1);
-    h.mediaTitle = 'Jazz FM.mp3'; // mpv's file name fallback: ignored
+    h.mediaTitle = 'Night Radio.mp3'; // mpv's file name fallback: ignored
     await h.load();
-    expect(h.row(_url).title, 'Jazz FM.mp3');
+    expect(h.row(_url).title, 'Night Radio.mp3');
 
     // A radio stream announcing its song.
-    h.mediaTitle = 'Miles Davis, So What';
+    h.mediaTitle = 'Juniper Avenue, Departures';
     h.metadataChanged.add(null);
     await pumpEventQueue();
-    expect(h.row(_url).title, 'Miles Davis, So What');
+    expect(h.row(_url).title, 'Juniper Avenue, Departures');
   });
 
   test('state left over from the previous track is not recorded', () async {
@@ -142,22 +142,22 @@ void main() {
 
     test('the same HTTP source reads "Web stream" on every row', () async {
       await h.play([placeholder, bare], 0);
-      h.metadata = {'title': 'So What', 'artist': 'Miles Davis'};
+      h.metadata = {'title': 'Departures', 'artist': 'Juniper Avenue'};
       await h.load();
       expect(h.row(placeholder).origin.label, 'Web stream');
       expect(h.row(bare).origin.label, 'Web stream');
-      expect(h.row(placeholder).subtitle, 'Miles Davis · Web stream');
+      expect(h.row(placeholder).subtitle, 'Juniper Avenue · Web stream');
       expect(h.row(bare).subtitle, 'Web stream');
     });
 
     test('the tagged artist wins over the extras on the current row', () async {
       // The current row showed the placeholder, the mini-player the tag.
       await h.play([placeholder, bare], 0);
-      h.metadata = {'ARTIST': 'Miles Davis', 'Album': 'Kind of Blue'};
+      h.metadata = {'ARTIST': 'Juniper Avenue', 'Album': 'Night Ferry'};
       await h.load();
       final row = h.row(placeholder);
-      expect(row.artist, 'Miles Davis');
-      expect(row.album, 'Kind of Blue');
+      expect(row.artist, 'Juniper Avenue');
+      expect(row.album, 'Night Ferry');
     });
 
     test('tags show on the row as soon as they change', () async {

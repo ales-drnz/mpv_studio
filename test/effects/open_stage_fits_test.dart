@@ -11,7 +11,7 @@ import '../support/fake_engine.dart';
 import '../support/layout_harness.dart';
 import 'rack_harness.dart';
 
-/// Defect 3: with a stage open, its main control (the first slider, the
+/// With a stage open, its main control (the first slider, the
 /// first parameter of a generic stage, the equalizer curve) is fully on
 /// screen without scrolling, in low desktop windows, phones in landscape
 /// and every size of the responsive contract.

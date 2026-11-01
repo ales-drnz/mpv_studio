@@ -42,7 +42,7 @@ FakePlayer _playing() =>
             Media('https://example.test/music/one.flac'),
             Media(
               'https://example.test/music/two.flac',
-              extras: {'title': 'Peace Piece'},
+              extras: {'title': 'Kveld'},
             ),
           ]),
           audioOutputState: AudioOutputState.active,

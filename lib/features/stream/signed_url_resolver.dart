@@ -53,7 +53,7 @@ class ResolveLogEntry {
 /// played through a signed URL: the real URL plus `exp` (a Unix time) and
 /// `sig` query parameters, renewed whenever the player asks again after a
 /// failed open (`isRetry`). That is the shape of a CDN or token URL a real
-/// service hands out; any such resolver, a YouTube one included, plugs into
+/// service hands out; any such resolver plugs into
 /// `Player.setSourceResolver` the same way.
 ///
 /// Test servers ignore the query string, so a merely expired signature would

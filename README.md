@@ -112,7 +112,7 @@ Network sources, one tab each: Lab, Chapters, Resolver, Jellyfin, Plex and Samba
 
 The **Resolver** tab shows `setSourceResolver` renewing signed links that expire. Turn on Simulate expiry and the first link fails, so the retry (`isRetry`) fetches a fresh one. A live log shows every call.
 
-Any resolver plugs in the same way, a YouTube one included:
+Any resolver plugs in the same way, for example one that finds the audio behind a web page:
 
 ```dart
 final cache = <String, String>{};
@@ -125,9 +125,9 @@ await player.setSourceResolver((request) async {
   return cache[page] = direct;
 });
 
-await player.open(Media('yt:dQw4w9WgXcQ', extras: {
-  'pageUrl': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  'title': 'My video',
+await player.open(Media('page:track-42', extras: {
+  'pageUrl': 'https://media.example/watch/track-42',
+  'title': 'My track',
 }));
 ```
 
@@ -270,6 +270,8 @@ GitHub Actions analyzes the code on the oldest supported Flutter and on the curr
 ## License
 
 The code of MPV Studio is BSD-3-Clause ([LICENSE](LICENSE)). The app bundles libmpv through `mpv_audio_kit` (LGPL, version 3 or later, from libmpv-r20 on) and libsmb2 through `dart_smb2` (LGPL, version 2.1 or later), each under its own license.
+
+`web/coi-serviceworker.js` is coi-serviceworker v0.1.7 by Guido Zuidhof and contributors, under the MIT license (see [web/coi-serviceworker.LICENSE](web/coi-serviceworker.LICENSE)).
 
 ---
 

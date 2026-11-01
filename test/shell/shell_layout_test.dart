@@ -47,7 +47,7 @@ void main() {
               playlist: Playlist([
                 Media(
                   'https://example.test/long.flac',
-                  extras: {'title': 'A Love Supreme', 'artist': 'Coltrane'},
+                  extras: {'title': 'Orchard Light', 'artist': 'Mira Okafor'},
                 ),
               ]),
               duration: Duration(hours: 1, minutes: 12, seconds: 40),

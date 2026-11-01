@@ -13,7 +13,7 @@ import '../support/layout_harness.dart';
 Widget _page(Section section) => section == Section.queue
     ? Center(
         child: StudioMenuRegion<int>(
-          title: 'Blue in Green',
+          title: 'Paper Lanterns',
           items: () => const [
             StudioMenuItem(value: 1, label: 'Play next'),
             StudioMenuItem(value: 2, label: 'Remove', destructive: true),

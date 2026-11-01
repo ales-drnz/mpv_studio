@@ -277,7 +277,7 @@ void main() {
       });
       addTearDown(failed.dispose);
       await _pumpPage(tester, player, failed: failed);
-      expect(find.text('Could not play "Blue in Green".'), findsOneWidget);
+      expect(find.text('Could not play "Paper Lanterns".'), findsOneWidget);
       await tester.tap(find.text('Retry'));
       expect(player.calls, ['jump 0']);
 

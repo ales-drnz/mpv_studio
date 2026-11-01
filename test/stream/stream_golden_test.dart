@@ -52,24 +52,24 @@ SignedUrlResolver _resolverWithLog() {
 const _tracks = [
   ServerTrack(
     id: '1',
-    title: 'So What',
-    artist: 'Miles Davis',
-    album: 'Kind of Blue',
+    title: 'Departures',
+    artist: 'Juniper Avenue',
+    album: 'Night Ferry',
     duration: Duration(minutes: 9, seconds: 22),
   ),
   ServerTrack(
     id: '2',
-    title: 'Blue in Green',
-    artist: 'Miles Davis',
-    album: 'Kind of Blue',
+    title: 'Paper Lanterns',
+    artist: 'Juniper Avenue',
+    album: 'Night Ferry',
     duration: Duration(minutes: 5, seconds: 37),
     isFavorite: true,
   ),
   ServerTrack(
     id: '3',
-    title: 'Peace Piece',
-    artist: 'Bill Evans',
-    album: 'Everybody Digs Bill Evans',
+    title: 'Kveld',
+    artist: 'Halvorsen Trio',
+    album: 'Fjord Sessions',
     duration: Duration(minutes: 6, seconds: 42),
   ),
 ];
@@ -77,17 +77,18 @@ const _tracks = [
 const _albums = [
   ServerAlbum(
     id: 'a',
-    title: 'Kind of Blue',
-    artist: 'Miles Davis',
+    title: 'Night Ferry',
+    artist: 'Juniper Avenue',
     year: 1959,
   ),
+  ServerAlbum(id: 'b', title: 'Fjord Sessions', artist: 'Halvorsen Trio'),
   ServerAlbum(
-    id: 'b',
-    title: 'Everybody Digs Bill Evans',
-    artist: 'Bill Evans',
+    id: 'c',
+    title: 'Static Bloom',
+    artist: 'The Velvet Parallels',
+    year: 1959,
   ),
-  ServerAlbum(id: 'c', title: 'Time Out', artist: 'Dave Brubeck', year: 1959),
-  ServerAlbum(id: 'd', title: 'Mingus Ah Um', artist: 'Charles Mingus'),
+  ServerAlbum(id: 'd', title: 'Quiet Machines', artist: 'Lumen Hollow'),
 ];
 
 /// A player on the second track of the library.
@@ -244,7 +245,7 @@ void main() {
             await tester.pumpAndSettle();
             await tester.tap(find.text('Albums'));
             await tester.pumpAndSettle();
-            await tester.tap(find.text('Kind of Blue'));
+            await tester.tap(find.text('Night Ferry'));
             await tester.pumpAndSettle();
           },
         );
@@ -296,7 +297,7 @@ void main() {
             SambaEntry(name: 'Jazz', isDirectory: true),
             SambaEntry(name: 'Rock', isDirectory: true),
             SambaEntry(
-              name: 'Take Five.flac',
+              name: 'Northbound.flac',
               isDirectory: false,
               size: 31457280,
             ),
