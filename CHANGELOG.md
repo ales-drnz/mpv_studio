@@ -8,6 +8,7 @@
 ### Changed
 - Updated `mpv_audio_kit` to version `0.6.0`, `dart_jellyfin` to `0.3.1`, `dart_plex` to `0.2.1`, `dart_smb2` to `0.2.3` and `go_router` to `18`. Jellyfin and Plex talk `package:http` instead of Dio.
 - Samba is not available in the browser, which cannot open an SMB connection: its tab says so.
+- The rubberband stage is gone from the rack, as `mpv_audio_kit` 0.6.0 ships an LGPL libmpv without Rubber Band. A saved rack that holds one loads without it; for pitch and tempo, use the player's speed and pitch or the `atempo` and `asetrate` stages.
 
 ### Fixed
 - Plex counts the plays the app reports: each report carries the track's length, without which the server ignores it, and none is sent while the length is unknown.
