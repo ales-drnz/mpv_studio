@@ -232,7 +232,6 @@ const Map<String, Set<String>> kRuntimeParams = {
     'width',
     'width_type',
   },
-  'rubberband': {'pitch', 'tempo'},
   'silenceremove': {
     'start_mode',
     'start_threshold',
