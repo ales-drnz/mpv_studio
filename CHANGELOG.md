@@ -1,21 +1,22 @@
 ## [0.4.0] - Unreleased
 
 ### Added
-- The app runs in the browser, with libmpv as WebAssembly through `mpv_audio_kit` 0.6.0, and a live demo on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
+- The app runs in the browser through `mpv_audio_kit` 0.6.0, with a live demo on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
 - In the browser, picked and dropped files play with their file names as titles, and the OS media controls come from the browser.
-- In the browser, an `http://` server address or stream says the HTTPS page cannot open it, instead of failing as a server that cannot be found.
-- **Open source licenses** in Settings, under About, opens the license page: the texts of every Dart package, and of the bundled libmpv that `mpv_audio_kit` registers from libmpv-r20 on (mpv, FFmpeg and the libraries they link, each under its own license).
+- In the browser, an `http://` server or stream says that the HTTPS page cannot open it, instead of failing as a server that cannot be found.
+- **Open source licenses**, under About in Settings, lists the license texts of the Dart packages and of the bundled libmpv.
 - The license page lists the libsmb2 of `dart_smb2`, with where the source of that build is.
 - A LICENSE (BSD 3-Clause) and a License section in the README.
 
 ### Changed
-- Updated `mpv_audio_kit` to version `0.6.0`, `dart_jellyfin` to `0.3.1`, `dart_plex` to `0.2.1`, `dart_smb2` to `0.2.3` and `go_router` to `18`. Jellyfin and Plex talk `package:http` instead of Dio.
-- The Console describes each mpv command in one whole line written for the app, instead of a line cut from mpv's manual.
+- Updated `mpv_audio_kit` to version `0.6.0`, `dart_jellyfin` to `0.3.1`, `dart_plex` to `0.2.1`, `dart_smb2` to `0.2.3` and `go_router` to `18`.
+- Jellyfin and Plex use `package:http` instead of Dio.
+- The Console describes each mpv command in a line written for the app, instead of one cut from mpv's manual.
 - Samba is not available in the browser, which cannot open an SMB connection: its tab says so.
-- The rubberband stage is gone from the rack, as `mpv_audio_kit` 0.6.0 bundles libmpv-r20, built under the LGPL, version 3 or later, without Rubber Band (GPL). A saved rack that holds one loads without it; for pitch and tempo, use the player's speed and pitch or the `atempo` and `asetrate` stages.
+- The rubberband stage is gone from the rack, as libmpv-r20 is LGPL and leaves out Rubber Band. A saved rack loads without it; speed, pitch and the `atempo` and `asetrate` stages remain.
 
 ### Fixed
-- Plex counts the plays the app reports: each report carries the track's length, without which the server ignores it, and none is sent while the length is unknown.
+- Plex counts the plays the app reports: each report carries the track's length, and none is sent before it is known.
 
 ## [0.3.2] - 22-10-2026
 
