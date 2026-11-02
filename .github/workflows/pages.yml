@@ -1,9 +1,8 @@
 name: Web demo
 
 # Builds the web app and publishes it on GitHub Pages, the demo linked from
-# the README of mpv_audio_kit. Until mpv_audio_kit 0.6.0 is on pub.dev the
-# web app lives on wip/web, and a push there publishes it; main gets it with
-# the release. Otherwise it runs by hand.
+# the README of mpv_audio_kit. A push to main publishes it, and it also runs
+# by hand.
 #
 # libmpv runs on threads, so the page must be cross-origin isolated. Pages
 # cannot send the COOP and COEP headers that make it so: web/index.html
@@ -14,19 +13,17 @@ name: Web demo
 # libmpv.
 #
 # Setup, once: Settings > Pages > Build and deployment > Source: GitHub
-# Actions, and wip/web in the deployment branches of the github-pages
-# environment (Settings > Environments), which allows the default branch
-# only.
+# Actions. The github-pages environment deploys from the default branch.
 
 on:
   push:
-    branches: [wip/web]
+    branches: [main]
   workflow_dispatch:
     inputs:
       mpv_audio_kit_ref:
         description: mpv_audio_kit branch, tag or commit, used while the app depends on it by path
         type: string
-        default: release/0.6.0
+        default: main
       libmpv_scripts_run:
         description: libmpv-scripts run id whose libmpv-release artifact gives the web module (empty to find the Build of the libmpv release mpv_audio_kit needs while it is not published)
         type: string
@@ -41,9 +38,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Not vars.MPV_AUDIO_KIT_REF either: the web needs 0.6.0. The fallback
-  # goes at the release, with the same one in the web job of ci.yml.
-  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
+  # The library checkout while the app depends on it by path, as in the web
+  # job of ci.yml. Ignored for a pub.dev dependency.
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'main' }}
   # The web module comes from libmpv-r20 on. Empty, the setup action lets
   # the library checkout find the libmpv-scripts Build of the release it
   # needs while that release is not published

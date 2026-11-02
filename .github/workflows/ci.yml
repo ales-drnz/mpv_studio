@@ -13,7 +13,7 @@ on:
       mpv_audio_kit_ref:
         description: mpv_audio_kit branch, tag or commit, used while the app depends on it by path
         type: string
-        default: release/0.6.0
+        default: main
       libmpv_scripts_run:
         description: libmpv-scripts run id whose libmpv-release artifact to bundle (empty for the repository variable, else the Build found by itself)
         type: string
@@ -39,10 +39,10 @@ env:
   # library is checked out beside the app from this ref (the workflow input,
   # else the repository variable MPV_AUDIO_KIT_REF). Once the app depends on
   # a pub.dev version the ref is ignored.
-  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'release/0.6.0' }}
+  MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || vars.MPV_AUDIO_KIT_REF || 'main' }}
   # mpv_audio_kit's build hook downloads libmpv from its pinned GitHub
-  # release (libmpvRelease in lib/src/internals/libmpv_release.dart; 0.6.0
-  # is to pin libmpv-r20) whenever Flutter builds native assets:
+  # release (libmpvRelease in lib/src/internals/libmpv_release.dart)
+  # whenever Flutter builds native assets:
   # flutter test and flutter build, not flutter pub get or flutter analyze.
   # While the library is a checkout and the release it needs is not
   # published, the setup action finds the libmpv-scripts Build of it with
@@ -177,20 +177,18 @@ jobs:
 
   # The build pages.yml publishes, without the deploy, so that a change the
   # web cannot run (dart:io, Platform without kIsWeb) fails here and not
-  # only on the next push to wip/web. No analyze or test of its own: the
+  # only on the next push to main. No analyze or test of its own: the
   # analyzer does not know the target platform and flutter test runs on
   # the VM, so the analyze and test jobs above already say all they can.
   build-web:
     name: Build web
     runs-on: ubuntu-24.04
-    # As in pages.yml, and not the workflow's values: the web needs
-    # mpv_audio_kit 0.6.0 whatever vars.MPV_AUDIO_KIT_REF says, and libmpv
+    # As in pages.yml, and not the workflow's values: the web needs libmpv
     # from r20 on, which vars.LIBMPV_SCRIPTS_RUN may predate for the
-    # native builds. Without the input the library checkout finds the
-    # Build itself. The ref's fallback goes at the release, with
-    # pages.yml's.
+    # native builds. Without the input a library checkout finds the Build
+    # itself.
     env:
-      MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'release/0.6.0' }}
+      MPV_AUDIO_KIT_REF: ${{ inputs.mpv_audio_kit_ref || 'main' }}
       LIBMPV_SCRIPTS_RUN: ${{ inputs.libmpv_scripts_run }}
     steps:
       - uses: actions/checkout@v4
