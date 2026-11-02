@@ -1,4 +1,4 @@
-## [0.4.0] - Unreleased
+## [0.4.0] - 2-11-2026
 
 ### Added
 - The app runs in the browser through `mpv_audio_kit` 0.6.0, with a live demo on GitHub Pages: https://ales-drnz.github.io/mpv_studio/.
