@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.4.0
+version: 0.4.1
 
 environment:
   sdk: ^3.10.0
@@ -13,7 +13,7 @@ dependencies:
 
   # mpv_audio_kit
   #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.6.0
+  mpv_audio_kit: ^0.6.2
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}

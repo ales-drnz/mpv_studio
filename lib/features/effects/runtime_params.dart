@@ -169,6 +169,7 @@ const Map<String, Set<String>> kRuntimeParams = {
     'mix',
     'normalize',
   },
+  'compensationdelay': {'cm', 'dry', 'm', 'mm', 'temp', 'wet'},
   'crossfeed': {'level_in', 'level_out', 'range', 'slope', 'strength'},
   'crystalizer': {'c', 'i'},
   'dialoguenhance': {'enhance', 'original', 'voice'},
