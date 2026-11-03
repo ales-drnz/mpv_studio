@@ -1,11 +1,9 @@
 ## [0.4.1] - 3-11-2026
 
-### Changed
-- Updated `mpv_audio_kit` to version `0.6.2`, with libmpv-r21.
-- The compensationdelay stage changes live, as `mpv_audio_kit` 0.6.2 moves its options on the running filter.
-
-### Build
-- `analysis_options.yaml` leaves out the build and platform folders, as `flutter analyze` 3.47 writes it.
+### All platforms
+**Changed**
+- Updated `mpv_audio_kit` to version `0.6.2`.
+- The compensationdelay stage changes live.
 
 ## [0.4.0] - 2-11-2026
 
