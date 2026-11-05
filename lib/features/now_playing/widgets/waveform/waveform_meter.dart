@@ -210,7 +210,10 @@ class _WaveformMeterState extends State<WaveformMeter>
   bool _panBy(double pixels) {
     if (!mounted) return false;
     final next = _view.scrollByPixels(pixels, _width);
-    if (next.leftRel == _view.leftRel) return false;
+    if (next.leftRel == _view.leftRel &&
+        next.followsLive == _view.followsLive) {
+      return false;
+    }
     setState(() => _view = next);
     return true;
   }
@@ -384,8 +387,7 @@ class _WaveformMeterState extends State<WaveformMeter>
                           label: 'Live',
                           icon: Icons.fast_forward_rounded,
                           tooltip: 'Follow the live end',
-                          onTap: () =>
-                              setState(() => _view = _view.toLive()),
+                          onTap: () => setState(() => _view = _view.toLive()),
                         ),
                       ],
                       const SizedBox(width: Tokens.s8),

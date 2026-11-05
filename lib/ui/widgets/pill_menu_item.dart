@@ -39,7 +39,14 @@ class _PillMenuItemState<T> extends PopupMenuItemState<T, PillMenuItem<T>> {
               constraints: BoxConstraints(minHeight: widget.height),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: buildChild(),
+                // A disabled item dims an icon its row does not colour,
+                // as Flutter's item does.
+                child: widget.enabled
+                    ? buildChild()
+                    : IconTheme.merge(
+                        data: const IconThemeData(opacity: 0.5),
+                        child: buildChild() ?? const SizedBox.shrink(),
+                      ),
               ),
             ),
           ),

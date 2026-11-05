@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,7 +10,8 @@ import 'package:mpv_studio/features/settings/settings_page.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
 import 'package:mpv_studio/features/stream/stream_page.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
-import 'package:mpv_studio/ui/palette.dart';
+import 'package:mpv_studio/ui/tokens.dart';
+import 'package:mpv_studio/ui/widgets/focus_ring.dart';
 
 import '../console/console_fixture.dart';
 import '../effects/rack_harness.dart';
@@ -36,6 +39,12 @@ import '../support/layout_harness.dart';
 ///   of ink on a rounded card, or a rectangle on a pill, lights past or
 ///   short of the box's corners.
 void expectInkFollowsShapes(WidgetTester tester) {
+  final problems = inkProblems(tester);
+  expect(problems, isEmpty, reason: problems.join('\n'));
+}
+
+/// What [expectInkFollowsShapes] finds wrong on screen.
+List<String> inkProblems(WidgetTester tester) {
   final problems = <String>[];
   for (final element in find.byType(InkWell).evaluate()) {
     final ink = element.widget as InkWell;
@@ -49,7 +58,8 @@ void expectInkFollowsShapes(WidgetTester tester) {
       continue;
     }
     final box2 = _boxCovered(element, box);
-    if (shaped && box2 != null && !_sameShape(ink, box2)) {
+    final inkRect0 = box.localToGlobal(Offset.zero) & box.size;
+    if (shaped && box2 != null && !_sameShape(ink, box2, inkRect0)) {
       problems.add(
         '${_where(element)}: ink ${_shapeName(ink.customBorder)} on a box '
         '${_shapeName(box2)} of the same size',
@@ -70,7 +80,7 @@ void expectInkFollowsShapes(WidgetTester tester) {
       );
     }
   }
-  expect(problems, isEmpty, reason: problems.join('\n'));
+  return problems;
 }
 
 String _where(Element e) {
@@ -124,13 +134,15 @@ bool _sameRect(RenderBox a, RenderBox b) {
       (ra.height - rb.height).abs() <= 1;
 }
 
-/// The shape of the nearest filled, shaped box around [e] (a decoration
-/// or a coloured Material) that the ink [box] covers exactly, if any.
+/// The shape of a filled, shaped box around [e] (a decoration or a
+/// coloured Material) that the ink [box] covers exactly, if any: it climbs
+/// while the ancestors keep the ink's rect, whatever widgets sit between
+/// (a focus ring, the Material's own), and stops at the first bigger one.
 ShapeBorder? _boxCovered(Element e, RenderBox box) {
   ShapeBorder? found;
-  var steps = 0;
   e.visitAncestorElements((a) {
-    steps++;
+    final r = a.renderObject;
+    if (r is RenderBox && r.hasSize && !_sameRect(box, r)) return false;
     final w = a.widget;
     final ShapeBorder? shape = switch (w) {
       Ink(:final decoration?) => _shapeOfDecoration(decoration),
@@ -139,11 +151,10 @@ ShapeBorder? _boxCovered(Element e, RenderBox box) {
       _ => null,
     };
     if (shape != null) {
-      final r = a.renderObject;
-      if (r is RenderBox && r.hasSize && _sameRect(box, r)) found = shape;
+      found = shape;
       return false;
     }
-    return steps < 8;
+    return true;
   });
   return found;
 }
@@ -157,18 +168,44 @@ ShapeBorder? _shapeOfDecoration(Decoration d) => switch (d) {
   _ => null,
 };
 
-bool _sameShape(InkWell ink, ShapeBorder box) {
+/// Whether the ink's shape and [box]'s draw the same outline on [rect]:
+/// a pill and a rounded rectangle of half the height's radius do.
+bool _sameShape(InkWell ink, ShapeBorder box, Rect rect) {
   final inkShape =
       ink.customBorder ??
       RoundedRectangleBorder(borderRadius: ink.borderRadius!);
-  return _shapeName(inkShape) == _shapeName(box);
+  final a = inkShape.getOuterPath(rect, textDirection: TextDirection.ltr);
+  final b = box.getOuterPath(rect, textDirection: TextDirection.ltr);
+  // Probe the corners, where shapes differ, on a fine grid.
+  const steps = 12;
+  final probe = math.min(rect.shortestSide, 48.0);
+  for (final corner in [
+    rect.topLeft,
+    rect.topRight,
+    rect.bottomLeft,
+    rect.bottomRight,
+  ]) {
+    for (var i = 0; i < steps; i++) {
+      for (var j = 0; j < steps; j++) {
+        final dx = (i + 0.5) / steps * probe / 2;
+        final dy = (j + 0.5) / steps * probe / 2;
+        final p = Offset(
+          corner.dx == rect.left ? rect.left + dx : rect.right - dx,
+          corner.dy == rect.top ? rect.top + dy : rect.bottom - dy,
+        );
+        if (a.contains(p) != b.contains(p)) return false;
+      }
+    }
+  }
+  return true;
 }
 
 String _shapeName(ShapeBorder? s) => switch (s) {
   StadiumBorder() => 'pill',
   CircleBorder() => 'circle',
-  RoundedRectangleBorder(:final borderRadius) =>
-    'rounded ${(borderRadius as BorderRadius).topLeft.x}',
+  RoundedRectangleBorder(:final BorderRadius borderRadius) =>
+    'rounded ${borderRadius.topLeft.x}',
+  RoundedRectangleBorder() => 'rounded',
   _ => '$s',
 };
 
@@ -351,4 +388,51 @@ void main() {
       expectInkFollowsShapes(tester);
     });
   }
+
+  testWidgets('the rule sees a coloured Material around a focus ring', (
+    tester,
+  ) async {
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 200,
+            height: 48,
+            child: Material(
+              color: Palette.dark.surface,
+              shape: const StadiumBorder(),
+              child: FocusRing(
+                child: InkWell(
+                  onTap: () {},
+                  customBorder: Tokens.shape(Tokens.rXs),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(inkProblems(tester), isNotEmpty);
+  });
+
+  testWidgets('the three column pages', (tester) async {
+    final (player, details) = await threeEntries(() => tester.pump());
+    await pumpQueue(tester, player, details, size: const Size(2560, 1080));
+    expectInkFollowsShapes(tester);
+    final console = QueueFakePlayer();
+    final log = ConsoleLog()..attach(console);
+    addTearDown(log.dispose);
+    await pumpConsole(tester, console, log, size: const Size(2560, 1080));
+    expectInkFollowsShapes(tester);
+    final h = await SettingsHarness.create();
+    await pumpStudio(
+      tester,
+      h.wrap(const Scaffold(body: SettingsPage())),
+      size: const Size(2560, 1080),
+    );
+    expectInkFollowsShapes(tester);
+    await tester.pump(const Duration(seconds: 1));
+  });
 }

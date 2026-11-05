@@ -312,6 +312,8 @@ class _ConsoleViewState extends State<ConsoleView>
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
     );
+    // The hint and the side panel follow the recalled command.
+    _recompute();
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -403,7 +405,10 @@ class _ConsoleViewState extends State<ConsoleView>
               level: _level,
               onLevel: _setLevel,
             ),
-            body: three ? _withSide(_body(visible)) : _body(visible),
+            // Keyed, so crossing the threshold keeps the field and its focus.
+            body: three
+                ? _withSide(KeyedSubtree(key: _bodyKey, child: _body(visible)))
+                : KeyedSubtree(key: _bodyKey, child: _body(visible)),
           );
         },
       ),
@@ -422,6 +427,7 @@ class _ConsoleViewState extends State<ConsoleView>
           history: _history,
           active: _completion.activeCommand(_input.text),
           onPick: (line) {
+            _historyIndex = _history.length;
             _input.value = TextEditingValue(
               text: line,
               selection: TextSelection.collapsed(offset: line.length),
@@ -433,6 +439,8 @@ class _ConsoleViewState extends State<ConsoleView>
       ),
     ],
   );
+
+  final _bodyKey = GlobalKey();
 
   /// The side panel's width.
   static const double _sideWidth = 360;

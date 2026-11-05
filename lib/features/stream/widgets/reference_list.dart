@@ -148,10 +148,13 @@ class ReferenceColumns extends StatelessWidget {
               categories.sublist(split),
             ].indexed) ...[
               if (i > 0) SizedBox(width: gap),
+              // A traversal group per column: Tab reads down the first.
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: rows(part),
+                child: FocusTraversalGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: rows(part),
+                  ),
                 ),
               ),
             ],

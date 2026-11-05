@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
+import 'package:mpv_studio/ui/tokens.dart';
 import 'package:mpv_studio/ui/widgets/controls/dropdown.dart';
 
 import '../support/layout_harness.dart';
@@ -78,5 +79,36 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expectPills(tester);
+  });
+
+  testWidgets('a disabled item dims its icon', (tester) async {
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => Center(
+            child: TextButton(
+              onPressed: () => showStudioMenu<int>(
+                context,
+                position: const Offset(200, 200),
+                items: const [
+                  StudioMenuItem(
+                    value: 1,
+                    label: 'Clear',
+                    icon: Icons.clear_all_rounded,
+                    enabled: false,
+                  ),
+                ],
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final icon = tester.widget<Icon>(find.byIcon(Icons.clear_all_rounded));
+    expect(icon.color, Tokens.fgFaint);
   });
 }

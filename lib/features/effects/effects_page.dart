@@ -214,13 +214,18 @@ class _SignalChainViewState extends State<SignalChainView> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [const SectionHeader('Loudness'), footer],
+              children: [
+                const SectionHeader('Loudness'),
+                KeyedSubtree(key: _footerKey, child: footer),
+              ],
             ),
           ),
         ),
       ],
     );
   }
+
+  final _footerKey = GlobalKey();
 
   /// The loudness column's width.
   static const double _loudnessWidth = 380;
@@ -292,7 +297,9 @@ class _SignalChainViewState extends State<SignalChainView> {
               if (below != null) ...[
                 const SizedBox(height: Tokens.s24),
                 const SectionHeader('Loudness'),
-                below,
+                // Keyed, so the panel keeps its state across the column
+                // threshold.
+                KeyedSubtree(key: _footerKey, child: below),
               ],
             ],
           ),

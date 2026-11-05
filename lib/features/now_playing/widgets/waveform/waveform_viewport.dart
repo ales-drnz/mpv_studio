@@ -139,7 +139,16 @@ class WaveformViewport {
   /// duration) starts whole again.
   WaveformViewport withSource({Duration? duration, WaveformData? wave}) {
     final d = duration ?? this.duration;
-    final reset = d != this.duration;
+    // A live window only slides forward: one that starts earlier is
+    // another stream, which follows its own end.
+    final old = this.wave;
+    final restarted =
+        wave != null &&
+        wave.live &&
+        old != null &&
+        old.live &&
+        wave.start < old.start;
+    final reset = d != this.duration || restarted;
     return WaveformViewport(
       duration: d,
       wave: wave ?? this.wave,
@@ -168,8 +177,12 @@ class WaveformViewport {
     // All of a track in view: fit it, so the view follows its length.
     final window = !live && clamped >= timelineSecs ? double.infinity : clamped;
     if (live) {
-      // The anchor holds; it is clamped again on read.
-      return _copy(windowSeconds: window);
+      // The anchor holds; it is clamped again on read. A view that now
+      // reaches the newest end follows it again.
+      final zoomed = _copy(windowSeconds: window);
+      return zoomed.followsLive || zoomed.leftRel < zoomed.maxStart - _liveSlack
+          ? zoomed
+          : zoomed._copy(followsLive: true);
     }
     final at = around == null ? null : around.inMicroseconds / 1e6;
     final inView =

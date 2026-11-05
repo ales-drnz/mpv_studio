@@ -198,12 +198,16 @@ class _Grid extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (var k = r; k < r + columns; k++)
+                for (var k = r; k < r + columns; k++) ...[
+                  // A gap between the cells: their hovers and focus rings
+                  // stay apart.
+                  if (k > r) const SizedBox(width: Tokens.s8),
                   Expanded(
                     child: k < entries.length
                         ? entries[k]
                         : const SizedBox.shrink(),
                   ),
+                ],
               ],
             ),
         ],

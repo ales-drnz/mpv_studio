@@ -129,7 +129,11 @@ class _MenuRow<T> extends StatelessWidget {
           Icon(
             item.icon,
             size: 18,
-            color: item.destructive && item.enabled ? Tokens.red : Tokens.fgDim,
+            color: !item.enabled
+                ? Tokens.fgFaint
+                : item.destructive
+                ? Tokens.red
+                : Tokens.fgDim,
           ),
           const SizedBox(width: Tokens.s12),
         ],

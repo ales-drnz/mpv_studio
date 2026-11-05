@@ -15,11 +15,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a wide window shows the sections in columns', (tester) async {
+  testWidgets('a wide window shows three sections in a row', (tester) async {
     await open(tester, '1920x1080');
-    final source = tester.getRect(find.text('Source').last);
+    final lefts = {
+      for (final t in ['Source', 'Output', 'Loudness (EBU R128)'])
+        tester.getRect(find.text(t).last).left,
+    };
+    expect(lefts, hasLength(3));
+    // The stream's long addresses get two thirds of the width below.
     final stream = tester.getRect(find.text('Stream').last);
-    expect(stream.left, greaterThan(source.left + 300));
+    final source = tester.getRect(find.text('Source').last);
+    expect(stream.top, greaterThan(source.bottom));
   });
 
   testWidgets('a laptop window shows two', (tester) async {

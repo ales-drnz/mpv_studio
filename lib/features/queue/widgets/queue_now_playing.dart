@@ -39,7 +39,7 @@ class QueueNowPlaying extends StatelessWidget {
       builder: (context, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionHeader('Now playing'),
+          // No header: the card lines up with the list and the details.
           Container(
             padding: const EdgeInsets.all(Tokens.s16),
             decoration: ShapeDecoration(

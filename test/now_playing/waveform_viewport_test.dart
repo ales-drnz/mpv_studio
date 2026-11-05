@@ -112,4 +112,21 @@ void main() {
     expect(slid.toLive().followsLive, isTrue);
     expect(slid.toLive().viewStartAbs, 210);
   });
+
+  test('zooming out to the end follows again', () {
+    final back = const WaveformViewport()
+        .withSource(wave: _live(startSecs: 100, spanSecs: 120))
+        .scrollTo(20);
+    expect(back.followsLive, isFalse);
+    final whole = back.zoomBy(10);
+    expect(whole.followsLive, isTrue);
+  });
+
+  test('another live stream follows its own end', () {
+    final back = const WaveformViewport()
+        .withSource(wave: _live(startSecs: 500, spanSecs: 120))
+        .scrollTo(20);
+    final next = back.withSource(wave: _live(startSecs: 0, spanSecs: 40));
+    expect(next.followsLive, isTrue);
+  });
 }

@@ -22,6 +22,7 @@ Color _fillUnder(WidgetTester tester, Finder text) {
     final w = a.widget;
     final d = switch (w) {
       DecoratedBox() => w.decoration,
+      Ink() => w.decoration,
       _ => null,
     };
     if (d is ShapeDecoration && d.color != null && d.color!.a > 0) {

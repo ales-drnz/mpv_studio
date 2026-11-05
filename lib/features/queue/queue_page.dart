@@ -309,9 +309,10 @@ class _QueueViewState extends State<QueueView> {
                 final available = constraints.maxWidth - 2 * gutter;
                 // With room for three columns, what plays and what comes
                 // next stand beside the list and the details.
+                // The width follows the window, the column the queue: the
+                // header stays put when the first file comes in.
                 final three =
                     context.layout.isPointer &&
-                    items.isNotEmpty &&
                     available >= Breakpoints.threeColumns;
                 final content = math.min(
                   available,
@@ -368,7 +369,7 @@ class _QueueViewState extends State<QueueView> {
                               )
                             : split
                             ? _withNowPlaying(
-                                three,
+                                three && items.isNotEmpty,
                                 playlist,
                                 TwoPane(
                                   listWidth: _listWidth,

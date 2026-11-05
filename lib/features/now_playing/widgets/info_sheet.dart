@@ -75,14 +75,28 @@ class _InfoBody extends StatelessWidget {
           builder: (context, c) {
             final gap = context.layout.gap;
             // As many columns as fit, the sections balanced by height.
+            if (c.maxWidth >= 3 * _minSection + 2 * gap) {
+              // Three short sections in a row, then the stream's long
+              // addresses on two thirds of the width beside the playback.
+              Widget row(List<(Widget, int)> cells) => Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (i, (cell, flex)) in cells.indexed) ...[
+                    if (i > 0) SizedBox(width: gap),
+                    Expanded(flex: flex, child: cell),
+                  ],
+                ],
+              );
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  row([(source, 1), (output, 1), (loudness, 1)]),
+                  row([(stream, 2), (playback, 1)]),
+                ],
+              );
+            }
             final List<List<Widget>> columns =
-                c.maxWidth >= 3 * _minSection + 2 * gap
-                ? [
-                    [source, output],
-                    [loudness, playback],
-                    [stream],
-                  ]
-                : c.maxWidth >= 2 * _minSection + gap
+                c.maxWidth >= 2 * _minSection + gap
                 ? [
                     [source, loudness, output],
                     [stream, playback],

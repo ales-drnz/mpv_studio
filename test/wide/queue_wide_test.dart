@@ -31,4 +31,21 @@ void main() {
     await pumpQueue(tester, player, details, size: const Size(1440, 900));
     expect(find.byType(QueueNowPlaying), findsNothing);
   });
+
+  testWidgets('the header stays put when the first file comes in', (
+    tester,
+  ) async {
+    final (player, details) = emptyQueue();
+    await pumpQueue(
+      tester,
+      player,
+      details,
+      size: const Size(2560, 1080),
+      picked: ['/m/a.flac'],
+    );
+    final before = tester.getTopLeft(find.text('Queue').first);
+    await tester.tap(find.text('Add files').last);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.text('Queue').first), before);
+  });
 }

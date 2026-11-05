@@ -286,9 +286,19 @@ class _GroupDetail extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: column(sections.take(half))),
+                      // A traversal group per column: Tab reads down the
+                      // first, then the second, not across the rows.
+                      Expanded(
+                        child: FocusTraversalGroup(
+                          child: column(sections.take(half)),
+                        ),
+                      ),
                       SizedBox(width: gap),
-                      Expanded(child: column(sections.skip(half))),
+                      Expanded(
+                        child: FocusTraversalGroup(
+                          child: column(sections.skip(half)),
+                        ),
+                      ),
                     ],
                   )
                 else

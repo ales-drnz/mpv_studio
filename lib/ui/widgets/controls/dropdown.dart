@@ -292,8 +292,9 @@ class _MenuRow extends StatelessWidget {
         : active
         ? Tokens.onAccent
         : Tokens.onTonal;
-    return Container(
-      alignment: Alignment.centerLeft,
+    // Ink, not a box: the current choice's fill paints on the menu's
+    // Material, so the item's hover shows over it.
+    return Ink(
       decoration: ShapeDecoration(
         color: active && enabled ? Tokens.accent : Colors.transparent,
         shape: Tokens.pill,
