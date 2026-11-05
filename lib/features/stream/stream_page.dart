@@ -176,6 +176,8 @@ class _StreamViewState extends State<StreamView> {
     return PageFrame(
       title: 'Stream',
       scrollable: false,
+      // Libraries are dense: a grid of covers, an album beside it.
+      maxWidth: Breakpoints.wide,
       // The tabs scroll themselves, each with the gutter at its sides and
       // under its last item; the header and the tab row share it.
       padding: layout.pagePadding.copyWith(top: 0),
