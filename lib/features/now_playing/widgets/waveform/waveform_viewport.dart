@@ -9,9 +9,11 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 ///
 /// A normal track spans `[0, duration]`. A live stream (the envelope is a
 /// rolling window over the demuxer cache, `wave.live`) spans the cached
-/// window instead, and its view is anchored in absolute media time so it
-/// holds still while the window slides. Neither follows the playhead: the
-/// view moves only when the user scrolls.
+/// window instead. It opens on the window's newest end and follows it as
+/// the window grows ([followsLive]); scrolled back, its view is anchored
+/// in absolute media time so it holds still while the window slides, and
+/// scrolled to the end (or [toLive]) it follows again. A track's view
+/// does not follow the playhead: it moves only when the user scrolls.
 @immutable
 class WaveformViewport {
   const WaveformViewport({
@@ -20,6 +22,7 @@ class WaveformViewport {
     this.windowSeconds = double.infinity,
     this.viewStart = 0,
     this.viewLeftAbs = 0,
+    this.followsLive = true,
   });
 
   /// The narrowest zoom, in seconds across the full width.
@@ -54,8 +57,15 @@ class WaveformViewport {
   /// First visible second of a normal track.
   final double viewStart;
 
-  /// Live only: the view's left edge in absolute media time.
+  /// Live only: the view's left edge in absolute media time, while it
+  /// does not follow the newest end.
   final double viewLeftAbs;
+
+  /// Live only: whether the view keeps the window's newest end in view.
+  final bool followsLive;
+
+  /// How close to the end a scroll counts as the end, in seconds.
+  static const double _liveSlack = 0.5;
 
   /// Whether the envelope is a live rolling window.
   bool get live => wave?.live ?? false;
@@ -92,6 +102,7 @@ class WaveformViewport {
   /// The view's left edge relative to [originSecs].
   double get leftRel {
     if (live) {
+      if (followsLive) return maxStart;
       return (viewLeftAbs - originSecs).clamp(0, maxStart).toDouble();
     }
     return viewStart.clamp(0, maxStart).toDouble();
@@ -135,6 +146,7 @@ class WaveformViewport {
       windowSeconds: reset ? double.infinity : windowSeconds,
       viewStart: reset ? 0 : viewStart,
       viewLeftAbs: reset ? 0 : viewLeftAbs,
+      followsLive: reset || followsLive,
     );
   }
 
@@ -144,6 +156,7 @@ class WaveformViewport {
     windowSeconds: windowSeconds,
     viewStart: viewStart,
     viewLeftAbs: viewLeftAbs,
+    followsLive: followsLive,
   );
 
   /// Zoomed by [factor] (below 1 zooms in) around [around] (a media time
@@ -173,8 +186,15 @@ class WaveformViewport {
   /// Scrolled so the view starts [rel] seconds after [originSecs].
   WaveformViewport scrollTo(double rel) {
     final v = rel.clamp(0, maxStart).toDouble();
-    return live ? _copy(viewLeftAbs: originSecs + v) : _copy(viewStart: v);
+    if (!live) return _copy(viewStart: v);
+    return _copy(
+      viewLeftAbs: originSecs + v,
+      followsLive: v >= maxStart - _liveSlack,
+    );
   }
+
+  /// A live view back on the newest end, following it.
+  WaveformViewport toLive() => _copy(followsLive: true);
 
   /// Scrolled by [pixels] of a [width] wide meter.
   WaveformViewport scrollByPixels(double pixels, double width) {
@@ -186,11 +206,13 @@ class WaveformViewport {
     double? windowSeconds,
     double? viewStart,
     double? viewLeftAbs,
+    bool? followsLive,
   }) => WaveformViewport(
     duration: duration,
     wave: wave,
     windowSeconds: windowSeconds ?? this.windowSeconds,
     viewStart: viewStart ?? this.viewStart,
     viewLeftAbs: viewLeftAbs ?? this.viewLeftAbs,
+    followsLive: followsLive ?? this.followsLive,
   );
 }

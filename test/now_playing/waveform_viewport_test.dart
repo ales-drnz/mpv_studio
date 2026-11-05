@@ -87,4 +87,29 @@ void main() {
     expect(slid.timeAtX(0, 300), const Duration(seconds: 140));
     expect(slid.timeAtX(-500, 300), const Duration(seconds: 110));
   });
+
+  test('a live window opens on its newest end and follows it', () {
+    final live = const WaveformViewport().withSource(
+      wave: _live(startSecs: 100, spanSecs: 120),
+    );
+    // The view ends at the newest audio: 220 - 30.
+    expect(live.viewStartAbs, 190);
+    expect(live.followsLive, isTrue);
+    final grown = live.withSource(wave: _live(startSecs: 110, spanSecs: 130));
+    expect(grown.viewStartAbs, 210);
+  });
+
+  test('scrolling back holds; scrolling to the end follows again', () {
+    final live = const WaveformViewport().withSource(
+      wave: _live(startSecs: 100, spanSecs: 120),
+    );
+    final back = live.scrollTo(20);
+    expect(back.followsLive, isFalse);
+    final slid = back.withSource(wave: _live(startSecs: 110, spanSecs: 130));
+    expect(slid.viewStartAbs, 120);
+    final end = slid.scrollTo(slid.maxStart);
+    expect(end.followsLive, isTrue);
+    expect(slid.toLive().followsLive, isTrue);
+    expect(slid.toLive().viewStartAbs, 210);
+  });
 }

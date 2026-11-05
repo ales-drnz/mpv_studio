@@ -310,25 +310,33 @@ class _Choice extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Semantics(
-            button: true,
-            child: FocusRing(
-              shape: Tokens.shape(Tokens.rLg),
-              inside: true,
-              child: InkWell(
-                onTap: onTap,
-                autofocus: autofocus,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: context.layout.minTap),
-                  child: Padding(
-                    padding: const EdgeInsets.all(Tokens.s16),
-                    child: LeadTile(
-                      icon: icon,
-                      title: title,
-                      subtitle: description,
-                      trailing: Icon(
-                        Icons.chevron_right_rounded,
-                        color: Tokens.fgDim,
+          // The tappable part is a rounded row inset in the card: its
+          // hover keeps its own corners whether or not a footer follows.
+          Padding(
+            padding: const EdgeInsets.all(Tokens.s4),
+            child: Semantics(
+              button: true,
+              child: FocusRing(
+                shape: Tokens.shape(Tokens.rMd),
+                inside: true,
+                child: InkWell(
+                  onTap: onTap,
+                  autofocus: autofocus,
+                  customBorder: Tokens.shape(Tokens.rMd),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: context.layout.minTap,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(Tokens.s12),
+                      child: LeadTile(
+                        icon: icon,
+                        title: title,
+                        subtitle: description,
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: Tokens.fgDim,
+                        ),
                       ),
                     ),
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens.dart';
+import '../widgets/pill_menu_item.dart';
 import 'adaptive_dialog.dart';
 import 'layout_scope.dart';
 
@@ -53,15 +54,20 @@ Future<T?> showStudioMenu<T>(
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: Tokens.shape(Tokens.rLg),
-      // The hover band of the first and last items keeps the corners.
       clipBehavior: Clip.antiAlias,
+      // The items are pills inset from the menu's edge, as the dropdown's
+      // are: their hover never meets the menu's corners.
+      menuPadding: const EdgeInsets.all(Tokens.s4),
       items: [
         for (final item in items)
-          PopupMenuItem<T>(
+          PillMenuItem<T>(
             value: item.value,
             enabled: item.enabled,
             height: layout.minTap,
-            child: _MenuRow(item: item),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+              child: _MenuRow(item: item),
+            ),
           ),
       ],
     );

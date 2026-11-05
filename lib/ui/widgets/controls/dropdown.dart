@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../layout/layout.dart';
 import '../../tokens.dart';
 import '../focus_ring.dart';
+import '../pill_menu_item.dart';
 import 'control_metrics.dart';
 import 'setting_tile.dart';
 
@@ -162,11 +163,10 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
       shape: Tokens.shape(Tokens.rMd),
       items: [
         for (final item in widget.items)
-          PopupMenuItem<_Pick<T>>(
+          PillMenuItem<_Pick<T>>(
             value: _Pick(item.value),
             enabled: item.enabled,
             height: context.layout.minTap,
-            padding: EdgeInsets.zero,
             child: _MenuRow(
               active: item.value == widget.value,
               enabled: item.enabled,
