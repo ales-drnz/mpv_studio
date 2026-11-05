@@ -16,6 +16,7 @@ import 'hook_monitor.dart';
 import 'suggestion_popup.dart';
 import 'widgets/console_controls.dart';
 import 'widgets/console_log_view.dart';
+import 'widgets/console_side_panel.dart';
 import '../../ui/widgets/studio_snack.dart';
 
 /// The engine console of the app's player.
@@ -359,46 +360,82 @@ class _ConsoleViewState extends State<ConsoleView>
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyL, control: true): _clear,
       },
-      child: PageFrame(
-        title: 'Console',
-        scrollable: false,
-        maxWidth: Breakpoints.wide,
-        actions: [
-          RoundIconButton(
-            onTap: () => setState(() => _autoscroll = !_autoscroll),
-            active: _autoscroll,
-            toggled: _autoscroll,
-            label: 'Follow new lines',
-            tooltip: _autoscroll ? 'Stop following' : 'Follow new lines',
-            icon: Icons.vertical_align_bottom_rounded,
-          ),
-          RoundIconButton(
-            onTap: _copyAll,
-            tooltip: 'Copy the log',
-            icon: Icons.copy_rounded,
-            size: 20,
-          ),
-          RoundIconButton(
-            onTap: _clear,
-            tooltip: 'Clear the log',
-            icon: Icons.delete_outline_rounded,
-          ),
-          RoundIconButton(
-            onTap: _showHelp,
-            tooltip: 'Console help',
-            icon: Icons.help_outline_rounded,
-          ),
-        ],
-        bottom: ConsoleFilterBar(
-          search: _search,
-          onSearch: (q) => setState(() => _query = q.toLowerCase()),
-          level: _level,
-          onLevel: _setLevel,
-        ),
-        body: _body(visible),
+      child: LayoutBuilder(
+        builder: (context, page) {
+          // With room for three columns the log keeps a reading width
+          // and the commands stand beside it.
+          final three =
+              page.maxWidth - context.layout.pagePadding.horizontal >=
+              Breakpoints.threeColumns;
+          return PageFrame(
+            title: 'Console',
+            scrollable: false,
+            maxWidth: three ? Breakpoints.full : Breakpoints.wide,
+            actions: [
+              RoundIconButton(
+                onTap: () => setState(() => _autoscroll = !_autoscroll),
+                active: _autoscroll,
+                toggled: _autoscroll,
+                label: 'Follow new lines',
+                tooltip: _autoscroll ? 'Stop following' : 'Follow new lines',
+                icon: Icons.vertical_align_bottom_rounded,
+              ),
+              RoundIconButton(
+                onTap: _copyAll,
+                tooltip: 'Copy the log',
+                icon: Icons.copy_rounded,
+                size: 20,
+              ),
+              RoundIconButton(
+                onTap: _clear,
+                tooltip: 'Clear the log',
+                icon: Icons.delete_outline_rounded,
+              ),
+              RoundIconButton(
+                onTap: _showHelp,
+                tooltip: 'Console help',
+                icon: Icons.help_outline_rounded,
+              ),
+            ],
+            bottom: ConsoleFilterBar(
+              search: _search,
+              onSearch: (q) => setState(() => _query = q.toLowerCase()),
+              level: _level,
+              onLevel: _setLevel,
+            ),
+            body: three ? _withSide(_body(visible)) : _body(visible),
+          );
+        },
       ),
     );
   }
+
+  /// [log] with the side panel beside it.
+  Widget _withSide(Widget log) => Row(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Expanded(child: log),
+      SizedBox(width: context.layout.gap),
+      SizedBox(
+        width: _sideWidth,
+        child: ConsoleSidePanel(
+          history: _history,
+          active: _completion.activeCommand(_input.text),
+          onPick: (line) {
+            _input.value = TextEditingValue(
+              text: line,
+              selection: TextSelection.collapsed(offset: line.length),
+            );
+            _inputFocus.requestFocus();
+            _recompute();
+          },
+        ),
+      ),
+    ],
+  );
+
+  /// The side panel's width.
+  static const double _sideWidth = 360;
 
   Widget _body(List<ConsoleLine> visible) {
     final activeCmd = _completion.activeCommand(_input.text);
