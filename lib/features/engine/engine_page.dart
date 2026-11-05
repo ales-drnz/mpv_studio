@@ -160,62 +160,78 @@ class _EnginePanelState extends State<EnginePanel> {
     final chain = ChainView(snapshot: snap);
 
     final layout = context.layout;
-    return PageFrame(
-      title: 'Engine',
-      maxWidth: Breakpoints.wide,
-      body: LayoutBuilder(
-        builder: (context, c) {
-          // One column on phones, two up to desktop, three on big screens;
-          // never narrower than a card reads well.
-          final wanted = switch (layout.width) {
-            WidthClass.compact => 1,
-            WidthClass.xlarge => 3,
-            _ => 2,
-          };
-          final columns = math.min(
-            wanted,
-            ResponsiveGrid.columnsFor(
-              c.maxWidth,
-              minTileWidth: _minCardWidth,
-              spacing: layout.gap,
-            ),
-          );
-          // Cards of unequal height stack per column, balanced by hand so
-          // the columns end near each other.
-          final List<List<Widget>> split = switch (columns) {
-            1 => [
-              [status, cache, prefetch, analysis, output, chain],
-            ],
-            2 => [
-              [status, cache, prefetch],
-              [output, analysis, chain],
-            ],
-            _ => [
-              [status, output],
-              [cache, chain],
-              [analysis, prefetch],
-            ],
-          };
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final (i, cards) in split.indexed) ...[
-                if (i > 0) SizedBox(width: layout.gap),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final (k, card) in cards.indexed) ...[
-                        if (k > 0) SizedBox(height: layout.gap),
-                        card,
-                      ],
-                    ],
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, page) => PageFrame(
+        title: 'Engine',
+        // With room for three columns the page grows to four of cards.
+        maxWidth:
+            page.maxWidth - layout.pagePadding.horizontal >=
+                Breakpoints.threeColumns
+            ? Breakpoints.full
+            : Breakpoints.wide,
+        body: LayoutBuilder(
+          builder: (context, c) {
+            // One column on phones, two up to desktop, three on big screens,
+            // four with room for three wide ones; never narrower than a card
+            // reads well.
+            final wanted = c.maxWidth >= Breakpoints.threeColumns
+                ? 4
+                : switch (layout.width) {
+                    WidthClass.compact => 1,
+                    WidthClass.xlarge => 3,
+                    _ => 2,
+                  };
+            final columns = math.min(
+              wanted,
+              ResponsiveGrid.columnsFor(
+                c.maxWidth,
+                minTileWidth: _minCardWidth,
+                spacing: layout.gap,
+              ),
+            );
+            // Cards of unequal height stack per column, balanced by hand so
+            // the columns end near each other.
+            final List<List<Widget>> split = switch (columns) {
+              1 => [
+                [status, cache, prefetch, analysis, output, chain],
               ],
-            ],
-          );
-        },
+              2 => [
+                [status, cache, prefetch],
+                [output, analysis, chain],
+              ],
+              3 => [
+                [status, output],
+                [cache, chain],
+                [analysis, prefetch],
+              ],
+              _ => [
+                [status],
+                [cache, prefetch],
+                [analysis],
+                [output, chain],
+              ],
+            };
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final (i, cards) in split.indexed) ...[
+                  if (i > 0) SizedBox(width: layout.gap),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final (k, card) in cards.indexed) ...[
+                          if (k > 0) SizedBox(height: layout.gap),
+                          card,
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }

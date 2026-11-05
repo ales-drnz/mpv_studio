@@ -35,7 +35,7 @@ class LabTab extends StatelessWidget {
         children: [
           UrlEntry(actions: actions, hasGlobalUserAgent: hasGlobalUserAgent),
           const SizedBox(height: Tokens.s16),
-          ...referenceRows(
+          ReferenceColumns(
             categories: labStreams,
             actions: actions,
             origin: playingOrigin(pl),

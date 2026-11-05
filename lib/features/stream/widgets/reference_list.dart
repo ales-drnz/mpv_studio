@@ -89,6 +89,79 @@ List<Widget> referenceRows({
   ];
 }
 
+/// The rows of [categories] as [referenceRows] lays them, in two columns
+/// when the tab has room for two of a card's readable width: the
+/// categories fill the first column, then the second, in order, the two
+/// about as long.
+class ReferenceColumns extends StatelessWidget {
+  const ReferenceColumns({
+    super.key,
+    required this.categories,
+    required this.actions,
+    required this.origin,
+    this.mediaFor,
+    this.icon = Icons.podcasts_rounded,
+  });
+
+  final List<StreamCategory> categories;
+  final StreamActions actions;
+  final String origin;
+  final Media Function(StreamItem item)? mediaFor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> rows(List<StreamCategory> cats) => referenceRows(
+      categories: cats,
+      actions: actions,
+      origin: origin,
+      mediaFor: mediaFor,
+      icon: icon,
+    );
+    return LayoutBuilder(
+      builder: (context, c) {
+        final gap = context.layout.gap;
+        if (categories.length < 2 ||
+            c.maxWidth < 2 * Breakpoints.cardColumn + gap) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: rows(categories),
+          );
+        }
+        // The split that leaves the two columns closest in rows.
+        final total = categories.fold(0, (n, c) => n + c.items.length + 1);
+        var split = 1, best = total;
+        var acc = 0;
+        for (var i = 0; i < categories.length - 1; i++) {
+          acc += categories[i].items.length + 1;
+          final diff = (total - 2 * acc).abs();
+          if (diff < best) {
+            best = diff;
+            split = i + 1;
+          }
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (i, part) in [
+              categories.sublist(0, split),
+              categories.sublist(split),
+            ].indexed) ...[
+              if (i > 0) SizedBox(width: gap),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: rows(part),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _ReferenceRow extends StatelessWidget {
   const _ReferenceRow({
     required this.item,

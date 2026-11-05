@@ -16,7 +16,8 @@ Future<AudioEffect?> showAddStage(BuildContext context) =>
     showStudioDialog<AudioEffect>(
       context,
       title: 'Add stage',
-      maxWidth: 560,
+      // A report: the catalog in a grid as wide as the window allows.
+      maxWidth: Breakpoints.report,
       builder: (context) => const AddStageCatalog(),
     );
 
@@ -115,19 +116,21 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
           padding: const EdgeInsets.only(top: Tokens.s8),
           child: SectionHeader(title),
         ),
-        for (final d in list)
-          _Entry(
-            id: d.name,
-            icon: d.icon,
-            title: d.title,
-            subtitle: kFeaturedSubtitles[d.filter] ?? d.wire,
-            onTap: () {
-              final e = d.create();
-              Navigator.of(
-                context,
-              ).pop(stageReady(e) ? e : d.setEnabled(e, false));
-            },
-          ),
+        _Grid([
+          for (final d in list)
+            _Entry(
+              id: d.name,
+              icon: d.icon,
+              title: d.title,
+              subtitle: kFeaturedSubtitles[d.filter] ?? d.wire,
+              onTap: () {
+                final e = d.create();
+                Navigator.of(
+                  context,
+                ).pop(stageReady(e) ? e : d.setEnabled(e, false));
+              },
+            ),
+        ]),
       ],
       if (!showRaw && groups.isEmpty)
         Padding(
@@ -166,6 +169,47 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
       ),
     );
   }
+}
+
+/// [entries] in as many columns as fit at their readable width, in rows
+/// read left to right.
+class _Grid extends StatelessWidget {
+  const _Grid(this.entries);
+
+  final List<Widget> entries;
+
+  /// The narrowest an entry reads well.
+  static const double _minEntry = 300;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      final columns = (c.maxWidth / _minEntry).floor().clamp(1, 3);
+      if (columns == 1) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: entries,
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var r = 0; r < entries.length; r += columns)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var k = r; k < r + columns; k++)
+                  Expanded(
+                    child: k < entries.length
+                        ? entries[k]
+                        : const SizedBox.shrink(),
+                  ),
+              ],
+            ),
+        ],
+      );
+    },
+  );
 }
 
 class _Entry extends StatelessWidget {

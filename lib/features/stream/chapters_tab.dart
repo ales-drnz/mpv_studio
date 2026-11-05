@@ -32,7 +32,7 @@ class ChaptersTab extends StatelessWidget {
           ),
           NowPlayingChapters(actions: actions),
           const SizedBox(height: Tokens.s16),
-          ...referenceRows(
+          ReferenceColumns(
             categories: chapterStreams,
             actions: actions,
             origin: playingOrigin(pl),

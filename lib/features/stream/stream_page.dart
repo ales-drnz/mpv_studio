@@ -182,34 +182,41 @@ class _StreamViewState extends State<StreamView> {
     final layout = context.layout;
     final selected = _tab;
     _visited.add(selected);
-    return PageFrame(
-      title: 'Stream',
-      scrollable: false,
-      // Libraries are dense: a grid of covers, an album beside it.
-      maxWidth: Breakpoints.wide,
-      // The tabs scroll themselves, each with the gutter at its sides and
-      // under its last item; the header and the tab row share it.
-      padding: layout.pagePadding.copyWith(top: 0),
-      bottom: StreamTabRow(
-        selected: selected,
-        onSelect: (t) => setState(() => _tab = t),
-      ),
-      body: IndexedStack(
-        key: StreamView.tabsKey,
-        index: selected.index,
-        sizing: StackFit.expand,
-        children: [
-          for (final tab in StreamTab.values)
-            StreamTabScope(
-              active: tab == selected,
-              child: TickerMode(
-                enabled: tab == selected,
-                child: _visited.contains(tab)
-                    ? _body(tab)
-                    : const SizedBox.shrink(),
+    return LayoutBuilder(
+      builder: (context, page) => PageFrame(
+        title: 'Stream',
+        scrollable: false,
+        // Libraries are dense: a grid of covers, an album beside it; with
+        // room for three columns the page grows further.
+        maxWidth:
+            page.maxWidth - layout.pagePadding.horizontal >=
+                Breakpoints.threeColumns
+            ? Breakpoints.full
+            : Breakpoints.wide,
+        // The tabs scroll themselves, each with the gutter at its sides and
+        // under its last item; the header and the tab row share it.
+        padding: layout.pagePadding.copyWith(top: 0),
+        bottom: StreamTabRow(
+          selected: selected,
+          onSelect: (t) => setState(() => _tab = t),
+        ),
+        body: IndexedStack(
+          key: StreamView.tabsKey,
+          index: selected.index,
+          sizing: StackFit.expand,
+          children: [
+            for (final tab in StreamTab.values)
+              StreamTabScope(
+                active: tab == selected,
+                child: TickerMode(
+                  enabled: tab == selected,
+                  child: _visited.contains(tab)
+                      ? _body(tab)
+                      : const SizedBox.shrink(),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

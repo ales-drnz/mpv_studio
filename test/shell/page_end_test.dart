@@ -309,7 +309,8 @@ void main() {
 
       testWidgets('lab', (tester) async {
         await stream(tester, streamView(player: StreamPlayer()));
-        await expectScrollEnds(tester, 'lab');
+        // In two columns a laptop window fits the whole Lab.
+        await expectScrollEnds(tester, 'lab', mustScroll: false);
       });
 
       testWidgets('chapters', (tester) async {

@@ -88,6 +88,9 @@ class _SettingsPageState extends State<SettingsPage> {
     final layout = context.layout;
     final body = c.maxWidth - layout.pagePadding.horizontal;
     final split = TwoPane.splitsAt(body.clamp(0, Breakpoints.wide));
+    // With room for three columns the page grows, and the group's cards
+    // go in two columns beside the list.
+    final three = split && body >= Breakpoints.threeColumns;
     // Side by side, a group is always open; one at a time, the list shows
     // until the user picks one.
     final open = _open ?? (split ? SettingsGroupId.listening : null);
@@ -125,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
       title: pushed ? open.title : 'Settings',
       onBack: pushed ? _close : null,
       scrollable: false,
-      maxWidth: Breakpoints.wide,
+      maxWidth: three ? Breakpoints.full : Breakpoints.wide,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -239,34 +242,61 @@ class _GroupDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sections = settingsSections(group);
+    // Gaps between the cards only: the last one ends at the page end.
+    Widget column(Iterable<Widget> cards) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, section) in cards.indexed) ...[
+          if (i > 0) const SizedBox(height: Tokens.s24),
+          section,
+        ],
+      ],
+    );
     return FocusTraversalGroup(
-      child: SingleChildScrollView(
-        padding: PageEnd.padding(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (heading)
-              Padding(
-                // Inset like the rows of the cards below.
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16,
-                  Tokens.s8,
-                  Tokens.s16,
-                  Tokens.s8,
-                ),
-                child: Semantics(
-                  header: true,
-                  child: Text(group.title, style: Tokens.heading),
-                ),
-              ),
-            // Gaps between the cards only: the last one ends at the page
-            // end.
-            for (final (i, section) in settingsSections(group).indexed) ...[
-              if (i > 0) const SizedBox(height: Tokens.s24),
-              section,
-            ],
-          ],
-        ),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final gap = context.layout.gap;
+          final two =
+              sections.length > 1 &&
+              c.maxWidth >= 2 * Breakpoints.cardColumn + gap;
+          // Two columns read down the first, then the second, in the
+          // group's order.
+          final half = (sections.length + 1) ~/ 2;
+          return SingleChildScrollView(
+            padding: PageEnd.padding(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (heading)
+                  Padding(
+                    // Inset like the rows of the cards below.
+                    padding: const EdgeInsets.fromLTRB(
+                      Tokens.s16,
+                      Tokens.s8,
+                      Tokens.s16,
+                      Tokens.s8,
+                    ),
+                    child: Semantics(
+                      header: true,
+                      child: Text(group.title, style: Tokens.heading),
+                    ),
+                  ),
+                if (two)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: column(sections.take(half))),
+                      SizedBox(width: gap),
+                      Expanded(child: column(sections.skip(half))),
+                    ],
+                  )
+                else
+                  column(sections),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
