@@ -21,6 +21,7 @@ import 'widgets/queue_empty.dart';
 import 'widgets/queue_entry_info.dart';
 import 'widgets/queue_header.dart';
 import 'widgets/queue_list.dart';
+import 'widgets/queue_now_playing.dart';
 import '../../ui/widgets/studio_snack.dart';
 
 /// The live playback queue, a view onto `player.stream.playlist`, for the
@@ -305,9 +306,16 @@ class _QueueViewState extends State<QueueView> {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final gutter = context.layout.gutter;
+                final available = constraints.maxWidth - 2 * gutter;
+                // With room for three columns, what plays and what comes
+                // next stand beside the list and the details.
+                final three =
+                    context.layout.isPointer &&
+                    items.isNotEmpty &&
+                    available >= Breakpoints.threeColumns;
                 final content = math.min(
-                  constraints.maxWidth - 2 * gutter,
-                  Breakpoints.wide,
+                  available,
+                  three ? Breakpoints.full : Breakpoints.wide,
                 );
                 // The width follows the window, not whether there is a
                 // detail yet: the header stays put when the first file
@@ -323,7 +331,11 @@ class _QueueViewState extends State<QueueView> {
                 return PageFrame(
                   title: 'Queue',
                   scrollable: false,
-                  maxWidth: roomy ? Breakpoints.wide : Breakpoints.readable,
+                  maxWidth: three
+                      ? Breakpoints.full
+                      : roomy
+                      ? Breakpoints.wide
+                      : Breakpoints.readable,
                   actions: queueHeaderButtons(
                     context,
                     _headerActions(items.isEmpty),
@@ -355,28 +367,32 @@ class _QueueViewState extends State<QueueView> {
                                     : () => router.go(Section.stream.path),
                               )
                             : split
-                            ? TwoPane(
-                                listWidth: _listWidth,
-                                minDetailWidth: _detailWidth,
-                                list: _list(playlist, selected, split),
-                                // A card at its content's height, scrolling
-                                // when it does not fit.
-                                detail: shown == null
-                                    ? null
-                                    : SingleChildScrollView(
-                                        padding: PageEnd.padding(context),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(
-                                            Tokens.s16,
+                            ? _withNowPlaying(
+                                three,
+                                playlist,
+                                TwoPane(
+                                  listWidth: _listWidth,
+                                  minDetailWidth: _detailWidth,
+                                  list: _list(playlist, selected, split),
+                                  // A card at its content's height, scrolling
+                                  // when it does not fit.
+                                  detail: shown == null
+                                      ? null
+                                      : SingleChildScrollView(
+                                          padding: PageEnd.padding(context),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(
+                                              Tokens.s16,
+                                            ),
+                                            decoration: ShapeDecoration(
+                                              color: Tokens.surface,
+                                              shape: Tokens.shape(Tokens.rLg),
+                                            ),
+                                            child: _info(playlist, shown),
                                           ),
-                                          decoration: ShapeDecoration(
-                                            color: Tokens.surface,
-                                            shape: Tokens.shape(Tokens.rLg),
-                                          ),
-                                          child: _info(playlist, shown),
                                         ),
-                                      ),
-                                placeholder: const _DetailPlaceholder(),
+                                  placeholder: const _DetailPlaceholder(),
+                                ),
                               )
                             : _list(playlist, selected, split),
                       ),
@@ -390,6 +406,34 @@ class _QueueViewState extends State<QueueView> {
       ),
     );
   }
+
+  /// [panes] with the Now playing column, when [three].
+  Widget _withNowPlaying(bool three, Playlist playlist, Widget panes) {
+    if (!three) return panes;
+    final gap = context.layout.gap;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: panes),
+        SizedBox(width: gap),
+        SizedBox(
+          width: _nowPlayingWidth,
+          child: SingleChildScrollView(
+            padding: PageEnd.padding(context),
+            child: QueueNowPlaying(
+              player: widget.player,
+              details: widget.details,
+              playlist: playlist,
+              onJump: _queue.play,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The Now playing column's width.
+  static const double _nowPlayingWidth = 320;
 
   Widget _summary(Playlist playlist) => ListenableBuilder(
     listenable: Listenable.merge([widget.details.details, _queue.adding]),
