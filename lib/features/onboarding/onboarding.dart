@@ -12,6 +12,7 @@ import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/focus_ring.dart';
 import '../../ui/widgets/lead_tile.dart';
 import '../../util/media_import.dart';
 
@@ -311,20 +312,24 @@ class _Choice extends StatelessWidget {
         children: [
           Semantics(
             button: true,
-            child: InkWell(
-              onTap: onTap,
-              autofocus: autofocus,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: context.layout.minTap),
-                child: Padding(
-                  padding: const EdgeInsets.all(Tokens.s16),
-                  child: LeadTile(
-                    icon: icon,
-                    title: title,
-                    subtitle: description,
-                    trailing: Icon(
-                      Icons.chevron_right_rounded,
-                      color: Tokens.fgDim,
+            child: FocusRing(
+              shape: Tokens.shape(Tokens.rLg),
+              inside: true,
+              child: InkWell(
+                onTap: onTap,
+                autofocus: autofocus,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: context.layout.minTap),
+                  child: Padding(
+                    padding: const EdgeInsets.all(Tokens.s16),
+                    child: LeadTile(
+                      icon: icon,
+                      title: title,
+                      subtitle: description,
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: Tokens.fgDim,
+                      ),
                     ),
                   ),
                 ),

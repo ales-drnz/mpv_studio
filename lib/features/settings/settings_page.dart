@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/focus_ring.dart';
 import '../../ui/widgets/lead_tile.dart';
 import '../onboarding/onboarding.dart';
 import 'restart_banner.dart';
@@ -194,26 +195,30 @@ class _GroupTile extends StatelessWidget {
       child: Material(
         color: selected ? Tokens.accentContainer : Tokens.surface,
         shape: Tokens.shape(Tokens.rLg),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.shape(Tokens.rLg),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: context.layout.minTap + Tokens.s16,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(Tokens.s16),
-              child: LeadTile(
-                icon: group.icon,
-                title: group.title,
-                subtitle: group.summary,
-                color: ink,
-                trailing: pushes
-                    ? Icon(
-                        Icons.chevron_right_rounded,
-                        color: ink ?? Tokens.fgFaint,
-                      )
-                    : null,
+        child: FocusRing(
+          shape: Tokens.shape(Tokens.rLg),
+          inside: true,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.shape(Tokens.rLg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: context.layout.minTap + Tokens.s16,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Tokens.s16),
+                child: LeadTile(
+                  icon: group.icon,
+                  title: group.title,
+                  subtitle: group.summary,
+                  color: ink,
+                  trailing: pushes
+                      ? Icon(
+                          Icons.chevron_right_rounded,
+                          color: ink ?? Tokens.fgFaint,
+                        )
+                      : null,
+                ),
               ),
             ),
           ),

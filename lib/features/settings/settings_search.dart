@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/focus_ring.dart';
 import '../../ui/widgets/controls.dart';
 import '../../ui/widgets/round_icon_button.dart';
 import 'settings_catalog.dart';
@@ -136,36 +137,40 @@ class _ResultTile extends StatelessWidget {
       child: Material(
         color: Tokens.surface,
         shape: Tokens.shape(Tokens.rMd),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.shape(Tokens.rMd),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: context.layout.minTap),
-            child: Padding(
-              padding: const EdgeInsets.all(Tokens.s16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    highlightMatches(entry.title, words, Tokens.body),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    '${entry.group.title}, ${entry.section}',
-                    style: Tokens.caption.copyWith(color: Tokens.fgDim),
-                  ),
-                  const SizedBox(height: Tokens.s4),
-                  Text.rich(
-                    highlightMatches(
-                      entry.description,
-                      words,
-                      Tokens.label.copyWith(color: Tokens.fgDim),
+        child: FocusRing(
+          shape: Tokens.shape(Tokens.rMd),
+          inside: true,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.shape(Tokens.rMd),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: context.layout.minTap),
+              child: Padding(
+                padding: const EdgeInsets.all(Tokens.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      highlightMatches(entry.title, words, Tokens.body),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    Text(
+                      '${entry.group.title}, ${entry.section}',
+                      style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                    ),
+                    const SizedBox(height: Tokens.s4),
+                    Text.rich(
+                      highlightMatches(
+                        entry.description,
+                        words,
+                        Tokens.label.copyWith(color: Tokens.fgDim),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

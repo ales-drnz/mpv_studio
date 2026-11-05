@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 
@@ -275,55 +276,62 @@ class SessionActionChip extends StatelessWidget {
         onTap: onTap,
         child: Material(
           type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: Tokens.pill,
-            child: Ink(
-              height: context.layout.minTap,
-              padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
-              decoration: ShapeDecoration(
-                color: advertised ? Tokens.accent : Tokens.surface3,
-                shape: Tokens.pill,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    m.icon,
-                    size: 16,
-                    color: advertised
-                        ? Tokens.onAccent
-                        : dim
-                        ? Tokens.fgFaint
-                        : Tokens.fgDim,
-                  ),
-                  const SizedBox(width: Tokens.s8),
-                  Text(
-                    m.label,
-                    style: Tokens.label.copyWith(
-                      fontWeight: FontWeight.w600,
+          child: FocusRing(
+            child: InkWell(
+              onTap: onTap,
+              customBorder: Tokens.pill,
+              child: Ink(
+                height: context.layout.minTap,
+                padding: const EdgeInsets.fromLTRB(
+                  Tokens.s12,
+                  0,
+                  Tokens.s16,
+                  0,
+                ),
+                decoration: ShapeDecoration(
+                  color: advertised ? Tokens.accent : Tokens.surface3,
+                  shape: Tokens.pill,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      m.icon,
+                      size: 16,
+                      color: advertised
+                          ? Tokens.onAccent
+                          : dim
+                          ? Tokens.fgFaint
+                          : Tokens.fgDim,
+                    ),
+                    const SizedBox(width: Tokens.s8),
+                    Text(
+                      m.label,
+                      style: Tokens.label.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: advertised
+                            ? Tokens.onAccent
+                            : dim
+                            ? Tokens.fgFaint
+                            : Tokens.fg,
+                      ),
+                    ),
+                    const SizedBox(width: Tokens.s8),
+                    Icon(
+                      advertised
+                          ? Icons.check_rounded
+                          : (unsupported
+                                ? Icons.block_rounded
+                                : Icons.add_rounded),
+                      size: 16,
                       color: advertised
                           ? Tokens.onAccent
                           : dim
                           ? Tokens.fgFaint
                           : Tokens.fg,
                     ),
-                  ),
-                  const SizedBox(width: Tokens.s8),
-                  Icon(
-                    advertised
-                        ? Icons.check_rounded
-                        : (unsupported
-                              ? Icons.block_rounded
-                              : Icons.add_rounded),
-                    size: 16,
-                    color: advertised
-                        ? Tokens.onAccent
-                        : dim
-                        ? Tokens.fgFaint
-                        : Tokens.fg,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
@@ -217,23 +218,25 @@ class _CodecChip extends StatelessWidget {
       onTap: onTap,
       child: Material(
         type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.pill,
-          child: Ink(
-            height: context.layout.minTap,
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-            decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Tokens.surface3,
-              shape: Tokens.pill,
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                label,
-                style: Tokens.label.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: active ? Tokens.onAccent : Tokens.fg,
+        child: FocusRing(
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.pill,
+            child: Ink(
+              height: context.layout.minTap,
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accent : Tokens.surface3,
+                shape: Tokens.pill,
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  label,
+                  style: Tokens.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: active ? Tokens.onAccent : Tokens.fg,
+                  ),
                 ),
               ),
             ),

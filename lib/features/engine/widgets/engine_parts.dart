@@ -71,7 +71,7 @@ class Spy extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: Tokens.motion(context, Tokens.motionShort),
             width: 8,
             height: 8,
             decoration: ShapeDecoration(

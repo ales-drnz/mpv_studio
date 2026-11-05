@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../rack_controller.dart';
 
@@ -55,35 +56,38 @@ class RackHeaderButton extends StatelessWidget {
           padding: const EdgeInsets.only(left: Tokens.s8),
           child: Material(
             type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onTap,
-              customBorder: shape,
-              child: Ink(
-                height: tap,
-                width: compact ? tap : null,
-                padding: compact
-                    ? EdgeInsets.zero
-                    : const EdgeInsets.symmetric(horizontal: Tokens.s16),
-                decoration: ShapeDecoration(
-                  color: active ? Tokens.amber : Tokens.tonal,
-                  shape: shape,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 18, color: fg),
-                    if (!compact) ...[
-                      const SizedBox(width: Tokens.s8),
-                      Text(
-                        label,
-                        style: Tokens.label.copyWith(
-                          color: fg,
-                          fontWeight: FontWeight.w600,
+            child: FocusRing(
+              shape: shape,
+              child: InkWell(
+                onTap: onTap,
+                customBorder: shape,
+                child: Ink(
+                  height: tap,
+                  width: compact ? tap : null,
+                  padding: compact
+                      ? EdgeInsets.zero
+                      : const EdgeInsets.symmetric(horizontal: Tokens.s16),
+                  decoration: ShapeDecoration(
+                    color: active ? Tokens.amber : Tokens.tonal,
+                    shape: shape,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 18, color: fg),
+                      if (!compact) ...[
+                        const SizedBox(width: Tokens.s8),
+                        Text(
+                          label,
+                          style: Tokens.label.copyWith(
+                            color: fg,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

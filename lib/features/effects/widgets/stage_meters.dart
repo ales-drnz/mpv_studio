@@ -126,7 +126,11 @@ class _StageMetersState extends State<StageMeters> {
       label: 'Stage meters, before and after',
       value: widget.active ? null : widget.idleText,
       child: Container(
-        height: context.layout.isShort ? 52 : 72,
+        // At rest one line, a control tall: an empty band took the top of
+        // every card.
+        height: widget.active
+            ? (context.layout.isShort ? 52 : 72)
+            : Tokens.controlH,
         decoration: ShapeDecoration(
           color: Tokens.surface3,
           shape: Tokens.shape(Tokens.rSm),

@@ -63,7 +63,7 @@ class StatusView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: Tokens.motion(context, Tokens.motionShort),
             width: 12,
             height: 12,
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),

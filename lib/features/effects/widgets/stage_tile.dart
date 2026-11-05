@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
@@ -166,34 +167,38 @@ class StageTile extends StatelessWidget {
     // The ink spans the whole header, the handle included, so the hover
     // and the splash fill the tile edge to edge and the tile's clip gives
     // them its rounded corners. A tap on the handle does nothing.
-    final header = InkWell(
-      key: ValueKey('stage-header-$id'),
-      customBorder: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
-      onTap: onTap,
-      // The header's own button below carries the tap for assistive tech.
-      excludeFromSemantics: true,
-      child: Row(
-        children: [
-          GestureDetector(onTap: () {}, child: handle),
-          Expanded(
-            child: Semantics(
-              button: true,
-              selected: selected,
-              expanded: inline ? open : null,
-              label: '$title, ${on ? 'on' : 'off'}',
-              onTap: onTap,
-              child: StudioMenuRegion<StageAction>(
-                title: title,
-                items: () => stageMenuItems(rack, id),
-                onSelected: onAction,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: layout.minTap),
-                  child: body,
+    final header = FocusRing(
+      shape: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
+      inside: true,
+      child: InkWell(
+        key: ValueKey('stage-header-$id'),
+        customBorder: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
+        onTap: onTap,
+        // The header's own button below carries the tap for assistive tech.
+        excludeFromSemantics: true,
+        child: Row(
+          children: [
+            GestureDetector(onTap: () {}, child: handle),
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: selected,
+                expanded: inline ? open : null,
+                label: '$title, ${on ? 'on' : 'off'}',
+                onTap: onTap,
+                child: StudioMenuRegion<StageAction>(
+                  title: title,
+                  items: () => stageMenuItems(rack, id),
+                  onSelected: onAction,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: layout.minTap),
+                    child: body,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
