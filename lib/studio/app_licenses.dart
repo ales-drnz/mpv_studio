@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 const _libsmb2Notice =
     'dart_smb2 loads libsmb2, the SMB2 and SMB3 client library by Ronnie '
@@ -13,18 +14,20 @@ const _libsmb2Notice =
 const _robotoMonoNotice =
     'Roboto Mono, by Christian Robertson and the Roboto Mono authors '
     '(https://github.com/googlefonts/RobotoMono), is bundled under the '
-    'Apache License, Version 2.0 '
-    '(https://www.apache.org/licenses/LICENSE-2.0).';
+    'Apache License, Version 2.0, whose text follows.';
 
 /// Registers what no package does: Flutter's license page does not list the
 /// Roboto Mono font the app bundles, nor the libsmb2 that dart_smb2
 /// bundles on the native platforms.
 void registerAppLicenses() {
-  LicenseRegistry.addLicense(
-    () => Stream.value(
-      const LicenseEntryWithLineBreaks(['Roboto Mono'], _robotoMonoNotice),
-    ),
-  );
+  LicenseRegistry.addLicense(() async* {
+    final text = await rootBundle.loadString(
+      'assets/fonts/LICENSE-RobotoMono.txt',
+    );
+    yield LicenseEntryWithLineBreaks([
+      'Roboto Mono',
+    ], '$_robotoMonoNotice\n\n$text');
+  });
   if (kIsWeb) return;
   LicenseRegistry.addLicense(
     () => Stream.value(

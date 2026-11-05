@@ -178,11 +178,14 @@ class _AppSliderState extends State<AppSlider> {
         : min + c * (max - min);
   }
 
+  /// [v] on the nearest of the [AppSlider.divisions], which are even
+  /// along the track (even ratios on a log track).
   double _snap(double v) {
     final min = widget.min, max = widget.max;
     final c = v.clamp(min, max).toDouble();
     final d = widget.divisions;
     if (d == null || max <= min) return c;
+    if (_log) return _fromT((_toT(c) * d).round() / d);
     final step = (max - min) / d;
     return (min + ((c - min) / step).round() * step).clamp(min, max).toDouble();
   }
@@ -202,21 +205,32 @@ class _AppSliderState extends State<AppSlider> {
     return (f <= 1 ? 1 : (f <= 2 ? 2 : (f <= 5 ? 5 : 10))) * unit;
   }
 
-  /// [v] on the grid of [step], without the float noise of the sum
-  /// (0.30000000000000004).
-  static double _onGrid(double v, double step) {
+  /// [v] on the grid of [step] that starts at the minimum, without the
+  /// float noise of the sum (0.30000000000000004).
+  double _onGrid(double v, double step) {
     if (step <= 0) return v;
-    final decimals = math.max(0, -(math.log(step) / math.ln10).floor() + 1);
-    final r = (v / step).round() * step;
-    return double.parse(r.toStringAsFixed(math.min(decimals, 12)));
+    final origin = widget.min;
+    final r = origin + ((v - origin) / step).round() * step;
+    final decimals = math.max(_decimals(step), _decimals(origin));
+    return double.parse(r.toStringAsFixed(decimals));
   }
 
-  /// [v] to three significant figures, or four when three would not move
-  /// it from [from].
+  /// The decimals [x] is written with, at most 12.
+  static int _decimals(double x) {
+    final text = x.toString();
+    if (text.contains('e')) return 12;
+    final dot = text.indexOf('.');
+    if (dot < 0) return 0;
+    final fraction = text.substring(dot + 1);
+    return fraction == '0' ? 0 : math.min(fraction.length, 12);
+  }
+
+  /// [v] to three significant figures, or more when fewer would not move
+  /// it from [from] the way [v] moves (rounding can undo a fine step).
   static double _round(double v, double from) {
-    for (final figures in [3, 4, 6]) {
+    for (final figures in [3, 4, 6, 9]) {
       final r = double.parse(v.toStringAsPrecision(figures));
-      if (r != from) return r;
+      if (r != from && (r - from).sign == (v - from).sign) return r;
     }
     return v;
   }

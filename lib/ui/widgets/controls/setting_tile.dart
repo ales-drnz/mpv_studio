@@ -103,8 +103,10 @@ class SettingTile extends StatelessWidget {
       button: toggled == null,
       toggled: toggled,
       enabled: enabled,
+      // Inside: the settings card clips 4 px from the row.
       child: FocusRing(
         shape: Tokens.shape(Tokens.rMd),
+        inside: true,
         child: InkWell(
           onTap: enabled ? onTap : null,
           customBorder: Tokens.shape(Tokens.rMd),

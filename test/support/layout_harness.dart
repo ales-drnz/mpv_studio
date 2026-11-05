@@ -108,9 +108,9 @@ Future<void> loadStudioFonts() async {
   final mono = FontLoader('Roboto Mono');
   for (final weight in ['Regular', 'Medium', 'Bold']) {
     mono.addFont(
-      File('assets/fonts/RobotoMono-$weight.ttf')
-          .readAsBytes()
-          .then(ByteData.sublistView),
+      File(
+        'assets/fonts/RobotoMono-$weight.ttf',
+      ).readAsBytes().then(ByteData.sublistView),
     );
   }
   await mono.load();

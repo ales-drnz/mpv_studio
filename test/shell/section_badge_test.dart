@@ -33,7 +33,7 @@ void main() {
           ),
         );
         final badge = tester.widget<Badge>(find.byType(Badge));
-        final text = badge.textColor ?? palette.onAccent;
+        final text = badge.textColor!;
         expect(
           contrast(text, badge.backgroundColor!),
           greaterThanOrEqualTo(4.5),

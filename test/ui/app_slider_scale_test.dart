@@ -176,4 +176,73 @@ void main() {
       expect(changes, [1, 11]);
     });
   });
+
+  group('review cases', () {
+    testWidgets('a fine step on a log track never moves backwards', (
+      tester,
+    ) async {
+      for (final from in [1.0004, 0.9996, 1.2345, 3.9]) {
+        final changes = await pump(
+          tester,
+          value: from,
+          min: 0.25,
+          max: 4,
+          scale: SliderScale.log,
+        );
+        await focus(tester);
+        changes.clear();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.pump();
+        expect(changes.single, greaterThan(from), reason: 'from $from');
+      }
+    });
+
+    testWidgets('an explicit step that is not round stays on its grid', (
+      tester,
+    ) async {
+      final changes = await pump(tester, value: 0, min: 0, max: 1, step: 0.125);
+      await focus(tester);
+      changes.clear();
+      for (var i = 0; i < 3; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump();
+      }
+      expect(changes, [0.125, 0.25, 0.375]);
+    });
+
+    testWidgets('steps count from the minimum', (tester) async {
+      final changes = await pump(
+        tester,
+        value: 0.13,
+        min: 0.13,
+        max: 10.13,
+        step: 0.1,
+      );
+      await focus(tester);
+      changes.clear();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(changes.single, 0.23);
+    });
+
+    testWidgets('divisions on a log track are even along the track', (
+      tester,
+    ) async {
+      final changes = await pump(
+        tester,
+        value: 0.25,
+        min: 0.25,
+        max: 4,
+        scale: SliderScale.log,
+        divisions: 4,
+      );
+      final rect = tester.getRect(find.byType(AppSlider));
+      await tester.tapAt(rect.center);
+      await tester.pump();
+      // The middle tick of a log track is the geometric mean.
+      expect(changes.last, closeTo(1, 1e-9));
+    });
+  });
 }

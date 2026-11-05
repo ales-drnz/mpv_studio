@@ -49,6 +49,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/models/
+    - assets/fonts/LICENSE-RobotoMono.txt
   # Roboto Mono (Apache License 2.0): the log, readouts and figures line up
   # on every platform, where 'monospace' falls back to a proportional face.
   fonts:

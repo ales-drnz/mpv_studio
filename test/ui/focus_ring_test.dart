@@ -30,13 +30,15 @@ void main() {
     expect(ring(), findsOneWidget);
   });
 
-  testWidgets('a click focuses without the ring', (tester) async {
+  testWidgets('a touch hides the ring the keyboard showed', (tester) async {
     await pump(tester);
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: Offset.zero);
-    addTearDown(mouse.removePointer);
-    await mouse.down(tester.getCenter(find.byType(RoundIconButton)));
-    await mouse.up();
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(ring(), findsOneWidget);
+    // A touch anywhere puts the focus highlight in touch mode.
+    final touch = await tester.createGesture(kind: PointerDeviceKind.touch);
+    await touch.down(const Offset(5, 5));
+    await touch.up();
     await tester.pump();
     expect(ring(), findsNothing);
   });
