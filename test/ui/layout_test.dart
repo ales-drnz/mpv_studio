@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
+import 'package:mpv_studio/ui/widgets/pill_menu_item.dart';
 
 import '../support/layout_harness.dart';
 
@@ -140,7 +141,7 @@ void main() {
       await pumpStudio(tester, region((v) => picked = v));
       await tester.tap(find.text('target'), buttons: kSecondaryButton);
       await tester.pumpAndSettle();
-      expect(find.byType(PopupMenuItem<int>), findsNWidgets(2));
+      expect(find.byType(PillMenuItem<int>), findsNWidgets(2));
       expect(find.byType(BottomSheet), findsNothing);
       await tester.tap(find.text('Remove'));
       await tester.pumpAndSettle();

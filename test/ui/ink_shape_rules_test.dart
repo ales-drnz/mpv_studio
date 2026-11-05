@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/console/console_log.dart';
 import 'package:mpv_studio/features/effects/rack_catalog.dart';
 import 'package:mpv_studio/features/settings/settings_page.dart';
 import 'package:mpv_studio/features/stream/media_server.dart';
@@ -9,9 +10,14 @@ import 'package:mpv_studio/features/stream/stream_page.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/palette.dart';
 
+import '../console/console_fixture.dart';
 import '../effects/rack_harness.dart';
+import '../now_playing/playback_fake.dart';
+import '../now_playing/playback_harness.dart';
+import '../onboarding/onboarding_test.dart' show pumpWelcome;
 import '../settings/studio_fakes.dart';
 import '../stream/stream_fakes.dart';
+import '../queue/queue_fake.dart';
 import '../queue/queue_fixture.dart';
 import '../support/fake_engine.dart';
 import '../support/layout_harness.dart';
@@ -20,10 +26,15 @@ import '../support/layout_harness.dart';
 /// take the shape of the surface they light up.
 ///
 /// * An InkWell gives its ink a shape (`customBorder` or `borderRadius`),
-///   or sits in a Material that clips to its own shape.
+///   or fills a Material that clips to its own shape (a Material that only
+///   clips a bigger surface, a menu around its items, leaves the item's
+///   ink a rectangle).
 /// * An InkWell shaped like the rounded surface around it (the same
 ///   corner radius) covers that whole surface, so the hover never stops
 ///   short of the surface's edge (a row's handle column, say).
+/// * An InkWell that covers a rounded box takes that box's shape: a pill
+///   of ink on a rounded card, or a rectangle on a pill, lights past or
+///   short of the box's corners.
 void expectInkFollowsShapes(WidgetTester tester) {
   final problems = <String>[];
   for (final element in find.byType(InkWell).evaluate()) {
@@ -31,8 +42,18 @@ void expectInkFollowsShapes(WidgetTester tester) {
     final box = element.renderObject as RenderBox?;
     if (box == null || !box.hasSize || box.size.isEmpty) continue;
     final shaped = ink.customBorder != null || ink.borderRadius != null;
-    if (!shaped && !_clippedByMaterial(element)) {
-      problems.add('${_where(element)}: no ink shape and no clipping Material');
+    if (!shaped && !_filledClippingMaterial(element, box)) {
+      problems.add(
+        '${_where(element)}: no ink shape and no clipping Material it fills',
+      );
+      continue;
+    }
+    final box2 = _boxCovered(element, box);
+    if (shaped && box2 != null && !_sameShape(ink, box2)) {
+      problems.add(
+        '${_where(element)}: ink ${_shapeName(ink.customBorder)} on a box '
+        '${_shapeName(box2)} of the same size',
+      );
       continue;
     }
     final radius = _radiusOf(ink.customBorder);
@@ -74,18 +95,82 @@ String _parentType(Element e) {
   return type;
 }
 
-bool _clippedByMaterial(Element e) {
+/// Whether [e] sits in a Material that clips to its shape and that the
+/// ink [box] fills.
+bool _filledClippingMaterial(Element e, RenderBox box) {
   var clipped = false;
   e.visitAncestorElements((a) {
     final w = a.widget;
     if (w is Material) {
-      clipped = w.clipBehavior != Clip.none && w.shape != null;
+      final m = a.renderObject as RenderBox?;
+      clipped =
+          w.clipBehavior != Clip.none &&
+          w.shape != null &&
+          m != null &&
+          _sameRect(box, m);
       return false;
     }
     return true;
   });
   return clipped;
 }
+
+bool _sameRect(RenderBox a, RenderBox b) {
+  final ra = a.localToGlobal(Offset.zero) & a.size;
+  final rb = b.localToGlobal(Offset.zero) & b.size;
+  return (ra.left - rb.left).abs() <= 1 &&
+      (ra.top - rb.top).abs() <= 1 &&
+      (ra.width - rb.width).abs() <= 1 &&
+      (ra.height - rb.height).abs() <= 1;
+}
+
+/// The shape of the nearest filled, shaped box around [e] (a decoration
+/// or a coloured Material) that the ink [box] covers exactly, if any.
+ShapeBorder? _boxCovered(Element e, RenderBox box) {
+  ShapeBorder? found;
+  var steps = 0;
+  e.visitAncestorElements((a) {
+    steps++;
+    final w = a.widget;
+    final ShapeBorder? shape = switch (w) {
+      Ink(:final decoration?) => _shapeOfDecoration(decoration),
+      DecoratedBox(:final decoration) => _shapeOfDecoration(decoration),
+      Material(:final shape?, :final color?) when color.a > 0 => shape,
+      _ => null,
+    };
+    if (shape != null) {
+      final r = a.renderObject;
+      if (r is RenderBox && r.hasSize && _sameRect(box, r)) found = shape;
+      return false;
+    }
+    return steps < 8;
+  });
+  return found;
+}
+
+ShapeBorder? _shapeOfDecoration(Decoration d) => switch (d) {
+  ShapeDecoration(:final shape, :final color?) when color.a > 0 => shape,
+  BoxDecoration(:final borderRadius?, :final color?) when color.a > 0 =>
+    RoundedRectangleBorder(borderRadius: borderRadius),
+  BoxDecoration(shape: BoxShape.circle, :final color?) when color.a > 0 =>
+    const CircleBorder(),
+  _ => null,
+};
+
+bool _sameShape(InkWell ink, ShapeBorder box) {
+  final inkShape =
+      ink.customBorder ??
+      RoundedRectangleBorder(borderRadius: ink.borderRadius!);
+  return _shapeName(inkShape) == _shapeName(box);
+}
+
+String _shapeName(ShapeBorder? s) => switch (s) {
+  StadiumBorder() => 'pill',
+  CircleBorder() => 'circle',
+  RoundedRectangleBorder(:final borderRadius) =>
+    'rounded ${(borderRadius as BorderRadius).topLeft.x}',
+  _ => '$s',
+};
 
 double? _radiusOf(ShapeBorder? shape) {
   if (shape is RoundedRectangleBorder) {
@@ -209,6 +294,59 @@ void main() {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details, palette: palette);
       await tester.tap(find.text('Kveld'), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+      expectInkFollowsShapes(tester);
+    });
+
+    testWidgets('$theme the shells and the mini-player', (tester) async {
+      for (final (size, input) in [
+        (const Size(1440, 900), InputMode.pointer),
+        (const Size(800, 1280), InputMode.touch),
+        (const Size(412, 915), InputMode.touch),
+      ]) {
+        await pumpShell(tester, size: size, input: input, palette: palette);
+        expectInkFollowsShapes(tester);
+      }
+      // The phone's More sheet.
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      expectInkFollowsShapes(tester);
+    });
+
+    testWidgets('$theme Playback, its menus and dialogs', (tester) async {
+      final player = playingTrack();
+      await pumpPlayback(
+        tester,
+        player,
+        size: studioSize('1440x900'),
+        palette: palette,
+      );
+      expectInkFollowsShapes(tester);
+      await tester.tap(find.byTooltip('Playback speed'));
+      await tester.pumpAndSettle();
+      expectInkFollowsShapes(tester);
+      await tester.tap(find.text('Speed and pitch'));
+      await tester.pumpAndSettle();
+      expectInkFollowsShapes(tester);
+    });
+
+    testWidgets('$theme the Console and its suggestions', (tester) async {
+      final player = QueueFakePlayer();
+      final log = ConsoleLog()..attach(player);
+      addTearDown(log.dispose);
+      await pumpConsole(tester, player, log, palette: palette);
+      expectInkFollowsShapes(tester);
+    });
+
+    testWidgets('$theme the welcome screen', (tester) async {
+      await pumpWelcome(tester, size: '1440x900', palette: palette);
+      expectInkFollowsShapes(tester);
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('$theme the add stage dialog', (tester) async {
+      await pumpRack(tester, FakeEngine(const []), palette: palette);
+      await tester.tap(find.text('Add stage').first);
       await tester.pumpAndSettle();
       expectInkFollowsShapes(tester);
     });
