@@ -48,9 +48,7 @@ void main() {
       expect(find.byTooltip('More queue actions'), findsNothing);
     });
 
-    testWidgets('a tablet labels Add files and folds the rest', (
-      tester,
-    ) async {
+    testWidgets('a tablet labels Add files and folds the rest', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(
         tester,
