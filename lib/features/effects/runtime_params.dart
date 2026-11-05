@@ -366,3 +366,30 @@ Object? _value(ParamSpec p, AudioEffect e) => switch (p) {
   EnumParam en => en.get(e),
   StringParam s => s.get(e),
 };
+
+/// Whether [option] of [effect] moves on the running filter (true) or
+/// rebuilds it (false).
+bool isLiveOption(AudioEffect effect, String option) =>
+    kRuntimeParams[descriptorOf(effect.filter)?.name]?.contains(option) ??
+    false;
+
+/// The slider tag of [option] of [effect], and its explanation.
+(String, String) liveTagOf(AudioEffect effect, String option) =>
+    isLiveOption(effect, option)
+    ? ('live', 'Moves on the running filter, without a gap')
+    : ('rebuild', 'Rebuilds the filter: a short gap in the sound');
+
+/// Whether an option named [name] spanning [min] upwards reads better on
+/// a log track: frequencies, times and ratios, whose useful values sit
+/// in the bottom tenth of a linear one.
+bool logScaled(String name, double min) {
+  if (min <= 0) return false;
+  final n = name.toLowerCase();
+  return n == 'f' ||
+      n.contains('freq') ||
+      n == 'cutoff' ||
+      n == 'attack' ||
+      n == 'release' ||
+      n == 'ratio' ||
+      n.contains('delay');
+}

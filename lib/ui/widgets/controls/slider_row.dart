@@ -26,6 +26,11 @@ class SliderRow extends StatelessWidget {
   final double? resetTo;
   final bool enabled;
 
+  /// A short word before the value ("live", "rebuild"), with [tagTooltip]
+  /// on hover; null for none.
+  final String? tag;
+  final String? tagTooltip;
+
   const SliderRow({
     super.key,
     required this.label,
@@ -41,6 +46,8 @@ class SliderRow extends StatelessWidget {
     this.format,
     this.resetTo,
     this.enabled = true,
+    this.tag,
+    this.tagTooltip,
   });
 
   String _fmt(double v) => format?.call(v) ?? v.toStringAsFixed(1);
@@ -76,11 +83,23 @@ class SliderRow extends StatelessWidget {
       title: label,
       description: description,
       enabled: enabled,
-      trailing: ExcludeSemantics(
-        child: ValueBadge(
-          _fmt(clamped),
-          color: enabled ? Tokens.accent : Tokens.fgFaint,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (tag case final tag?) ...[
+            Tooltip(
+              message: tagTooltip ?? '',
+              child: Text(tag, style: Tokens.caption),
+            ),
+            const SizedBox(width: Tokens.s8),
+          ],
+          ExcludeSemantics(
+            child: ValueBadge(
+              _fmt(clamped),
+              color: enabled ? Tokens.accent : Tokens.fgFaint,
+            ),
+          ),
+        ],
       ),
       below: slider,
     );

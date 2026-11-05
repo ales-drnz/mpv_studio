@@ -29,6 +29,8 @@ class PlaybackSection extends StatelessWidget {
             value: v,
             min: 0.25,
             max: 4,
+            // Even ratios: 1x in the middle, 0.5x and 2x at the quarters.
+            scale: SliderScale.log,
             resetTo: 1,
             format: (x) => '${x.toStringAsFixed(2)}x',
             set: p.setRate,
@@ -43,6 +45,8 @@ class PlaybackSection extends StatelessWidget {
             value: v,
             min: 0.5,
             max: 2,
+            // An octave down to an octave up, 1x in the middle.
+            scale: SliderScale.log,
             resetTo: 1,
             format: (x) => '${x.toStringAsFixed(2)}x',
             set: p.setPitch,
