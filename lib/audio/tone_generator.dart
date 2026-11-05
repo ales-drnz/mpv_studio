@@ -22,7 +22,8 @@ enum ToneKind {
 /// Test signals made in Dart, chunk by chunk, as interleaved stereo
 /// 16-bit little-endian samples: what the Live PCM tab feeds a
 /// `PcmSource`. [kind], [frequency] and [levelDb] change between chunks
-/// without a click: the phase carries over.
+/// without a click: the phase carries over, the level glides across the
+/// next chunk, and a new kind fades in over 5 ms.
 class ToneGenerator {
   ToneGenerator({this.sampleRate = 48000, int seed = 1})
     : _random = math.Random(seed);
@@ -51,6 +52,13 @@ class ToneGenerator {
   double _phase = 0;
   int _frame = 0;
 
+  /// The gain the last chunk ended on, and the kind it played.
+  double? _gain;
+  ToneKind? _kind;
+
+  /// How long a change of kind fades over.
+  static const Duration _fade = Duration(milliseconds: 5);
+
   // Paul Kellet's pink filter state.
   double _b0 = 0, _b1 = 0, _b2 = 0, _b3 = 0, _b4 = 0, _b5 = 0, _b6 = 0;
 
@@ -65,46 +73,66 @@ class ToneGenerator {
   Uint8List next(Duration length) {
     final frames = (length.inMicroseconds * sampleRate / 1e6).round();
     final out = Int16List(frames * channels);
-    final gain = math.pow(10, levelDb / 20).toDouble();
+    final target = math.pow(10, levelDb / 20).toDouble();
+    final from = _gain ?? target;
+    final previous = _kind ?? kind;
+    final fade = previous == kind
+        ? 0
+        : (_fade.inMicroseconds * sampleRate / 1e6).round();
     for (var i = 0; i < frames; i++) {
-      final v = (_sample() * gain).clamp(-1.0, 1.0);
+      final gain = from + (target - from) * (i + 1) / frames;
+      var raw = _sampleOf(kind);
+      if (i < fade) {
+        final a = (i + 1) / fade;
+        raw = raw * a + _sampleOf(previous, advance: false) * (1 - a);
+      }
+      _advance();
+      final v = (raw * gain).clamp(-1.0, 1.0);
       final s = (v * 32767).round();
       out[i * 2] = s;
       out[i * 2 + 1] = s;
-      _frame++;
     }
+    _gain = target;
+    _kind = kind;
     return out.buffer.asUint8List();
   }
 
-  double _sample() {
-    switch (kind) {
-      case ToneKind.sine:
-        return _tone(frequency);
-      case ToneKind.sweep:
-        final at = Duration(microseconds: (_frame * 1e6 / sampleRate).round());
-        return _tone(sweepFrequencyAt(at));
+  /// The frequency the tone plays at this frame.
+  double get _hz => kind == ToneKind.sweep
+      ? sweepFrequencyAt(
+          Duration(microseconds: (_frame * 1e6 / sampleRate).round()),
+        )
+      : frequency;
+
+  /// This frame of [k], before its gain. [advance] false reads noise
+  /// without drawing a new value (the fading-out side of a change).
+  double _sampleOf(ToneKind k, {bool advance = true}) {
+    switch (k) {
+      case ToneKind.sine || ToneKind.sweep:
+        return math.sin(_phase);
       case ToneKind.pinkNoise:
-        return _pink();
+        return advance ? _pink() : _lastPink;
       case ToneKind.pulses:
         // 50 ms of tone every 250 ms, with 5 ms fades against clicks.
         final period = sampleRate ~/ 4;
         final burst = sampleRate ~/ 20;
         final fade = sampleRate ~/ 200;
         final at = _frame % period;
-        final tone = _tone(frequency);
         if (at >= burst) return 0;
         final edge = math.min(at, burst - at);
+        final tone = math.sin(_phase);
         return edge < fade ? tone * edge / fade : tone;
     }
   }
 
-  /// One step of a sine at [hz], the phase carried across calls.
-  double _tone(double hz) {
-    final v = math.sin(_phase);
-    _phase += 2 * math.pi * hz / sampleRate;
+  /// Moves the phase and the frame on by one sample.
+  void _advance() {
+    _phase += 2 * math.pi * _hz / sampleRate;
     if (_phase > 2 * math.pi) _phase -= 2 * math.pi;
-    return v;
+    _frame++;
   }
+
+  double _lastPink = 0;
 
   double _pink() {
     final white = _random.nextDouble() * 2 - 1;
@@ -116,7 +144,7 @@ class ToneGenerator {
     _b5 = -0.7616 * _b5 - white * 0.0168980;
     final pink = _b0 + _b1 + _b2 + _b3 + _b4 + _b5 + _b6 + white * 0.5362;
     _b6 = white * 0.115926;
-    // The filter's peak sits near 5x white: scale back under full scale.
-    return pink * 0.2;
+    // The filter's peaks pass 5x white: 0.11 keeps them under full scale.
+    return _lastPink = pink * 0.11;
   }
 }

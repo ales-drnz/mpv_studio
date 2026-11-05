@@ -110,13 +110,6 @@ class _PcmTabState extends State<PcmTab> {
     ),
   );
 
-  String get _title => switch (_generator.kind) {
-    ToneKind.sine => 'Sine, ${_hz(_generator.frequency)}',
-    ToneKind.pulses => 'Pulses, ${_hz(_generator.frequency)}',
-    ToneKind.sweep => 'Sweep, 20 Hz to 20 kHz',
-    ToneKind.pinkNoise => 'Pink noise',
-  };
-
   static String _hz(double hz) => hz >= 1000
       ? '${(hz / 1000).toStringAsFixed(hz >= 10000 ? 0 : 1)} kHz'
       : '${hz.round()} Hz';
@@ -130,15 +123,23 @@ class _PcmTabState extends State<PcmTab> {
         () => open(
           PcmTab.format,
           lowLatency: _lowLatency,
-          extras: {'title': 'Live PCM', 'artist': _title},
+          // The signal changes while it plays: the entry names the kind
+          // of source, not the first signal.
+          extras: {'title': 'Live PCM', 'artist': 'Test signal'},
         ),
       );
-      if (!mounted || source == null) return;
+      if (source == null) return;
+      if (!mounted) {
+        // Gone while the input opened (on the web it waits for the
+        // engine's module): nobody would feed it.
+        source.abort();
+        return;
+      }
       setState(() => _source = source);
-      _refresh = Timer.periodic(
-        const Duration(milliseconds: 200),
-        (_) => mounted ? setState(() {}) : null,
-      );
+      // The buffered readout, while the tab is the one on screen.
+      _refresh = Timer.periodic(const Duration(milliseconds: 200), (_) {
+        if (mounted && TickerMode.valuesOf(context).enabled) setState(() {});
+      });
       unawaited(_feed(source));
     } finally {
       if (mounted) setState(() => _starting = false);
@@ -254,8 +255,12 @@ class _PcmTabState extends State<PcmTab> {
                     label: const Text('Play live'),
                   ),
             StatePill(
-              playing ? 'Feeding the engine' : 'Not playing',
-              on: playing,
+              !playing
+                  ? 'Not playing'
+                  : _player.state.playing
+                  ? 'Feeding the engine'
+                  : 'Paused, the input waits',
+              on: playing && _player.state.playing,
               color: Tokens.green,
               tooltip: 'PcmSource',
             ),

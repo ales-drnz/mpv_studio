@@ -17,6 +17,13 @@ class _FakePcm implements LivePcm {
   final chunks = <Uint8List>[];
   bool aborted = false;
   final _drain = Completer<void>();
+  bool stopped = false;
+
+  /// The player let the input go (stop, next, another open).
+  void stopFromPlayer() {
+    stopped = true;
+    if (!_drain.isCompleted) _drain.complete();
+  }
 
   int get _bytes => chunks.fold(0, (n, c) => n + c.lengthInBytes);
 
@@ -41,7 +48,7 @@ class _FakePcm implements LivePcm {
   }
 
   @override
-  bool get isDone => aborted;
+  bool get isDone => aborted || stopped;
 }
 
 void main() {
@@ -81,5 +88,50 @@ void main() {
     await tester.pump();
     expect(fake.aborted, isTrue);
     expect(find.text('Play live'), findsOneWidget);
+  });
+
+  testWidgets('a stop from elsewhere puts the tab back to Play live', (
+    tester,
+  ) async {
+    final fake = _FakePcm();
+    await pumpStudio(
+      tester,
+      Material(
+        child: PcmTab(
+          actions: StreamActions(player: StreamPlayer(), guard: unguarded),
+          open: (format, {required lowLatency, required extras}) async => fake,
+        ),
+      ),
+    );
+    await tester.tap(find.text('Play live'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Stop'), findsOneWidget);
+    fake.stopFromPlayer();
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Play live'), findsOneWidget);
+    expect(fake.aborted, isFalse);
+  });
+
+  testWidgets('a tab gone while the input opens stops it', (tester) async {
+    final fake = _FakePcm();
+    final opening = Completer<LivePcm>();
+    await pumpStudio(
+      tester,
+      Material(
+        child: PcmTab(
+          actions: StreamActions(player: StreamPlayer(), guard: unguarded),
+          open: (format, {required lowLatency, required extras}) =>
+              opening.future,
+        ),
+      ),
+    );
+    await tester.tap(find.text('Play live'));
+    await tester.pump();
+    await tester.pumpWidget(const SizedBox());
+    opening.complete(fake);
+    await tester.pump();
+    expect(fake.aborted, isTrue);
   });
 }

@@ -168,7 +168,8 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
                 label: 'Reconnect a live stream',
                 subtitle:
                     'Reopens a radio when its connection drops. For live '
-                    'streams only: a file would start over.',
+                    'streams only: a file would start over. A chunk size '
+                    'turns it on by itself.',
                 value: _reconnect,
                 onChanged: (v) {
                   setState(() => _reconnect = v);

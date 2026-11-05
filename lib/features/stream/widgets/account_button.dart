@@ -26,39 +26,46 @@ class AccountButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: '$label account',
-      child: Builder(
-        builder: (context) => OutlinedButton.icon(
-          onPressed: onAction == null
-              ? null
-              : () async {
-                  final box = context.findRenderObject() as RenderBox?;
-                  final picked = await showStudioMenu<bool>(
-                    context,
-                    position: box?.localToGlobal(
-                      box.size.bottomLeft(Offset.zero),
-                    ),
-                    title: label,
-                    items: [
-                      StudioMenuItem(
-                        value: true,
-                        label: action,
-                        icon: Icons.logout_rounded,
-                        destructive: true,
+    // A long server or host name stays within reach of the field beside.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: maxWidth),
+      child: Tooltip(
+        message: '$label account',
+        child: Builder(
+          builder: (context) => OutlinedButton.icon(
+            onPressed: onAction == null
+                ? null
+                : () async {
+                    final box = context.findRenderObject() as RenderBox?;
+                    final picked = await showStudioMenu<bool>(
+                      context,
+                      position: box?.localToGlobal(
+                        box.size.bottomLeft(Offset.zero),
                       ),
-                    ],
-                  );
-                  if (picked == true) onAction?.call();
-                },
-          icon: Icon(icon),
-          label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-          style: OutlinedButton.styleFrom(
-            minimumSize: Size(0, controlHeightOf(context)),
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+                      title: label,
+                      items: [
+                        StudioMenuItem(
+                          value: true,
+                          label: action,
+                          icon: Icons.logout_rounded,
+                          destructive: true,
+                        ),
+                      ],
+                    );
+                    if (picked == true) onAction?.call();
+                  },
+            icon: Icon(icon),
+            label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size(0, controlHeightOf(context)),
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+            ),
           ),
         ),
       ),
     );
   }
+
+  /// The widest it gets.
+  static const double maxWidth = 200;
 }

@@ -11,6 +11,13 @@ void main() {
     expect(streamMedia(radio).streamLavfOptions, {'reconnect_streamed': '1'});
   });
 
+  test('every Icecast radio of the Lab is live', () {
+    for (final item in labStreams.expand((c) => c.items)) {
+      if (item.url.endsWith('.m3u8')) continue;
+      expect(item.live, isTrue, reason: item.label);
+    }
+  });
+
   test('a file or a playlist does not', () {
     final hls = labStreams
         .expand((c) => c.items)

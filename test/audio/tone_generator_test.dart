@@ -56,13 +56,58 @@ void main() {
     );
   });
 
-  test('pink noise stays under full scale', () {
+  test('pink noise at full scale never clips', () {
     final g = ToneGenerator(sampleRate: 48000)
       ..kind = ToneKind.pinkNoise
       ..levelDb = 0;
-    final l = left(g.next(const Duration(seconds: 1)));
-    expect(l.map((v) => v.abs()).reduce(math.max), lessThanOrEqualTo(32767));
+    final l = left(g.next(const Duration(seconds: 20)));
+    expect(l.where((v) => v.abs() >= 32767), isEmpty);
     expect(l.toSet().length, greaterThan(1000));
+  });
+
+  /// The largest step between two samples of [l].
+  int largestStep(List<int> l) {
+    var m = 0;
+    for (var i = 1; i < l.length; i++) {
+      m = math.max(m, (l[i] - l[i - 1]).abs());
+    }
+    return m;
+  }
+
+  // A 440 Hz sine at full scale steps at most 2 pi 440 / 48000 of it.
+  const sineStep = 1900;
+
+  test('a level change does not click', () {
+    final g = ToneGenerator(sampleRate: 48000)
+      ..kind = ToneKind.sine
+      ..frequency = 440
+      ..levelDb = -48;
+    final before = left(g.next(const Duration(milliseconds: 20)));
+    g.levelDb = 0;
+    final after = left(g.next(const Duration(milliseconds: 20)));
+    expect(largestStep([...before, ...after]), lessThan(sineStep));
+  });
+
+  test('a change of signal does not click', () {
+    for (final (from, to) in [
+      (ToneKind.sine, ToneKind.pinkNoise),
+      (ToneKind.sine, ToneKind.pulses),
+      (ToneKind.pulses, ToneKind.sine),
+    ]) {
+      final g = ToneGenerator(sampleRate: 48000)
+        ..kind = from
+        ..frequency = 440
+        ..levelDb = -6;
+      // Into the pulses' quiet part, where a switch jumps the most.
+      final before = left(g.next(const Duration(milliseconds: 120)));
+      g.kind = to;
+      final after = left(g.next(const Duration(milliseconds: 20)));
+      // Noise steps far by nature: for it, the seam alone must not jump.
+      final seam = to == ToneKind.pinkNoise
+          ? [before.last, after.first]
+          : [before.last, ...after];
+      expect(largestStep(seam), lessThan(sineStep), reason: '$from to $to');
+    }
   });
 
   test('pulses are silent between bursts', () {

@@ -92,6 +92,7 @@ const labStreams = <StreamCategory>[
       StreamItem(
         label: 'Radio Paradise (main mix FLAC)',
         url: 'http://stream.radioparadise.com/flacm',
+        live: true,
       ),
     ],
   ),
