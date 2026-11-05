@@ -148,6 +148,9 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<List<MpvTrack>> get tracks => _s((s) => s.tracks);
   @override
+  Stream<DemuxerCacheState> get demuxerCacheState =>
+      _s((s) => s.demuxerCacheState);
+  @override
   Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
   @override
   Stream<MpvPlaybackState> get playbackState =>

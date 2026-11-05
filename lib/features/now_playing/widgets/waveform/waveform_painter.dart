@@ -77,6 +77,8 @@ class WaveformPainter extends CustomPainter {
     this.abB,
     this.chapters = const [],
     this.currentChapter,
+    this.cached = const [],
+    this.scaler = TextScaler.noScaling,
   });
 
   final WaveformViewport view;
@@ -94,6 +96,19 @@ class WaveformPainter extends CustomPainter {
   final List<Chapter> chapters;
   final int? currentChapter;
 
+  /// What the engine holds in its cache, marked along the ruler's foot;
+  /// empty for a source that is all there (a local file).
+  final List<CacheRange> cached;
+
+  /// The text scale of the ruler's labels.
+  final TextScaler scaler;
+
+  /// The height of the cache band along the ruler's foot.
+  static const double cacheBand = 3;
+
+  /// Half the playhead pip's width.
+  static const double _pipHalf = 5;
+
   static double _niceStep(double visibleSecs) {
     const steps = <double>[1, 2, 5, 10, 15, 20, 30, 60, 120, 300, 600];
     final target = visibleSecs / 5;
@@ -103,18 +118,18 @@ class WaveformPainter extends CustomPainter {
     return steps.last;
   }
 
-  TextPainter _label(String text, Color color, {double size = 9.5}) =>
-      TextPainter(
-        textDirection: TextDirection.ltr,
-        text: TextSpan(
-          text: text,
-          style: TextStyle(
-            fontFamily: Tokens.mono,
-            fontSize: size,
-            color: color,
-          ),
-        ),
-      )..layout();
+  TextPainter _label(String text, Color color) => TextPainter(
+    textDirection: TextDirection.ltr,
+    textScaler: scaler,
+    text: TextSpan(
+      text: text,
+      style: TextStyle(
+        fontFamily: Tokens.mono,
+        fontSize: Tokens.chartLabelSize,
+        color: color,
+      ),
+    ),
+  )..layout();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -128,7 +143,8 @@ class WaveformPainter extends CustomPainter {
     final waveH = h - rulerHeight;
     final centreY = rulerHeight + waveH / 2;
 
-    _paintRuler(canvas, w, tLeft, tRight, pxPerSec);
+    final playheadX = view.xOf(position, w);
+    _paintRuler(canvas, w, tLeft, tRight, pxPerSec, playheadX);
     canvas.drawLine(
       Offset(0, centreY),
       Offset(w, centreY),
@@ -159,13 +175,12 @@ class WaveformPainter extends CustomPainter {
     _paintHover(canvas, w, h, tLeft, pxPerSec);
 
     // The playhead: one line through the ruler, capped by a pip.
-    final playheadX = view.xOf(position, w);
     if (playheadX >= 0 && playheadX <= w) {
       final ph = Paint()..color = palette.accent;
       canvas.drawRect(Rect.fromLTWH(playheadX - 0.75, 0, 1.5, h), ph);
       final pip = Path()
-        ..moveTo(playheadX - 5, 0)
-        ..lineTo(playheadX + 5, 0)
+        ..moveTo(playheadX - _pipHalf, 0)
+        ..lineTo(playheadX + _pipHalf, 0)
         ..lineTo(playheadX, 9)
         ..close();
       canvas.drawPath(pip, ph);
@@ -178,11 +193,23 @@ class WaveformPainter extends CustomPainter {
     double tLeft,
     double tRight,
     double pxPerSec,
+    double playheadX,
   ) {
     canvas.drawRect(
       Rect.fromLTWH(0, 0, w, rulerHeight),
       Paint()..color = palette.surface3,
     );
+    // What the cache holds: a band along the ruler's foot.
+    final band = Paint()..color = palette.accentDim;
+    for (final r in cached) {
+      final x0 = view.xOf(r.start, w).clamp(0.0, w);
+      final x1 = view.xOf(r.end, w).clamp(0.0, w);
+      if (x1 - x0 < 1) continue;
+      canvas.drawRect(
+        Rect.fromLTRB(x0, rulerHeight - cacheBand, x1, rulerHeight),
+        band,
+      );
+    }
     final start = view.originSecs;
     final end = start + view.timelineSecs;
     final tick = Paint()
@@ -206,9 +233,11 @@ class WaveformPainter extends CustomPainter {
       var dx = x - tp.width / 2;
       if (dx + tp.width > w - Tokens.s16) dx = w - Tokens.s16 - tp.width;
       if (dx < Tokens.s16) dx = Tokens.s16;
-      tp
-        ..paint(canvas, Offset(dx, 5))
-        ..dispose();
+      // A label the playhead's pip would cover is left out.
+      final covered =
+          playheadX >= dx - _pipHalf && playheadX <= dx + tp.width + _pipHalf;
+      if (!covered) tp.paint(canvas, Offset(dx, 5));
+      tp.dispose();
     }
   }
 
@@ -322,5 +351,7 @@ class WaveformPainter extends CustomPainter {
       old.abA != abA ||
       old.abB != abB ||
       !listEquals(old.chapters, chapters) ||
-      old.currentChapter != currentChapter;
+      old.currentChapter != currentChapter ||
+      !listEquals(old.cached, cached) ||
+      old.scaler != scaler;
 }
