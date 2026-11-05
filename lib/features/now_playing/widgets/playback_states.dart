@@ -87,14 +87,24 @@ class FailedTrackBanner extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: Tokens.s12),
             child: _Banner(
-              title: titleOf(media),
-              onRetry: () => scope.guard(() => player.jump(pl.index)),
-              onNext: () => skipTrack(
-                player,
-                scope.guard,
-                forward: true,
-                notify: feedbackFor(context),
-              ),
+              icon: Icons.error_outline_rounded,
+              color: Tokens.red,
+              message: 'Could not play "${titleOf(media)}".',
+              actions: [
+                TextButton(
+                  onPressed: () => scope.guard(() => player.jump(pl.index)),
+                  child: const Text('Retry'),
+                ),
+                TextButton(
+                  onPressed: () => skipTrack(
+                    player,
+                    scope.guard,
+                    forward: true,
+                    notify: feedbackFor(context),
+                  ),
+                  child: const Text('Next'),
+                ),
+              ],
             ),
           );
         },
@@ -103,16 +113,70 @@ class FailedTrackBanner extends StatelessWidget {
   }
 }
 
+/// The banners over the player: a track that failed, a silent output.
+class PlaybackBanners extends StatelessWidget {
+  const PlaybackBanners({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [FailedTrackBanner(), MutedOutputBanner()],
+  );
+}
+
+/// A banner while the engine plays on its null output because no device
+/// opened: the position runs and nothing is heard. Not when the null
+/// driver was chosen. Reopen output asks the engine to try the device
+/// again.
+class MutedOutputBanner extends StatelessWidget {
+  const MutedOutputBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PlaybackScope.of(context);
+    final player = scope.player;
+    return Live<String>(
+      stream: player.stream.currentAo,
+      initial: player.state.currentAo,
+      builder: (context, ao) => Live<String>(
+        stream: player.stream.audioDriver,
+        initial: player.state.audioDriver,
+        builder: (context, driver) {
+          if (ao != 'null' || driver == 'null') return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: Tokens.s12),
+            child: _Banner(
+              icon: Icons.volume_off_rounded,
+              color: Tokens.amber,
+              message: 'No audio device: playing silently on the null output.',
+              actions: [
+                TextButton(
+                  onPressed: () => scope.guard(player.reloadAudio),
+                  child: const Text('Reopen output'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A tinted banner: an icon and a message in [color], then [actions].
 class _Banner extends StatelessWidget {
   const _Banner({
-    required this.title,
-    required this.onRetry,
-    required this.onNext,
+    required this.icon,
+    required this.color,
+    required this.message,
+    required this.actions,
   });
 
-  final String title;
-  final VoidCallback onRetry;
-  final VoidCallback onNext;
+  final IconData icon;
+  final Color color;
+  final String message;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +191,7 @@ class _Banner extends StatelessWidget {
           Tokens.s4,
         ),
         decoration: ShapeDecoration(
-          color: Tokens.red.withValues(alpha: 0.14),
+          color: color.withValues(alpha: 0.14),
           shape: Tokens.shape(Tokens.rMd),
         ),
         child: Wrap(
@@ -139,25 +203,19 @@ class _Banner extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline_rounded, size: 20, color: Tokens.red),
+                Icon(icon, size: Tokens.iconMd, color: color),
                 const SizedBox(width: Tokens.s8),
                 Flexible(
                   child: Text(
-                    'Could not play "$title".',
+                    message,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Tokens.body.copyWith(color: Tokens.red),
+                    style: Tokens.body.copyWith(color: color),
                   ),
                 ),
               ],
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(onPressed: onRetry, child: const Text('Retry')),
-                TextButton(onPressed: onNext, child: const Text('Next')),
-              ],
-            ),
+            Row(mainAxisSize: MainAxisSize.min, children: actions),
           ],
         ),
       ),

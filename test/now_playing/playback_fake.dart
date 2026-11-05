@@ -85,6 +85,9 @@ class PlaybackFake extends FakePlayer {
   Future<void> stop() async => calls.add('stop');
 
   @override
+  Future<void> reloadAudio() async => calls.add('reloadAudio');
+
+  @override
   Future<void> jump(int index) async => calls.add('jump $index');
 }
 
@@ -113,6 +116,10 @@ class PlaybackFakeStream extends FakePlayerStream {
   Stream<Loop> get loop => _s((s) => s.loop);
   @override
   Stream<double> get pitch => _s((s) => s.pitch);
+  @override
+  Stream<String> get currentAo => _s((s) => s.currentAo);
+  @override
+  Stream<String> get audioDriver => _s((s) => s.audioDriver);
   @override
   Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
   @override

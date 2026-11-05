@@ -368,7 +368,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const FailedTrackBanner(),
+                  const PlaybackBanners(),
                   Center(child: _cover(cover)),
                   const SizedBox(height: Tokens.s12),
                   const TrackInfo(),
@@ -441,7 +441,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const FailedTrackBanner(),
+                  const PlaybackBanners(),
                   Expanded(child: _waveform()),
                   const PositionBar(),
                   SizedBox(height: PageEnd.of(context)),
@@ -473,7 +473,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
           below: _fillBelow([
             const PositionBar(),
             const ChapterBar(),
-            const FailedTrackBanner(),
+            const PlaybackBanners(),
             const SizedBox(height: Tokens.s8),
             SizedBox(
               height: rowH,
@@ -559,7 +559,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const FailedTrackBanner(),
+                    const PlaybackBanners(),
                     Expanded(child: _waveform()),
                     const PositionBar(),
                     const ChapterBar(),
