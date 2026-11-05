@@ -27,7 +27,8 @@ Future<void> showInfoSheet(BuildContext context) {
   return showStudioDialog<void>(
     context,
     title: 'Track info',
-    maxWidth: 560,
+    // A report: as wide as its sections need, side by side.
+    maxWidth: Breakpoints.report,
     builder: (_) => body,
     actions: (context) => [
       TextButton(
@@ -43,8 +44,19 @@ class _InfoBody extends StatelessWidget {
   final LoudnessScan? loudnessSeed;
   const _InfoBody({required this.player, this.loudnessSeed});
 
+  /// The narrowest a section of the report reads well.
+  static const double _minSection = 320;
+
   @override
   Widget build(BuildContext context) {
+    final source = _source();
+    // `stream.loudnessScan` replays the current result to every
+    // listener, but only after the first frame, and `player.state` has no
+    // loudness field: the seed fills that first frame.
+    final loudness = _loudness(loudnessSeed);
+    final output = _output();
+    final stream = _stream();
+    final playback = _playback();
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,14 +71,41 @@ class _InfoBody extends StatelessWidget {
           ),
           child: _identity(),
         ),
-        _source(),
-        // `stream.loudnessScan` replays the current result to every
-        // listener, but only after the first frame, and `player.state`
-        // has no loudness field: the seed fills that first frame.
-        _loudness(loudnessSeed),
-        _output(),
-        _stream(),
-        _playback(),
+        LayoutBuilder(
+          builder: (context, c) {
+            final gap = context.layout.gap;
+            // As many columns as fit, the sections balanced by height.
+            final List<List<Widget>> columns =
+                c.maxWidth >= 3 * _minSection + 2 * gap
+                ? [
+                    [source, output],
+                    [loudness, playback],
+                    [stream],
+                  ]
+                : c.maxWidth >= 2 * _minSection + gap
+                ? [
+                    [source, loudness, output],
+                    [stream, playback],
+                  ]
+                : [
+                    [source, loudness, output, stream, playback],
+                  ];
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final (i, sections) in columns.indexed) ...[
+                  if (i > 0) SizedBox(width: gap),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: sections,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
       ],
     );
   }

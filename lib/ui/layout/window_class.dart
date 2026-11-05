@@ -42,6 +42,10 @@ abstract final class Breakpoints {
   /// The maximum width of a page in three columns.
   static const double full = 2200;
 
+  /// The width of a report dialog (Track info, the stage catalog): its
+  /// sections stand side by side where a form dialog stays narrow.
+  static const double report = 1100;
+
   /// The narrowest column of cards worth a second column beside it.
   static const double cardColumn = 520;
 
