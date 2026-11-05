@@ -195,7 +195,43 @@ class _SignalChainViewState extends State<SignalChainView> {
     );
   }
 
-  Widget _chain({required bool inline, required bool quick, double end = 0}) {
+  /// [panes] with the loudness panel as a third column, when [three].
+  Widget _withLoudness(bool three, Widget panes) {
+    final footer = widget.footer;
+    if (!three || footer == null) return panes;
+    final gap = context.layout.gap;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: panes),
+        SizedBox(width: gap),
+        SizedBox(
+          width: _loudnessWidth,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              top: Tokens.s8,
+              bottom: PageEnd.of(context),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [const SectionHeader('Loudness'), footer],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The loudness column's width.
+  static const double _loudnessWidth = 380;
+
+  Widget _chain({
+    required bool inline,
+    required bool quick,
+    double end = 0,
+    bool footer = true,
+  }) {
+    final below = footer ? widget.footer : null;
     final stages = rack.chain.stages;
     final focused = rack.focused;
     return CustomScrollView(
@@ -249,14 +285,14 @@ class _SignalChainViewState extends State<SignalChainView> {
               RackNode(
                 label: 'Output',
                 detail: 'Then volume and the device',
-                padding: widget.footer == null
+                padding: below == null
                     ? const EdgeInsets.only(top: Tokens.s4)
                     : const EdgeInsets.symmetric(vertical: Tokens.s4),
               ),
-              if (widget.footer != null) ...[
+              if (below != null) ...[
                 const SizedBox(height: Tokens.s24),
                 const SectionHeader('Loudness'),
-                widget.footer!,
+                below,
               ],
             ],
           ),
@@ -276,6 +312,12 @@ class _SignalChainViewState extends State<SignalChainView> {
             final gutter = layout.gutter;
             final width = math.min(c.maxWidth - 2 * gutter, Breakpoints.wide);
             final mode = _mode = RackMode.of(layout, width, c.maxHeight);
+            // With room for three columns the loudness panel stands beside
+            // the editor, where it waited under the chain.
+            final three =
+                mode == RackMode.split &&
+                widget.footer != null &&
+                c.maxWidth - 2 * gutter >= Breakpoints.threeColumns;
             _tiles.removeWhere((id, _) => rack.chain.stage(id) == null);
             final focus = mode == RackMode.inline ? null : rack.focused;
             final covering = mode == RackMode.detail && focus != null;
@@ -318,36 +360,40 @@ class _SignalChainViewState extends State<SignalChainView> {
                       ),
                     ),
                     Expanded(
-                      child: TwoPane(
-                        // Wider with the page, so a long stage name is
-                        // not cut beside a thousand-pixel editor.
-                        listWidth: math.max(
-                          RackMode.listWidth,
-                          TwoPane.listWidthFor(width),
-                        ),
-                        minDetailWidth: RackMode.minDetailWidth,
-                        list: _chain(
-                          inline: false,
-                          quick: false,
-                          end: layout.gap,
-                        ),
-                        detail: focus == null
-                            ? null
-                            : StageDetail(
-                                key: ValueKey('detail-$focus'),
-                                rack: rack,
-                                id: focus,
-                                padding: EdgeInsets.fromLTRB(
-                                  layout.gap,
-                                  Tokens.s8,
-                                  0,
-                                  PageEnd.of(context),
+                      child: _withLoudness(
+                        three,
+                        TwoPane(
+                          // Wider with the page, so a long stage name is
+                          // not cut beside a thousand-pixel editor.
+                          listWidth: math.max(
+                            RackMode.listWidth,
+                            TwoPane.listWidthFor(width),
+                          ),
+                          minDetailWidth: RackMode.minDetailWidth,
+                          list: _chain(
+                            inline: false,
+                            quick: false,
+                            end: layout.gap,
+                            footer: !three,
+                          ),
+                          detail: focus == null
+                              ? null
+                              : StageDetail(
+                                  key: ValueKey('detail-$focus'),
+                                  rack: rack,
+                                  id: focus,
+                                  padding: EdgeInsets.fromLTRB(
+                                    layout.gap,
+                                    Tokens.s8,
+                                    0,
+                                    PageEnd.of(context),
+                                  ),
+                                  onClose: rack.closeAll,
+                                  onAction: (a) => _action(focus, a),
                                 ),
-                                onClose: rack.closeAll,
-                                onAction: (a) => _action(focus, a),
-                              ),
-                        placeholder: const _NoStageOpen(),
-                        onCloseDetail: rack.closeAll,
+                          placeholder: const _NoStageOpen(),
+                          onCloseDetail: rack.closeAll,
+                        ),
                       ),
                     ),
                   ],
@@ -397,7 +443,9 @@ class _SignalChainViewState extends State<SignalChainView> {
                   ? stagePlace(rack, focus)
                   : chainSummary(rack, layout),
               scrollable: false,
-              maxWidth: mode == RackMode.split
+              maxWidth: three
+                  ? Breakpoints.full
+                  : mode == RackMode.split
                   ? Breakpoints.wide
                   : Breakpoints.readable,
               // The chain and the editor scroll to the panel edge and end
