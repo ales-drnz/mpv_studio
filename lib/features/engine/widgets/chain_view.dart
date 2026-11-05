@@ -33,8 +33,8 @@ class ChainView extends StatelessWidget {
                 ? '$off more stage${off == 1 ? '' : 's'} switched off.'
                 : null),
       trailing: bypassed != null
-          ? StatePill('Bypass', color: Tokens.amber)
-          : StatePill(
+          ? PhasePill('Bypass', color: Tokens.amber)
+          : PhasePill(
               '${active.length} active',
               color: Tokens.accent,
               strong: active.isNotEmpty,

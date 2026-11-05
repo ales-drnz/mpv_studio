@@ -105,7 +105,7 @@ void main() {
       await _pump(tester, EnginePanel(player: player), size);
 
       expect(find.text('Buffering'), findsOneWidget);
-      expect(find.text('playWhenReady'), findsOneWidget);
+      expect(find.byTooltip('playWhenReady'), findsOneWidget);
       expect(find.text('mpv v0.41.0+r16'), findsOneWidget);
       expect(find.text('8.1.1'), findsOneWidget);
       expect(find.text('Network'), findsOneWidget);
@@ -192,16 +192,12 @@ void main() {
 
     expect(find.text('Play requested'), findsOneWidget);
     expect(find.text('Audio running'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel('Play requested (playWhenReady): no'),
-      findsOneWidget,
-    );
-    expect(
-      find.bySemanticsLabel('Audio running (playing): yes'),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel('Play requested, off'), findsOneWidget);
+    expect(find.bySemanticsLabel('Audio running, on'), findsOneWidget);
     expect(find.byKey(const ValueKey('engine-intent-note')), findsOneWidget);
-    expect(find.text('40.0 s, 17%'), findsOneWidget);
+    // One unit as it plays, past the minute and before it, over a bar.
+    expect(find.text('0:40.0, 17%'), findsOneWidget);
+    expect(find.byKey(const ValueKey('engine-position-bar')), findsOneWidget);
     expect(find.text('3:20'), findsOneWidget);
     expect(find.text('plex-transcode://42'), findsOneWidget);
     expect(find.text('https://plex.test/transcode/42.flac'), findsOneWidget);
@@ -210,6 +206,12 @@ void main() {
     player.emit((s) => s.copyWith(playWhenReady: true));
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.byKey(const ValueKey('engine-intent-note')), findsNothing);
+  });
+
+  testWidgets('a stream cut by its connection says so', (tester) async {
+    player.emit((s) => s.copyWith(completed: true, readError: true));
+    await _pump(tester, EnginePanel(player: player), const Size(1280, 1600));
+    expect(find.textContaining('connection dropped'), findsOneWidget);
   });
 
   test('the waiting note needs something to wait for', () {

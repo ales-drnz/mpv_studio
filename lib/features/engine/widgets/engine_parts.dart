@@ -94,12 +94,12 @@ class Spy extends StatelessWidget {
 
 /// A pill naming a state: [color] at 16% with the colour as text, or a
 /// quiet tonal pill when not [strong].
-class StatePill extends StatelessWidget {
+class PhasePill extends StatelessWidget {
   final String text;
   final Color color;
   final bool strong;
 
-  const StatePill(
+  const PhasePill(
     this.text, {
     super.key,
     required this.color,

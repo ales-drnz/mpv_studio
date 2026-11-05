@@ -53,7 +53,7 @@ class PrefetchView extends StatelessWidget {
       caption: s.prefetchPlaylist
           ? (next == null ? 'No next entry.' : 'Next: $next')
           : 'Prefetch is off. Turn it on in Settings, Streaming.',
-      trailing: StatePill(
+      trailing: PhasePill(
         current.mpvValue,
         color: colorOf(current),
         strong: current != PrefetchState.idle,
@@ -66,7 +66,7 @@ class PrefetchView extends StatelessWidget {
             runSpacing: Tokens.s8,
             children: [
               for (final p in PrefetchState.values)
-                StatePill(p.mpvValue, color: colorOf(p), strong: p == current),
+                PhasePill(p.mpvValue, color: colorOf(p), strong: p == current),
             ],
           ),
           const SizedBox(height: Tokens.s12),

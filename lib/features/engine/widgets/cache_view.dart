@@ -33,8 +33,8 @@ class CacheView extends StatelessWidget {
           ? 'Local source: the demuxer reads the file directly.'
           : 'What the demuxer holds around the playhead.',
       trailing: s.pausedForCache
-          ? StatePill('Paused for cache', color: Tokens.amber)
-          : StatePill(
+          ? PhasePill('Paused for cache', color: Tokens.amber)
+          : PhasePill(
               s.demuxerViaNetwork ? 'Network' : 'Local',
               color: Tokens.accent,
               strong: s.demuxerViaNetwork,
