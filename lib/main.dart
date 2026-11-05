@@ -23,20 +23,37 @@ Future<void> main() async {
 /// Launches the studio and runs the app on it; when the engine does not
 /// start, runs a screen that says why and tries again.
 Future<void> _start(UncaughtErrors errors) async {
+  // A browser that cannot run libmpv says why before a player is made;
+  // trying again would fail the same way.
+  if (MpvAudioKit.unsupportedReason case final reason?) {
+    _runError(reason, unsupported: true);
+    return;
+  }
   try {
     final studio = await MpvStudio.launch();
     errors.target = studio;
     runApp(MpvStudioApp(studio: studio, errors: errors));
   } on Object catch (error) {
     debugPrint('MPV Studio did not start: ${redactSecrets('$error')}');
-    runApp(
-      MaterialApp(
-        title: 'MPV Studio',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.of(Palette.dark, input: InputMode.platformDefault),
-        builder: (context, child) => LayoutScope(child: child!),
-        home: StartupErrorView(error: error, onRetry: () => _start(errors)),
-      ),
-    );
+    _runError(error, onRetry: () => _start(errors));
   }
 }
+
+/// Runs the screen that says why the engine did not start.
+void _runError(
+  Object error, {
+  VoidCallback? onRetry,
+  bool unsupported = false,
+}) => runApp(
+  MaterialApp(
+    title: 'MPV Studio',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.of(Palette.dark, input: InputMode.platformDefault),
+    builder: (context, child) => LayoutScope(child: child!),
+    home: StartupErrorView(
+      error: error,
+      onRetry: onRetry,
+      unsupported: unsupported,
+    ),
+  ),
+);

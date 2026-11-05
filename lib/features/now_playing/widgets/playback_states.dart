@@ -121,8 +121,40 @@ class PlaybackBanners extends StatelessWidget {
   Widget build(BuildContext context) => const Column(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [FailedTrackBanner(), MutedOutputBanner()],
+    children: [FailedTrackBanner(), MutedOutputBanner(), SoundGestureBanner()],
   );
+}
+
+/// In a browser, a banner while the page's sound waits for the user's
+/// first click or key (MpvAudioKit.needsUserGesture); the next one
+/// starts it. Never on the other platforms.
+class SoundGestureBanner extends StatelessWidget {
+  const SoundGestureBanner({super.key, this.stream, this.initial});
+
+  /// Whether the sound waits; the kit's by default.
+  final Stream<bool>? stream;
+  final bool? initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Live<bool>(
+      stream: stream ?? MpvAudioKit.needsUserGestureStream,
+      initial: initial ?? MpvAudioKit.needsUserGesture,
+      builder: (context, waits) => !waits
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.only(bottom: Tokens.s12),
+              child: _Banner(
+                icon: Icons.touch_app_rounded,
+                color: Tokens.fg,
+                message:
+                    'Click or press a key: the browser holds the sound '
+                    'until you do.',
+                actions: const [],
+              ),
+            ),
+    );
+  }
 }
 
 /// A banner while the engine plays on its null output because no device
