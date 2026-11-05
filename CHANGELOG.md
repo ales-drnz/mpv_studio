@@ -1,3 +1,21 @@
+## [0.4.3] - 5-11-2026
+
+### All platforms
+**Added**
+- Wide windows use three columns: Settings shows a group's cards in two columns beside the groups, Effects puts loudness beside the stage editor, Queue adds what plays and what comes next, and the Console lists the commands run beside the log.
+- Engine shows its cards in four columns on a wide window.
+- A Live chip brings a live waveform back to its newest audio.
+
+**Changed**
+- The Lab and Chapters streams stand in two columns when there is room.
+- Track info and the stage catalog open wider, with their sections side by side.
+
+**Fixed**
+- Menu items light a pill on hover, instead of a square across the menu.
+- A live waveform follows its newest audio, where it showed the oldest part of the cache.
+- The welcome screen's choices light a rounded row on hover.
+- A disabled menu item dims its icon.
+
 ## [0.4.2] - 5-11-2026
 
 ### All platforms
