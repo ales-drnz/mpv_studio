@@ -48,6 +48,9 @@ class WaveformMeter extends StatefulWidget {
 
 class _WaveformMeterState extends State<WaveformMeter>
     with SingleTickerProviderStateMixin, StreamListenerState<WaveformMeter> {
+  /// The least meter width that fits the scrollbar beside the zoom pill.
+  static const double _zoomRowWidth = 200;
+
   late PlayerApi _player;
   late CallGuard _guard;
   // Made when playback first starts, not lazily on first use: dispose
@@ -364,12 +367,18 @@ class _WaveformMeterState extends State<WaveformMeter>
               ],
             ),
           ),
-          Row(
-            children: [
-              Expanded(child: scrollBar),
-              const SizedBox(width: Tokens.s8),
-              zoom,
-            ],
+          // A meter too narrow for both keeps the scrollbar; the wheel,
+          // the pinch and the keyboard still zoom.
+          LayoutBuilder(
+            builder: (context, c) => c.maxWidth < _zoomRowWidth
+                ? scrollBar
+                : Row(
+                    children: [
+                      Expanded(child: scrollBar),
+                      const SizedBox(width: Tokens.s8),
+                      zoom,
+                    ],
+                  ),
           ),
         ],
       ),

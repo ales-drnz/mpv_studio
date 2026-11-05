@@ -364,7 +364,10 @@ void main() {
       ),
     );
     expect(find.bySemanticsLabel('Output level'), findsOneWidget);
-    expect(find.bySemanticsLabel('Spectrum analyser'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Output spectrum, 20 Hz to 20 kHz'),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('No cover art'), findsOneWidget);
     expect(find.bySemanticsLabel('Volume'), findsOneWidget);
     handle.dispose();
@@ -571,13 +574,15 @@ void main() {
       expectNoOverflow(tester);
     });
 
-    testWidgets('with a pointer the zoom pill floats over the waveform', (
+    testWidgets('with a pointer the zoom pill sits beside the scrollbar', (
       tester,
     ) async {
       await _pumpPage(tester, playingTrack());
       final bar = tester.getRect(find.byType(WaveformScrollBar));
       final zoom = tester.getRect(find.byType(WaveformZoomControls));
-      expect(zoom.bottom, lessThan(bar.top));
+      // In the scrollbar's row, never over the waveform's data.
+      expect(zoom.center.dy, closeTo(bar.center.dy, 1));
+      expect(zoom.left, greaterThanOrEqualTo(bar.right));
       expect(bar.height, 16);
     });
   });

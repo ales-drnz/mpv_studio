@@ -311,8 +311,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
 
   /// The spectrum, full bleed: [side] wider than its slot on both sides,
   /// out to the edges of the page. Its slot runs down to the bottom edge.
-  static Widget _spectrum(double side) =>
-      _Bleed(side: side, child: const SpectrumCurve());
+  static Widget _spectrum(double side) => _Bleed(
+    side: side,
+    child: SpectrumCurve(inset: side),
+  );
 
   /// A scroll view of [slivers] that clips top and bottom at its own
   /// edges but [side] past them at the sides, so the spectrum in it
