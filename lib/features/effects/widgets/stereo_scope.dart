@@ -261,9 +261,10 @@ class _ScopePainter extends CustomPainter {
     paintChartLabel(
       canvas,
       '+1',
-      Offset(size.width - 14, barTop + _barH - 8),
+      Offset(size.width, barTop + _barH - 8),
       Tokens.fgFaint,
       scaler: scaler,
+      end: true,
     );
   }
 

@@ -86,10 +86,15 @@ class SliderRow extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // The tag is for the eye; the explanation is the tooltip's.
           if (tag case final tag?) ...[
-            Tooltip(
-              message: tagTooltip ?? '',
-              child: Text(tag, style: Tokens.caption),
+            ExcludeSemantics(
+              child: tagTooltip == null
+                  ? Text(tag, style: Tokens.caption)
+                  : Tooltip(
+                      message: tagTooltip!,
+                      child: Text(tag, style: Tokens.caption),
+                    ),
             ),
             const SizedBox(width: Tokens.s8),
           ],

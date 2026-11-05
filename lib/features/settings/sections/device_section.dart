@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -77,16 +78,18 @@ class DeviceSection extends StatelessWidget {
             },
           ),
         ),
-        Live<bool>(
-          stream: p.stream.audioExclusive,
-          initial: p.state.audioExclusive,
-          builder: (context, v) => anchoredSwitch(
-            scope,
-            SettingsCatalog.exclusive,
-            value: v,
-            set: p.setAudioExclusive,
+        // A browser page has one output and no exclusive mode.
+        if (!kIsWeb)
+          Live<bool>(
+            stream: p.stream.audioExclusive,
+            initial: p.state.audioExclusive,
+            builder: (context, v) => anchoredSwitch(
+              scope,
+              SettingsCatalog.exclusive,
+              value: v,
+              set: p.setAudioExclusive,
+            ),
           ),
-        ),
         Live<Format>(
           stream: p.stream.audioFormat,
           initial: p.state.audioFormat,

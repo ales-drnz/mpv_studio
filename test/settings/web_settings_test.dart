@@ -34,4 +34,10 @@ void main() {
     final native = settingsSections(SettingsGroupId.output);
     expect(native.whereType<DriverSection>(), isNotEmpty);
   });
+
+  test('search does not lead a browser to what it does not have', () {
+    expect(searchSettings('proxy', web: true), isEmpty);
+    expect(searchSettings('driver', web: true), isEmpty);
+    expect(searchSettings('proxy'), isNotEmpty);
+  });
 }

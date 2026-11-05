@@ -152,7 +152,14 @@ class CacheBarPainter extends CustomPainter {
         paintChartLabel(
           canvas,
           'cache duration',
-          Offset(math.min(cx + 4, w - 60), _top + _barH + 32),
+          // Kept inside the bar's width at any text size.
+          Offset(
+            math.min(
+              cx + 4,
+              w - chartLabelWidth('cache duration', scaler: scaler),
+            ),
+            _top + _barH + 32,
+          ),
           Tokens.fgFaint,
           scaler: scaler,
         );
@@ -293,7 +300,8 @@ class CacheHistoryPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const left = 34.0;
     final w = size.width - left;
-    final h = size.height - 12;
+    // Room under the plot for the axis labels at the reader's size.
+    final h = size.height - chartLabelHeight(scaler: scaler) - 4;
     final t0 = now - window;
     double x(double t) => left + ((t - t0) / window).clamp(0.0, 1.0) * w;
 
@@ -357,9 +365,10 @@ class CacheHistoryPainter extends CustomPainter {
     paintChartLabel(
       canvas,
       'now',
-      Offset(size.width - 18, h + 3),
+      Offset(size.width, h + 3),
       Tokens.fgFaint,
       scaler: scaler,
+      end: true,
     );
 
     // The curve.

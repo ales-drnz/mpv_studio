@@ -17,11 +17,10 @@ class EngineFormat {
   /// A position as `m:ss.d`, one unit before the minute and past it.
   static String clock(Duration d) {
     if (d.isNegative) d = Duration.zero;
-    final m = d.inMinutes;
-    final s = d.inMilliseconds.remainder(60000) / 1000;
-    final whole = s.floor().toString().padLeft(2, '0');
-    final tenth = ((s - s.floor()) * 10).floor();
-    return '$m:$whole.$tenth';
+    // In whole milliseconds: a float tenth reads 1.2 s as 1.1.
+    final ms = d.inMilliseconds;
+    final whole = (ms % 60000 ~/ 1000).toString().padLeft(2, '0');
+    return '${d.inMinutes}:$whole.${ms % 1000 ~/ 100}';
   }
 
   /// A length as `m:ss`.

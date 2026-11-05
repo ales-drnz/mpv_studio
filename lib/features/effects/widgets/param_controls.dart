@@ -26,14 +26,16 @@ Widget buildParamControl(
   switch (p) {
     case DoubleParam d:
       final tag = liveTagOf(stage, d.name);
+      final log = logScaled(d.name, d.min);
+      final (min, max) = log ? logRange(d.name, d.min, d.max) : (d.min, d.max);
       return SliderRow(
         label: d.name,
-        scale: logScaled(d.name, d.min) ? SliderScale.log : SliderScale.linear,
+        scale: log ? SliderScale.log : SliderScale.linear,
         tag: tag.$1,
         tagTooltip: tag.$2,
-        value: d.get(stage).clamp(d.min, d.max),
-        min: d.min,
-        max: d.max,
+        value: d.get(stage).clamp(min, max),
+        min: min,
+        max: max,
         resetTo: d.def,
         enabled: enabled,
         format: _fmt,

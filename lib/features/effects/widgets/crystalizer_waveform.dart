@@ -141,9 +141,10 @@ class _CrystalPainter extends CustomPainter {
     paintChartLabel(
       canvas,
       'input',
-      Offset(w - 34, 4),
+      Offset(w - Tokens.s4, 4),
       Tokens.fgFaint,
       scaler: scaler,
+      end: true,
     );
   }
 

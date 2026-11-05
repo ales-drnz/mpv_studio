@@ -130,7 +130,8 @@ class PrefetchTimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final h = size.height - 14;
+    // Room under the timeline for its labels at the reader's size.
+    final h = size.height - chartLabelHeight(scaler: scaler) - 5;
     final t0 = now - window;
     double x(double t) => ((t - t0) / window).clamp(0.0, 1.0) * size.width;
 
@@ -171,9 +172,10 @@ class PrefetchTimelinePainter extends CustomPainter {
     paintChartLabel(
       canvas,
       'now',
-      Offset(size.width - 18, h + 4),
+      Offset(size.width, h + 4),
       Tokens.fgFaint,
       scaler: scaler,
+      end: true,
     );
   }
 

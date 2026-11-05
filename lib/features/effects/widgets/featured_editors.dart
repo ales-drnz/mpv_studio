@@ -10,6 +10,7 @@ import 'crossfeed_diagram.dart';
 import 'crystalizer_waveform.dart';
 import 'equalizer.dart';
 import 'loudness_gauge.dart';
+import '../rack_catalog.dart';
 import '../runtime_params.dart';
 import 'param_controls.dart';
 import 'response_curve.dart';
@@ -47,6 +48,12 @@ class FeaturedEditor {
       String? option,
       SliderScale scale = SliderScale.linear,
     }) {
+      assert(
+        option == null ||
+            (descriptorOf(e.filter)?.params.any((p) => p.name == option) ??
+                true),
+        '$option is not an option of ${e.filterName}',
+      );
       final tag = option == null ? null : liveTagOf(e, option);
       return SliderRow(
         label: label,
@@ -361,7 +368,7 @@ class FeaturedEditor {
               (v) => ln.copyWith(i: v),
               format: (v) => '${v.round()} LUFS',
               resetTo: -24,
-              option: 'i',
+              option: 'I',
             ),
             slider(
               'Range',
@@ -371,7 +378,7 @@ class FeaturedEditor {
               (v) => ln.copyWith(lra: v),
               format: (v) => '${v.round()} LU',
               resetTo: 7,
-              option: 'lra',
+              option: 'LRA',
             ),
             slider(
               'True peak',
@@ -381,7 +388,7 @@ class FeaturedEditor {
               (v) => ln.copyWith(tp: v),
               format: (v) => '${v.toStringAsFixed(1)} dB',
               resetTo: -2,
-              option: 'tp',
+              option: 'TP',
             ),
           ],
         );

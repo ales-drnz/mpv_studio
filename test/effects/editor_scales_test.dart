@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/widgets/featured_editors.dart';
+import 'package:mpv_studio/features/effects/runtime_params.dart';
 import 'package:mpv_studio/features/effects/widgets/param_controls.dart';
 import 'package:mpv_studio/features/effects/rack_catalog.dart';
 import 'package:mpv_studio/ui/widgets/controls.dart';
@@ -46,5 +47,49 @@ void main() {
     expect(of('attack').scale, SliderScale.log);
     expect(of('attack').tag, 'live');
     expect(of('threshold').scale, SliderScale.linear);
+  });
+
+  test('a biquad frequency from 0 Hz is a log track from 10 Hz', () {
+    final d = descriptorOf(const EqualizerEffect().filter)!;
+    final row =
+        buildParamControl(
+              d.params.firstWhere((p) => p.name == 'frequency'),
+              const EqualizerEffect(),
+              onChange: (_, {live = false}) {},
+              onEnd: () {},
+            )
+            as SliderRow;
+    expect(row.scale, SliderScale.log);
+    expect(row.min, 10);
+    expect(row.max, 24000);
+  });
+
+  test('centre frequencies, rates and Q factors are log too', () {
+    for (final (name, min) in [
+      ('centerf', 2.0),
+      ('hz', 0.01),
+      ('lforate', 0.01),
+      ('qfactor', 0.1),
+      ('dqfactor', 0.1),
+      ('tempo', 0.5),
+    ]) {
+      expect(logScaled(name, min), isTrue, reason: name);
+    }
+  });
+
+  test('every featured option is an option of its filter', () {
+    for (final e in [
+      const AcompressorEffect(),
+      const BassEffect(),
+      const TrebleEffect(),
+      const AsubboostEffect(),
+      const ExtrastereoEffect(),
+      const CrossfeedEffect(),
+      const CrystalizerEffect(),
+      const LoudnormEffect(),
+    ]) {
+      // The editor asserts each slider's option against the filter's.
+      expect(editor(e).controls, isNotEmpty, reason: '${e.filter}');
+    }
   });
 }

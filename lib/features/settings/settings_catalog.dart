@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// The four groups Settings is organised in, by purpose.
@@ -57,6 +58,22 @@ class SettingEntry {
   final String description;
   final List<String> keywords;
 
+  /// Whether the setting exists only outside a browser, where the
+  /// browser decides it (TLS, proxies, cookies) or there is nothing to
+  /// pick (drivers, passthrough, exclusive mode, folders).
+  bool get nativeOnly =>
+      section == SettingsSections.driver ||
+      section == SettingsSections.passthrough ||
+      const {
+        'tlsVerify',
+        'tlsCaFile',
+        'httpProxy',
+        'cookies',
+        'exclusive',
+        'resumeFolder',
+        'diskCacheFolder',
+      }.contains(id);
+
   /// How well this entry matches [query], 0 for not at all. Every word of
   /// the query must appear in the title, the description, the keywords,
   /// the section or the group; a match in the title ranks first.
@@ -91,10 +108,11 @@ class SettingEntry {
 }
 
 /// The settings matching [query], best first, then in page order.
-List<SettingEntry> searchSettings(String query) {
+List<SettingEntry> searchSettings(String query, {bool web = kIsWeb}) {
   final scored = [
     for (final (i, e) in SettingsCatalog.all.indexed)
-      if (e.score(query) case final s when s > 0) (e, s, i),
+      if (!(web && e.nativeOnly))
+        if (e.score(query) case final s when s > 0) (e, s, i),
   ]..sort((a, b) => a.$2 != b.$2 ? b.$2 - a.$2 : a.$3 - b.$3);
   return [for (final (e, _, _) in scored) e];
 }

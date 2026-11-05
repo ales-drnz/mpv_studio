@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/engine/engine_format.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/engine/engine_page.dart';
@@ -206,6 +207,16 @@ void main() {
     player.emit((s) => s.copyWith(playWhenReady: true));
     await tester.pump(const Duration(milliseconds: 250));
     expect(find.byKey(const ValueKey('engine-intent-note')), findsNothing);
+  });
+
+  test('the position reads to the tenth, whatever the float', () {
+    for (var ms = 0; ms < 60000; ms += 100) {
+      final s = (ms ~/ 1000).toString().padLeft(2, '0');
+      expect(
+        EngineFormat.clock(Duration(milliseconds: ms)),
+        '0:$s.${(ms % 1000) ~/ 100}',
+      );
+    }
   });
 
   testWidgets('a stream cut by its connection says so', (tester) async {
