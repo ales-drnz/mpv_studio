@@ -51,6 +51,8 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
     for (final h in widget.initial.headers) _HeaderRow(h),
   ];
   late int? _chunkSize = widget.initial.chunkSize;
+  late bool _reconnect = widget.initial.reconnect;
+  late bool _failFast = widget.initial.failFast;
 
   @override
   void dispose() {
@@ -66,6 +68,8 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
       headers: [for (final r in _rows) r.header],
       userAgent: _userAgent.text,
       chunkSize: _chunkSize,
+      reconnect: _reconnect,
+      failFast: _failFast,
     ),
   );
 
@@ -159,6 +163,28 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
                     _emit();
                   },
                 ),
+              ),
+              SwitchRow(
+                label: 'Reconnect a live stream',
+                subtitle:
+                    'Reopens a radio when its connection drops. For live '
+                    'streams only: a file would start over.',
+                value: _reconnect,
+                onChanged: (v) {
+                  setState(() => _reconnect = v);
+                  _emit();
+                },
+              ),
+              SwitchRow(
+                label: 'Fail fast',
+                subtitle:
+                    'Gives up at once on an unreachable server instead of '
+                    'retrying.',
+                value: _failFast,
+                onChanged: (v) {
+                  setState(() => _failFast = v);
+                  _emit();
+                },
               ),
             ],
           ),
