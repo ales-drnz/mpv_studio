@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
+import '../focus_ring.dart';
 
 /// A read-only value, set in a small pill chip and aligned flush to the
 /// trailing edge. The single way settings values are shown.
@@ -64,34 +65,36 @@ class TileButton extends StatelessWidget {
       label: tooltip ?? label,
       excludeSemantics: true,
       onTap: onPressed,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: Tokens.pill,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: context.layout.minTap,
-              minWidth: context.layout.minTap,
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Tokens.s16,
-                  vertical: Tokens.s8,
-                ),
-                decoration: ShapeDecoration(
-                  color: accent ? Tokens.accentContainer : Tokens.tonal,
-                  shape: Tokens.pill,
-                ),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Tokens.label.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+      child: FocusRing(
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: Tokens.pill,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: context.layout.minTap,
+                minWidth: context.layout.minTap,
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Tokens.s16,
+                    vertical: Tokens.s8,
+                  ),
+                  decoration: ShapeDecoration(
+                    color: accent ? Tokens.accentContainer : Tokens.tonal,
+                    shape: Tokens.pill,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Tokens.label.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

@@ -104,7 +104,7 @@ class _ResizeHandleState extends State<ResizeHandle> {
         : (_hovering ? Tokens.fgDim : Tokens.fgFaint);
 
     final grip = AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
+      duration: Tokens.motion(context, Tokens.motionShort),
       curve: Curves.easeOut,
       width: horizontal ? _gripLong : _gripShort,
       height: horizontal ? _gripShort : _gripLong,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../tokens.dart';
+
 /// The single transition shape used across the app's navigation: a gentle
 /// fade plus a short horizontal slide. Shared by [SectionSwitcher] (an
 /// in-page list to detail swap, as in `TwoPane`) and [fadeSlidePageRoute]
 /// (pushed full-page routes), so every navigation reads the same.
-const Duration kNavTransition = Duration(milliseconds: 220);
+const Duration kNavTransition = Tokens.motionMedium;
 const Offset kNavSlideOffset = Offset(0.04, 0);
 
 Widget _navTransition(Animation<double> animation, Widget child) {
@@ -25,13 +27,17 @@ Widget _navTransition(Animation<double> animation, Widget child) {
 Route<T> fadeSlidePageRoute<T>(Widget page) {
   return PageRouteBuilder<T>(
     transitionDuration: kNavTransition,
-    reverseTransitionDuration: const Duration(milliseconds: 180),
+    reverseTransitionDuration: Tokens.motionShort,
     pageBuilder: (context, animation, secondary) => page,
+    // A route's duration is fixed before it has a context: with reduced
+    // motion the page shows at once and the route only waits it out.
     transitionsBuilder: (context, animation, secondary, child) =>
-        _navTransition(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-          child,
-        ),
+        MediaQuery.disableAnimationsOf(context)
+        ? child
+        : _navTransition(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            child,
+          ),
   );
 }
 
@@ -50,7 +56,7 @@ class SectionSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: kNavTransition,
+      duration: Tokens.motion(context, kNavTransition),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) => _navTransition(animation, child),

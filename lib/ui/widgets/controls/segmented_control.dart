@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
+import '../focus_ring.dart';
 import 'control_metrics.dart';
 
 /// One selectable option in a [SegmentedControl].
@@ -18,10 +20,12 @@ class SegmentOption<T> {
 /// A flat pill of mutually-exclusive options. Used for short enum
 /// picks (loop, gapless, cache mode, normalization, FFT window).
 ///
-/// By default the segments share the width equally ([expand] `true`); set
-/// [expand] `false` for a compact pill that hugs its content, e.g. when it
-/// sits inline in a toolbar next to other controls. On touch it is a full
-/// tap target tall.
+/// By default the segments share the width equally ([expand] `true`), up
+/// to [maxExpandedWidth] from a medium window on, where a pill across a
+/// whole card would only stretch three words apart; set [expand] `false`
+/// for a compact pill that hugs its content, e.g. when it sits inline in
+/// a toolbar next to other controls. On touch it is a full tap target
+/// tall.
 class SegmentedControl<T> extends StatelessWidget {
   final List<SegmentOption<T>> options;
   final T selected;
@@ -40,8 +44,24 @@ class SegmentedControl<T> extends StatelessWidget {
     this.enabled = true,
   });
 
+  /// The widest an expanded control grows outside a phone.
+  static const double maxExpandedWidth = 360;
+
   @override
   Widget build(BuildContext context) {
+    final pill = _pill(context);
+    if (!expand || context.layout.isCompact) return pill;
+    return LayoutBuilder(
+      builder: (context, c) => c.maxWidth <= maxExpandedWidth
+          ? pill
+          : Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: SizedBox(width: maxExpandedWidth, child: pill),
+            ),
+    );
+  }
+
+  Widget _pill(BuildContext context) {
     Widget segment(SegmentOption<T> o) => _Segment(
       label: o.label,
       tooltip: o.tooltip,
@@ -94,28 +114,30 @@ class _Segment extends StatelessWidget {
       label: tooltip ?? label,
       excludeSemantics: true,
       onTap: onTap,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.pill,
-          child: Container(
-            alignment: Alignment.center,
-            padding: EdgeInsets.symmetric(
-              horizontal: hugContent ? Tokens.s12 : Tokens.s4,
-            ),
-            decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Colors.transparent,
-              shape: Tokens.pill,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Tokens.label.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: active ? Tokens.onAccent : Tokens.fgDim,
+      child: FocusRing(
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.pill,
+            child: Container(
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(
+                horizontal: hugContent ? Tokens.s12 : Tokens.s4,
+              ),
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accent : Colors.transparent,
+                shape: Tokens.pill,
+              ),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Tokens.label.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: active ? Tokens.onAccent : Tokens.fgDim,
+                ),
               ),
             ),
           ),

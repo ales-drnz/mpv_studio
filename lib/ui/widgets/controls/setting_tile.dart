@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
+import '../focus_ring.dart';
 
 /// The uniform settings row: a title, an optional description, and then the
 /// interaction. Compact controls (switch, value readout, button) sit at the
@@ -102,10 +103,13 @@ class SettingTile extends StatelessWidget {
       button: toggled == null,
       toggled: toggled,
       enabled: enabled,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        customBorder: Tokens.shape(Tokens.rMd),
-        child: padded,
+      child: FocusRing(
+        shape: Tokens.shape(Tokens.rMd),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          customBorder: Tokens.shape(Tokens.rMd),
+          child: padded,
+        ),
       ),
     );
   }

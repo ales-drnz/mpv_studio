@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../layout/layout_scope.dart';
 import '../tokens.dart';
+import 'focus_ring.dart';
 
 /// How much a [RoundIconButton] stands out: the shape contrast of the
 /// design language.
@@ -50,6 +51,7 @@ class RoundIconButton extends StatelessWidget {
     this.selected,
     this.onContainer = false,
     this.badge,
+    this.value,
   });
 
   final IconData icon;
@@ -78,6 +80,11 @@ class RoundIconButton extends StatelessWidget {
   /// A short count on the icon (the number of options set); null for
   /// none.
   final String? badge;
+
+  /// The state a screen reader announces after the name, for a button
+  /// that cycles through more than on and off (repeat: "off", "this
+  /// track", "the queue").
+  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -112,32 +119,39 @@ class RoundIconButton extends StatelessWidget {
       toggled: toggled,
       selected: selected,
       label: label ?? tooltip,
+      value: value,
       excludeSemantics: true,
       onTap: onTap,
       onLongPress: onLongPress,
       child: Tooltip(
         message: tooltip,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: d,
-          height: d,
-          decoration: ShapeDecoration(color: fill, shape: const CircleBorder()),
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onTap,
-              onLongPress: onLongPress,
-              customBorder: const CircleBorder(),
-              hoverColor: onContainer
-                  ? Tokens.onAccentContainer.withValues(alpha: 0.10)
-                  : null,
-              child: Center(
-                child: Badge(
-                  isLabelVisible: badge != null,
-                  label: badge == null ? null : Text(badge!),
-                  backgroundColor: Tokens.accent,
-                  textColor: Tokens.onAccent,
-                  child: Icon(icon, size: size, color: color),
+        child: FocusRing(
+          shape: const CircleBorder(),
+          child: AnimatedContainer(
+            duration: Tokens.motion(context, Tokens.motionShort),
+            width: d,
+            height: d,
+            decoration: ShapeDecoration(
+              color: fill,
+              shape: const CircleBorder(),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                customBorder: const CircleBorder(),
+                hoverColor: onContainer
+                    ? Tokens.onAccentContainer.withValues(alpha: 0.10)
+                    : null,
+                child: Center(
+                  child: Badge(
+                    isLabelVisible: badge != null,
+                    label: badge == null ? null : Text(badge!),
+                    backgroundColor: Tokens.accent,
+                    textColor: Tokens.onAccent,
+                    child: Icon(icon, size: size, color: color),
+                  ),
                 ),
               ),
             ),

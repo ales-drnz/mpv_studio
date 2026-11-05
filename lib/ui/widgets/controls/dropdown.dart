@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../layout/layout.dart';
 import '../../tokens.dart';
+import '../focus_ring.dart';
 import 'control_metrics.dart';
 import 'setting_tile.dart';
 
@@ -228,38 +229,40 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
       value: valueText,
       child: Opacity(
         opacity: enabled ? 1 : 0.5,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: enabled ? _show : null,
-            customBorder: Tokens.pill,
-            child: Container(
-              height: controlHeightOf(context),
-              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-              decoration: ShapeDecoration(
-                color: Tokens.surface3,
-                shape: Tokens.pill,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DefaultTextStyle(
-                      style: selected == null ? Tokens.caption : Tokens.body,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      child: selected ?? Text(widget.hint ?? 'Select'),
+        child: FocusRing(
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: enabled ? _show : null,
+              customBorder: Tokens.pill,
+              child: Container(
+                height: controlHeightOf(context),
+                padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+                decoration: ShapeDecoration(
+                  color: Tokens.surface3,
+                  shape: Tokens.pill,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DefaultTextStyle(
+                        style: selected == null ? Tokens.caption : Tokens.body,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        child: selected ?? Text(widget.hint ?? 'Select'),
+                      ),
                     ),
-                  ),
-                  AnimatedRotation(
-                    turns: _open ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 150),
-                    child: Icon(
-                      Icons.expand_more_rounded,
-                      size: 18,
-                      color: Tokens.fgDim,
+                    AnimatedRotation(
+                      turns: _open ? 0.5 : 0,
+                      duration: Tokens.motion(context, Tokens.motionShort),
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        size: 18,
+                        color: Tokens.fgDim,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

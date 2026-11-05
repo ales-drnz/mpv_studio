@@ -48,29 +48,38 @@ class AppSwitch extends StatelessWidget {
     final track = enabled
         ? (value ? Tokens.accent : Tokens.surface4)
         : Tokens.surface3;
+    // Off, the track also carries a ring at 3:1 so the state reads on
+    // any card, as Material 3 switches do.
+    final ring = enabled && !value
+        ? BorderSide(color: Tokens.trackOff, width: 2)
+        : BorderSide.none;
     final knob = enabled
         ? (value ? Tokens.onAccent : Tokens.fgDim)
         : Tokens.fgFaint;
     // Shape contrast: the knob grows from a small dot (off) to a full
     // circle (on), as Material 3 switches do.
     final size = value ? 20.0 : 14.0;
+    final duration = Tokens.motion(context, Tokens.motionShort);
     return ExcludeSemantics(
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: duration,
         curve: Curves.easeOutCubic,
         width: 48,
         height: 28,
         padding: const EdgeInsets.all(Tokens.s4),
-        decoration: ShapeDecoration(color: track, shape: Tokens.pill),
+        decoration: ShapeDecoration(
+          color: track,
+          shape: StadiumBorder(side: ring),
+        ),
         child: AnimatedAlign(
-          duration: const Duration(milliseconds: 200),
+          duration: duration,
           curve: Curves.easeOutBack,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: SizedBox.square(
             dimension: 20,
             child: Center(
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: duration,
                 curve: Curves.easeOutCubic,
                 width: size,
                 height: size,
