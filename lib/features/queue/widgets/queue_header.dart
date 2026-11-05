@@ -18,6 +18,7 @@ class QueueHeaderAction {
     required this.label,
     required this.onPressed,
     this.primary = false,
+    this.destructive = false,
     this.disabledReason,
   });
 
@@ -28,30 +29,28 @@ class QueueHeaderAction {
   final VoidCallback? onPressed;
   final bool primary;
 
+  /// Whether it removes something (red in the menu).
+  final bool destructive;
+
   /// Shown as the tooltip of a disabled button.
   final String? disabledReason;
 }
 
-/// The Queue header buttons: labelled pills on wide pointer windows (the
-/// primary one filled), bare round icons with tooltips elsewhere.
+/// The Queue header buttons. From an expanded pointer window each is a
+/// labelled pill (the primary one filled); below it, or on touch, the
+/// primary keeps its label and the rest fold into a menu, the removing
+/// one in red, so no action is a bare icon beside another of equal weight.
 List<Widget> queueHeaderButtons(
   BuildContext context,
   List<QueueHeaderAction> actions,
 ) {
+  if (actions.isEmpty) return const [];
   final layout = context.layout;
-  final labelled = layout.isPointer && layout.width.atLeast(WidthClass.large);
-  Widget button(QueueHeaderAction a) {
-    if (!labelled) {
-      // A disabled button says why; an enabled one names itself.
-      return RoundIconButton(
-        icon: a.icon,
-        tooltip: a.onPressed == null ? a.disabledReason ?? a.label : a.label,
-        label: a.label,
-        onTap: a.onPressed,
-      );
-    }
-    final icon = Icon(a.icon, size: 18);
-    return a.primary
+  final labelled =
+      layout.isPointer && layout.width.atLeast(WidthClass.expanded);
+  Widget pill(QueueHeaderAction a) {
+    final icon = Icon(a.icon);
+    final Widget button = a.primary
         ? FilledButton.icon(
             onPressed: a.onPressed,
             icon: icon,
@@ -63,16 +62,53 @@ List<Widget> queueHeaderButtons(
             label: Text(a.label),
             style: TextButton.styleFrom(foregroundColor: Tokens.fg),
           );
+    // A disabled pill says why.
+    return a.onPressed == null
+        ? Tooltip(message: a.disabledReason ?? a.label, child: button)
+        : button;
   }
 
+  if (labelled) {
+    return [
+      for (final a in actions)
+        Padding(
+          padding: const EdgeInsets.only(left: Tokens.s8),
+          child: pill(a),
+        ),
+    ];
+  }
+  final primary = actions.where((a) => a.primary).toList();
+  final rest = actions.where((a) => !a.primary).toList();
   return [
-    for (final a in actions)
+    for (final a in primary) pill(a),
+    if (rest.isNotEmpty)
       Padding(
-        padding: EdgeInsets.only(left: labelled ? Tokens.s8 : Tokens.s4),
-        // A disabled pill says why.
-        child: labelled && a.onPressed == null
-            ? Tooltip(message: a.disabledReason ?? a.label, child: button(a))
-            : button(a),
+        padding: const EdgeInsets.only(left: Tokens.s4),
+        child: Builder(
+          builder: (context) => RoundIconButton(
+            icon: Icons.more_vert_rounded,
+            tooltip: 'More queue actions',
+            onTap: () async {
+              final box = context.findRenderObject() as RenderBox?;
+              final picked = await showStudioMenu<QueueHeaderAction>(
+                context,
+                position: box?.localToGlobal(box.size.bottomLeft(Offset.zero)),
+                title: 'Queue',
+                items: [
+                  for (final a in rest)
+                    StudioMenuItem(
+                      value: a,
+                      label: a.label,
+                      icon: a.icon,
+                      enabled: a.onPressed != null,
+                      destructive: a.destructive,
+                    ),
+                ],
+              );
+              picked?.onPressed?.call();
+            },
+          ),
+        ),
       ),
   ];
 }

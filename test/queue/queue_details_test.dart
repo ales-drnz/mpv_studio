@@ -52,8 +52,22 @@ class _Harness {
     await pumpEventQueue();
   }
 
-  Future<void> end(MpvEndFileReason reason, {int error = 0}) async {
-    endFile.add(MpvFileEndedEvent(reason: reason, error: error));
+  Future<void> end(
+    MpvEndFileReason reason, {
+    int error = 0,
+    bool? readError,
+    int? skippedSegments,
+    Duration? position,
+  }) async {
+    endFile.add(
+      MpvFileEndedEvent(
+        reason: reason,
+        error: error,
+        readError: readError,
+        skippedSegments: skippedSegments,
+        position: position,
+      ),
+    );
     await pumpEventQueue();
   }
 
@@ -73,6 +87,26 @@ void main() {
     expect(row.artist, isNull);
     expect(row.origin, MediaOrigin.http);
     expect(row.duration, isNull);
+  });
+
+  test('a stream cut by its connection is not "played"', () async {
+    await h.play([_url, _song], 0);
+    await h.load();
+    await h.end(
+      MpvEndFileReason.eof,
+      readError: true,
+      position: const Duration(minutes: 2, seconds: 13),
+    );
+    final o = h.outcome(_url)!;
+    expect(o.end, EntryEnd.cut);
+    expect(o.reason, 'Cut short at 2:13');
+  });
+
+  test('segments lost on the way are counted', () async {
+    await h.play([_url, _song], 0);
+    await h.load();
+    await h.end(MpvEndFileReason.eof, skippedSegments: 3);
+    expect(h.outcome(_url)!.reason, 'Played, 3 segments lost');
   });
 
   test('server rows use their extras', () {

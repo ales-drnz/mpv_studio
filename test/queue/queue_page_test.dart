@@ -28,13 +28,46 @@ void main() {
       expect(find.text('1 track'), findsOneWidget);
     });
 
-    testWidgets('clear is disabled', (tester) async {
+    testWidgets('the header leaves the ways in to the empty state', (
+      tester,
+    ) async {
       final (player, details) = emptyQueue();
       await pumpQueue(tester, player, details);
-      final clear = tester.widget<TextButton>(
-        buttonWithText<TextButton>('Clear queue'),
+      // Once, in the empty state; not twice with the header's.
+      expect(find.text('Add files'), findsOneWidget);
+      expect(find.text('Clear queue'), findsNothing);
+    });
+  });
+
+  group('header', () {
+    testWidgets('a laptop window labels every action', (tester) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(tester, player, details, size: const Size(1024, 700));
+      expect(buttonWithText<FilledButton>('Add files'), findsOneWidget);
+      expect(buttonWithText<TextButton>('Clear queue'), findsOneWidget);
+      expect(find.byTooltip('More queue actions'), findsNothing);
+    });
+
+    testWidgets('a tablet labels Add files and folds the rest', (
+      tester,
+    ) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(
+        tester,
+        player,
+        details,
+        size: const Size(800, 1280),
+        input: InputMode.touch,
       );
-      expect(clear.onPressed, isNull);
+      expect(buttonWithText<FilledButton>('Add files'), findsOneWidget);
+      expect(find.text('Clear queue'), findsNothing);
+      await tester.tap(find.byTooltip('More queue actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add folder'), findsOneWidget);
+      expect(find.text('Load playlist'), findsOneWidget);
+      await tester.tap(find.text('Clear queue'));
+      await tester.pumpAndSettle();
+      expect(find.text('Clear the queue?'), findsOneWidget);
     });
   });
 

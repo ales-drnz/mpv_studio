@@ -343,6 +343,7 @@ class OutcomeBadge extends StatelessWidget {
       EntryEnd.ended => 'Played',
       EntryEnd.stopped => 'Skipped',
       EntryEnd.failed => 'Failed',
+      EntryEnd.cut => 'Cut short',
     };
     final color = onContainer ? Tokens.onAccentContainer : Tokens.fgDim;
     final text = Text(
@@ -351,7 +352,7 @@ class OutcomeBadge extends StatelessWidget {
       style: Tokens.caption.copyWith(color: color, fontWeight: FontWeight.w600),
     );
     if (!failed) {
-      return Container(
+      final badge = Container(
         padding: const EdgeInsets.symmetric(horizontal: Tokens.s8),
         decoration: ShapeDecoration(
           color: onContainer
@@ -361,6 +362,10 @@ class OutcomeBadge extends StatelessWidget {
         ),
         child: text,
       );
+      // A cut play says where and what was lost on hover.
+      return outcome.end == EntryEnd.cut
+          ? Tooltip(message: outcome.reason, child: badge)
+          : badge;
     }
     // A failure: a red dot carries the meaning, the label stays in the
     // row's dim tone (4.5:1 or more on rows and on the selection), and
