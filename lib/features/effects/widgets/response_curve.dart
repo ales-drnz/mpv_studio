@@ -55,6 +55,7 @@ class ResponseCurve extends StatelessWidget {
           child: CustomPaint(
             size: Size.infinite,
             painter: _ResponsePainter(
+              scaler: chartTextScaler(context),
               response: response,
               enabled: enabled,
               maxDb: maxDb,
@@ -77,12 +78,15 @@ const _decades = [
 ];
 
 class _ResponsePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final double Function(double hz) response;
   final bool enabled;
   final double maxDb;
   final double? markerHz;
 
   _ResponsePainter({
+    this.scaler = TextScaler.noScaling,
     required this.response,
     required this.enabled,
     required this.maxDb,
@@ -115,7 +119,7 @@ class _ResponsePainter extends CustomPainter {
     final grid = Paint()..strokeWidth = 1;
     for (final db in [maxDb, maxDb / 2, 0.0, -maxDb / 2, -maxDb]) {
       final yy = yOf(db);
-      grid.color = db == 0 ? Tokens.line2 : Tokens.line;
+      grid.color = db == 0 ? Tokens.lineRef : Tokens.line;
       canvas.drawLine(Offset(plot.left, yy), Offset(plot.right, yy), grid);
     }
     paintChartLabel(
@@ -123,12 +127,14 @@ class _ResponsePainter extends CustomPainter {
       '+${maxDb.toInt()}',
       Offset(plot.right + 3, yOf(maxDb) - 5),
       Tokens.fgFaint,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
       '${(-maxDb).toInt()}',
       Offset(plot.right + 3, yOf(-maxDb) - 5),
       Tokens.fgFaint,
+      scaler: scaler,
     );
 
     // Frequency decade lines + labels.
@@ -145,6 +151,7 @@ class _ResponsePainter extends CustomPainter {
         Offset(xx, plot.bottom + 2),
         Tokens.fgFaint,
         center: true,
+        scaler: scaler,
       );
     }
 
@@ -202,5 +209,6 @@ class _ResponsePainter extends CustomPainter {
       old.enabled != enabled ||
       old.maxDb != maxDb ||
       old.markerHz != markerHz ||
-      old.response != response;
+      old.response != response ||
+      old.scaler != scaler;
 }

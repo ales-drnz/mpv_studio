@@ -33,7 +33,7 @@ class OutputView extends StatelessWidget {
 
     return EngineCard(
       title: 'Audio output',
-      trailing: StatePill(
+      trailing: PhasePill(
         EngineFormat.outputState(out),
         color: colorOf(out),
         strong: out != AudioOutputState.closed,

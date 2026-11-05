@@ -14,6 +14,22 @@ class EngineFormat {
     return '$m:$s';
   }
 
+  /// A position as `m:ss.d`, one unit before the minute and past it.
+  static String clock(Duration d) {
+    if (d.isNegative) d = Duration.zero;
+    // In whole milliseconds: a float tenth reads 1.2 s as 1.1.
+    final ms = d.inMilliseconds;
+    final whole = (ms % 60000 ~/ 1000).toString().padLeft(2, '0');
+    return '${d.inMinutes}:$whole.${ms % 1000 ~/ 100}';
+  }
+
+  /// A length as `m:ss`.
+  static String minutes(Duration d) {
+    if (d.isNegative) d = Duration.zero;
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '${d.inMinutes}:$s';
+  }
+
   /// A byte rate as `850 KB/s` or `2.4 MB/s`.
   static String rate(double bytesPerSecond) {
     if (bytesPerSecond <= 0) return '0 KB/s';

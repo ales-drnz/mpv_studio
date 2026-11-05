@@ -126,7 +126,11 @@ class _StageMetersState extends State<StageMeters> {
       label: 'Stage meters, before and after',
       value: widget.active ? null : widget.idleText,
       child: Container(
-        height: context.layout.isShort ? 52 : 72,
+        // At rest one line, a control tall: an empty band took the top of
+        // every card.
+        height: widget.active
+            ? (context.layout.isShort ? 52 : 72)
+            : Tokens.controlH,
         decoration: ShapeDecoration(
           color: Tokens.surface3,
           shape: Tokens.shape(Tokens.rSm),
@@ -135,7 +139,12 @@ class _StageMetersState extends State<StageMeters> {
             ? RepaintBoundary(
                 child: CustomPaint(
                   size: Size.infinite,
-                  painter: _MetersPainter(_pre, _post, _tick),
+                  painter: _MetersPainter(
+                    scaler: chartTextScaler(context),
+                    _pre,
+                    _post,
+                    _tick,
+                  ),
                 ),
               )
             : Center(
@@ -149,9 +158,16 @@ class _StageMetersState extends State<StageMeters> {
 }
 
 class _MetersPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final _Side pre;
   final _Side post;
-  _MetersPainter(this.pre, this.post, Listenable tick) : super(repaint: tick);
+  _MetersPainter(
+    this.pre,
+    this.post,
+    Listenable tick, {
+    this.scaler = TextScaler.noScaling,
+  }) : super(repaint: tick);
 
   static const _readoutW = 92.0;
 
@@ -174,6 +190,7 @@ class _MetersPainter extends CustomPainter {
       Offset(x, step),
       Tokens.fgDim,
       fontSize: 10,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
@@ -181,6 +198,7 @@ class _MetersPainter extends CustomPainter {
       Offset(x, 2 * step + 10),
       Tokens.accent,
       fontSize: 10,
+      scaler: scaler,
     );
     final silent = inDb <= _floor + 1 && outDb <= _floor + 1;
     final delta = outDb - inDb;
@@ -196,6 +214,7 @@ class _MetersPainter extends CustomPainter {
           ? Tokens.fgDim
           : (delta > 0 ? Tokens.amber : Tokens.green),
       fontSize: 10,
+      scaler: scaler,
     );
   }
 
@@ -239,5 +258,6 @@ class _MetersPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_MetersPainter old) => old.pre != pre || old.post != post;
+  bool shouldRepaint(_MetersPainter old) =>
+      old.pre != pre || old.post != post || old.scaler != scaler;
 }

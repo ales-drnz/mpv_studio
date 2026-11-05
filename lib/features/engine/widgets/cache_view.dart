@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 import '../engine_format.dart';
 import '../engine_snapshot.dart';
@@ -33,8 +34,8 @@ class CacheView extends StatelessWidget {
           ? 'Local source: the demuxer reads the file directly.'
           : 'What the demuxer holds around the playhead.',
       trailing: s.pausedForCache
-          ? StatePill('Paused for cache', color: Tokens.amber)
-          : StatePill(
+          ? PhasePill('Paused for cache', color: Tokens.amber)
+          : PhasePill(
               s.demuxerViaNetwork ? 'Network' : 'Local',
               color: Tokens.accent,
               strong: s.demuxerViaNetwork,
@@ -52,6 +53,7 @@ class CacheView extends StatelessWidget {
               height: 112,
               child: CustomPaint(
                 painter: CacheBarPainter(
+                  scaler: chartTextScaler(context),
                   geometry: geometry,
                   waveform: snapshot.waveform,
                 ),
@@ -102,6 +104,7 @@ class CacheView extends StatelessWidget {
               height: 72,
               child: CustomPaint(
                 painter: CacheHistoryPainter(
+                  scaler: chartTextScaler(context),
                   samples: snapshot.cacheHistory,
                   now: snapshot.now,
                   pauseWait: pauseOn ? secondsOf(s.cache.pauseWait) : null,

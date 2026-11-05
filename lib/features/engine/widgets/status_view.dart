@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/state_pill.dart';
 import '../../../ui/widgets/controls.dart';
 import '../engine_format.dart';
 import '../engine_snapshot.dart';
@@ -62,7 +63,7 @@ class StatusView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: Tokens.motion(context, Tokens.motionShort),
             width: 12,
             height: 12,
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),
@@ -87,24 +88,39 @@ class StatusView extends StatelessWidget {
         children: [
           headline,
           const SizedBox(height: Tokens.s12),
-          ReadoutGrid(
-            minCellWidth: 150,
+          // The flags as states, named first, their property in the
+          // tooltip: a dot when on, a ring when off.
+          Wrap(
+            spacing: Tokens.s24,
+            runSpacing: Tokens.s8,
             children: [
-              _Fact(
-                title: 'Play requested',
-                wire: 'playWhenReady',
+              StatePill(
+                'Play requested',
                 on: s.playWhenReady,
-                color: Tokens.accent,
+                tooltip: 'playWhenReady',
               ),
-              _Fact(title: 'Audio running', wire: 'playing', on: s.playing),
-              _Fact(
-                title: 'Reached the end',
-                wire: 'completed',
+              StatePill(
+                'Audio running',
+                on: s.playing,
+                color: Tokens.green,
+                tooltip: 'playing',
+              ),
+              StatePill(
+                'Reached the end',
                 on: s.completed,
                 color: Tokens.fgDim,
+                tooltip: 'completed',
               ),
             ],
           ),
+          if (s.completed && s.readError == true) ...[
+            const SizedBox(height: Tokens.s8),
+            Text(
+              'The connection dropped: the stream ended before its end '
+              '(readError).',
+              style: Tokens.caption.copyWith(color: Tokens.amber),
+            ),
+          ],
           if (note != null) ...[
             const SizedBox(height: Tokens.s8),
             Text(
@@ -119,13 +135,20 @@ class StatusView extends StatelessWidget {
               Readout(
                 'Position',
                 s.duration > Duration.zero
-                    ? '${EngineFormat.seconds(s.position)}, '
+                    ? '${EngineFormat.clock(s.position)}, '
                           '${s.percentPos.round()}%'
-                    : EngineFormat.seconds(s.position),
+                    : EngineFormat.clock(s.position),
               ),
-              Readout('Remaining', EngineFormat.seconds(s.playtimeRemaining)),
+              Readout('Remaining', EngineFormat.minutes(s.playtimeRemaining)),
             ],
           ),
+          if (s.duration > Duration.zero) ...[
+            const SizedBox(height: Tokens.s8),
+            ThinBar(
+              key: const ValueKey('engine-position-bar'),
+              fraction: (s.percentPos / 100).clamp(0.0, 1.0),
+            ),
+          ],
           if (source.isNotEmpty) ...[
             const SizedBox(height: Tokens.s12),
             _Path(label: 'Source', value: source),
@@ -148,51 +171,6 @@ class StatusView extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// One yes or no fact with its light: the plain name over the property.
-class _Fact extends StatelessWidget {
-  final String title;
-  final String wire;
-  final bool on;
-  final Color? color;
-  const _Fact({
-    required this.title,
-    required this.wire,
-    required this.on,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: Tokens.s8),
-      child: Semantics(
-        label: '$title ($wire): ${on ? 'yes' : 'no'}',
-        excludeSemantics: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Spy(label: on ? 'yes' : 'no', on: on, color: color),
-            const SizedBox(height: Tokens.s4),
-            Text(
-              title,
-              style: Tokens.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              wire,
-              style: Tokens.caption.copyWith(fontFamily: Tokens.mono),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }

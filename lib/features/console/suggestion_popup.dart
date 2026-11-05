@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/focus_ring.dart';
 import 'completion_engine.dart';
 
 /// The autocomplete popup: a flat list of [Suggestion]s that sits just
@@ -101,66 +102,70 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
           final ink = active ? Tokens.onAccentContainer : null;
           return Material(
             type: MaterialType.transparency,
-            child: InkWell(
-              onTap: () => widget.onTap(i),
-              customBorder: Tokens.shape(Tokens.rSm),
-              child: Ink(
-                decoration: ShapeDecoration(
-                  color: active ? Tokens.accentContainer : Colors.transparent,
-                  shape: Tokens.shape(Tokens.rSm),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Name + (description underneath).
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _Label(
-                            label: s.label,
-                            match: widget.tokenSoFar,
-                            active: active,
-                          ),
-                          if (s.description != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                s.description!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Tokens.caption.copyWith(
-                                  color: ink ?? Tokens.fgFaint,
+            child: FocusRing(
+              shape: Tokens.shape(Tokens.rSm),
+              inside: true,
+              child: InkWell(
+                onTap: () => widget.onTap(i),
+                customBorder: Tokens.shape(Tokens.rSm),
+                child: Ink(
+                  decoration: ShapeDecoration(
+                    color: active ? Tokens.accentContainer : Colors.transparent,
+                    shape: Tokens.shape(Tokens.rSm),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Name + (description underneath).
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _Label(
+                              label: s.label,
+                              match: widget.tokenSoFar,
+                              active: active,
+                            ),
+                            if (s.description != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  s.description!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Tokens.caption.copyWith(
+                                    color: ink ?? Tokens.fgFaint,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Parameters or type tag, to the right.
-                    if (s.detail != null) ...[
-                      const SizedBox(width: Tokens.s8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 240),
-                        child: Text(
-                          s.detail!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
-                          style: Tokens.numeric.copyWith(
-                            fontSize: 11,
-                            color:
-                                ink ??
-                                (s.kind == SuggestionKind.command
-                                    ? Tokens.fgDim
-                                    : Tokens.fgFaint),
-                          ),
+                          ],
                         ),
                       ),
+                      // Parameters or type tag, to the right.
+                      if (s.detail != null) ...[
+                        const SizedBox(width: Tokens.s8),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 240),
+                          child: Text(
+                            s.detail!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                            style: Tokens.numeric.copyWith(
+                              fontSize: 11,
+                              color:
+                                  ink ??
+                                  (s.kind == SuggestionKind.command
+                                      ? Tokens.fgDim
+                                      : Tokens.fgFaint),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

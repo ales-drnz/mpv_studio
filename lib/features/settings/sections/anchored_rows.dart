@@ -21,10 +21,14 @@ Widget anchoredSlider(
   required Future<void> Function(double) set,
   double? resetTo,
   int? divisions,
+  SliderScale scale = SliderScale.linear,
+  double? step,
   bool enabled = true,
 }) => SettingAnchor(
   entry: entry,
   child: SliderRow(
+    scale: scale,
+    step: step,
     label: entry.title,
     description: entry.description,
     value: value,

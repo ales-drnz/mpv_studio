@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../ui/widgets/controls.dart';
@@ -46,13 +47,15 @@ class ResumeSection extends StatelessWidget {
               onChanged: settings.recordResumePlayback,
             ),
           ),
-          anchoredPath(
-            SettingsCatalog.resumeFolder,
-            path: settings.watchLaterDir,
-            unset: 'The engine default, often not writable on mobile.',
-            pick: pickFolder,
-            onChanged: settings.recordWatchLaterDir,
-          ),
+          // A browser page has no folders to write to.
+          if (!kIsWeb)
+            anchoredPath(
+              SettingsCatalog.resumeFolder,
+              path: settings.watchLaterDir,
+              unset: 'The engine default, often not writable on mobile.',
+              pick: pickFolder,
+              onChanged: settings.recordWatchLaterDir,
+            ),
           SettingAnchor(
             entry: SettingsCatalog.saveResume,
             child: SettingTile(

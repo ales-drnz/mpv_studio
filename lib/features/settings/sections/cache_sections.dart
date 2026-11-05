@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -177,16 +178,18 @@ class DemuxerSection extends StatelessWidget {
                 set: (x) =>
                     p.setDemuxer(d.copyWith(maxBackBytes: (x * _mib).round())),
               ),
-              ListenableBuilder(
-                listenable: settings.changes,
-                builder: (context, _) => anchoredPath(
-                  SettingsCatalog.diskCacheFolder,
-                  path: settings.demuxerCacheDir,
-                  unset: 'The engine default, often not writable on mobile.',
-                  pick: pickFolder,
-                  onChanged: settings.recordDemuxerCacheDir,
+              // A browser page has no folders to write to.
+              if (!kIsWeb)
+                ListenableBuilder(
+                  listenable: settings.changes,
+                  builder: (context, _) => anchoredPath(
+                    SettingsCatalog.diskCacheFolder,
+                    path: settings.demuxerCacheDir,
+                    unset: 'The engine default, often not writable on mobile.',
+                    pick: pickFolder,
+                    onChanged: settings.recordDemuxerCacheDir,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

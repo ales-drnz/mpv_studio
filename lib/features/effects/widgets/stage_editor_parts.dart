@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/controls.dart';
 import '../rack_controller.dart';
 import '../stage_presets.dart';
@@ -188,23 +189,25 @@ class _Chip extends StatelessWidget {
       selected: active,
       child: Material(
         type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.pill,
-          child: Ink(
-            height: context.layout.minTap,
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-            decoration: ShapeDecoration(
-              color: active ? Tokens.accent : Tokens.surface3,
-              shape: Tokens.pill,
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                label,
-                style: Tokens.label.copyWith(
-                  color: active ? Tokens.onAccent : Tokens.fg,
-                  fontWeight: FontWeight.w600,
+        child: FocusRing(
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.pill,
+            child: Ink(
+              height: context.layout.minTap,
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accent : Tokens.surface3,
+                shape: Tokens.pill,
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  label,
+                  style: Tokens.label.copyWith(
+                    color: active ? Tokens.onAccent : Tokens.fg,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

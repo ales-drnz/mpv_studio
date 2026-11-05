@@ -64,6 +64,7 @@ class LoudnessGauge extends StatelessWidget {
         child: CustomPaint(
           size: Size.infinite,
           painter: _GaugePainter(
+            scaler: chartTextScaler(context),
             reading: reading,
             target: target,
             range: range,
@@ -80,6 +81,8 @@ const double _luMin = -48;
 const double _luMax = 0;
 
 class _GaugePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final Loudness? reading;
   final double? target;
   final double? range;
@@ -87,6 +90,7 @@ class _GaugePainter extends CustomPainter {
   final bool enabled;
 
   _GaugePainter({
+    this.scaler = TextScaler.noScaling,
     required this.reading,
     required this.target,
     required this.range,
@@ -139,6 +143,7 @@ class _GaugePainter extends CustomPainter {
         Offset(x(t), 6),
         Tokens.fgDim,
         center: true,
+        scaler: scaler,
       );
     }
 
@@ -197,6 +202,7 @@ class _GaugePainter extends CustomPainter {
         Offset(xx, barTop + barH + 10),
         Tokens.fgFaint,
         center: true,
+        scaler: scaler,
       );
     }
   }
@@ -207,5 +213,6 @@ class _GaugePainter extends CustomPainter {
       old.target != target ||
       old.range != range ||
       old.truePeak != truePeak ||
-      old.enabled != enabled;
+      old.enabled != enabled ||
+      old.scaler != scaler;
 }

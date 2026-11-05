@@ -41,7 +41,11 @@ class CrystalizerWaveform extends StatelessWidget {
           width: double.infinity,
           child: CustomPaint(
             size: Size.infinite,
-            painter: _CrystalPainter(intensity: intensity, enabled: enabled),
+            painter: _CrystalPainter(
+              scaler: chartTextScaler(context),
+              intensity: intensity,
+              enabled: enabled,
+            ),
           ),
         ),
       ),
@@ -50,10 +54,16 @@ class CrystalizerWaveform extends StatelessWidget {
 }
 
 class _CrystalPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final double intensity;
   final bool enabled;
 
-  _CrystalPainter({required this.intensity, required this.enabled});
+  _CrystalPainter({
+    this.scaler = TextScaler.noScaling,
+    required this.intensity,
+    required this.enabled,
+  });
 
   /// A representative input waveform: a couple of partials under a
   /// percussive envelope, so transients are present for the law to act on.
@@ -126,11 +136,21 @@ class _CrystalPainter extends CustomPainter {
       intensity >= 0 ? 'sharpen' : 'smooth',
       const Offset(4, 4),
       accent,
+      scaler: scaler,
     );
-    paintChartLabel(canvas, 'input', Offset(w - 34, 4), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      'input',
+      Offset(w - Tokens.s4, 4),
+      Tokens.fgFaint,
+      scaler: scaler,
+      end: true,
+    );
   }
 
   @override
   bool shouldRepaint(_CrystalPainter old) =>
-      old.intensity != intensity || old.enabled != enabled;
+      old.intensity != intensity ||
+      old.enabled != enabled ||
+      old.scaler != scaler;
 }

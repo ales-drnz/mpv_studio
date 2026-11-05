@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../rack_catalog.dart';
@@ -185,37 +186,39 @@ class _Entry extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       type: MaterialType.transparency,
-      child: InkWell(
-        key: ValueKey('add-$id'),
-        customBorder: Tokens.pill,
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: context.layout.minTap),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Tokens.s16,
-              vertical: Tokens.s8,
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: Tokens.fg),
-                const SizedBox(width: Tokens.s16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(title, style: Tokens.body),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Tokens.caption,
-                      ),
-                    ],
+      child: FocusRing(
+        child: InkWell(
+          key: ValueKey('add-$id'),
+          customBorder: Tokens.pill,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: context.layout.minTap),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Tokens.s16,
+                vertical: Tokens.s8,
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, size: 20, color: Tokens.fg),
+                  const SizedBox(width: Tokens.s16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(title, style: Tokens.body),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Tokens.caption,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

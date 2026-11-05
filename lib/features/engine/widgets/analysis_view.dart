@@ -86,7 +86,7 @@ class AnalysisView extends StatelessWidget {
                     style: Tokens.numeric,
                   ),
                 ),
-              StatePill(
+              PhasePill(
                 phase.label,
                 color: _phaseColor(phase),
                 strong: phase != WaveformPhase.waiting,
@@ -121,7 +121,7 @@ class AnalysisView extends StatelessWidget {
                     style: Tokens.numeric,
                   ),
                 ),
-              StatePill(
+              PhasePill(
                 scanState?.mpvValue ?? 'waiting',
                 color: _scanColor(scanState),
                 strong:

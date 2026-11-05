@@ -53,7 +53,7 @@ class PrefetchView extends StatelessWidget {
       caption: s.prefetchPlaylist
           ? (next == null ? 'No next entry.' : 'Next: $next')
           : 'Prefetch is off. Turn it on in Settings, Streaming.',
-      trailing: StatePill(
+      trailing: PhasePill(
         current.mpvValue,
         color: colorOf(current),
         strong: current != PrefetchState.idle,
@@ -66,7 +66,7 @@ class PrefetchView extends StatelessWidget {
             runSpacing: Tokens.s8,
             children: [
               for (final p in PrefetchState.values)
-                StatePill(p.mpvValue, color: colorOf(p), strong: p == current),
+                PhasePill(p.mpvValue, color: colorOf(p), strong: p == current),
             ],
           ),
           const SizedBox(height: Tokens.s12),
@@ -77,6 +77,7 @@ class PrefetchView extends StatelessWidget {
               height: 40,
               child: CustomPaint(
                 painter: PrefetchTimelinePainter(
+                  scaler: chartTextScaler(context),
                   marks: snapshot.prefetchHistory,
                   now: snapshot.now,
                 ),
@@ -114,11 +115,14 @@ class PrefetchView extends StatelessWidget {
 /// The prefetch state over the last [window] seconds, one band per
 /// stretch, with loading drawn striped as in the diagram.
 class PrefetchTimelinePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final List<PrefetchMark> marks;
   final double now;
   final double window;
 
   PrefetchTimelinePainter({
+    this.scaler = TextScaler.noScaling,
     required this.marks,
     required this.now,
     this.window = 120,
@@ -126,7 +130,8 @@ class PrefetchTimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final h = size.height - 14;
+    // Room under the timeline for its labels at the reader's size.
+    final h = size.height - chartLabelHeight(scaler: scaler) - 5;
     final t0 = now - window;
     double x(double t) => ((t - t0) / window).clamp(0.0, 1.0) * size.width;
 
@@ -157,12 +162,20 @@ class PrefetchTimelinePainter extends CustomPainter {
       canvas.drawLine(Offset(x(m.t), 0), Offset(x(m.t), h + 3), tick);
     }
 
-    paintChartLabel(canvas, '-2 min', Offset(0, h + 4), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      '-2 min',
+      Offset(0, h + 4),
+      Tokens.fgFaint,
+      scaler: scaler,
+    );
     paintChartLabel(
       canvas,
       'now',
-      Offset(size.width - 18, h + 4),
+      Offset(size.width, h + 4),
       Tokens.fgFaint,
+      scaler: scaler,
+      end: true,
     );
   }
 
@@ -216,6 +229,7 @@ class PrefetchTimelinePainter extends CustomPainter {
         Tokens.fg,
         center: true,
         middle: true,
+        scaler: scaler,
       );
     }
   }

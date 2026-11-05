@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/round_icon_button.dart';
+import '../runtime_params.dart';
 
 /// Writes a new value of a stage. `live` marks a control that moves
 /// continuously (a slider drag), which the rack throttles.
@@ -24,11 +25,17 @@ Widget buildParamControl(
 }) {
   switch (p) {
     case DoubleParam d:
+      final tag = liveTagOf(stage, d.name);
+      final log = logScaled(d.name, d.min);
+      final (min, max) = log ? logRange(d.name, d.min, d.max) : (d.min, d.max);
       return SliderRow(
         label: d.name,
-        value: d.get(stage).clamp(d.min, d.max),
-        min: d.min,
-        max: d.max,
+        scale: log ? SliderScale.log : SliderScale.linear,
+        tag: tag.$1,
+        tagTooltip: tag.$2,
+        value: d.get(stage).clamp(min, max),
+        min: min,
+        max: max,
         resetTo: d.def,
         enabled: enabled,
         format: _fmt,
@@ -36,8 +43,11 @@ Widget buildParamControl(
         onChangeEnd: (_) => onEnd(),
       );
     case IntParam d:
+      final tag = liveTagOf(stage, d.name);
       return SliderRow(
         label: d.name,
+        tag: tag.$1,
+        tagTooltip: tag.$2,
         value: d
             .get(stage)
             .toDouble()

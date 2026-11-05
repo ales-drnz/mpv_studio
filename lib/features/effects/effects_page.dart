@@ -319,7 +319,12 @@ class _SignalChainViewState extends State<SignalChainView> {
                     ),
                     Expanded(
                       child: TwoPane(
-                        listWidth: RackMode.listWidth,
+                        // Wider with the page, so a long stage name is
+                        // not cut beside a thousand-pixel editor.
+                        listWidth: math.max(
+                          RackMode.listWidth,
+                          TwoPane.listWidthFor(width),
+                        ),
                         minDetailWidth: RackMode.minDetailWidth,
                         list: _chain(
                           inline: false,

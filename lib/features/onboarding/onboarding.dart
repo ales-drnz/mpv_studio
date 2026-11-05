@@ -12,6 +12,8 @@ import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/focus_ring.dart';
+import '../../ui/widgets/lead_tile.dart';
 import '../../util/media_import.dart';
 
 /// The public stream the welcome screen offers as a demo: the Lab's MP3
@@ -310,45 +312,25 @@ class _Choice extends StatelessWidget {
         children: [
           Semantics(
             button: true,
-            child: InkWell(
-              onTap: onTap,
-              autofocus: autofocus,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: context.layout.minTap),
-                child: Padding(
-                  padding: const EdgeInsets.all(Tokens.s16),
-                  child: Row(
-                    children: [
-                      ExcludeSemantics(
-                        child: Container(
-                          width: _lead,
-                          height: _lead,
-                          decoration: ShapeDecoration(
-                            color: Tokens.surface3,
-                            shape: const CircleBorder(),
-                          ),
-                          child: Icon(icon, size: 24, color: Tokens.fg),
-                        ),
+            child: FocusRing(
+              shape: Tokens.shape(Tokens.rLg),
+              inside: true,
+              child: InkWell(
+                onTap: onTap,
+                autofocus: autofocus,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: context.layout.minTap),
+                  child: Padding(
+                    padding: const EdgeInsets.all(Tokens.s16),
+                    child: LeadTile(
+                      icon: icon,
+                      title: title,
+                      subtitle: description,
+                      trailing: Icon(
+                        Icons.chevron_right_rounded,
+                        color: Tokens.fgDim,
                       ),
-                      const SizedBox(width: Tokens.s16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(title, style: Tokens.heading),
-                            const SizedBox(height: Tokens.s4),
-                            Text(
-                              description,
-                              style: Tokens.label.copyWith(
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: Tokens.s8),
-                      Icon(Icons.chevron_right_rounded, color: Tokens.fgDim),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -360,7 +342,7 @@ class _Choice extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(
                 context.layout.isCompact
                     ? Tokens.s16
-                    : Tokens.s16 + _lead + Tokens.s16,
+                    : Tokens.s16 + Tokens.leadSize + Tokens.s16,
                 0,
                 Tokens.s16,
                 Tokens.s16,
@@ -371,7 +353,4 @@ class _Choice extends StatelessWidget {
       ),
     );
   }
-
-  /// The diameter of the glyph circle.
-  static const double _lead = 48;
 }

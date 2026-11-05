@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../generated/filter_catalog.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../rack_catalog.dart';
@@ -79,30 +80,37 @@ class _QuickChip extends StatelessWidget {
         toggled: active,
         child: Material(
           type: MaterialType.transparency,
-          child: InkWell(
-            key: ValueKey('quick-${d.name}'),
-            onTap: onTap,
-            customBorder: Tokens.pill,
-            child: Ink(
-              height: context.layout.minTap,
-              padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
-              decoration: ShapeDecoration(
-                color: active ? Tokens.accentContainer : Tokens.surface,
-                shape: Tokens.pill,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(d.icon, size: 18, color: fg),
-                  const SizedBox(width: Tokens.s8),
-                  Text(
-                    d.title,
-                    style: Tokens.label.copyWith(
-                      color: fg,
-                      fontWeight: FontWeight.w600,
+          child: FocusRing(
+            child: InkWell(
+              key: ValueKey('quick-${d.name}'),
+              onTap: onTap,
+              customBorder: Tokens.pill,
+              child: Ink(
+                height: context.layout.minTap,
+                padding: const EdgeInsets.fromLTRB(
+                  Tokens.s12,
+                  0,
+                  Tokens.s16,
+                  0,
+                ),
+                decoration: ShapeDecoration(
+                  color: active ? Tokens.accentContainer : Tokens.surface,
+                  shape: Tokens.pill,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(d.icon, size: 18, color: fg),
+                    const SizedBox(width: Tokens.s8),
+                    Text(
+                      d.title,
+                      style: Tokens.label.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -157,7 +165,7 @@ class _ScrollingRowState extends State<_ScrollingRow> {
         0,
         p.maxScrollExtent,
       ),
-      duration: const Duration(milliseconds: 220),
+      duration: Tokens.motion(context, Tokens.motionMedium),
       curve: Curves.easeOutCubic,
     );
   }

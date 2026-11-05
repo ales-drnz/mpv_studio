@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 
 import 'sections/advanced_sections.dart';
@@ -14,37 +15,39 @@ import 'sections/session_section.dart';
 import 'sections/visuals_section.dart';
 import 'settings_catalog.dart';
 
-/// The section cards of [group], top to bottom.
-List<Widget> settingsSections(SettingsGroupId group) => switch (group) {
-  SettingsGroupId.listening => const [
-    PlaybackSection(),
-    VolumeSection(),
-    LoudnessSection(),
-    ReplayGainSection(),
-    DownmixSection(),
-    ResumeSection(),
-    AudioTrackSection(),
-    VisualizerSection(),
-    CoverArtSection(),
-    AppearanceSection(),
-    SessionSection(),
-  ],
-  SettingsGroupId.output => const [
-    DeviceSection(),
-    DriverSection(),
-    PassthroughSection(),
-    OutputStatusSection(),
-  ],
-  SettingsGroupId.network => const [
-    ConnectionSection(),
-    StreamingSection(),
-    CacheSection(),
-    DemuxerSection(),
-  ],
-  SettingsGroupId.advanced => const [
-    LoggingSection(),
-    EngineOptionsSection(),
-    PlayerSection(),
-    AboutSection(),
-  ],
-};
+/// The section cards of [group], top to bottom. In a browser ([web]) the
+/// output has one device and no driver, exclusive mode or passthrough to
+/// pick, and the network leaves TLS, proxies and cookies to the browser.
+List<Widget> settingsSections(SettingsGroupId group, {bool web = kIsWeb}) =>
+    switch (group) {
+      SettingsGroupId.listening => const [
+        PlaybackSection(),
+        VolumeSection(),
+        LoudnessSection(),
+        ReplayGainSection(),
+        DownmixSection(),
+        ResumeSection(),
+        AudioTrackSection(),
+        VisualizerSection(),
+        CoverArtSection(),
+        AppearanceSection(),
+        SessionSection(),
+      ],
+      SettingsGroupId.output => [
+        const DeviceSection(),
+        if (!web) ...const [DriverSection(), PassthroughSection()],
+        const OutputStatusSection(),
+      ],
+      SettingsGroupId.network => [
+        ConnectionSection(web: web),
+        const StreamingSection(),
+        const CacheSection(),
+        const DemuxerSection(),
+      ],
+      SettingsGroupId.advanced => const [
+        LoggingSection(),
+        EngineOptionsSection(),
+        PlayerSection(),
+        AboutSection(),
+      ],
+    };

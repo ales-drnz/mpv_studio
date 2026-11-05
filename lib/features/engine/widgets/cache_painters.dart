@@ -79,10 +79,16 @@ class CacheGeometry {
 /// over a wash marking the read part; the playhead, brackets for behind
 /// and ahead, the cache-secs limit.
 class CacheBarPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final CacheGeometry geometry;
   final WaveformData? waveform;
 
-  CacheBarPainter({required this.geometry, this.waveform});
+  CacheBarPainter({
+    this.scaler = TextScaler.noScaling,
+    required this.geometry,
+    this.waveform,
+  });
 
   static const double _top = 18;
   static const double _barH = 44;
@@ -146,8 +152,16 @@ class CacheBarPainter extends CustomPainter {
         paintChartLabel(
           canvas,
           'cache duration',
-          Offset(math.min(cx + 4, w - 60), _top + _barH + 32),
+          // Kept inside the bar's width at any text size.
+          Offset(
+            math.min(
+              cx + 4,
+              w - chartLabelWidth('cache duration', scaler: scaler),
+            ),
+            _top + _barH + 32,
+          ),
           Tokens.fgFaint,
+          scaler: scaler,
         );
       }
     }
@@ -172,6 +186,7 @@ class CacheBarPainter extends CustomPainter {
       Offset(px.clamp(24.0, math.max(24.0, w - 24)), 0),
       Tokens.accent,
       center: true,
+      scaler: scaler,
     );
 
     // Brackets under the read part: behind and ahead, their labels
@@ -185,18 +200,22 @@ class CacheBarPainter extends CustomPainter {
       var behindEnd = px - 4;
       if (px - l > 6) {
         _bracket(canvas, l + 1, px - 3, by);
-        behindEnd = math.max(behindEnd, chartLabelWidth(behind));
+        behindEnd = math.max(
+          behindEnd,
+          chartLabelWidth(behind, scaler: scaler),
+        );
         paintChartLabel(
           canvas,
           behind,
           Offset(behindEnd, by + 8),
           Tokens.fgDim,
           end: true,
+          scaler: scaler,
         );
       }
       final aheadStart = math.min(
         math.max(px + 4, px - l > 6 ? behindEnd + 8 : 0.0),
-        w - chartLabelWidth(ahead),
+        w - chartLabelWidth(ahead, scaler: scaler),
       );
       if (r - px > 6 && aheadStart >= (px - l > 6 ? behindEnd + 8 : 0.0)) {
         _bracket(canvas, px + 3, r - 1, by);
@@ -205,6 +224,7 @@ class CacheBarPainter extends CustomPainter {
           ahead,
           Offset(aheadStart, by + 8),
           Tokens.fgDim,
+          scaler: scaler,
         );
       }
     }
@@ -261,12 +281,15 @@ class CacheBarPainter extends CustomPainter {
 /// Cached-ahead seconds over the last [window] seconds, with the pause
 /// threshold and the stretches paused for cache.
 class CacheHistoryPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final List<CacheSample> samples;
   final double now;
   final double? pauseWait;
   final double window;
 
   CacheHistoryPainter({
+    this.scaler = TextScaler.noScaling,
     required this.samples,
     required this.now,
     this.pauseWait,
@@ -277,7 +300,8 @@ class CacheHistoryPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const left = 34.0;
     final w = size.width - left;
-    final h = size.height - 12;
+    // Room under the plot for the axis labels at the reader's size.
+    final h = size.height - chartLabelHeight(scaler: scaler) - 4;
     final t0 = now - window;
     double x(double t) => left + ((t - t0) / window).clamp(0.0, 1.0) * w;
 
@@ -307,12 +331,19 @@ class CacheHistoryPainter extends CustomPainter {
       ..color = Tokens.line2
       ..strokeWidth = 1;
     canvas.drawLine(Offset(left, h), Offset(size.width, h), axis);
-    paintChartLabel(canvas, '0 s', Offset(0, h - 5), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      '0 s',
+      Offset(0, h - 5),
+      Tokens.fgFaint,
+      scaler: scaler,
+    );
     paintChartLabel(
       canvas,
       EngineFormat.seconds(Duration(milliseconds: (top * 1000).round())),
       const Offset(0, 0),
       Tokens.fgFaint,
+      scaler: scaler,
     );
     if (pauseWait != null) {
       final py = y(pauseWait!);
@@ -324,12 +355,20 @@ class CacheHistoryPainter extends CustomPainter {
         );
       }
     }
-    paintChartLabel(canvas, '-60 s', Offset(left, h + 3), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      '-60 s',
+      Offset(left, h + 3),
+      Tokens.fgFaint,
+      scaler: scaler,
+    );
     paintChartLabel(
       canvas,
       'now',
-      Offset(size.width - 18, h + 3),
+      Offset(size.width, h + 3),
       Tokens.fgFaint,
+      scaler: scaler,
+      end: true,
     );
 
     // The curve.

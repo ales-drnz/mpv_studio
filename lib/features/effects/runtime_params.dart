@@ -366,3 +366,59 @@ Object? _value(ParamSpec p, AudioEffect e) => switch (p) {
   EnumParam en => en.get(e),
   StringParam s => s.get(e),
 };
+
+/// Whether [option] of [effect] moves on the running filter (true) or
+/// rebuilds it (false).
+bool isLiveOption(AudioEffect effect, String option) =>
+    kRuntimeParams[descriptorOf(effect.filter)?.name]?.contains(option) ??
+    false;
+
+/// The slider tag of [option] of [effect], and its explanation.
+(String, String) liveTagOf(AudioEffect effect, String option) =>
+    isLiveOption(effect, option)
+    ? ('live', 'Moves on the running filter, without a gap')
+    : ('rebuild', 'Rebuilds the filter: a short gap in the sound');
+
+/// Whether an option named [name] reads better on a log track:
+/// frequencies, rates, times, ratios, Q factors and tempi, whose useful
+/// values sit in the bottom tenth of a linear one. A frequency from 0 Hz
+/// goes on a log track from [hzFloor] (see [logRange]); anything else
+/// needs a range above zero.
+bool logScaled(String name, double min) {
+  if (_isHz(name)) return true;
+  if (min <= 0) return false;
+  final n = name.toLowerCase();
+  return n == 'attack' ||
+      n == 'release' ||
+      n == 'ratio' ||
+      n.contains('delay') ||
+      n.contains('qfactor') ||
+      n == 'tempo' ||
+      n == 'lforate';
+}
+
+bool _isHz(String name) {
+  final n = name.toLowerCase();
+  return n == 'f' ||
+      n == 'hz' ||
+      n.contains('freq') ||
+      n == 'centerf' ||
+      n == 'cutoff';
+}
+
+/// The lowest frequency a log track for a frequency from 0 Hz starts at.
+const double hzFloor = 10;
+
+/// The highest frequency worth a track: past hearing, a catalog maximum
+/// of 999999 Hz would put the audible band in the first half.
+const double hzCeiling = 24000;
+
+/// The range a slider for [name] spans, for a catalog range of [min] to
+/// [max]: a frequency is held between [hzFloor] and [hzCeiling] (the
+/// engine still takes the other values typed or reset to).
+(double, double) logRange(String name, double min, double max) {
+  if (!_isHz(name)) return (min, max);
+  final lo = min <= 0 ? hzFloor : min;
+  final hi = max > hzCeiling ? hzCeiling : max;
+  return hi > lo ? (lo, hi) : (min, max);
+}

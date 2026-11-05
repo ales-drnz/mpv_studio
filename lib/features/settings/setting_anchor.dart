@@ -63,13 +63,15 @@ class _SettingAnchorState extends State<SettingAnchor>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _focus?.value != widget.entry.id) return;
       _focus!.value = null;
+      final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
       Scrollable.ensureVisible(
         context,
         alignment: 0.2,
-        duration: const Duration(milliseconds: 300),
+        duration: still ? Duration.zero : Tokens.motionLong,
         curve: Curves.easeOutCubic,
       );
-      _glow.forward(from: 0);
+      // With reduced motion the row is scrolled to, not flashed.
+      if (!still) _glow.forward(from: 0);
     });
   }
 
