@@ -12,6 +12,7 @@ import '../features/now_playing/widgets/transport_controls.dart'
 import '../studio/playback_issues.dart';
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/focus_ring.dart';
 import '../ui/widgets/round_icon_button.dart';
 import '../util/duration_format.dart';
 import '../util/reactive.dart';
@@ -121,6 +122,7 @@ class MiniPlayer extends StatelessWidget {
         player: player,
         guard: guard,
         onNext: () => _skip(context, forward: true),
+        onOpen: onOpen,
       );
     }
     final compact = variant == MiniPlayerVariant.compact;
@@ -163,14 +165,16 @@ class MiniPlayer extends StatelessWidget {
         onTap: onOpen,
         child: _OpenTooltip(
           enabled: onOpen != null,
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onOpen,
-              customBorder: Tokens.pill,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: context.layout.minTap),
-                child: info,
+          child: FocusRing(
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: onOpen,
+                customBorder: Tokens.pill,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: context.layout.minTap),
+                  child: info,
+                ),
               ),
             ),
           ),
@@ -242,8 +246,10 @@ class MiniPlayer extends StatelessWidget {
           Tokens.s8,
         ),
         child: LayoutBuilder(
-          builder: (context, c) => SizedBox(
-            height: 64,
+          // At least 64 tall; large text grows it instead of clipping
+          // the title and the artist.
+          builder: (context, c) => ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _barHeight),
             child: Row(
               children: [
                 Expanded(flex: 4, child: infoArea),
@@ -270,8 +276,18 @@ class MiniPlayer extends StatelessWidget {
                   flex: 4,
                   child: Row(
                     children: [
+                      // A seek line across a 2560 window is too long to
+                      // read a position from.
                       Expanded(
-                        child: _TimedProgress(player: player, guard: guard),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: _maxProgress,
+                            ),
+                            child: _TimedProgress(player: player, guard: guard),
+                          ),
+                        ),
                       ),
                       if (rack != null) ...[
                         const SizedBox(width: Tokens.s16),
@@ -293,6 +309,12 @@ class MiniPlayer extends StatelessWidget {
 
   /// The bar width from which the FX switch shows its label.
   static const double _roomyBar = 640;
+
+  /// The bar's least height.
+  static const double _barHeight = 64;
+
+  /// The widest the position and its seek line grow.
+  static const double _maxProgress = 640;
 }
 
 /// Position, the progress pill and the length, in a row.
@@ -400,17 +422,52 @@ class _RailMini extends StatelessWidget {
   final PlayerApi player;
   final CallGuard guard;
   final VoidCallback onNext;
+  final VoidCallback? onOpen;
   const _RailMini({
     required this.player,
     required this.guard,
     required this.onNext,
+    this.onOpen,
   });
 
   @override
   Widget build(BuildContext context) {
+    // The cover says what plays, and opens Playback, as the title does in
+    // the other mini-players. A low window (a phone in landscape) has
+    // room for two targets under the rail's: the cover and play; next
+    // stays on Playback and the media keys.
+    final short = context.layout.isShort;
+    final cover = CoverArtView(
+      player: player,
+      size: Tokens.controlH,
+      radius: Tokens.rPill,
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Tooltip(
+          message: 'Open Playback',
+          child: Semantics(
+            button: onOpen != null,
+            label: 'Open Playback',
+            onTap: onOpen,
+            excludeSemantics: true,
+            child: FocusRing(
+              shape: const CircleBorder(),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: onOpen,
+                  customBorder: const CircleBorder(),
+                  child: SizedBox.square(
+                    dimension: context.layout.minTap,
+                    child: Center(child: cover),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
         Live<Duration>(
           stream: player.stream.duration,
           initial: player.state.duration,
@@ -426,11 +483,12 @@ class _RailMini extends StatelessWidget {
             },
           ),
         ),
-        RoundIconButton(
-          icon: Icons.skip_next_rounded,
-          tooltip: 'Next',
-          onTap: onNext,
-        ),
+        if (!short)
+          RoundIconButton(
+            icon: Icons.skip_next_rounded,
+            tooltip: 'Next',
+            onTap: onNext,
+          ),
       ],
     );
   }
@@ -625,52 +683,55 @@ class _PlayPause extends StatelessWidget {
             onTap: onTap,
             child: Tooltip(
               message: wait == null ? action : '$action (${wait.label})',
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  onTap: onTap,
-                  customBorder: const CircleBorder(),
-                  child: SizedBox.square(
-                    dimension: dimension,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (wait != null)
-                          SizedBox.square(
-                            key: const ValueKey('mini-waiting'),
-                            dimension: dimension - 2,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Tokens.accent,
-                              backgroundColor: Tokens.surface4,
+              child: FocusRing(
+                shape: const CircleBorder(),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: onTap,
+                    customBorder: const CircleBorder(),
+                    child: SizedBox.square(
+                      dimension: dimension,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (wait != null)
+                            SizedBox.square(
+                              key: const ValueKey('mini-waiting'),
+                              dimension: dimension - 2,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Tokens.accent,
+                                backgroundColor: Tokens.surface4,
+                              ),
+                            )
+                          else if (progress != null)
+                            SizedBox.square(
+                              dimension: dimension - 2,
+                              child: CircularProgressIndicator(
+                                value: progress,
+                                strokeWidth: 2,
+                                color: Tokens.accent,
+                                backgroundColor: Tokens.surface4,
+                              ),
                             ),
-                          )
-                        else if (progress != null)
-                          SizedBox.square(
-                            dimension: dimension - 2,
-                            child: CircularProgressIndicator(
-                              value: progress,
-                              strokeWidth: 2,
+                          Container(
+                            width: dimension - 8,
+                            height: dimension - 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
                               color: Tokens.accent,
-                              backgroundColor: Tokens.surface4,
+                            ),
+                            child: Icon(
+                              wants
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                              size: 24,
+                              color: Tokens.onAccent,
                             ),
                           ),
-                        Container(
-                          width: dimension - 8,
-                          height: dimension - 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Tokens.accent,
-                          ),
-                          child: Icon(
-                            wants
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
-                            size: 24,
-                            color: Tokens.onAccent,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -718,53 +779,55 @@ class FxBypassToggle extends StatelessWidget {
           onTap: enabled ? _toggle : null,
           child: Tooltip(
             message: tip,
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: enabled ? _toggle : null,
-                customBorder: Tokens.pill,
-                // The pill stays small; the tap area grows to a full target.
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: context.layout.minTap,
-                    minHeight: context.layout.minTap,
-                  ),
-                  child: Center(
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: compact ? Tokens.s8 : Tokens.s12,
-                        vertical: Tokens.s8,
-                      ),
-                      decoration: ShapeDecoration(
-                        color: on
-                            ? Tokens.amber.withValues(alpha: 0.18)
-                            : (compact ? Colors.transparent : Tokens.tonal),
-                        shape: Tokens.pill,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            on
-                                ? Icons.layers_clear_rounded
-                                : Icons.layers_rounded,
-                            size: compact ? 20 : 18,
-                            color: color,
-                          ),
-                          if (!compact) ...[
-                            const SizedBox(width: Tokens.s8),
-                            Text(
-                              on ? 'Dry' : 'FX',
-                              style: Tokens.label.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
+            child: FocusRing(
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: enabled ? _toggle : null,
+                  customBorder: Tokens.pill,
+                  // The pill stays small; the tap area grows to a full target.
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: context.layout.minTap,
+                      minHeight: context.layout.minTap,
+                    ),
+                    child: Center(
+                      widthFactor: 1,
+                      heightFactor: 1,
+                      child: AnimatedContainer(
+                        duration: Tokens.motion(context, Tokens.motionShort),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? Tokens.s8 : Tokens.s12,
+                          vertical: Tokens.s8,
+                        ),
+                        decoration: ShapeDecoration(
+                          color: on
+                              ? Tokens.amber.withValues(alpha: 0.18)
+                              : (compact ? Colors.transparent : Tokens.tonal),
+                          shape: Tokens.pill,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              on
+                                  ? Icons.layers_clear_rounded
+                                  : Icons.layers_rounded,
+                              size: compact ? 20 : 18,
+                              color: color,
                             ),
+                            if (!compact) ...[
+                              const SizedBox(width: Tokens.s8),
+                              Text(
+                                on ? 'Dry' : 'FX',
+                                style: Tokens.label.copyWith(
+                                  color: color,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),

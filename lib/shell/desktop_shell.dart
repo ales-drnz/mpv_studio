@@ -41,48 +41,50 @@ class _DesktopShellState extends State<DesktopShell> {
   @override
   Widget build(BuildContext context) {
     final mini = widget.miniPlayer;
-    final panels = Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _Sidebar(
-          section: widget.section,
-          onSelect: widget.onSelect,
-          collapsed: _collapsed,
-          onToggle: () => setState(() => _collapsed = !_collapsed),
-          safeBottom: mini == null,
-        ),
-        // The sidebar covers the left inset, so the stage must not see
-        // it; the panel clips the stage, so a full-bleed painter never
-        // bleeds over the sidebar.
-        Expanded(
-          child: withoutLeftInset(
-            SafeArea(
-              bottom: mini == null,
-              child: StagePanel(child: widget.body),
-            ),
-          ),
-        ),
-      ],
+    // The sidebar covers the left inset, so the stage must not see it;
+    // the panel clips the stage, so a full-bleed painter never bleeds over
+    // the sidebar.
+    final stage = withoutLeftInset(
+      SafeArea(
+        bottom: mini == null,
+        child: StagePanel(child: widget.body),
+      ),
     );
     // The chrome is the tonal container; the stage panel and the cards
-    // in it sit one and two steps away from it.
+    // in it sit one and two steps away from it. The mini-player sits
+    // under the stage, beside the sidebar, as it does beside the rail.
     return ColoredBox(
       color: Tokens.surface2,
       child: liftAboveKeyboard(
         context,
-        mini == null
-            ? panels
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: panels),
-                  // Toasts float above the mini-player.
-                  SnackObstacle(
-                    edge: SnackEdge.bottom,
-                    child: SafeArea(top: false, child: mini),
-                  ),
-                ],
-              ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _Sidebar(
+              section: widget.section,
+              onSelect: widget.onSelect,
+              collapsed: _collapsed,
+              onToggle: () => setState(() => _collapsed = !_collapsed),
+            ),
+            Expanded(
+              child: mini == null
+                  ? stage
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: stage),
+                        // Toasts float above the mini-player.
+                        SnackObstacle(
+                          edge: SnackEdge.bottom,
+                          child: withoutLeftInset(
+                            SafeArea(top: false, child: mini),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -93,14 +95,12 @@ class _Sidebar extends StatelessWidget {
   final ValueChanged<Section> onSelect;
   final bool collapsed;
   final VoidCallback onToggle;
-  final bool safeBottom;
 
   const _Sidebar({
     required this.section,
     required this.onSelect,
     required this.collapsed,
     required this.onToggle,
-    required this.safeBottom,
   });
 
   @override
@@ -145,7 +145,7 @@ class _Sidebar extends StatelessWidget {
             ],
           );
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
+      duration: Tokens.motion(context, Tokens.motionLong),
       curve: Curves.easeOutCubic,
       // Grows by the left safe-area inset, as the rail does, so the items
       // keep their full width beside a notch.
@@ -154,7 +154,6 @@ class _Sidebar extends StatelessWidget {
           MediaQuery.paddingOf(context).left,
       child: SafeArea(
         right: false,
-        bottom: safeBottom,
         child: Padding(
           // Symmetric: 16 on every side of the sidebar column.
           padding: const EdgeInsets.all(Tokens.s16),
