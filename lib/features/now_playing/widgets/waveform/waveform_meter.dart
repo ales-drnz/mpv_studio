@@ -7,6 +7,7 @@ import '../../../../studio/playback_issues.dart';
 import '../../../../ui/chart_text.dart';
 import '../../../../ui/layout/layout.dart';
 import '../../../../ui/tokens.dart';
+import '../../../../ui/widgets/studio_chip.dart';
 import '../../../../util/duration_format.dart';
 import '../../../../util/reactive.dart';
 import '../../playback_scope.dart';
@@ -375,6 +376,18 @@ class _WaveformMeterState extends State<WaveformMeter>
                 : Row(
                     children: [
                       Expanded(child: scrollBar),
+                      // Scrolled back on a live stream: back to the
+                      // newest audio, following it again.
+                      if (_view.live && !_view.followsLive) ...[
+                        const SizedBox(width: Tokens.s8),
+                        StudioChip(
+                          label: 'Live',
+                          icon: Icons.fast_forward_rounded,
+                          tooltip: 'Follow the live end',
+                          onTap: () =>
+                              setState(() => _view = _view.toLive()),
+                        ),
+                      ],
                       const SizedBox(width: Tokens.s8),
                       zoom,
                     ],
