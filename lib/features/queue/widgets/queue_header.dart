@@ -36,18 +36,21 @@ class QueueHeaderAction {
   final String? disabledReason;
 }
 
-/// The Queue header buttons. From an expanded pointer window each is a
-/// labelled pill (the primary one filled); below it, or on touch, the
+/// The Queue header buttons. With a pointer and [available] page width
+/// for the title and four pills ([labelledWidth]; the window's width when
+/// not given) each is a labelled pill (the primary one filled); with less
+/// room, or on touch, the
 /// primary keeps its label and the rest fold into a menu, the removing
 /// one in red, so no action is a bare icon beside another of equal weight.
 List<Widget> queueHeaderButtons(
   BuildContext context,
-  List<QueueHeaderAction> actions,
-) {
+  List<QueueHeaderAction> actions, {
+  double? available,
+}) {
   if (actions.isEmpty) return const [];
   final layout = context.layout;
-  final labelled =
-      layout.isPointer && layout.width.atLeast(WidthClass.expanded);
+  final room = available ?? MediaQuery.sizeOf(context).width;
+  final labelled = layout.isPointer && room >= labelledWidth;
   Widget pill(QueueHeaderAction a) {
     final icon = Icon(a.icon);
     final Widget button = a.primary
@@ -112,6 +115,9 @@ List<Widget> queueHeaderButtons(
       ),
   ];
 }
+
+/// The page width that fits the title beside the four labelled pills.
+const double labelledWidth = 760;
 
 /// The line under the title: how many entries the queue holds and how long
 /// it plays, and a progress bar while picked files are being added.

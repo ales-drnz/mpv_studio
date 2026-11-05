@@ -115,14 +115,6 @@ class PlaybackFakeStream extends FakePlayerStream {
   @override
   Stream<Loop> get loop => _s((s) => s.loop);
   @override
-  Stream<double> get pitch => _s((s) => s.pitch);
-  @override
-  Stream<String> get currentAo => _s((s) => s.currentAo);
-  @override
-  Stream<String> get audioDriver => _s((s) => s.audioDriver);
-  @override
-  Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
-  @override
   Stream<Duration?> get abLoopA => _s((s) => s.abLoopA);
   @override
   Stream<Duration?> get abLoopB => _s((s) => s.abLoopB);

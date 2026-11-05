@@ -175,7 +175,9 @@ class MutedOutputBanner extends StatelessWidget {
         stream: player.stream.audioDriver,
         initial: player.state.audioDriver,
         builder: (context, driver) {
-          if (ao != 'null' || driver == 'null') return const SizedBox.shrink();
+          if (ao != 'null' || chosenNullOutput(driver)) {
+            return const SizedBox.shrink();
+          }
           return Padding(
             padding: const EdgeInsets.only(bottom: Tokens.s12),
             child: _Banner(
@@ -195,6 +197,14 @@ class MutedOutputBanner extends StatelessWidget {
     );
   }
 }
+
+/// Whether the driver setting asks for the null output itself: `null`,
+/// a list with `null` in it (`pipewire,null`), or `null` with options
+/// (`null=untimed`), as mpv reads it.
+bool chosenNullOutput(String driver) => driver
+    .split(',')
+    .map((d) => d.trim())
+    .any((d) => d == 'null' || d.startsWith('null='));
 
 /// A tinted banner: an icon and a message in [color], then [actions].
 class _Banner extends StatelessWidget {

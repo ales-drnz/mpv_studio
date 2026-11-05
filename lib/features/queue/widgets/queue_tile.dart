@@ -339,12 +339,7 @@ class OutcomeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final failed = outcome.end == EntryEnd.failed;
-    final label = switch (outcome.end) {
-      EntryEnd.ended => 'Played',
-      EntryEnd.stopped => 'Skipped',
-      EntryEnd.failed => 'Failed',
-      EntryEnd.cut => 'Cut short',
-    };
+    final label = outcome.badge;
     final color = onContainer ? Tokens.onAccentContainer : Tokens.fgDim;
     final text = Text(
       label,

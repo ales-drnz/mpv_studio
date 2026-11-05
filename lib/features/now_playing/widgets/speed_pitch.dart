@@ -72,15 +72,18 @@ Future<void> showSpeedAndPitch(
   ],
 );
 
-/// The semitones a pitch ratio shifts by, to the nearest one.
-double semitonesOf(double pitch) =>
-    pitch <= 0 ? 0 : (12 * math.log(pitch) / math.ln2).roundToDouble();
+/// The semitones a pitch ratio shifts by, to a tenth (a pitch set
+/// elsewhere can fall between semitones).
+double semitonesOf(double pitch) => pitch <= 0
+    ? 0
+    : (12 * math.log(pitch) / math.ln2 * 10).roundToDouble() / 10;
 
 /// The pitch ratio of a shift by [semitones].
 double pitchOf(double semitones) => math.pow(2, semitones / 12).toDouble();
 
-/// "+3 st", "0 st", "-5 st".
+/// "+3 st", "0 st", "-5 st", "+0.5 st".
 String formatSemitones(double semitones) {
-  final s = semitones.round();
-  return '${s > 0 ? '+' : ''}$s st';
+  final whole = semitones == semitones.roundToDouble();
+  final s = whole ? semitones.round().toString() : semitones.toStringAsFixed(1);
+  return '${semitones > 0 ? '+' : ''}$s st';
 }

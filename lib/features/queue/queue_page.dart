@@ -327,6 +327,7 @@ class _QueueViewState extends State<QueueView> {
                   actions: queueHeaderButtons(
                     context,
                     _headerActions(items.isEmpty),
+                    available: content,
                   ),
                   body: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

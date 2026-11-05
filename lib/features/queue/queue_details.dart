@@ -72,6 +72,7 @@ class EntryOutcome {
     this.message,
     this.at,
     this.lost = 0,
+    this.readError = false,
   });
 
   final EntryEnd end;
@@ -87,6 +88,18 @@ class EntryOutcome {
 
   /// The segments a play lost on the way.
   final int lost;
+
+  /// Whether the connection dropped before the end.
+  final bool readError;
+
+  /// The row's short label: a cut connection says so; segments lost
+  /// alone keep "Played", the reason telling the rest.
+  String get badge => switch (end) {
+    EntryEnd.ended => 'Played',
+    EntryEnd.stopped => 'Skipped',
+    EntryEnd.failed => 'Failed',
+    EntryEnd.cut => readError ? 'Cut short' : 'Played',
+  };
 
   /// A short readable reason, for the row badge and the details.
   String get reason => switch (end) {
@@ -112,13 +125,16 @@ class EntryOutcome {
       other.code == code &&
       other.message == message &&
       other.at == at &&
-      other.lost == lost;
+      other.lost == lost &&
+      other.readError == readError;
 
   @override
-  int get hashCode => Object.hash(end, code, message, at, lost);
+  int get hashCode => Object.hash(end, code, message, at, lost, readError);
 
   @override
-  String toString() => 'EntryOutcome($end, $code, $message)';
+  String toString() =>
+      'EntryOutcome($end, $code, $message, at: $at, lost: $lost, '
+      'readError: $readError)';
 }
 
 /// Why an entry failed, in words, from the mpv error [code] and mpv's
@@ -261,14 +277,15 @@ class QueueDetails {
     // A dropped connection ends a stream with a plain eof: the read error
     // and the lost segments tell it from the real end.
     final lost = event.skippedSegments ?? 0;
+    final cut = event.readError == true || lost > 0;
     switch (event.reason) {
       case MpvEndFileReason.eof:
-        end = event.readError == true || lost > 0
-            ? EntryEnd.cut
-            : EntryEnd.ended;
+        end = cut ? EntryEnd.cut : EntryEnd.ended;
         entry = _playing;
+      // The last entry stays open at its end: a cut stream there ends
+      // later, as a stop.
       case MpvEndFileReason.stop:
-        end = EntryEnd.stopped;
+        end = cut ? EntryEnd.cut : EntryEnd.stopped;
         entry = _playing;
       case MpvEndFileReason.error:
         end = EntryEnd.failed;
@@ -289,6 +306,7 @@ class QueueDetails {
             ? event.position
             : null,
         lost: lost,
+        readError: event.readError == true,
       ),
     };
   }

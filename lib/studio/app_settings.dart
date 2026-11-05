@@ -236,8 +236,10 @@ class AppSettings {
   double get specMaxDb => _double('specMaxDb', -30);
 
   SpectrumSettings get spectrumSettings {
-    // A floor above the ceiling (a hand-edited blob) falls back whole.
-    final floorOk = specMinDb < specMaxDb;
+    // A range the spectrum's dialog cannot show (a hand-edited blob) falls
+    // back whole: a floor from -120, a ceiling to 0, 10 dB apart at least.
+    final floorOk =
+        specMinDb >= -120 && specMaxDb <= 0 && specMaxDb - specMinDb >= 10;
     return SpectrumSettings(
       window: specWindow,
       fftSize: specFft,

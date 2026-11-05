@@ -177,6 +177,13 @@ void main() {
       expect(again.spectrumSettings.maxDb, -20);
     });
 
+    test('a dB range the dialog cannot show falls back', () async {
+      final s = await loadSettings({'specMinDb': -8.0, 'specMaxDb': -2.0});
+      expect(s.spectrumSettings.minDb, -100);
+      expect(s.spectrumSettings.maxDb, -30);
+      await s.dispose();
+    });
+
     test('changes notify the listeners', () async {
       final s = await loadSettings();
       var ticks = 0;

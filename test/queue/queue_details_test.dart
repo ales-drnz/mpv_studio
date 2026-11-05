@@ -109,6 +109,27 @@ void main() {
     expect(h.outcome(_url)!.reason, 'Played, 3 segments lost');
   });
 
+  test('the last entry, cut and then stopped, is cut', () async {
+    // The last entry stays open at its end: its end comes as a stop.
+    await h.play([_song, _url], 1);
+    await h.load();
+    await h.end(
+      MpvEndFileReason.stop,
+      readError: true,
+      position: const Duration(minutes: 1),
+    );
+    expect(h.outcome(_url)!.end, EntryEnd.cut);
+    expect(h.outcome(_url)!.badge, 'Cut short');
+  });
+
+  test('lost segments alone keep the played badge', () async {
+    await h.play([_url, _song], 0);
+    await h.load();
+    await h.end(MpvEndFileReason.eof, skippedSegments: 2);
+    expect(h.outcome(_url)!.badge, 'Played');
+    expect(h.outcome(_url)!.reason, 'Played, 2 segments lost');
+  });
+
   test('server rows use their extras', () {
     final row = h.row(_server);
     expect(row.title, 'Server title');

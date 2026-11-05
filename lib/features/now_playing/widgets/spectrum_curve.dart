@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/chart_text.dart';
@@ -56,6 +57,7 @@ class SpectrumCurve extends StatelessWidget {
             high: spec.bandHighHz,
             inset: inset,
             scaler: scaler,
+            bandCount: spec.bandCount,
           ),
         ),
       ),
@@ -118,6 +120,21 @@ class SpectrumCurve extends StatelessWidget {
   }
 }
 
+/// Where [frequency] falls across a curve [width] wide: [bands] log-spaced
+/// bands from [low] to [high], band i drawn at i / (bands - 1) of the
+/// width and centred on its geometric edges.
+double spectrumMarkX(
+  double frequency, {
+  required double low,
+  required double high,
+  required int bands,
+  required double width,
+}) {
+  final t = math.log(frequency / low) / math.log(high / low);
+  if (bands < 2) return t * width;
+  return (bands * t - 0.5) / (bands - 1) * width;
+}
+
 /// The spectrum's look, beside the spectrum: how fast the bands rise and
 /// fall, and the dB range they span. The window, the FFT size and the
 /// band count stay in Settings.
@@ -161,7 +178,9 @@ Future<void> showSpectrumSettings(BuildContext context, PlayerApi player) =>
                 description: 'The level drawn as silence',
                 value: spec.minDb,
                 min: -120,
-                max: spec.maxDb - 10,
+                // A range set elsewhere (the Console) can leave no room:
+                // the track always keeps one.
+                max: math.max(spec.maxDb - 10, -119),
                 step: 1,
                 format: db,
                 resetTo: const SpectrumSettings().minDb,
@@ -171,7 +190,7 @@ Future<void> showSpectrumSettings(BuildContext context, PlayerApi player) =>
                 label: 'Ceiling',
                 description: 'The level drawn at the top',
                 value: spec.maxDb,
-                min: spec.minDb + 10,
+                min: math.min(spec.minDb + 10, -1),
                 max: 0,
                 step: 1,
                 format: db,
@@ -197,6 +216,9 @@ class _CurvePainter extends CustomPainter {
   final double high;
   final double inset;
   final TextScaler scaler;
+
+  /// The bands drawn when no frame has come yet.
+  final int bandCount;
   _CurvePainter(
     this.bands,
     this.palette, {
@@ -204,6 +226,7 @@ class _CurvePainter extends CustomPainter {
     required this.high,
     required this.inset,
     required this.scaler,
+    required this.bandCount,
   });
 
   @override
@@ -231,7 +254,13 @@ class _CurvePainter extends CustomPainter {
       final labelH = chartLabelHeight(scaler: scaler);
       for (final f in SpectrumCurve.marks) {
         if (f <= low || f >= high) continue;
-        final x = math.log(f / low) / math.log(high / low) * w;
+        final x = spectrumMarkX(
+          f,
+          low: low,
+          high: high,
+          bands: b?.length ?? bandCount,
+          width: w,
+        );
         if (x < inset + Tokens.s16 || x > w - inset - Tokens.s16) continue;
         canvas.drawLine(Offset(x, h - Tokens.s8), Offset(x, h), tick);
         paintChartLabel(
@@ -288,30 +317,65 @@ class _CurvePainter extends CustomPainter {
       old.low != low ||
       old.high != high ||
       old.inset != inset ||
-      old.scaler != scaler;
+      old.scaler != scaler ||
+      old.bandCount != bandCount;
 }
 
 /// Shows [child] only when it gets at least [height]; in a shorter slot
-/// (the spectrum strip under a phone's transport) it takes no room and
-/// paints nothing. Reports no intrinsic size, so the slot is sized by the
-/// curve, not by what sits on it.
-class _ShowFrom extends SingleChildRenderObjectWidget {
-  const _ShowFrom({required this.height, super.child});
+/// (the spectrum strip under a phone's transport) it takes no room,
+/// paints nothing and keeps the keyboard out of it. Reports no intrinsic
+/// size, so the slot is sized by the curve, not by what sits on it.
+class _ShowFrom extends StatefulWidget {
+  const _ShowFrom({required this.height, required this.child});
 
   final double height;
+  final Widget child;
+
+  @override
+  State<_ShowFrom> createState() => _ShowFromState();
+}
+
+class _ShowFromState extends State<_ShowFrom> {
+  /// Whether the last layout showed the child; it decides focus on the
+  /// next frame (a layout cannot rebuild).
+  bool _shown = false;
+
+  void _onShown(bool shown) {
+    if (mounted && shown != _shown) setState(() => _shown = shown);
+  }
+
+  @override
+  Widget build(BuildContext context) => _ShowFromBox(
+    height: widget.height,
+    onShown: _onShown,
+    child: ExcludeFocus(excluding: !_shown, child: widget.child),
+  );
+}
+
+class _ShowFromBox extends SingleChildRenderObjectWidget {
+  const _ShowFromBox({
+    required this.height,
+    required this.onShown,
+    super.child,
+  });
+
+  final double height;
+  final ValueChanged<bool> onShown;
 
   @override
   RenderObject createRenderObject(BuildContext context) =>
-      _RenderShowFrom(height);
+      _RenderShowFrom(height, onShown);
 
   @override
   void updateRenderObject(BuildContext context, _RenderShowFrom renderObject) {
-    renderObject.height = height;
+    renderObject
+      ..height = height
+      ..onShown = onShown;
   }
 }
 
 class _RenderShowFrom extends RenderProxyBox {
-  _RenderShowFrom(this._height);
+  _RenderShowFrom(this._height, this.onShown);
 
   double _height;
   set height(double value) {
@@ -320,8 +384,9 @@ class _RenderShowFrom extends RenderProxyBox {
     markNeedsLayout();
   }
 
+  ValueChanged<bool> onShown;
   bool _shown = false;
-
+  bool? _reported;
   @override
   double computeMinIntrinsicWidth(double height) => 0;
   @override
@@ -334,6 +399,10 @@ class _RenderShowFrom extends RenderProxyBox {
   @override
   void performLayout() {
     _shown = constraints.maxHeight >= _height;
+    if (_reported != _shown) {
+      final shown = _reported = _shown;
+      SchedulerBinding.instance.addPostFrameCallback((_) => onShown(shown));
+    }
     final child = this.child;
     if (child != null) child.layout(constraints, parentUsesSize: true);
     size = _shown && child != null ? child.size : constraints.smallest;

@@ -150,6 +150,14 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<SpectrumSettings> get spectrum => _s((s) => s.spectrum);
   @override
+  Stream<String> get currentAo => _s((s) => s.currentAo);
+  @override
+  Stream<String> get audioDriver => _s((s) => s.audioDriver);
+  @override
+  Stream<double> get pitch => _s((s) => s.pitch);
+  @override
+  Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
+  @override
   Stream<DemuxerCacheState> get demuxerCacheState =>
       _s((s) => s.demuxerCacheState);
   @override
