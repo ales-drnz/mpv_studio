@@ -18,6 +18,8 @@ class SliderRow extends StatelessWidget {
   final double min;
   final double max;
   final int? divisions;
+  final SliderScale scale;
+  final double? step;
   final ValueChanged<double> onChanged;
   final ValueChanged<double>? onChangeEnd;
   final String Function(double value)? format;
@@ -34,6 +36,8 @@ class SliderRow extends StatelessWidget {
     this.description,
     this.onChangeEnd,
     this.divisions,
+    this.scale = SliderScale.linear,
+    this.step,
     this.format,
     this.resetTo,
     this.enabled = true,
@@ -49,6 +53,8 @@ class SliderRow extends StatelessWidget {
       min: min,
       max: max,
       divisions: divisions,
+      scale: scale,
+      step: step,
       enabled: enabled,
       onChanged: onChanged,
       onChangeEnd: onChangeEnd,
@@ -87,16 +93,35 @@ class SliderRow extends StatelessWidget {
 /// Tap or drag to set; reports continuously through [onChanged] and once
 /// through [onChangeEnd]. Snaps to [divisions] when given.
 ///
-/// It is focusable: the arrow keys step it (a division, or a hundredth of
-/// the range), Home and End jump to the ends. Screen readers see a slider
+/// It is focusable: the arrow keys step it (a division, the [step], or a
+/// round hundredth of the range; Shift for a tenth of that), Page Up and
+/// Page Down move ten steps, Home and End jump to the ends. Screen readers see a slider
 /// named [semanticLabel] with the value [semanticValue] prints. On touch
 /// the hit area is a full tap target tall and the track and handle grow to
 /// fit a finger; with a pointer the slider stays dense.
+/// Where a value sits along a slider's track.
+enum SliderScale {
+  /// Even steps of value: gain in dB, a percentage, a mix.
+  linear,
+
+  /// Even ratios: frequencies, times, ratios, speeds. The middle of the
+  /// track is the geometric mean of the range, so 1x sits in the middle
+  /// of 0.25x to 4x. Needs a range above zero.
+  log,
+}
+
 class AppSlider extends StatefulWidget {
   final double value;
   final double min;
   final double max;
   final int? divisions;
+
+  /// Where values sit along the track.
+  final SliderScale scale;
+
+  /// The value an arrow key moves; null for a round hundredth of the
+  /// range (on a [SliderScale.log] track, a hundredth of the track).
+  final double? step;
   final bool enabled;
   final ValueChanged<double> onChanged;
   final ValueChanged<double>? onChangeEnd;
@@ -110,6 +135,8 @@ class AppSlider extends StatefulWidget {
     required this.max,
     required this.onChanged,
     this.divisions,
+    this.scale = SliderScale.linear,
+    this.step,
     this.enabled = true,
     this.onChangeEnd,
     this.semanticLabel,
@@ -129,11 +156,26 @@ class _AppSliderState extends State<AppSlider> {
 
   bool _focused = false;
 
-  double get _step {
-    final span = widget.max - widget.min;
-    if (span <= 0) return 0;
-    final d = widget.divisions;
-    return d == null || d <= 0 ? span / 100 : span / d;
+  bool get _log =>
+      widget.scale == SliderScale.log && widget.min > 0 && widget.max > 0;
+
+  /// Where [v] sits along the track, from 0 to 1.
+  double _toT(double v) {
+    final min = widget.min, max = widget.max;
+    if (max <= min) return 0;
+    final t = _log
+        ? math.log(v / min) / math.log(max / min)
+        : (v - min) / (max - min);
+    return t.isFinite ? t.clamp(0.0, 1.0) : 0.0;
+  }
+
+  /// The value at [t] along the track.
+  double _fromT(double t) {
+    final min = widget.min, max = widget.max;
+    final c = t.clamp(0.0, 1.0);
+    return _log
+        ? min * math.pow(max / min, c).toDouble()
+        : min + c * (max - min);
   }
 
   double _snap(double v) {
@@ -145,11 +187,60 @@ class _AppSliderState extends State<AppSlider> {
     return (min + ((c - min) / step).round() * step).clamp(min, max).toDouble();
   }
 
+  /// The value an arrow key moves on a linear track: a division, the
+  /// given step, or a round hundredth of the range (1, 2 or 5 times a
+  /// power of ten).
+  double get _linearStep {
+    final span = widget.max - widget.min;
+    if (span <= 0) return 0;
+    final d = widget.divisions;
+    if (d != null && d > 0) return span / d;
+    if (widget.step case final step?) return step;
+    final raw = span / 100;
+    final unit = math.pow(10, (math.log(raw) / math.ln10).floor()).toDouble();
+    final f = raw / unit;
+    return (f <= 1 ? 1 : (f <= 2 ? 2 : (f <= 5 ? 5 : 10))) * unit;
+  }
+
+  /// [v] on the grid of [step], without the float noise of the sum
+  /// (0.30000000000000004).
+  static double _onGrid(double v, double step) {
+    if (step <= 0) return v;
+    final decimals = math.max(0, -(math.log(step) / math.ln10).floor() + 1);
+    final r = (v / step).round() * step;
+    return double.parse(r.toStringAsFixed(math.min(decimals, 12)));
+  }
+
+  /// [v] to three significant figures, or four when three would not move
+  /// it from [from].
+  static double _round(double v, double from) {
+    for (final figures in [3, 4, 6]) {
+      final r = double.parse(v.toStringAsPrecision(figures));
+      if (r != from) return r;
+    }
+    return v;
+  }
+
+  /// The value [times] steps from [from]: on a log track a hundredth of
+  /// the track per step, else [_linearStep]. [fine] steps a tenth.
+  double _stepped(double from, double times, {bool fine = false}) {
+    final divided = (widget.divisions ?? 0) > 0;
+    final k = fine && !divided ? times / 10 : times;
+    if (_log && widget.step == null && !divided) {
+      final next = _fromT(_toT(from) + k / 100);
+      return _round(next, from).clamp(widget.min, widget.max).toDouble();
+    }
+    final step = _linearStep;
+    final next = from + k * step;
+    final grid = divided ? next : _onGrid(next, fine ? step / 10 : step);
+    return _snap(grid);
+  }
+
   String _describe(double v) =>
       widget.semanticValue?.call(v) ?? v.toStringAsFixed(1);
 
-  void _nudge(double delta) {
-    final next = _snap(widget.value + delta);
+  void _nudge(double times, {bool fine = false}) {
+    final next = _stepped(widget.value, times, fine: fine);
     if (next == widget.value) return;
     widget.onChanged(next);
     widget.onChangeEnd?.call(next);
@@ -161,15 +252,22 @@ class _AppSliderState extends State<AppSlider> {
     widget.onChangeEnd?.call(to);
   }
 
+  /// Arrows step (Shift for a tenth of a step), Page Up and Page Down
+  /// move ten steps, Home and End jump to the ends.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (!widget.enabled || event is KeyUpEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
+    final fine = HardwareKeyboard.instance.isShiftPressed;
     if (key == LogicalKeyboardKey.arrowRight ||
         key == LogicalKeyboardKey.arrowUp) {
-      _nudge(_step);
+      _nudge(1, fine: fine);
     } else if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.arrowDown) {
-      _nudge(-_step);
+      _nudge(-1, fine: fine);
+    } else if (key == LogicalKeyboardKey.pageUp) {
+      _nudge(10);
+    } else if (key == LogicalKeyboardKey.pageDown) {
+      _nudge(-10);
     } else if (key == LogicalKeyboardKey.home) {
       _jump(widget.min);
     } else if (key == LogicalKeyboardKey.end) {
@@ -182,7 +280,7 @@ class _AppSliderState extends State<AppSlider> {
 
   @override
   Widget build(BuildContext context) {
-    final min = widget.min, max = widget.max, value = widget.value;
+    final value = widget.value;
     final enabled = widget.enabled;
     // On touch the track, the handle and the grab band grow to fit a
     // finger.
@@ -191,7 +289,7 @@ class _AppSliderState extends State<AppSlider> {
     final thumb = touch ? 6.0 : 4.0;
     final handleH = touch ? 40.0 : 28.0;
     final height = math.max(_pointerHeight, context.layout.minTap);
-    final up = _snap(value + _step), down = _snap(value - _step);
+    final up = _stepped(value, 1), down = _stepped(value, -1);
     return Semantics(
       slider: true,
       enabled: enabled,
@@ -199,8 +297,8 @@ class _AppSliderState extends State<AppSlider> {
       value: _describe(value),
       increasedValue: _describe(up),
       decreasedValue: _describe(down),
-      onIncrease: enabled && up != value ? () => _nudge(_step) : null,
-      onDecrease: enabled && down != value ? () => _nudge(-_step) : null,
+      onIncrease: enabled && up != value ? () => _nudge(1) : null,
+      onDecrease: enabled && down != value ? () => _nudge(-1) : null,
       child: Focus(
         canRequestFocus: enabled,
         onKeyEvent: _onKey,
@@ -210,13 +308,11 @@ class _AppSliderState extends State<AppSlider> {
           child: LayoutBuilder(
             builder: (context, c) {
               final span = (c.maxWidth - thumb).clamp(1.0, double.infinity);
-              final frac = max <= min
-                  ? 0.0
-                  : ((value - min) / (max - min)).clamp(0.0, 1.0);
+              final frac = _toT(value);
 
               double valueAt(double dx) {
                 final t = ((dx - thumb / 2) / span).clamp(0.0, 1.0);
-                return _snap(min + t * (max - min));
+                return _snap(_fromT(t));
               }
 
               return GestureDetector(
@@ -259,7 +355,7 @@ class _AppSliderState extends State<AppSlider> {
                           alignment: Alignment.centerRight,
                           padding: EdgeInsets.only(right: track / 2 - 2),
                           decoration: ShapeDecoration(
-                            color: Tokens.surface4,
+                            color: enabled ? Tokens.trackOff : Tokens.surface4,
                             shape: Tokens.pill,
                           ),
                           // The stop dot marks the end of the range.
