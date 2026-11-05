@@ -59,6 +59,7 @@ void main() {
     required FakePlayer mini,
     RackController? rack,
     Palette palette = Palette.dark,
+    double textScale = 1,
   }) async {
     final input = inputFor(size);
     setStudioView(
@@ -98,8 +99,12 @@ void main() {
           theme: AppTheme.of(active, input: input),
           themeAnimationDuration: Duration.zero,
           routerConfig: router,
-          builder: (context, child) =>
-              LayoutScope(inputMode: input, child: child!),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: LayoutScope(inputMode: input, child: child!),
+          ),
         ),
       ),
     );
@@ -135,7 +140,12 @@ void main() {
   }
 
   // ---- Queue ----------------------------------------------------------
-  Future<void> queue(WidgetTester tester, String size, Palette palette) async {
+  Future<void> queue(
+    WidgetTester tester,
+    String size,
+    Palette palette, {
+    double textScale = 1,
+  }) async {
     final (player, details) = await threeEntries(() => tester.pump());
     player.emit((s) => s.copyWith(playWhenReady: true));
     await pumpIn(
@@ -144,6 +154,7 @@ void main() {
       section: Section.queue,
       mini: player,
       palette: palette,
+      textScale: textScale,
       page: () => QueueView(
         player: player,
         guard: unguarded,
@@ -153,7 +164,7 @@ void main() {
         pickPlaylist: () async => null,
       ),
     );
-    expectNoOverflow(tester);
+    if (textScale == 1) expectNoOverflow(tester);
   }
 
   for (final (size, palette) in [
@@ -269,6 +280,71 @@ void main() {
       await tester.pumpAndSettle();
       expectNoOverflow(tester);
       await shot('settings_${themeOf(palette)}_$size');
+      await tester.pump(const Duration(seconds: 1));
+    });
+  }
+
+  // ---- Text at 2x -----------------------------------------------------
+  // Large text, to see what clips. Overflows are counted into the name of
+  // the shot instead of failing it: these shots exist to show them.
+  Future<void> large(
+    WidgetTester tester,
+    String name,
+    Future<void> Function() pump,
+  ) async {
+    var overflows = 0;
+    final report = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (details.toString().contains('overflowed')) {
+        overflows++;
+      } else {
+        report?.call(details);
+      }
+    };
+    try {
+      await pump();
+      await shot('text2x_${name}_overflows$overflows');
+    } finally {
+      FlutterError.onError = report;
+    }
+  }
+
+  for (final size in ['412x915', '1440x900']) {
+    testWidgets('text 2x playback $size', (tester) async {
+      await large(tester, 'playback_$size', () async {
+        final player = playingTrack();
+        await pumpPlayback(
+          tester,
+          player,
+          size: studioSize(size),
+          textScale: 2,
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+      });
+    });
+
+    testWidgets('text 2x queue $size', (tester) async {
+      await large(
+        tester,
+        'queue_$size',
+        () => queue(tester, size, Palette.dark, textScale: 2),
+      );
+    });
+
+    testWidgets('text 2x settings $size', (tester) async {
+      await large(tester, 'settings_$size', () async {
+        final h = await SettingsHarness.create();
+        await pumpIn(
+          tester,
+          size: studioSize(size),
+          section: Section.settings,
+          mini: demoPlayer(),
+          textScale: 2,
+          page: () => h.wrap(const SettingsPage()),
+        );
+        await tester.tap(find.text('Listening').first);
+        await tester.pumpAndSettle();
+      });
       await tester.pump(const Duration(seconds: 1));
     });
   }
