@@ -64,6 +64,18 @@ class PlaybackFake extends FakePlayer {
   }
 
   @override
+  Future<void> setPitch(double pitch) async {
+    calls.add('setPitch ${pitch.toStringAsFixed(4)}');
+    emit((s) => s.copyWith(pitch: pitch));
+  }
+
+  @override
+  Future<void> setPitchCorrection(bool enable) async {
+    calls.add('setPitchCorrection $enable');
+    emit((s) => s.copyWith(pitchCorrection: enable));
+  }
+
+  @override
   Future<void> setVolume(double volume) async {
     calls.add('setVolume ${volume.round()}');
     emit((s) => s.copyWith(volume: volume));
@@ -71,6 +83,9 @@ class PlaybackFake extends FakePlayer {
 
   @override
   Future<void> stop() async => calls.add('stop');
+
+  @override
+  Future<void> reloadAudio() async => calls.add('reloadAudio');
 
   @override
   Future<void> jump(int index) async => calls.add('jump $index');

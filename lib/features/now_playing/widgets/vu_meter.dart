@@ -100,11 +100,14 @@ class _VuMeterState extends State<VuMeter>
       minDb: _minDb,
       maxDb: _maxDb,
       palette: Tokens.palette,
+      scaler: chartTextScaler(context),
     );
     final vertical = widget.axis == Axis.vertical;
     return Semantics(
       label: 'Output level',
-      value: 'left ${_level(_left.db)}, right ${_level(_right.db)}',
+      value:
+          'left ${_level(_left.db)}, right ${_level(_right.db)}, '
+          'peak ${_level(math.max(_left.holdDb, _right.holdDb))}',
       excludeSemantics: true,
       child: SizedBox(
         width: vertical ? 40 : null,
@@ -119,8 +122,15 @@ class _VuPainter extends CustomPainter {
   final Axis axis;
   final double dbL, dbR, holdL, holdR, minDb, maxDb;
   final Palette palette;
+  final TextScaler scaler;
   static const double _amberDb = -18;
   static const double _redDb = -6;
+
+  /// The scale marks between the bars, in dB.
+  static const List<double> _marks = [-20, -6, 0];
+
+  /// The width kept for the peak readout of the horizontal meter.
+  static const double _readoutW = 32;
 
   _VuPainter({
     required this.axis,
@@ -131,6 +141,7 @@ class _VuPainter extends CustomPainter {
     required this.minDb,
     required this.maxDb,
     required this.palette,
+    required this.scaler,
   });
 
   double _t(double db) => ((db - minDb) / (maxDb - minDb)).clamp(0.0, 1.0);
@@ -224,53 +235,75 @@ class _VuPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     if (w <= 0 || h <= 0) return;
+    final mark = Paint()
+      ..color = palette.lineRef
+      ..strokeWidth = 1;
+    final labelH = chartLabelHeight(scaler: scaler);
     if (axis == Axis.horizontal) {
-      const labelW = 12.0, barH = 8.0, gap = 6.0;
-      final barLeft = labelW + 8;
-      final barW = w - barLeft;
+      const labelW = 12.0, barH = 8.0, gap = Tokens.s4;
+      final barLeft = labelW + Tokens.s8;
+      final barW = w - barLeft - Tokens.s8 - _readoutW;
       if (barW <= 0) return;
       final topY = (h - (barH * 2 + gap)) / 2;
       final lRect = Rect.fromLTWH(barLeft, topY, barW, barH);
       final rRect = Rect.fromLTWH(barLeft, topY + barH + gap, barW, barH);
-      paintChartLabel(
-        canvas,
-        'L',
-        Offset(0, lRect.center.dy - 6),
-        palette.fgFaint,
-        fontSize: 10,
-      );
-      paintChartLabel(
-        canvas,
-        'R',
-        Offset(0, rRect.center.dy - 6),
-        palette.fgFaint,
-        fontSize: 10,
-      );
+      for (final (text, rect) in [('L', lRect), ('R', rRect)]) {
+        paintChartLabel(
+          canvas,
+          text,
+          Offset(0, rect.center.dy - labelH / 2),
+          palette.fgFaint,
+          scaler: scaler,
+        );
+      }
       _barH(canvas, lRect, dbL, holdL);
       _barH(canvas, rRect, dbR, holdR);
+      // The scale: marks through the gap between the bars.
+      for (final db in _marks) {
+        final x = barLeft + _t(db) * barW;
+        canvas.drawLine(
+          Offset(x, lRect.bottom - 2),
+          Offset(x, rRect.top + 2),
+          mark,
+        );
+      }
+      // The held peak in dB, red at full scale (clipping).
+      final peak = math.max(holdL, holdR);
+      paintChartLabel(
+        canvas,
+        peak <= minDb ? '-inf' : peak.round().toString(),
+        Offset(w, h / 2 - labelH / 2),
+        peak >= -0.1 ? palette.red : palette.fgDim,
+        scaler: scaler,
+        end: true,
+      );
     } else {
-      const labelH = 16.0, barW = 8.0, gap = 6.0;
-      final barsH = h - labelH;
+      const barW = 8.0, gap = Tokens.s4;
+      final barsH = h - labelH - Tokens.s4;
       final totalW = barW * 2 + gap;
       final left = (w - totalW) / 2;
       final lRect = Rect.fromLTWH(left, 0, barW, barsH);
       final rRect = Rect.fromLTWH(left + barW + gap, 0, barW, barsH);
       _barV(canvas, lRect, dbL, holdL);
       _barV(canvas, rRect, dbR, holdR);
-      paintChartLabel(
-        canvas,
-        'L',
-        Offset(lRect.center.dx - 3, barsH + 1),
-        palette.fgFaint,
-        fontSize: 10,
-      );
-      paintChartLabel(
-        canvas,
-        'R',
-        Offset(rRect.center.dx - 3, barsH + 1),
-        palette.fgFaint,
-        fontSize: 10,
-      );
+      for (final db in _marks) {
+        final y = barsH - _t(db) * barsH;
+        canvas.drawLine(
+          Offset(lRect.right - 2, y),
+          Offset(rRect.left + 2, y),
+          mark,
+        );
+      }
+      for (final (text, rect) in [('L', lRect), ('R', rRect)]) {
+        paintChartLabel(
+          canvas,
+          text,
+          Offset(rect.center.dx, barsH + Tokens.s4),
+          palette.fgFaint,
+          scaler: scaler,
+          center: true,
+        );
+      }
     }
   }
 
@@ -281,5 +314,6 @@ class _VuPainter extends CustomPainter {
       old.dbR != dbR ||
       old.holdL != holdL ||
       old.holdR != holdR ||
-      old.palette != palette;
+      old.palette != palette ||
+      old.scaler != scaler;
 }

@@ -230,12 +230,26 @@ class AppSettings {
       _enum('specWindow', WindowFunction.values, WindowFunction.hann);
   int get specFft => _int('specFft', 2048);
   int get specBands => _int('specBands', 64);
+  double get specAttack => _double('specAttack', 0.5).clamp(0.0, 1.0);
+  double get specRelease => _double('specRelease', 0.1).clamp(0.0, 1.0);
+  double get specMinDb => _double('specMinDb', -100);
+  double get specMaxDb => _double('specMaxDb', -30);
 
-  SpectrumSettings get spectrumSettings => SpectrumSettings(
-    window: specWindow,
-    fftSize: specFft,
-    bandCount: specBands,
-  );
+  SpectrumSettings get spectrumSettings {
+    // A range the spectrum's dialog cannot show (a hand-edited blob) falls
+    // back whole: a floor from -120, a ceiling to 0, 10 dB apart at least.
+    final floorOk =
+        specMinDb >= -120 && specMaxDb <= 0 && specMaxDb - specMinDb >= 10;
+    return SpectrumSettings(
+      window: specWindow,
+      fftSize: specFft,
+      bandCount: specBands,
+      attackSmoothing: specAttack,
+      releaseSmoothing: specRelease,
+      minDb: floorOk ? specMinDb : -100,
+      maxDb: floorOk ? specMaxDb : -30,
+    );
+  }
 
   // ---- OS media session -------------------------------------------------
   // The full capability set, in the order the Session page shows them.

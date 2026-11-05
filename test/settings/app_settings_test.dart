@@ -157,6 +157,33 @@ void main() {
       expect((await _savedBlob())['mute'], isTrue);
     });
 
+    test('the spectrum keeps its smoothing and its dB range', () async {
+      final s = await loadSettings();
+      final p = StudioFakePlayer();
+      s.attach(p);
+      const tuned = SpectrumSettings(
+        attackSmoothing: 0.8,
+        releaseSmoothing: 0.3,
+        minDb: -90,
+        maxDb: -20,
+      );
+      p.emit((st) => st.copyWith(spectrum: tuned));
+      await pumpEventQueue();
+      await s.dispose();
+      final again = await AppSettings.load();
+      expect(again.spectrumSettings.attackSmoothing, 0.8);
+      expect(again.spectrumSettings.releaseSmoothing, 0.3);
+      expect(again.spectrumSettings.minDb, -90);
+      expect(again.spectrumSettings.maxDb, -20);
+    });
+
+    test('a dB range the dialog cannot show falls back', () async {
+      final s = await loadSettings({'specMinDb': -8.0, 'specMaxDb': -2.0});
+      expect(s.spectrumSettings.minDb, -100);
+      expect(s.spectrumSettings.maxDb, -30);
+      await s.dispose();
+    });
+
     test('changes notify the listeners', () async {
       final s = await loadSettings();
       var ticks = 0;

@@ -46,6 +46,7 @@ class QueueEntryInfo extends StatelessWidget {
       EntryEnd.ended => 'Played to the end',
       EntryEnd.stopped => 'Skipped',
       EntryEnd.failed => 'Failed: ${o.reason}',
+      EntryEnd.cut => o.reason,
     };
   }
 
@@ -91,48 +92,44 @@ class QueueEntryInfo extends StatelessWidget {
           ],
         ),
         const SizedBox(height: Tokens.s16),
-        for (final (label, value) in rows)
-          Padding(
-            padding: const EdgeInsets.only(bottom: Tokens.s8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 88,
-                  child: Padding(
-                    // On the body text's first baseline.
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(label, style: Tokens.caption),
-                  ),
-                ),
-                Expanded(
-                  child: SelectableText(
-                    value,
-                    style: Tokens.body.copyWith(
-                      color: label == 'Status' && failed
-                          ? Tokens.red
-                          : Tokens.fg,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // The labels take the width of the longest at the reader's text
+        // size, and sit on the values' first baseline.
         Padding(
-          padding: const EdgeInsets.only(bottom: Tokens.s16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.only(bottom: Tokens.s8),
+          child: Table(
+            columnWidths: const {
+              0: IntrinsicColumnWidth(),
+              1: FlexColumnWidth(),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              SizedBox(
-                width: 88,
-                child: Text('Location', style: Tokens.caption),
-              ),
-              Expanded(
-                child: SelectableText(
-                  shareableLocation(media),
-                  style: Tokens.numeric,
+              for (final (label, value) in [
+                ...rows,
+                ('Location', shareableLocation(media)),
+              ])
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        right: Tokens.s16,
+                        bottom: Tokens.s8,
+                      ),
+                      child: Text(label, style: Tokens.caption),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: Tokens.s8),
+                      child: SelectableText(
+                        value,
+                        style: Tokens.body.copyWith(
+                          color: label == 'Status' && failed
+                              ? Tokens.red
+                              : Tokens.fg,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
             ],
           ),
         ),
@@ -142,19 +139,19 @@ class QueueEntryInfo extends StatelessWidget {
           children: [
             FilledButton.icon(
               onPressed: onPlay,
-              icon: const Icon(Icons.play_arrow_rounded, size: 18),
+              icon: const Icon(Icons.play_arrow_rounded),
               label: Text(current ? 'Restart' : 'Play'),
               style: FilledButton.styleFrom(minimumSize: buttonSize),
             ),
             OutlinedButton.icon(
               onPressed: onCopy,
-              icon: const Icon(Icons.link_rounded, size: 18),
+              icon: const Icon(Icons.link_rounded),
               label: const Text('Copy location'),
               style: OutlinedButton.styleFrom(minimumSize: buttonSize),
             ),
             OutlinedButton.icon(
               onPressed: onRemove,
-              icon: const Icon(Icons.close_rounded, size: 18),
+              icon: const Icon(Icons.close_rounded),
               label: const Text('Remove'),
               // Red on the tonal fill is too faint for text: the icon
               // carries the warning, the label stays in the tonal ink.

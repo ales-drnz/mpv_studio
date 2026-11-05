@@ -71,7 +71,7 @@ class WaveformScanIndicator extends StatelessWidget {
           )
         : TweenAnimationBuilder<double>(
             tween: Tween(end: f.clamp(0.0, 1.0)),
-            duration: const Duration(milliseconds: 240),
+            duration: Tokens.motion(context, Tokens.motionLong),
             curve: Curves.easeOut,
             builder: (_, v, _) => LinearProgressIndicator(
               value: v,
@@ -84,7 +84,7 @@ class WaveformScanIndicator extends StatelessWidget {
       ignoring: !visible,
       child: AnimatedOpacity(
         opacity: visible ? 1 : 0,
-        duration: const Duration(milliseconds: 220),
+        duration: Tokens.motion(context, Tokens.motionMedium),
         curve: Curves.easeOut,
         child: Container(
           padding: const EdgeInsets.symmetric(

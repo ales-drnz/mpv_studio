@@ -1,9 +1,17 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/chart_text.dart';
+import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/round_icon_button.dart';
+import '../../../util/reactive.dart';
 import '../playback_scope.dart';
 
 /// Flat real-time spectrum drawn as a smooth curve (not bars). Subscribes
@@ -14,36 +22,212 @@ import '../playback_scope.dart';
 /// The curve runs edge to edge and its baseline sits on the bottom edge,
 /// so the Playback page lays it full bleed, out to the edges of the page:
 /// silent, the line rests whole on the edge, and the fill under it meets
-/// the edge.
+/// the edge. When there is room it names itself, marks 100 Hz, 1 kHz and
+/// 10 kHz along its foot, and offers its settings; [inset] keeps those
+/// inside the page when the curve bleeds past it. Paused, it dims.
 class SpectrumCurve extends StatelessWidget {
   /// Fixed height, or null to fill the parent (e.g. inside an [Expanded]).
   final double? height;
-  const SpectrumCurve({super.key, this.height});
+
+  /// How far past the page the curve bleeds on each side.
+  final double inset;
+  const SpectrumCurve({super.key, this.height, this.inset = 0});
+
+  /// The least height that shows the title, the marks and the settings.
+  static const double labelledHeight = 96;
+
+  /// The marks along the foot, in Hz.
+  static const List<double> marks = [100, 1000, 10000];
 
   @override
   Widget build(BuildContext context) {
     final player = PlaybackScope.of(context).player;
-    final paint = Semantics(
-      image: true,
-      label: 'Spectrum analyser',
-      excludeSemantics: true,
-      child: StreamBuilder<FftFrame>(
+    final scaler = chartTextScaler(context);
+    final curve = Live<SpectrumSettings>(
+      stream: player.stream.spectrum,
+      initial: player.state.spectrum,
+      builder: (context, spec) => StreamBuilder<FftFrame>(
         stream: player.stream.fft,
         builder: (context, snap) => CustomPaint(
           size: Size.infinite,
-          painter: _CurvePainter(snap.data?.bands, Tokens.palette),
+          painter: _CurvePainter(
+            snap.data?.bands,
+            Tokens.palette,
+            low: spec.bandLowHz,
+            high: spec.bandHighHz,
+            inset: inset,
+            scaler: scaler,
+            bandCount: spec.bandCount,
+          ),
         ),
       ),
+    );
+    final paint = Stack(
+      children: [
+        Positioned.fill(
+          child: Semantics(
+            image: true,
+            label: 'Output spectrum, 20 Hz to 20 kHz',
+            excludeSemantics: true,
+            child: Live<bool>(
+              stream: player.stream.playWhenReady,
+              initial: player.state.playWhenReady,
+              builder: (context, playing) => AnimatedOpacity(
+                opacity: playing ? 1 : 0.4,
+                duration: Tokens.motion(context, Tokens.motionMedium),
+                child: curve,
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: _ShowFrom(
+            height: labelledHeight,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: inset + Tokens.s16,
+                right: inset + Tokens.s8,
+                top: Tokens.s8,
+              ),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Output spectrum',
+                        style: Tokens.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    RoundIconButton(
+                      icon: Icons.tune_rounded,
+                      tooltip: 'Spectrum settings',
+                      size: Tokens.iconMd,
+                      onTap: () => showSpectrumSettings(context, player),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
     if (height == null) return SizedBox.expand(child: paint);
     return SizedBox(height: height, width: double.infinity, child: paint);
   }
 }
 
+/// Where [frequency] falls across a curve [width] wide: [bands] log-spaced
+/// bands from [low] to [high], band i drawn at i / (bands - 1) of the
+/// width and centred on its geometric edges.
+double spectrumMarkX(
+  double frequency, {
+  required double low,
+  required double high,
+  required int bands,
+  required double width,
+}) {
+  final t = math.log(frequency / low) / math.log(high / low);
+  if (bands < 2) return t * width;
+  return (bands * t - 0.5) / (bands - 1) * width;
+}
+
+/// The spectrum's look, beside the spectrum: how fast the bands rise and
+/// fall, and the dB range they span. The window, the FFT size and the
+/// band count stay in Settings.
+Future<void> showSpectrumSettings(BuildContext context, PlayerApi player) =>
+    showStudioDialog<void>(
+      context,
+      title: 'Spectrum',
+      builder: (context) => Live<SpectrumSettings>(
+        stream: player.stream.spectrum,
+        initial: player.state.spectrum,
+        builder: (context, spec) {
+          String db(double v) => '${v.round()} dB';
+          String share(double v) => v.toStringAsFixed(2);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SliderRow(
+                label: 'Rise',
+                description: 'How fast a band climbs to a louder value',
+                value: spec.attackSmoothing,
+                min: 0.05,
+                max: 1,
+                format: share,
+                resetTo: const SpectrumSettings().attackSmoothing,
+                onChanged: (v) =>
+                    player.setSpectrum(spec.copyWith(attackSmoothing: v)),
+              ),
+              SliderRow(
+                label: 'Fall',
+                description: 'How fast it sinks back; low leaves an afterglow',
+                value: spec.releaseSmoothing,
+                min: 0.02,
+                max: 1,
+                format: share,
+                resetTo: const SpectrumSettings().releaseSmoothing,
+                onChanged: (v) =>
+                    player.setSpectrum(spec.copyWith(releaseSmoothing: v)),
+              ),
+              SliderRow(
+                label: 'Floor',
+                description: 'The level drawn as silence',
+                value: spec.minDb,
+                min: -120,
+                // A range set elsewhere (the Console) can leave no room:
+                // the track always keeps one.
+                max: math.max(spec.maxDb - 10, -119),
+                step: 1,
+                format: db,
+                resetTo: const SpectrumSettings().minDb,
+                onChanged: (v) => player.setSpectrum(spec.copyWith(minDb: v)),
+              ),
+              SliderRow(
+                label: 'Ceiling',
+                description: 'The level drawn at the top',
+                value: spec.maxDb,
+                min: math.min(spec.minDb + 10, -1),
+                max: 0,
+                step: 1,
+                format: db,
+                resetTo: const SpectrumSettings().maxDb,
+                onChanged: (v) => player.setSpectrum(spec.copyWith(maxDb: v)),
+              ),
+            ],
+          );
+        },
+      ),
+      actions: (context) => [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Done'),
+        ),
+      ],
+    );
+
 class _CurvePainter extends CustomPainter {
   final Float32List? bands;
   final Palette palette;
-  _CurvePainter(this.bands, this.palette);
+  final double low;
+  final double high;
+  final double inset;
+  final TextScaler scaler;
+
+  /// The bands drawn when no frame has come yet.
+  final int bandCount;
+  _CurvePainter(
+    this.bands,
+    this.palette, {
+    required this.low,
+    required this.high,
+    required this.inset,
+    required this.scaler,
+    required this.bandCount,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -60,6 +244,35 @@ class _CurvePainter extends CustomPainter {
       ..color = palette.line
       ..strokeWidth = 1;
     canvas.drawLine(Offset(0, h - 0.5), Offset(w, h - 0.5), baseline);
+
+    // The frequency marks: a short tick and its label just above the
+    // foot, where the bands are log-spaced from [low] to [high].
+    if (h >= SpectrumCurve.labelledHeight && high > low && low > 0) {
+      final tick = Paint()
+        ..color = palette.lineRef
+        ..strokeWidth = 1;
+      final labelH = chartLabelHeight(scaler: scaler);
+      for (final f in SpectrumCurve.marks) {
+        if (f <= low || f >= high) continue;
+        final x = spectrumMarkX(
+          f,
+          low: low,
+          high: high,
+          bands: b?.length ?? bandCount,
+          width: w,
+        );
+        if (x < inset + Tokens.s16 || x > w - inset - Tokens.s16) continue;
+        canvas.drawLine(Offset(x, h - Tokens.s8), Offset(x, h), tick);
+        paintChartLabel(
+          canvas,
+          f >= 1000 ? '${(f / 1000).round()}k' : '${f.round()}',
+          Offset(x, h - Tokens.s8 - labelH - Tokens.s4),
+          palette.fgFaint,
+          scaler: scaler,
+          center: true,
+        );
+      }
+    }
 
     if (b == null || n < 2) return;
 
@@ -99,5 +312,113 @@ class _CurvePainter extends CustomPainter {
   // new data. Repaint only then (or on a theme change), not on unrelated
   // parent rebuilds.
   bool shouldRepaint(_CurvePainter old) =>
-      !identical(old.bands, bands) || old.palette != palette;
+      !identical(old.bands, bands) ||
+      old.palette != palette ||
+      old.low != low ||
+      old.high != high ||
+      old.inset != inset ||
+      old.scaler != scaler ||
+      old.bandCount != bandCount;
+}
+
+/// Shows [child] only when it gets at least [height]; in a shorter slot
+/// (the spectrum strip under a phone's transport) it takes no room,
+/// paints nothing and keeps the keyboard out of it. Reports no intrinsic
+/// size, so the slot is sized by the curve, not by what sits on it.
+class _ShowFrom extends StatefulWidget {
+  const _ShowFrom({required this.height, required this.child});
+
+  final double height;
+  final Widget child;
+
+  @override
+  State<_ShowFrom> createState() => _ShowFromState();
+}
+
+class _ShowFromState extends State<_ShowFrom> {
+  /// Whether the last layout showed the child; it decides focus on the
+  /// next frame (a layout cannot rebuild).
+  bool _shown = false;
+
+  void _onShown(bool shown) {
+    if (mounted && shown != _shown) setState(() => _shown = shown);
+  }
+
+  @override
+  Widget build(BuildContext context) => _ShowFromBox(
+    height: widget.height,
+    onShown: _onShown,
+    child: ExcludeFocus(excluding: !_shown, child: widget.child),
+  );
+}
+
+class _ShowFromBox extends SingleChildRenderObjectWidget {
+  const _ShowFromBox({
+    required this.height,
+    required this.onShown,
+    super.child,
+  });
+
+  final double height;
+  final ValueChanged<bool> onShown;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderShowFrom(height, onShown);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderShowFrom renderObject) {
+    renderObject
+      ..height = height
+      ..onShown = onShown;
+  }
+}
+
+class _RenderShowFrom extends RenderProxyBox {
+  _RenderShowFrom(this._height, this.onShown);
+
+  double _height;
+  set height(double value) {
+    if (value == _height) return;
+    _height = value;
+    markNeedsLayout();
+  }
+
+  ValueChanged<bool> onShown;
+  bool _shown = false;
+  bool? _reported;
+  @override
+  double computeMinIntrinsicWidth(double height) => 0;
+  @override
+  double computeMaxIntrinsicWidth(double height) => 0;
+  @override
+  double computeMinIntrinsicHeight(double width) => 0;
+  @override
+  double computeMaxIntrinsicHeight(double width) => 0;
+
+  @override
+  void performLayout() {
+    _shown = constraints.maxHeight >= _height;
+    if (_reported != _shown) {
+      final shown = _reported = _shown;
+      SchedulerBinding.instance.addPostFrameCallback((_) => onShown(shown));
+    }
+    final child = this.child;
+    if (child != null) child.layout(constraints, parentUsesSize: true);
+    size = _shown && child != null ? child.size : constraints.smallest;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (_shown) super.paint(context, offset);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      _shown && super.hitTestChildren(result, position: position);
+
+  @override
+  void visitChildrenForSemantics(RenderObjectVisitor visitor) {
+    if (_shown) super.visitChildrenForSemantics(visitor);
+  }
 }

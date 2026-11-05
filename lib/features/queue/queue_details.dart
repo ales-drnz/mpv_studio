@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../util/duration_format.dart';
 import '../../util/media_import.dart';
 import '../../util/media_labels.dart';
 
@@ -56,12 +57,23 @@ enum EntryEnd {
 
   /// It could not be played.
   failed,
+
+  /// It ended as if at its end, but cut by the connection (a read error)
+  /// or with HLS or DASH segments lost on the way.
+  cut,
 }
 
 /// The last play of a queue entry: how it ended and, for a failure, why.
 @immutable
 class EntryOutcome {
-  const EntryOutcome(this.end, {this.code = 0, this.message});
+  const EntryOutcome(
+    this.end, {
+    this.code = 0,
+    this.message,
+    this.at,
+    this.lost = 0,
+    this.readError = false,
+  });
 
   final EntryEnd end;
 
@@ -71,25 +83,58 @@ class EntryOutcome {
   /// mpv's own description of the failure, when it sent one.
   final String? message;
 
+  /// Where a [EntryEnd.cut] play stopped, when the engine said.
+  final Duration? at;
+
+  /// The segments a play lost on the way.
+  final int lost;
+
+  /// Whether the connection dropped before the end.
+  final bool readError;
+
+  /// The row's short label: a cut connection says so; segments lost
+  /// alone keep "Played", the reason telling the rest.
+  String get badge => switch (end) {
+    EntryEnd.ended => 'Played',
+    EntryEnd.stopped => 'Skipped',
+    EntryEnd.failed => 'Failed',
+    EntryEnd.cut => readError ? 'Cut short' : 'Played',
+  };
+
   /// A short readable reason, for the row badge and the details.
   String get reason => switch (end) {
     EntryEnd.ended => 'Played',
     EntryEnd.stopped => 'Skipped',
     EntryEnd.failed => failureReason(code, message),
+    EntryEnd.cut => _cutReason,
   };
+
+  String get _cutReason {
+    final segments = lost == 1 ? '1 segment lost' : '$lost segments lost';
+    if (lost > 0 && at == null) return 'Played, $segments';
+    final where = at == null
+        ? 'Cut short'
+        : 'Cut short at ${formatDuration(at!)}';
+    return lost > 0 ? '$where, $segments' : where;
+  }
 
   @override
   bool operator ==(Object other) =>
       other is EntryOutcome &&
       other.end == end &&
       other.code == code &&
-      other.message == message;
+      other.message == message &&
+      other.at == at &&
+      other.lost == lost &&
+      other.readError == readError;
 
   @override
-  int get hashCode => Object.hash(end, code, message);
+  int get hashCode => Object.hash(end, code, message, at, lost, readError);
 
   @override
-  String toString() => 'EntryOutcome($end, $code, $message)';
+  String toString() =>
+      'EntryOutcome($end, $code, $message, at: $at, lost: $lost, '
+      'readError: $readError)';
 }
 
 /// Why an entry failed, in words, from the mpv error [code] and mpv's
@@ -229,12 +274,18 @@ class QueueDetails {
   void _onEndFile(MpvFileEndedEvent event) {
     final EntryEnd end;
     final Media? entry;
+    // A dropped connection ends a stream with a plain eof: the read error
+    // and the lost segments tell it from the real end.
+    final lost = event.skippedSegments ?? 0;
+    final cut = event.readError == true || lost > 0;
     switch (event.reason) {
       case MpvEndFileReason.eof:
-        end = EntryEnd.ended;
+        end = cut ? EntryEnd.cut : EntryEnd.ended;
         entry = _playing;
+      // The last entry stays open at its end: a cut stream there ends
+      // later, as a stop.
       case MpvEndFileReason.stop:
-        end = EntryEnd.stopped;
+        end = cut ? EntryEnd.cut : EntryEnd.stopped;
         entry = _playing;
       case MpvEndFileReason.error:
         end = EntryEnd.failed;
@@ -248,7 +299,15 @@ class QueueDetails {
     if (entry == null) return;
     _outcomes.value = {
       ..._outcomes.value,
-      entry: EntryOutcome(end, code: event.error),
+      entry: EntryOutcome(
+        end,
+        code: event.error,
+        at: end == EntryEnd.cut && event.readError == true
+            ? event.position
+            : null,
+        lost: lost,
+        readError: event.readError == true,
+      ),
     };
   }
 

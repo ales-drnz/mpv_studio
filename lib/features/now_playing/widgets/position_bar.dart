@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
 import '../../../util/reactive.dart';
@@ -284,71 +285,82 @@ class AbLoopChip extends StatelessWidget {
                       constraints: BoxConstraints(minHeight: tap),
                       child: Center(
                         widthFactor: 1,
+                        // At least 32 tall; large text grows it, badge and
+                        // all, instead of clipping them.
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: 32,
+                          duration: Tokens.motion(context, Tokens.motionShort),
+                          constraints: const BoxConstraints(
+                            minHeight: Tokens.s32,
+                          ),
                           decoration: ShapeDecoration(
                             color: on
                                 ? Tokens.accentContainer
                                 : Colors.transparent,
                             shape: Tokens.pill,
                           ),
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: InkWell(
-                              onTap: () => _menu(context, player, scope.guard),
-                              customBorder: Tokens.pill,
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                  left: Tokens.s12,
-                                  right: badge == null ? Tokens.s12 : Tokens.s4,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.repeat_on_rounded,
-                                      size: 18,
-                                      color: color,
-                                    ),
-                                    const SizedBox(width: Tokens.s8),
-                                    Flexible(
-                                      child: Text(
-                                        text,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Tokens.label.copyWith(
-                                          color: color,
-                                          fontWeight: on
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                        ),
+                          child: FocusRing(
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: () =>
+                                    _menu(context, player, scope.guard),
+                                customBorder: Tokens.pill,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: Tokens.s12,
+                                    right: badge == null
+                                        ? Tokens.s12
+                                        : Tokens.s4,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.repeat_on_rounded,
+                                        size: Tokens.iconSm,
+                                        color: color,
                                       ),
-                                    ),
-                                    if (badge != null) ...[
                                       const SizedBox(width: Tokens.s8),
-                                      Container(
-                                        key: const ValueKey('ab-badge'),
-                                        height: 24,
-                                        alignment: Alignment.center,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: Tokens.s8,
-                                        ),
-                                        decoration: ShapeDecoration(
-                                          color: Tokens.onAccentContainer,
-                                          shape: Tokens.pill,
-                                        ),
+                                      Flexible(
                                         child: Text(
-                                          badge,
+                                          text,
                                           maxLines: 1,
-                                          style: Tokens.caption.copyWith(
-                                            color: Tokens.accentContainer,
-                                            fontWeight: FontWeight.w700,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Tokens.label.copyWith(
+                                            color: color,
+                                            fontWeight: on
+                                                ? FontWeight.w600
+                                                : FontWeight.w500,
                                           ),
                                         ),
                                       ),
+                                      if (badge != null) ...[
+                                        const SizedBox(width: Tokens.s8),
+                                        Container(
+                                          key: const ValueKey('ab-badge'),
+                                          constraints: const BoxConstraints(
+                                            minHeight: Tokens.s24,
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: Tokens.s8,
+                                          ),
+                                          decoration: ShapeDecoration(
+                                            color: Tokens.onAccentContainer,
+                                            shape: Tokens.pill,
+                                          ),
+                                          child: Text(
+                                            badge,
+                                            maxLines: 1,
+                                            style: Tokens.caption.copyWith(
+                                              color: Tokens.accentContainer,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),

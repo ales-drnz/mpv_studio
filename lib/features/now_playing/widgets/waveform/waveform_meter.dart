@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../../studio/playback_issues.dart';
+import '../../../../ui/chart_text.dart';
 import '../../../../ui/layout/layout.dart';
 import '../../../../ui/tokens.dart';
 import '../../../../util/duration_format.dart';
@@ -47,6 +48,9 @@ class WaveformMeter extends StatefulWidget {
 
 class _WaveformMeterState extends State<WaveformMeter>
     with SingleTickerProviderStateMixin, StreamListenerState<WaveformMeter> {
+  /// The least meter width that fits the scrollbar beside the zoom pill.
+  static const double _zoomRowWidth = 200;
+
   late PlayerApi _player;
   late CallGuard _guard;
   // Made when playback first starts, not lazily on first use: dispose
@@ -85,6 +89,9 @@ class _WaveformMeterState extends State<WaveformMeter>
   /// The envelope's width at the last layout, for the wheel and pan.
   double _width = 0;
 
+  /// What the demuxer cache holds, drawn only for a network source.
+  List<CacheRange> _cached = const [];
+
   @override
   void onSubscribe() {
     final scope = PlaybackScope.of(context);
@@ -100,6 +107,7 @@ class _WaveformMeterState extends State<WaveformMeter>
     _abB = s.abLoopB;
     _chapters = s.chapters;
     _currentChapter = s.currentChapter;
+    _cached = s.demuxerCacheState.seekableRanges;
     if (_playWhenReady) {
       _sw.start();
       _frames.start();
@@ -128,6 +136,10 @@ class _WaveformMeterState extends State<WaveformMeter>
       update(() {});
     });
     listen(_player.stream.rate, (r) => update(() => _rate = r));
+    listen(
+      _player.stream.demuxerCacheState,
+      (c) => update(() => _cached = c.seekableRanges),
+    );
     listen(_player.stream.seekable, (v) => update(() => _seekable = v));
     listen(_player.stream.waveform, (w) {
       update(
@@ -280,6 +292,8 @@ class _WaveformMeterState extends State<WaveformMeter>
                   abB: _abB,
                   chapters: _chapters,
                   currentChapter: _currentChapter,
+                  cached: _player.state.demuxerViaNetwork ? _cached : const [],
+                  scaler: chartTextScaler(context),
                 ),
               ),
             ),
@@ -311,9 +325,8 @@ class _WaveformMeterState extends State<WaveformMeter>
       onZoomIn: () => _zoom(WaveformViewport.zoomStep),
       onZoomOut: () => _zoom(1 / WaveformViewport.zoomStep),
     );
-    // On touch the scrollbar is a full touch target tall, and the zoom
-    // pill sits beside it instead of over the waveform (a third of a
-    // phone's meter).
+    // The zoom pill sits beside the scrollbar, never over the waveform,
+    // on every input. On touch the scrollbar is a full touch target tall.
     final scrollBar = WaveformScrollBar(
       height: touch ? context.layout.minTap : 16,
       thickness: touch ? 12 : 8,
@@ -343,12 +356,6 @@ class _WaveformMeterState extends State<WaveformMeter>
             child: Stack(
               children: [
                 Positioned.fill(child: _envelope(context, touch)),
-                if (!touch)
-                  Positioned(
-                    top: WaveformMeter.rulerHeight + Tokens.s8,
-                    right: Tokens.s8,
-                    child: zoom,
-                  ),
                 Positioned(
                   top: WaveformMeter.rulerHeight + Tokens.s8,
                   left: Tokens.s8,
@@ -360,16 +367,19 @@ class _WaveformMeterState extends State<WaveformMeter>
               ],
             ),
           ),
-          if (touch)
-            Row(
-              children: [
-                Expanded(child: scrollBar),
-                const SizedBox(width: Tokens.s8),
-                zoom,
-              ],
-            )
-          else
-            scrollBar,
+          // A meter too narrow for both keeps the scrollbar; the wheel,
+          // the pinch and the keyboard still zoom.
+          LayoutBuilder(
+            builder: (context, c) => c.maxWidth < _zoomRowWidth
+                ? scrollBar
+                : Row(
+                    children: [
+                      Expanded(child: scrollBar),
+                      const SizedBox(width: Tokens.s8),
+                      zoom,
+                    ],
+                  ),
+          ),
         ],
       ),
     );

@@ -165,16 +165,24 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       initial: player.state.playlist,
       builder: (context, pl) {
         if (currentMedia(pl) == null) {
-          return PageFrame(
-            title: 'Playback',
-            scrollable: false,
-            body: EmptyPlayback(
-              onOpenFiles: _openFiles,
-              onOpenStream: _openStream,
-              onPlayQueue: pl.items.isEmpty
-                  ? null
-                  : () => scope.guard(() => player.jump(0)),
-            ),
+          // The header sits where it will once a track plays, so it does
+          // not jump when the first one starts.
+          return LayoutBuilder(
+            builder: (context, c) {
+              final shape = _shapeFor(c.biggest);
+              return PageFrame(
+                title: _hasHeader(shape, c.maxWidth) ? 'Playback' : null,
+                scrollable: false,
+                maxWidth: _maxWidthOf(shape),
+                body: EmptyPlayback(
+                  onOpenFiles: _openFiles,
+                  onOpenStream: _openStream,
+                  onPlayQueue: pl.items.isEmpty
+                      ? null
+                      : () => scope.guard(() => player.jump(0)),
+                ),
+              );
+            },
           );
         }
         return LayoutBuilder(
@@ -184,17 +192,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             // Phones keep the height for the player: the tab bar already
             // says where they are. The info button lives in the transport
             // on every shape, so the header has no actions.
-            final header =
-                shape != _Shape.side &&
-                !WidthClass.of(c.maxWidth).below(WidthClass.medium);
             return PageFrame(
-              title: header ? 'Playback' : null,
+              title: _hasHeader(shape, page) ? 'Playback' : null,
               scrollable: false,
-              maxWidth: switch (shape) {
-                _Shape.column => Breakpoints.medium,
-                _Shape.stage => Breakpoints.wide,
-                _Shape.side || _Shape.split => double.infinity,
-              },
+              maxWidth: _maxWidthOf(shape),
               body: switch (shape) {
                 _Shape.column => _columnLayout(context, page),
                 _Shape.side => _sideLayout(context),
@@ -309,10 +310,25 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     );
   }
 
+  /// Whether the page shows its title at [shape] in [width]: phones keep
+  /// the height for the player (the tab bar already says where they are),
+  /// as does the side shape of a low window.
+  static bool _hasHeader(_Shape shape, double width) =>
+      shape != _Shape.side && !WidthClass.of(width).below(WidthClass.medium);
+
+  /// The page's widest content at [shape].
+  static double _maxWidthOf(_Shape shape) => switch (shape) {
+    _Shape.column => Breakpoints.medium,
+    _Shape.stage => Breakpoints.wide,
+    _Shape.side || _Shape.split => double.infinity,
+  };
+
   /// The spectrum, full bleed: [side] wider than its slot on both sides,
   /// out to the edges of the page. Its slot runs down to the bottom edge.
-  static Widget _spectrum(double side) =>
-      _Bleed(side: side, child: const SpectrumCurve());
+  static Widget _spectrum(double side) => _Bleed(
+    side: side,
+    child: SpectrumCurve(inset: side),
+  );
 
   /// A scroll view of [slivers] that clips top and bottom at its own
   /// edges but [side] past them at the sides, so the spectrum in it
@@ -352,7 +368,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const FailedTrackBanner(),
+                  const PlaybackBanners(),
                   Center(child: _cover(cover)),
                   const SizedBox(height: Tokens.s12),
                   const TrackInfo(),
@@ -425,7 +441,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const FailedTrackBanner(),
+                  const PlaybackBanners(),
                   Expanded(child: _waveform()),
                   const PositionBar(),
                   SizedBox(height: PageEnd.of(context)),
@@ -457,7 +473,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
           below: _fillBelow([
             const PositionBar(),
             const ChapterBar(),
-            const FailedTrackBanner(),
+            const PlaybackBanners(),
             const SizedBox(height: Tokens.s8),
             SizedBox(
               height: rowH,
@@ -543,7 +559,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const FailedTrackBanner(),
+                    const PlaybackBanners(),
                     Expanded(child: _waveform()),
                     const PositionBar(),
                     const ChapterBar(),

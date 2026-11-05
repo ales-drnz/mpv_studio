@@ -245,31 +245,35 @@ class _QueueViewState extends State<QueueView> {
     );
   }
 
-  List<QueueHeaderAction> _headerActions(bool empty) => [
-    QueueHeaderAction(
-      icon: Icons.add_rounded,
-      label: 'Add files',
-      onPressed: _queue.addFiles,
-      primary: true,
-    ),
-    QueueHeaderAction(
-      icon: Icons.folder_open_rounded,
-      label: 'Add folder',
-      onPressed: canPickFolder ? _queue.addFolder : null,
-      disabledReason: 'Folders cannot be picked on this device',
-    ),
-    QueueHeaderAction(
-      icon: Icons.playlist_play_rounded,
-      label: 'Load playlist',
-      onPressed: _queue.loadPlaylist,
-    ),
-    QueueHeaderAction(
-      icon: Icons.clear_all_rounded,
-      label: 'Clear queue',
-      onPressed: empty ? null : _clear,
-      disabledReason: 'The queue is empty',
-    ),
-  ];
+  /// The header's actions; none while the queue is empty, where the empty
+  /// state offers the same ways in.
+  List<QueueHeaderAction> _headerActions(bool empty) => empty
+      ? const []
+      : [
+          QueueHeaderAction(
+            icon: Icons.add_rounded,
+            label: 'Add files',
+            onPressed: _queue.addFiles,
+            primary: true,
+          ),
+          QueueHeaderAction(
+            icon: Icons.folder_open_rounded,
+            label: 'Add folder',
+            onPressed: canPickFolder ? _queue.addFolder : null,
+            disabledReason: 'Folders cannot be picked on this device',
+          ),
+          QueueHeaderAction(
+            icon: Icons.playlist_play_rounded,
+            label: 'Load playlist',
+            onPressed: _queue.loadPlaylist,
+          ),
+          QueueHeaderAction(
+            icon: Icons.clear_all_rounded,
+            label: 'Clear queue',
+            onPressed: _clear,
+            destructive: true,
+          ),
+        ];
 
   @override
   Widget build(BuildContext context) {
@@ -305,21 +309,25 @@ class _QueueViewState extends State<QueueView> {
                   constraints.maxWidth - 2 * gutter,
                   Breakpoints.wide,
                 );
-                final split =
-                    items.isNotEmpty &&
+                // The width follows the window, not whether there is a
+                // detail yet: the header stays put when the first file
+                // comes in.
+                final roomy =
                     context.layout.isPointer &&
                     TwoPane.splitsAt(
                       content,
                       listWidth: _listWidth,
                       minDetailWidth: _detailWidth,
                     );
+                final split = items.isNotEmpty && roomy;
                 return PageFrame(
                   title: 'Queue',
                   scrollable: false,
-                  maxWidth: split ? Breakpoints.wide : Breakpoints.readable,
+                  maxWidth: roomy ? Breakpoints.wide : Breakpoints.readable,
                   actions: queueHeaderButtons(
                     context,
                     _headerActions(items.isEmpty),
+                    available: content,
                   ),
                   body: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

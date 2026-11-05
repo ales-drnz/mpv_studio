@@ -241,6 +241,10 @@ extension AppSettingsSync on AppSettings {
           'specWindow': v.window.name,
           'specFft': v.fftSize,
           'specBands': v.bandCount,
+          'specAttack': v.attackSmoothing,
+          'specRelease': v.releaseSmoothing,
+          'specMinDb': v.minDb,
+          'specMaxDb': v.maxDb,
         }),
       ),
       s.audioEffects.listen((v) {

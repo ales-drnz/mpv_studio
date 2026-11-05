@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../ui/layout/layout.dart';
 import '../ui/theme_host.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/focus_ring.dart';
 import 'playback_shortcuts.dart';
 
 /// A quiet utility entry of the shell navigation: a pill row with a
@@ -34,39 +35,42 @@ class ShellToolButton extends StatelessWidget {
       onTap: onTap,
       child: Tooltip(
         message: label,
-        child: Material(
-          color: expanded ? Colors.transparent : Tokens.tonal,
+        child: FocusRing(
           shape: expanded ? Tokens.pill : const CircleBorder(),
-          child: InkWell(
-            onTap: onTap,
-            customBorder: expanded ? Tokens.pill : const CircleBorder(),
-            child: expanded
-                ? ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: tap),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Tokens.s16,
-                      ),
-                      child: Row(
-                        children: [
-                          glyph,
-                          const SizedBox(width: Tokens.s12),
-                          Expanded(
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Tokens.label.copyWith(fontSize: 14),
+          child: Material(
+            color: expanded ? Colors.transparent : Tokens.tonal,
+            shape: expanded ? Tokens.pill : const CircleBorder(),
+            child: InkWell(
+              onTap: onTap,
+              customBorder: expanded ? Tokens.pill : const CircleBorder(),
+              child: expanded
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: tap),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Tokens.s16,
+                        ),
+                        child: Row(
+                          children: [
+                            glyph,
+                            const SizedBox(width: Tokens.s12),
+                            Expanded(
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Tokens.label.copyWith(fontSize: 14),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    )
+                  : SizedBox.square(
+                      dimension: tap,
+                      child: Center(child: glyph),
                     ),
-                  )
-                : SizedBox.square(
-                    dimension: tap,
-                    child: Center(child: glyph),
-                  ),
+            ),
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/focus_ring.dart';
 import 'section_badge.dart';
 import 'sections.dart';
 import 'shell_tools.dart';
@@ -56,7 +57,7 @@ class NavDestination extends StatelessWidget {
   /// The pill indicator width of the stacked and icon-only layouts.
   final double indicatorWidth;
 
-  static const _duration = Duration(milliseconds: 220);
+  static const _duration = Tokens.motionMedium;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +81,7 @@ class NavDestination extends StatelessWidget {
     switch (layout) {
       case NavItemLayout.inline:
         item = AnimatedContainer(
-          duration: _duration,
+          duration: Tokens.motion(context, _duration),
           curve: Curves.easeOutCubic,
           height: math.max(48, minTap),
           padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
@@ -106,7 +107,7 @@ class NavDestination extends StatelessWidget {
       case NavItemLayout.stacked:
       case NavItemLayout.iconOnly:
         final pill = AnimatedContainer(
-          duration: _duration,
+          duration: Tokens.motion(context, _duration),
           curve: Curves.easeOutCubic,
           width: active ? indicatorWidth : indicatorWidth - 8,
           height: layout == NavItemLayout.iconOnly ? 40 : 32,
@@ -141,13 +142,15 @@ class NavDestination extends StatelessWidget {
     }
 
     final tip = tooltip ?? (layout == NavItemLayout.iconOnly ? label : null);
-    Widget tappable = Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: Tokens.pill,
-        hoverColor: Tokens.accentWash,
-        child: item,
+    Widget tappable = FocusRing(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: Tokens.pill,
+          hoverColor: Tokens.accentWash,
+          child: item,
+        ),
       ),
     );
     if (tip != null) {

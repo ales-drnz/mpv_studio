@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -7,8 +10,10 @@ import '../track_identity.dart';
 
 /// Square album art of the current track: the embedded cover from
 /// `stream.coverArt`, else the artwork URL the queue entry carries in
-/// `extras['art']` (server tracks), else a flat placeholder. Shared by the
-/// Playback page and the mini-player.
+/// `extras['art']` (server tracks), else an image from the file's folder
+/// (an external album art track, loaded when Settings' Cover art is on;
+/// not on the web), else a flat placeholder. Shared by the Playback page
+/// and the mini-player.
 class CoverArtView extends StatelessWidget {
   const CoverArtView({
     super.key,
@@ -45,36 +50,64 @@ class CoverArtView extends StatelessWidget {
           builder: (context, pl) => Live<CoverArt?>(
             stream: player.stream.coverArt,
             initial: player.state.coverArt,
-            builder: (context, art) {
-              final hasArt = art != null || currentExtra(pl, 'art') != null;
-              final Widget image;
-              if (art != null) {
-                image = Image.memory(
-                  art.bytes,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  errorBuilder: (_, _, _) => placeholder,
+            builder: (context, art) => Live<List<MpvTrack>>(
+              stream: player.stream.tracks,
+              initial: player.state.tracks,
+              builder: (context, tracks) {
+                final folder = folderCover(tracks);
+                final hasArt =
+                    art != null ||
+                    currentExtra(pl, 'art') != null ||
+                    folder != null;
+                final Widget image;
+                if (art != null) {
+                  image = Image.memory(
+                    art.bytes,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => placeholder,
+                  );
+                } else if (currentExtra(pl, 'art') case final url?) {
+                  image = Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => placeholder,
+                  );
+                } else if (folder != null) {
+                  image = Image.file(
+                    File(folder),
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => placeholder,
+                  );
+                } else {
+                  image = placeholder;
+                }
+                return Semantics(
+                  image: true,
+                  label: hasArt ? 'Cover art' : 'No cover art',
+                  excludeSemantics: true,
+                  child: image,
                 );
-              } else if (currentExtra(pl, 'art') case final url?) {
-                image = Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  errorBuilder: (_, _, _) => placeholder,
-                );
-              } else {
-                image = placeholder;
-              }
-              return Semantics(
-                image: true,
-                label: hasArt ? 'Cover art' : 'No cover art',
-                excludeSemantics: true,
-                child: image,
-              );
-            },
+              },
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// The path of the image the engine found next to the playing file (an
+/// external album art track), or null; always null on the web, where
+/// there is no folder to read.
+String? folderCover(List<MpvTrack> tracks) {
+  if (kIsWeb) return null;
+  for (final t in tracks) {
+    if (t.external && t.albumArt && t.externalFilename != null) {
+      return t.externalFilename;
+    }
+  }
+  return null;
 }

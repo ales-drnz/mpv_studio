@@ -146,6 +146,21 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<CoverArt?> get coverArt => _s((s) => s.coverArt);
   @override
+  Stream<List<MpvTrack>> get tracks => _s((s) => s.tracks);
+  @override
+  Stream<SpectrumSettings> get spectrum => _s((s) => s.spectrum);
+  @override
+  Stream<String> get currentAo => _s((s) => s.currentAo);
+  @override
+  Stream<String> get audioDriver => _s((s) => s.audioDriver);
+  @override
+  Stream<double> get pitch => _s((s) => s.pitch);
+  @override
+  Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
+  @override
+  Stream<DemuxerCacheState> get demuxerCacheState =>
+      _s((s) => s.demuxerCacheState);
+  @override
   Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
   @override
   Stream<MpvPlaybackState> get playbackState =>

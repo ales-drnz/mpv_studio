@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
-import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/empty_state.dart';
 import '../../../util/media_labels.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
@@ -26,82 +26,39 @@ class EmptyPlayback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final queued = onPlayQueue != null;
-    return Center(
-      child: SingleChildScrollView(
-        // Centred, so as far from the top as from the page end.
-        padding: PageEnd.centred(context),
-        child: ReadableWidth(
-          maxWidth: Breakpoints.medium,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: ShapeDecoration(
-                  color: Tokens.tonal,
-                  shape: const CircleBorder(),
-                ),
-                child: Icon(
-                  Icons.graphic_eq_rounded,
-                  size: 44,
-                  color: Tokens.fg,
-                ),
-              ),
-              const SizedBox(height: Tokens.s24),
-              Semantics(
-                header: true,
-                child: Text(
-                  'Nothing playing',
-                  style: Tokens.display,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: Tokens.s8),
-              Text(
-                queued
-                    ? 'The queue is ready. Play it, or add more to listen to.'
-                    : 'Open audio files from this device, or go to Stream '
-                          'for a URL, a radio station or a media server.',
-                style: Tokens.body.copyWith(color: Tokens.fgDim),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: Tokens.s24),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: Tokens.s8,
-                runSpacing: Tokens.s8,
-                // One filled primary: playing the queue when it has
-                // entries, else opening files.
-                children: [
-                  if (queued) ...[
-                    FilledButton.icon(
-                      onPressed: onPlayQueue,
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Play the queue'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onOpenFiles,
-                      icon: const Icon(Icons.folder_open_rounded),
-                      label: const Text('Open files'),
-                    ),
-                  ] else
-                    FilledButton.icon(
-                      onPressed: onOpenFiles,
-                      icon: const Icon(Icons.folder_open_rounded),
-                      label: const Text('Open files'),
-                    ),
-                  OutlinedButton.icon(
-                    onPressed: onOpenStream,
-                    icon: const Icon(Icons.podcasts_rounded),
-                    label: const Text('Go to Stream'),
-                  ),
-                ],
-              ),
-            ],
+    return EmptyState(
+      icon: Icons.graphic_eq_rounded,
+      title: 'Nothing playing',
+      message: queued
+          ? 'The queue is ready. Play it, or add more to listen to.'
+          : 'Open audio files from this device, or go to Stream for a URL, '
+                'a radio station or a media server.',
+      // One filled primary: playing the queue when it has entries, else
+      // opening files.
+      actions: [
+        if (queued) ...[
+          FilledButton.icon(
+            onPressed: onPlayQueue,
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text('Play the queue'),
           ),
+          OutlinedButton.icon(
+            onPressed: onOpenFiles,
+            icon: const Icon(Icons.folder_open_rounded),
+            label: const Text('Open files'),
+          ),
+        ] else
+          FilledButton.icon(
+            onPressed: onOpenFiles,
+            icon: const Icon(Icons.folder_open_rounded),
+            label: const Text('Open files'),
+          ),
+        OutlinedButton.icon(
+          onPressed: onOpenStream,
+          icon: const Icon(Icons.podcasts_rounded),
+          label: const Text('Go to Stream'),
         ),
-      ),
+      ],
     );
   }
 }
@@ -130,14 +87,24 @@ class FailedTrackBanner extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: Tokens.s12),
             child: _Banner(
-              title: titleOf(media),
-              onRetry: () => scope.guard(() => player.jump(pl.index)),
-              onNext: () => skipTrack(
-                player,
-                scope.guard,
-                forward: true,
-                notify: feedbackFor(context),
-              ),
+              icon: Icons.error_outline_rounded,
+              color: Tokens.red,
+              message: 'Could not play "${titleOf(media)}".',
+              actions: [
+                TextButton(
+                  onPressed: () => scope.guard(() => player.jump(pl.index)),
+                  child: const Text('Retry'),
+                ),
+                TextButton(
+                  onPressed: () => skipTrack(
+                    player,
+                    scope.guard,
+                    forward: true,
+                    notify: feedbackFor(context),
+                  ),
+                  child: const Text('Next'),
+                ),
+              ],
             ),
           );
         },
@@ -146,16 +113,112 @@ class FailedTrackBanner extends StatelessWidget {
   }
 }
 
+/// The banners over the player: a track that failed, a silent output.
+class PlaybackBanners extends StatelessWidget {
+  const PlaybackBanners({super.key});
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [FailedTrackBanner(), MutedOutputBanner(), SoundGestureBanner()],
+  );
+}
+
+/// In a browser, a banner while the page's sound waits for the user's
+/// first click or key (MpvAudioKit.needsUserGesture); the next one
+/// starts it. Never on the other platforms.
+class SoundGestureBanner extends StatelessWidget {
+  const SoundGestureBanner({super.key, this.stream, this.initial});
+
+  /// Whether the sound waits; the kit's by default.
+  final Stream<bool>? stream;
+  final bool? initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Live<bool>(
+      stream: stream ?? MpvAudioKit.needsUserGestureStream,
+      initial: initial ?? MpvAudioKit.needsUserGesture,
+      builder: (context, waits) => !waits
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.only(bottom: Tokens.s12),
+              child: _Banner(
+                icon: Icons.touch_app_rounded,
+                color: Tokens.fg,
+                message:
+                    'Click or press a key: the browser holds the sound '
+                    'until you do.',
+                actions: const [],
+              ),
+            ),
+    );
+  }
+}
+
+/// A banner while the engine plays on its null output because no device
+/// opened: the position runs and nothing is heard. Not when the null
+/// driver was chosen. Reopen output asks the engine to try the device
+/// again.
+class MutedOutputBanner extends StatelessWidget {
+  const MutedOutputBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = PlaybackScope.of(context);
+    final player = scope.player;
+    return Live<String>(
+      stream: player.stream.currentAo,
+      initial: player.state.currentAo,
+      builder: (context, ao) => Live<String>(
+        stream: player.stream.audioDriver,
+        initial: player.state.audioDriver,
+        builder: (context, driver) {
+          if (ao != 'null' || chosenNullOutput(driver)) {
+            return const SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: Tokens.s12),
+            child: _Banner(
+              icon: Icons.volume_off_rounded,
+              color: Tokens.amber,
+              message: 'No audio device: playing silently on the null output.',
+              actions: [
+                TextButton(
+                  onPressed: () => scope.guard(player.reloadAudio),
+                  child: const Text('Reopen output'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Whether the driver setting asks for the null output itself: `null`,
+/// a list with `null` in it (`pipewire,null`), or `null` with options
+/// (`null=untimed`), as mpv reads it.
+bool chosenNullOutput(String driver) => driver
+    .split(',')
+    .map((d) => d.trim())
+    .any((d) => d == 'null' || d.startsWith('null='));
+
+/// A tinted banner: an icon and a message in [color], then [actions].
 class _Banner extends StatelessWidget {
   const _Banner({
-    required this.title,
-    required this.onRetry,
-    required this.onNext,
+    required this.icon,
+    required this.color,
+    required this.message,
+    required this.actions,
   });
 
-  final String title;
-  final VoidCallback onRetry;
-  final VoidCallback onNext;
+  final IconData icon;
+  final Color color;
+  final String message;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +233,7 @@ class _Banner extends StatelessWidget {
           Tokens.s4,
         ),
         decoration: ShapeDecoration(
-          color: Tokens.red.withValues(alpha: 0.14),
+          color: color.withValues(alpha: 0.14),
           shape: Tokens.shape(Tokens.rMd),
         ),
         child: Wrap(
@@ -182,25 +245,19 @@ class _Banner extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline_rounded, size: 20, color: Tokens.red),
+                Icon(icon, size: Tokens.iconMd, color: color),
                 const SizedBox(width: Tokens.s8),
                 Flexible(
                   child: Text(
-                    'Could not play "$title".',
+                    message,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Tokens.body.copyWith(color: Tokens.red),
+                    style: Tokens.body.copyWith(color: color),
                   ),
                 ),
               ],
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(onPressed: onRetry, child: const Text('Retry')),
-                TextButton(onPressed: onNext, child: const Text('Next')),
-              ],
-            ),
+            Row(mainAxisSize: MainAxisSize.min, children: actions),
           ],
         ),
       ),

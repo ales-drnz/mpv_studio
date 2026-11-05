@@ -149,7 +149,7 @@ void main() {
       expect(find.text('page engine'), findsOneWidget);
     });
 
-    testWidgets('the mini-player runs along the bottom off Playback', (
+    testWidgets('the mini-player runs under the stage off Playback', (
       tester,
     ) async {
       await _pump(tester, const _Host(desktop: true), desktop);
@@ -158,8 +158,10 @@ void main() {
       await tester.tap(find.text('Queue'));
       await tester.pumpAndSettle();
       final mini = tester.getRect(find.byKey(const ValueKey('mini')));
+      // Beside the sidebar, under the stage, to the window's edge.
       expect(mini.bottom, desktop.height);
-      expect(mini.width, desktop.width);
+      expect(mini.left, DesktopShell.openWidth);
+      expect(mini.right, desktop.width);
     });
   });
 }
