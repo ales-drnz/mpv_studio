@@ -1,3 +1,8 @@
+## [0.4.4] - 5-11-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.6.3`, with libmpv-r22: a pause in the last buffer of a track keeps the rest, and play plays it instead of starting the track again.
+
 ## [0.4.3] - 5-11-2026
 
 ### All platforms
