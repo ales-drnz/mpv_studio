@@ -160,6 +160,7 @@ class _CompressorCurveState extends State<CompressorCurve> {
             child: CustomPaint(
               size: Size.infinite,
               painter: _KneePainter(
+                scaler: chartTextScaler(context),
                 thresholdDb: amplitudeToDb(widget.threshold),
                 ratio: widget.ratio,
                 kneeDb: amplitudeToDb(widget.knee.clamp(1.0, 8.0)),
@@ -177,6 +178,8 @@ class _CompressorCurveState extends State<CompressorCurve> {
 }
 
 class _KneePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final double thresholdDb;
   final double ratio;
   final double kneeDb;
@@ -186,6 +189,7 @@ class _KneePainter extends CustomPainter {
   final ValueListenable<double> grDb;
 
   _KneePainter({
+    this.scaler = TextScaler.noScaling,
     required this.thresholdDb,
     required this.ratio,
     required this.kneeDb,
@@ -249,12 +253,14 @@ class _KneePainter extends CustomPainter {
         Offset(x(db), plot.bottom + 3),
         Tokens.fgFaint,
         center: true,
+        scaler: scaler,
       );
       paintChartLabel(
         canvas,
         '${db.toInt()}',
         Offset(plot.right + 3, y(db) - 5),
         Tokens.fgFaint,
+        scaler: scaler,
       );
     }
 
@@ -342,6 +348,7 @@ class _KneePainter extends CustomPainter {
         '−${gr.toStringAsFixed(1)} dB GR',
         Offset(plot.left + 4, plot.top + 2),
         Tokens.accent,
+        scaler: scaler,
       );
     }
   }
@@ -352,5 +359,6 @@ class _KneePainter extends CustomPainter {
       old.ratio != ratio ||
       old.kneeDb != kneeDb ||
       old.makeupDb != makeupDb ||
-      old.enabled != enabled;
+      old.enabled != enabled ||
+      old.scaler != scaler;
 }

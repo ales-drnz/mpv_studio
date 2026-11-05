@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/chart_text.dart';
 import '../../../ui/tokens.dart';
 import '../engine_format.dart';
 import '../engine_snapshot.dart';
@@ -52,6 +53,7 @@ class CacheView extends StatelessWidget {
               height: 112,
               child: CustomPaint(
                 painter: CacheBarPainter(
+                  scaler: chartTextScaler(context),
                   geometry: geometry,
                   waveform: snapshot.waveform,
                 ),
@@ -102,6 +104,7 @@ class CacheView extends StatelessWidget {
               height: 72,
               child: CustomPaint(
                 painter: CacheHistoryPainter(
+                  scaler: chartTextScaler(context),
                   samples: snapshot.cacheHistory,
                   now: snapshot.now,
                   pauseWait: pauseOn ? secondsOf(s.cache.pauseWait) : null,

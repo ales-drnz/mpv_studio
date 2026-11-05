@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/lead_tile.dart';
 import '../onboarding/onboarding.dart';
 import 'restart_banner.dart';
 import 'setting_anchor.dart';
@@ -197,45 +198,22 @@ class _GroupTile extends StatelessWidget {
           onTap: onTap,
           customBorder: Tokens.shape(Tokens.rLg),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: context.layout.minTap + 16),
+            constraints: BoxConstraints(
+              minHeight: context.layout.minTap + Tokens.s16,
+            ),
             child: Padding(
               padding: const EdgeInsets.all(Tokens.s16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: ShapeDecoration(
-                      color: Tokens.surface3,
-                      shape: const CircleBorder(),
-                    ),
-                    child: Icon(group.icon, size: 20, color: Tokens.fg),
-                  ),
-                  const SizedBox(width: Tokens.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          group.title,
-                          style: Tokens.heading.copyWith(color: ink),
-                        ),
-                        Text(
-                          group.summary,
-                          style: Tokens.label.copyWith(
-                            color: ink ?? Tokens.fgDim,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (pushes)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: ink ?? Tokens.fgFaint,
-                    ),
-                ],
+              child: LeadTile(
+                icon: group.icon,
+                title: group.title,
+                subtitle: group.summary,
+                color: ink,
+                trailing: pushes
+                    ? Icon(
+                        Icons.chevron_right_rounded,
+                        color: ink ?? Tokens.fgFaint,
+                      )
+                    : null,
               ),
             ),
           ),

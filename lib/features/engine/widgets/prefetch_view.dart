@@ -77,6 +77,7 @@ class PrefetchView extends StatelessWidget {
               height: 40,
               child: CustomPaint(
                 painter: PrefetchTimelinePainter(
+                  scaler: chartTextScaler(context),
                   marks: snapshot.prefetchHistory,
                   now: snapshot.now,
                 ),
@@ -114,11 +115,14 @@ class PrefetchView extends StatelessWidget {
 /// The prefetch state over the last [window] seconds, one band per
 /// stretch, with loading drawn striped as in the diagram.
 class PrefetchTimelinePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final List<PrefetchMark> marks;
   final double now;
   final double window;
 
   PrefetchTimelinePainter({
+    this.scaler = TextScaler.noScaling,
     required this.marks,
     required this.now,
     this.window = 120,
@@ -157,12 +161,19 @@ class PrefetchTimelinePainter extends CustomPainter {
       canvas.drawLine(Offset(x(m.t), 0), Offset(x(m.t), h + 3), tick);
     }
 
-    paintChartLabel(canvas, '-2 min', Offset(0, h + 4), Tokens.fgFaint);
+    paintChartLabel(
+      canvas,
+      '-2 min',
+      Offset(0, h + 4),
+      Tokens.fgFaint,
+      scaler: scaler,
+    );
     paintChartLabel(
       canvas,
       'now',
       Offset(size.width - 18, h + 4),
       Tokens.fgFaint,
+      scaler: scaler,
     );
   }
 
@@ -216,6 +227,7 @@ class PrefetchTimelinePainter extends CustomPainter {
         Tokens.fg,
         center: true,
         middle: true,
+        scaler: scaler,
       );
     }
   }

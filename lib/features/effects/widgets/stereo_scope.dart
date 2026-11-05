@@ -94,6 +94,7 @@ class _StereoScopeState extends State<StereoScope> {
           child: CustomPaint(
             size: Size.infinite,
             painter: _ScopePainter(
+              scaler: chartTextScaler(context),
               xs: _xs,
               ys: _ys,
               count: () => _count,
@@ -111,6 +112,8 @@ class _StereoScopeState extends State<StereoScope> {
 }
 
 class _ScopePainter extends CustomPainter {
+  final TextScaler scaler;
+
   final Float32List xs;
   final Float32List ys;
   final int Function() count;
@@ -121,6 +124,7 @@ class _ScopePainter extends CustomPainter {
   final bool enabled;
 
   _ScopePainter({
+    this.scaler = TextScaler.noScaling,
     required this.xs,
     required this.ys,
     required this.count,
@@ -174,18 +178,21 @@ class _ScopePainter extends CustomPainter {
       'L',
       Offset(cx - d - 10, cy - d - 10),
       Tokens.fgFaint,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
       'R',
       Offset(cx + d + 4, cy - d - 10),
       Tokens.fgFaint,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
       'M',
       Offset(cx + 4, cy - radius - 1),
       Tokens.fgFaint,
+      scaler: scaler,
     );
 
     // Scatter: newest points brightest. Draw as tiny dots.
@@ -242,21 +249,25 @@ class _ScopePainter extends CustomPainter {
       '−1',
       Offset(4, barTop + _barH - 8),
       Tokens.fgFaint,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
       enabled ? c.toStringAsFixed(2) : 'corr',
       Offset(mid - 9, barTop + _barH - 8),
       enabled ? fillColor : Tokens.fgFaint,
+      scaler: scaler,
     );
     paintChartLabel(
       canvas,
       '+1',
       Offset(size.width - 14, barTop + _barH - 8),
       Tokens.fgFaint,
+      scaler: scaler,
     );
   }
 
   @override
-  bool shouldRepaint(_ScopePainter old) => old.enabled != enabled;
+  bool shouldRepaint(_ScopePainter old) =>
+      old.enabled != enabled || old.scaler != scaler;
 }

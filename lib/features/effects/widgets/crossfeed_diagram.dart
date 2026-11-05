@@ -34,6 +34,7 @@ class CrossfeedDiagram extends StatelessWidget {
         child: CustomPaint(
           size: Size.infinite,
           painter: _CrossfeedPainter(
+            scaler: chartTextScaler(context),
             strength: strength,
             range: range,
             enabled: enabled,
@@ -45,11 +46,14 @@ class CrossfeedDiagram extends StatelessWidget {
 }
 
 class _CrossfeedPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final double strength;
   final double range;
   final bool enabled;
 
   _CrossfeedPainter({
+    this.scaler = TextScaler.noScaling,
     required this.strength,
     required this.range,
     required this.enabled,
@@ -124,9 +128,9 @@ class _CrossfeedPainter extends CustomPainter {
         label,
         at,
         enabled ? Tokens.fg : Tokens.fgFaint,
-        fontSize: 9.5,
         center: true,
         middle: true,
+        scaler: scaler,
       );
     }
 
@@ -139,13 +143,16 @@ class _CrossfeedPainter extends CustomPainter {
       'bleed ${(strength * 100).round()}%',
       Offset(cx, size.height - 14),
       enabled ? Tokens.fgDim : Tokens.fgFaint,
-      fontSize: 9.5,
       center: true,
       middle: true,
+      scaler: scaler,
     );
   }
 
   @override
   bool shouldRepaint(_CrossfeedPainter old) =>
-      old.strength != strength || old.range != range || old.enabled != enabled;
+      old.strength != strength ||
+      old.range != range ||
+      old.enabled != enabled ||
+      old.scaler != scaler;
 }

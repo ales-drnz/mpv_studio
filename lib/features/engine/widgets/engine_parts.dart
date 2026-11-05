@@ -76,7 +76,7 @@ class Spy extends StatelessWidget {
             height: 8,
             decoration: ShapeDecoration(
               shape: const CircleBorder(),
-              color: on ? lit : Tokens.surface4,
+              color: on ? lit : Tokens.trackOff,
             ),
           ),
           const SizedBox(width: Tokens.s8),
@@ -114,7 +114,7 @@ class PhasePill extends StatelessWidget {
         vertical: Tokens.s4,
       ),
       decoration: ShapeDecoration(
-        color: strong ? color.withValues(alpha: 0.16) : Tokens.surface3,
+        color: strong ? color.withValues(alpha: 0.12) : Tokens.surface3,
         shape: Tokens.pill,
       ),
       child: Text(
@@ -174,7 +174,10 @@ class ReadoutGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final perRow = (c.maxWidth / minCellWidth).floor().clamp(
+        // Cells widen with the reader's text, so "-11.2 LUFS" at 2x keeps
+        // its line instead of an ellipsis.
+        final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
+        final perRow = (c.maxWidth / (minCellWidth * scale)).floor().clamp(
           1,
           children.length,
         );
@@ -214,7 +217,7 @@ class ThinBar extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            ColoredBox(color: Tokens.surface4),
+            ColoredBox(color: Tokens.trackOff),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: fraction.clamp(0.0, 1.0),

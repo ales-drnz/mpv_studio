@@ -172,6 +172,7 @@ class _EqualizerState extends State<Equalizer> {
               child: CustomPaint(
                 size: size,
                 painter: _EqPainter(
+                  scaler: chartTextScaler(context),
                   bandsDb: widget.bandsDb,
                   active: _active,
                   enabled: widget.enabled,
@@ -187,12 +188,15 @@ class _EqualizerState extends State<Equalizer> {
 }
 
 class _EqPainter extends CustomPainter {
+  final TextScaler scaler;
+
   final Map<String, double> bandsDb;
   final int? active;
   final bool enabled;
   final Rect Function(Size) plot;
 
   _EqPainter({
+    this.scaler = TextScaler.noScaling,
     required this.bandsDb,
     required this.active,
     required this.enabled,
@@ -219,7 +223,7 @@ class _EqPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (final db in _gridDb) {
       final y = yOfDb(db);
-      gridPaint.color = db == 0 ? Tokens.line2 : Tokens.line;
+      gridPaint.color = db == 0 ? Tokens.lineRef : Tokens.line;
       canvas.drawLine(Offset(r.left, y), Offset(r.right, y), gridPaint);
       // dB scale label in the right gutter.
       paintChartLabel(
@@ -227,6 +231,7 @@ class _EqPainter extends CustomPainter {
         db == 0 ? '0' : '${db > 0 ? '+' : ''}${db.toInt()}',
         Offset(r.right + 4, y - 6),
         Tokens.fgFaint,
+        scaler: scaler,
       );
     }
 
@@ -295,6 +300,7 @@ class _EqPainter extends CustomPainter {
           Offset(p.dx, r.bottom + 3),
           isActive ? accent : Tokens.fgFaint,
           center: true,
+          scaler: scaler,
         );
       }
     }
@@ -327,7 +333,8 @@ class _EqPainter extends CustomPainter {
   bool shouldRepaint(_EqPainter old) =>
       old.active != active ||
       old.enabled != enabled ||
-      !_mapEq(old.bandsDb, bandsDb);
+      !_mapEq(old.bandsDb, bandsDb) ||
+      old.scaler != scaler;
 
   static bool _mapEq(Map<String, double> a, Map<String, double> b) {
     if (a.length != b.length) return false;
