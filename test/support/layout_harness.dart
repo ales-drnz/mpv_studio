@@ -106,12 +106,13 @@ Future<void> loadStudioFonts() async {
   await sans.load();
   // The app's bundled mono face, from the repository.
   final mono = FontLoader('Roboto Mono');
+  Future<ByteData> bundled(String file) async {
+    final bytes = await File('assets/fonts/$file').readAsBytes();
+    return ByteData.sublistView(bytes);
+  }
+
   for (final weight in ['Regular', 'Medium', 'Bold']) {
-    mono.addFont(
-      File(
-        'assets/fonts/RobotoMono-$weight.ttf',
-      ).readAsBytes().then(ByteData.sublistView),
-    );
+    mono.addFont(bundled('RobotoMono-$weight.ttf'));
   }
   await mono.load();
   final icons = FontLoader('MaterialIcons')
