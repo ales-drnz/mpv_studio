@@ -426,6 +426,29 @@ void main() {
       expect(find.text('No songs'), findsOneWidget);
     });
 
+    testWidgets('a server error is said in words, its cause on request', (
+      tester,
+    ) async {
+      final server = FakeServer(
+        connected: true,
+        fetchError: Exception('The server answered 500.'),
+      );
+      await pumpAt(
+        tester,
+        streamView(
+          player: StreamPlayer(),
+          jellyfin: server,
+          tab: StreamTab.jellyfin,
+        ),
+        '1440x900',
+      );
+      expect(find.text('Could not load the library'), findsOneWidget);
+      expect(find.textContaining('Exception'), findsNothing);
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('The server answered 500.'), findsOneWidget);
+    });
+
     testWidgets('an expired session returns to the sign-in form', (
       tester,
     ) async {

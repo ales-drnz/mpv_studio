@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/empty_state.dart';
 
-/// The widest a sign-in card or a state message gets: a comfortable form
-/// width, well under the narrowest medium window (`Breakpoints.medium`), so
-/// it reads as one column at every size.
-const double streamCardWidth = 440;
+/// The widest a sign-in card gets: the form width, under the narrowest
+/// medium window, so it reads as one column at every size.
+const double streamCardWidth = Breakpoints.form;
 
 /// A centred spinner with an optional [label], for a tab or list that is
 /// loading.
@@ -55,9 +55,10 @@ class StreamLoading extends StatelessWidget {
   }
 }
 
-/// A centred message for an empty or failed state: a glyph in a tonal
-/// circle, a title, an optional explanation and an optional action (Retry,
-/// Sign in again). A failure sets the explanation in red on a red tint.
+/// A centred message for an empty or failed state, the app's
+/// [EmptyState]: a glyph in a circle, a title, an optional explanation,
+/// an optional action (Retry, Sign in again) and, for a failure, its
+/// technical [details] on request.
 class StreamMessage extends StatelessWidget {
   const StreamMessage({
     super.key,
@@ -67,6 +68,7 @@ class StreamMessage extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.error = false,
+    this.details,
   });
 
   final IconData icon;
@@ -75,77 +77,26 @@ class StreamMessage extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  /// A failure: the glyph and the explanation in red.
+  /// A failure: the glyph in red, and a live region.
   final bool error;
+
+  /// What the failure was, in the system's words.
+  final String? details;
 
   @override
   Widget build(BuildContext context) {
-    final message = this.message;
-    return Center(
-      child: SingleChildScrollView(
-        // Centred, so as far from the top as from the page end.
-        padding: PageEnd.centred(
-          context,
-        ).copyWith(left: Tokens.s16, right: Tokens.s16),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: streamCardWidth),
-          child: Semantics(
-            liveRegion: error,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: ShapeDecoration(
-                    color: error
-                        ? Tokens.red.withValues(alpha: 0.14)
-                        : Tokens.surface3,
-                    shape: const CircleBorder(),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 28,
-                    color: error ? Tokens.red : Tokens.fgDim,
-                  ),
-                ),
-                const SizedBox(height: Tokens.s16),
-                Text(
-                  title,
-                  style: Tokens.heading.copyWith(fontSize: 20, height: 28 / 20),
-                  textAlign: TextAlign.center,
-                ),
-                if (message != null) ...[
-                  const SizedBox(height: Tokens.s8),
-                  if (error)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(Tokens.s12),
-                      decoration: ShapeDecoration(
-                        color: Tokens.red.withValues(alpha: 0.14),
-                        shape: Tokens.shape(Tokens.rMd),
-                      ),
-                      child: Text(
-                        message,
-                        style: Tokens.body.copyWith(color: Tokens.red),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  else
-                    Text(
-                      message,
-                      style: Tokens.body.copyWith(color: Tokens.fgDim),
-                      textAlign: TextAlign.center,
-                    ),
-                ],
-                if (actionLabel != null && onAction != null) ...[
-                  const SizedBox(height: Tokens.s24),
-                  StreamButton(label: actionLabel!, onPressed: onAction),
-                ],
-              ],
-            ),
-          ),
-        ),
+    return Semantics(
+      liveRegion: error,
+      child: EmptyState(
+        icon: icon,
+        title: title,
+        message: message,
+        tone: error ? EmptyTone.error : EmptyTone.neutral,
+        details: details,
+        actions: [
+          if (actionLabel != null && onAction != null)
+            StreamButton(label: actionLabel!, onPressed: onAction),
+        ],
       ),
     );
   }

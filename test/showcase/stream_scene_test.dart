@@ -145,7 +145,7 @@ void main() {
     await scene.moveOnto(find.text('Opus').last);
     await scene.click();
     await scene.wait(280);
-    await scene.moveOnto(find.text('160 kbps').last);
+    await scene.moveOnto(find.text('160').last);
     await scene.click();
     await scene.wait(350);
     await scene.moveOnto(find.text('Done').last);

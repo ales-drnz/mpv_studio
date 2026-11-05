@@ -222,7 +222,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       title: kind == FailureKind.network
           ? '${_server.name} is not reachable'
           : 'Could not load the library',
-      message: describeFailure(kind, cause),
+      message: kind == FailureKind.other
+          ? 'The server could not answer. Try again in a moment.'
+          : describeFailure(kind, cause),
+      details: kind == FailureKind.other ? failureDetail(cause) : null,
       actionLabel: kind == FailureKind.auth ? 'Sign in again' : 'Retry',
       onAction: kind == FailureKind.auth ? widget.onSessionExpired : retry,
     );
