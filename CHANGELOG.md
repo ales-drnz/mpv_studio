@@ -1,3 +1,43 @@
+## [0.4.2] - 5-11-2026
+
+### All platforms
+**Added**
+- A Live PCM tab in Stream plays test signals made in Dart through `openPcmStream`: a sine, a sweep, pink noise or pulses.
+- A Speed and pitch dialog from the speed menu, with the pitch in semitones.
+- The spectrum on Playback names itself, marks 100 Hz, 1 kHz and 10 kHz, and opens its own settings.
+- The waveform marks what the cache holds on a network source.
+- Each effect slider says whether a change applies live or rebuilds the filter.
+- A banner when no audio device opens and the sound plays on the null output, with a button to reopen the output.
+- A stream cut by its connection shows as cut short in the queue and in Engine.
+- The Lab radios reconnect when their connection drops, and the HTTP options add Reconnect and Fail fast.
+- A focus ring shows the control the keyboard is on.
+
+**Changed**
+- One scale for spacing, icons, type and motion across the app, and Roboto Mono for figures and the log.
+- Frequency, time and ratio sliders use a log scale, as do speed and pitch, and the arrow keys step by round values.
+- The desktop mini-player sits under the page, next to the sidebar.
+- Stream libraries use the whole width: the album grid fills the page until an album opens.
+- Empty and error states share one design, with the technical cause under Details.
+- Queue labels its actions when there is room and folds the rest into a menu.
+- Engine shows the position in one unit over a bar, and its flags as named states.
+- The Stream tabs come in two groups, tools and sources, and the account sits in a button with a menu.
+- With reduced motion on in the system, the app does not animate.
+- Large text no longer clips the mini-player, the A-B pill, the queue details or the chart labels.
+
+**Fixed**
+- The Console error badge is readable and says its count to screen readers.
+- With Cover art on, an image in the file's folder shows as the cover.
+- Slider tracks, switches that are off and the reference lines of the charts stand out from their background.
+
+### Web
+**Added**
+- A browser that cannot run the engine says why, instead of offering to try again.
+- A note while the browser holds the sound until a click or a key.
+- The Lab radios ask for their titles across origins.
+
+**Changed**
+- Settings leave out what the browser decides: TLS, certificates, proxies and cookies, the driver, passthrough and folders.
+
 ## [0.4.1] - 5-11-2026
 
 ### All platforms
