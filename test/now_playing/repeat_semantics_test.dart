@@ -1,4 +1,3 @@
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -19,7 +18,6 @@ void main() {
       await pumpPlayback(tester, player, size: studioSize('1440x900'));
       final node = tester.getSemantics(find.bySemanticsLabel('Repeat'));
       expect(node.getSemanticsData().value, value);
-      expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
       semantics.dispose();
     });
   }

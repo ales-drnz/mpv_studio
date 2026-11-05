@@ -12,6 +12,7 @@ import '../../../util/reactive.dart';
 import '../playback_scope.dart';
 import '../transport_actions.dart';
 import 'info_sheet.dart';
+import 'speed_pitch.dart';
 
 /// The full transport: previous, back 10 s, play and pause, forward 10 s
 /// and next, over a row of modes (shuffle, stop, repeat, undo seek, speed
@@ -338,6 +339,9 @@ class _SpeedButton extends StatelessWidget {
 
   static const _speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
+  /// The menu's last item: the dialog with the free speed and the pitch.
+  static const double _speedAndPitch = -1;
+
   Future<void> _pick(BuildContext context, double current) async {
     final box = context.findRenderObject() as RenderBox?;
     final at = box?.localToGlobal(box.size.bottomLeft(Offset.zero));
@@ -352,9 +356,19 @@ class _SpeedButton extends StatelessWidget {
             label: s == current ? '${formatRate(s)} (current)' : formatRate(s),
             icon: s == current ? Icons.check_rounded : Icons.speed_rounded,
           ),
+        const StudioMenuItem(
+          value: _speedAndPitch,
+          label: 'Speed and pitch',
+          icon: Icons.tune_rounded,
+        ),
       ],
     );
-    if (picked != null) await guard(() => player.setRate(picked));
+    if (picked == null || !context.mounted) return;
+    if (picked == _speedAndPitch) {
+      await showSpeedAndPitch(context, player, guard);
+    } else {
+      await guard(() => player.setRate(picked));
+    }
   }
 
   @override

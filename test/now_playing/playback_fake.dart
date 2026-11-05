@@ -64,6 +64,18 @@ class PlaybackFake extends FakePlayer {
   }
 
   @override
+  Future<void> setPitch(double pitch) async {
+    calls.add('setPitch ${pitch.toStringAsFixed(4)}');
+    emit((s) => s.copyWith(pitch: pitch));
+  }
+
+  @override
+  Future<void> setPitchCorrection(bool enable) async {
+    calls.add('setPitchCorrection $enable');
+    emit((s) => s.copyWith(pitchCorrection: enable));
+  }
+
+  @override
   Future<void> setVolume(double volume) async {
     calls.add('setVolume ${volume.round()}');
     emit((s) => s.copyWith(volume: volume));
@@ -99,6 +111,10 @@ class PlaybackFakeStream extends FakePlayerStream {
   Stream<bool> get shuffle => _s((s) => s.shuffle);
   @override
   Stream<Loop> get loop => _s((s) => s.loop);
+  @override
+  Stream<double> get pitch => _s((s) => s.pitch);
+  @override
+  Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
   @override
   Stream<Duration?> get abLoopA => _s((s) => s.abLoopA);
   @override
