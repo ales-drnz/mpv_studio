@@ -34,6 +34,17 @@ abstract final class Breakpoints {
   /// The maximum width of dense content such as tables and racks.
   static const double wide = 1400;
 
+  /// An available page width from which a page puts three columns side by
+  /// side (a list and two of content, or two and a panel), each of a
+  /// readable width, instead of stretching two.
+  static const double threeColumns = 1600;
+
+  /// The maximum width of a page in three columns.
+  static const double full = 2200;
+
+  /// The narrowest column of cards worth a second column beside it.
+  static const double cardColumn = 520;
+
   /// The width of a dialog, an info sheet on a wide window, a centred
   /// empty state card.
   static const double dialog = 560;
