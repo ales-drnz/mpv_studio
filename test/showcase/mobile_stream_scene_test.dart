@@ -75,6 +75,9 @@ void main() {
     await scene.wait(800);
 
     // Jellyfin's albums; one opens over the grid.
+    // Past Live PCM the source tabs start off screen on a phone.
+    await tester.ensureVisible(find.text('Jellyfin').first);
+    await tester.pump();
     await scene.tapOn(find.text('Jellyfin').first);
     await scene.wait(700);
     await scene.settleImages();

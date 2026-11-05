@@ -9,6 +9,7 @@ import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../source_failure.dart';
 import '../stream_actions.dart';
+import '../widgets/account_button.dart';
 import '../widgets/reference_list.dart';
 import '../widgets/stream_form.dart';
 import '../widgets/stream_row.dart';
@@ -344,7 +345,7 @@ class _SambaTabState extends State<SambaTab> {
                 children: [
                   Icon(
                     Icons.folder_open_rounded,
-                    size: 20,
+                    size: Tokens.iconMd,
                     color: Tokens.fgDim,
                   ),
                   const SizedBox(width: Tokens.s8),
@@ -361,10 +362,11 @@ class _SambaTabState extends State<SambaTab> {
             ),
           ),
           const SizedBox(width: Tokens.s8),
-          RowButton(
-            icon: Icons.logout_rounded,
-            tooltip: 'Disconnect from the share',
-            onPressed: _disconnect,
+          AccountButton(
+            label: _login?.host ?? 'Samba',
+            icon: Icons.dns_outlined,
+            action: 'Disconnect from the share',
+            onAction: _disconnect,
           ),
         ],
       ),

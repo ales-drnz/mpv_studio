@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 /// One streamable reference URL.
 class StreamItem {
   final String label;
   final String url;
-  const StreamItem({required this.label, required this.url});
+
+  /// A live radio: it has no end, and reopens when its connection drops.
+  final bool live;
+  const StreamItem({required this.label, required this.url, this.live = false});
 }
 
 /// A named group of [StreamItem]s.
@@ -23,14 +27,17 @@ const labStreams = <StreamCategory>[
       StreamItem(
         label: 'MP3 128k Stereo (standard)',
         url: 'https://streams.radiomast.io/ref-128k-mp3-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'MP3 128k Stereo (with preroll)',
         url: 'https://streams.radiomast.io/ref-128k-mp3-stereo-preroll',
+        live: true,
       ),
       StreamItem(
         label: 'MP3 32k Mono (low-bandwidth)',
         url: 'https://streams.radiomast.io/ref-32k-mp3-mono',
+        live: true,
       ),
     ],
   ),
@@ -40,18 +47,22 @@ const labStreams = <StreamCategory>[
       StreamItem(
         label: 'AAC-LC 128k Stereo',
         url: 'https://streams.radiomast.io/ref-128k-aaclc-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'HE-AAC v1 64k Stereo (SBR)',
         url: 'https://streams.radiomast.io/ref-64k-heaacv1-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'HE-AAC v2 64k Stereo (SBR+PS)',
         url: 'https://streams.radiomast.io/ref-64k-heaacv2-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'HE-AAC v1 24k Mono',
         url: 'https://streams.radiomast.io/ref-24k-heaacv1-mono',
+        live: true,
       ),
     ],
   ),
@@ -61,10 +72,12 @@ const labStreams = <StreamCategory>[
       StreamItem(
         label: 'Ogg Vorbis 64k Stereo',
         url: 'https://streams.radiomast.io/ref-64k-ogg-vorbis-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'Ogg Opus 64k Stereo',
         url: 'https://streams.radiomast.io/ref-64k-ogg-opus-stereo',
+        live: true,
       ),
     ],
   ),
@@ -74,10 +87,12 @@ const labStreams = <StreamCategory>[
       StreamItem(
         label: 'Ogg FLAC (16-bit lossless)',
         url: 'https://streams.radiomast.io/ref-lossless-ogg-flac-stereo',
+        live: true,
       ),
       StreamItem(
         label: 'Radio Paradise (main mix FLAC)',
         url: 'http://stream.radioparadise.com/flacm',
+        live: true,
       ),
     ],
   ),
@@ -127,6 +142,13 @@ const chapterStreams = <StreamCategory>[
 ];
 
 /// [item] as a queue entry. No artist: the stream's own tags fill it in
-/// once it loads.
-Media streamMedia(StreamItem item) =>
-    Media(item.url, extras: {'title': item.label});
+/// once it loads. A live radio reopens when its connection drops
+/// (`reconnect_streamed`) and, in a browser, asks for its ICY titles
+/// across origins (`icy_cross_origin`).
+Media streamMedia(StreamItem item) => Media(
+  item.url,
+  extras: {'title': item.label},
+  streamLavfOptions: item.live
+      ? {'reconnect_streamed': '1', if (kIsWeb) 'icy_cross_origin': '1'}
+      : null,
+);

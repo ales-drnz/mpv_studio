@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/stream/library/album_views.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/stream/http_options.dart';
 import 'package:mpv_studio/features/stream/lab_tab.dart';
@@ -425,6 +426,29 @@ void main() {
       expect(find.text('No songs'), findsOneWidget);
     });
 
+    testWidgets('a server error is said in words, its cause on request', (
+      tester,
+    ) async {
+      final server = FakeServer(
+        connected: true,
+        fetchError: Exception('The server answered 500.'),
+      );
+      await pumpAt(
+        tester,
+        streamView(
+          player: StreamPlayer(),
+          jellyfin: server,
+          tab: StreamTab.jellyfin,
+        ),
+        '1440x900',
+      );
+      expect(find.text('Could not load the library'), findsOneWidget);
+      expect(find.textContaining('Exception'), findsNothing);
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('The server answered 500.'), findsOneWidget);
+    });
+
     testWidgets('an expired session returns to the sign-in form', (
       tester,
     ) async {
@@ -456,12 +480,42 @@ void main() {
       tab: StreamTab.jellyfin,
     );
 
+    testWidgets('the grid takes the page until an album opens', (tester) async {
+      await pumpAt(tester, albums(StreamPlayer()), '1440x900');
+      await tester.tap(find.text('Albums'));
+      await tester.pumpAndSettle();
+      // No placeholder pane beside a narrow grid: the grid is the page.
+      expect(find.text('Pick an album'), findsNothing);
+      final grid = tester.getRect(find.byType(AlbumGrid));
+      expect(grid.width, greaterThan(1000));
+      await tester.tap(find.text('Dawn'));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.byType(AlbumGrid)).width, lessThan(500));
+    });
+
+    testWidgets('the account button signs out', (tester) async {
+      final server = FakeServer(connected: true, albums: const [_album]);
+      await pumpAt(
+        tester,
+        streamView(
+          player: StreamPlayer(),
+          jellyfin: server,
+          tab: StreamTab.jellyfin,
+        ),
+        '1440x900',
+      );
+      await tester.tap(find.byTooltip('Jellyfin account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign out of Jellyfin'));
+      await tester.pumpAndSettle();
+      expect(server.log, contains('logout'));
+    });
+
     testWidgets('albums open beside the grid on a wide window', (tester) async {
       final player = StreamPlayer();
       await pumpAt(tester, albums(player), '1440x900');
       await tester.tap(find.text('Albums'));
       await tester.pumpAndSettle();
-      expect(find.text('Pick an album'), findsOneWidget);
       await tester.tap(find.text('Dawn'));
       await tester.pumpAndSettle();
       expect(find.text('Second wind'), findsOneWidget);

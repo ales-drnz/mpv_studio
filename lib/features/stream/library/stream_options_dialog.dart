@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/controls.dart';
 import '../media_server.dart';
 import '../widgets/choice_row.dart';
 
@@ -74,11 +75,15 @@ class _StreamOptionsFormState extends State<_StreamOptionsForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ChoiceRow<PlaybackMode>(
+        _Labelled(
           label: 'Mode',
-          selected: _o.mode,
-          choices: [for (final m in PlaybackMode.values) Choice(m, m.label)],
-          onSelected: (m) => _set(_o.copyWith(mode: m)),
+          child: SegmentedControl<PlaybackMode>(
+            options: [
+              for (final m in PlaybackMode.values) SegmentOption(m, m.label),
+            ],
+            selected: _o.mode,
+            onSelect: (m) => _set(_o.copyWith(mode: m)),
+          ),
         ),
         const SizedBox(height: Tokens.s4),
         Text(
@@ -89,20 +94,30 @@ class _StreamOptionsFormState extends State<_StreamOptionsForm> {
         ),
         if (_o.transcodes) ...[
           gap,
-          ChoiceRow<TranscodeCodec>(
+          _Labelled(
             label: 'Codec',
-            selected: _o.codec,
-            choices: [
-              for (final c in TranscodeCodec.values) Choice(c, c.label),
-            ],
-            onSelected: (c) => _set(_o.copyWith(codec: c)),
+            child: SegmentedControl<TranscodeCodec>(
+              options: [
+                for (final c in TranscodeCodec.values)
+                  SegmentOption(c, c.label),
+              ],
+              selected: _o.codec,
+              onSelect: (c) => _set(_o.copyWith(codec: c)),
+            ),
           ),
           gap,
-          ChoiceRow<int>(
-            label: 'Bitrate',
-            selected: _o.bitrateKbps,
-            choices: [for (final b in transcodeBitrates) Choice(b, '$b kbps')],
-            onSelected: (b) => _set(_o.copyWith(bitrateKbps: b)),
+          // Six short values in one pill: they no longer wrap and leave
+          // one alone on a second line.
+          _Labelled(
+            label: 'Bitrate, kbps',
+            child: SegmentedControl<int>(
+              options: [
+                for (final b in transcodeBitrates)
+                  SegmentOption(b, '$b', tooltip: '$b kbps'),
+              ],
+              selected: _o.bitrateKbps,
+              onSelect: (b) => _set(_o.copyWith(bitrateKbps: b)),
+            ),
           ),
           gap,
           ChoiceRow<StreamProtocol>(
@@ -142,4 +157,22 @@ class _StreamOptionsFormState extends State<_StreamOptionsForm> {
       ],
     );
   }
+}
+
+/// A control under its label, as a [ChoiceRow] lays out its pills.
+class _Labelled extends StatelessWidget {
+  const _Labelled({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: Tokens.body.copyWith(fontWeight: FontWeight.w500)),
+      const SizedBox(height: Tokens.s8),
+      child,
+    ],
+  );
 }

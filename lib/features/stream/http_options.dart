@@ -27,6 +27,8 @@ class HttpOptions {
     this.headers = const [],
     this.userAgent = '',
     this.chunkSize,
+    this.reconnect = false,
+    this.failFast = false,
   });
 
   /// The headers in the order entered; rows with an empty name are ignored.
@@ -38,6 +40,24 @@ class HttpOptions {
   /// The largest HTTP range request in bytes; null for one open-ended
   /// request.
   final int? chunkSize;
+
+  /// Reopens a live stream when its connection drops
+  /// (`reconnect_streamed`); for live streams only, as a file from a
+  /// server without ranges would start over.
+  final bool reconnect;
+
+  /// Fails at once on an unreachable server instead of retrying
+  /// (`reconnect_on_network_error=0`).
+  final bool failFast;
+
+  /// The stream options as [Media.streamLavfOptions]; null when none.
+  Map<String, String>? get streamLavfOptions {
+    final out = {
+      if (reconnect) 'reconnect_streamed': '1',
+      if (failFast) 'reconnect_on_network_error': '0',
+    };
+    return out.isEmpty ? null : out;
+  }
 
   /// The chunk sizes offered, in bytes.
   static const chunkSizes = [1 << 20, 4 << 20, 8 << 20, 16 << 20];
@@ -61,7 +81,11 @@ class HttpOptions {
   }
 
   /// How many options are set, for the collapsed section's badge.
-  int get count => (httpHeaders?.length ?? 0) + (chunkSize == null ? 0 : 1);
+  int get count =>
+      (httpHeaders?.length ?? 0) +
+      (chunkSize == null ? 0 : 1) +
+      (reconnect ? 1 : 0) +
+      (failFast ? 1 : 0);
 
   /// The first problem that would make the player refuse these options, or
   /// null when they are fine.
@@ -90,16 +114,21 @@ class HttpOptions {
     extras: extras,
     httpHeaders: httpHeaders,
     httpChunkSize: chunkSize,
+    streamLavfOptions: streamLavfOptions,
   );
 
   HttpOptions copyWith({
     List<HttpHeader>? headers,
     String? userAgent,
     int? Function()? chunkSize,
+    bool? reconnect,
+    bool? failFast,
   }) => HttpOptions(
     headers: headers ?? this.headers,
     userAgent: userAgent ?? this.userAgent,
     chunkSize: chunkSize == null ? this.chunkSize : chunkSize(),
+    reconnect: reconnect ?? this.reconnect,
+    failFast: failFast ?? this.failFast,
   );
 
   static bool _isUserAgent(String name) => name.toLowerCase() == 'user-agent';
@@ -109,11 +138,18 @@ class HttpOptions {
       other is HttpOptions &&
       listEquals(other.headers, headers) &&
       other.userAgent == userAgent &&
-      other.chunkSize == chunkSize;
+      other.chunkSize == chunkSize &&
+      other.reconnect == reconnect &&
+      other.failFast == failFast;
 
   @override
-  int get hashCode =>
-      Object.hash(Object.hashAll(headers), userAgent, chunkSize);
+  int get hashCode => Object.hash(
+    Object.hashAll(headers),
+    userAgent,
+    chunkSize,
+    reconnect,
+    failFast,
+  );
 }
 
 final _token = RegExp(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$");

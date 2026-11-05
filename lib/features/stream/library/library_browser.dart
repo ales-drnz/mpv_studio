@@ -9,6 +9,7 @@ import '../../../ui/widgets/controls.dart';
 import '../favorites_controller.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
+import '../widgets/account_button.dart';
 import '../widgets/reference_list.dart';
 import '../widgets/stream_row.dart';
 import '../widgets/stream_states.dart';
@@ -221,7 +222,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       title: kind == FailureKind.network
           ? '${_server.name} is not reachable'
           : 'Could not load the library',
-      message: describeFailure(kind, cause),
+      message: kind == FailureKind.other
+          ? 'The server could not answer. Try again in a moment.'
+          : describeFailure(kind, cause),
+      details: kind == FailureKind.other ? failureDetail(cause) : null,
       actionLabel: kind == FailureKind.auth ? 'Sign in again' : 'Retry',
       onAction: kind == FailureKind.auth ? widget.onSessionExpired : retry,
     );
@@ -277,10 +281,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                 ),
               ),
               const SizedBox(width: Tokens.s8),
-              RowButton(
-                icon: Icons.logout_rounded,
-                tooltip: 'Sign out of ${_server.name}',
-                onPressed: widget.onSignOut,
+              AccountButton(
+                label: _server.name,
+                action: 'Sign out of ${_server.name}',
+                onAction: widget.onSignOut,
               ),
             ],
           ),
@@ -372,9 +376,18 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
     final album = active ? _openAlbum : null;
     return LayoutBuilder(
       builder: (context, c) {
-        final split = TwoPane.splitsAt(c.maxWidth);
+        // The grid takes the page until an album opens; then the album
+        // opens beside a narrower grid, which keeps its scroll.
+        final listWidth = album == null
+            ? c.maxWidth
+            : TwoPane.listWidthFor(c.maxWidth);
+        final split = TwoPane.splitsAt(
+          c.maxWidth,
+          listWidth: TwoPane.listWidthFor(c.maxWidth),
+        );
         void close() => setState(() => _openAlbum = null);
         return TwoPane(
+          listWidth: listWidth,
           list: AlbumGrid(
             paging: _albums,
             selected: split ? album : null,
@@ -399,11 +412,6 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                   ),
                 ),
           onCloseDetail: close,
-          placeholder: const StreamMessage(
-            icon: Icons.album_outlined,
-            title: 'Pick an album',
-            message: 'Its tracks show here.',
-          ),
         );
       },
     );

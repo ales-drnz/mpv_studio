@@ -106,7 +106,6 @@ class _ChoicePill<T> extends StatelessWidget {
                 choice.label,
                 maxLines: 1,
                 style: Tokens.label.copyWith(
-                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: !enabled
                       ? Tokens.fgFaint

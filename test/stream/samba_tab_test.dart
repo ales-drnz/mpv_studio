@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/features/stream/widgets/account_button.dart';
 import 'package:mpv_studio/features/stream/samba/samba_login_store.dart';
 import 'package:mpv_studio/features/stream/samba/samba_share.dart';
 import 'package:mpv_studio/features/stream/samba/samba_tab.dart';
@@ -55,7 +56,9 @@ void main() {
     final share = await pumpSaved(tester);
     expect(find.text('Jazz'), findsOneWidget);
     share.disconnectError = Exception('connection reset');
-    await tester.tap(find.byTooltip('Disconnect from the share'));
+    await tester.tap(find.byType(AccountButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Disconnect from the share'));
     await tester.pumpAndSettle();
     expect(share.disconnected, isTrue);
     expect(find.text('Connect to Samba'), findsOneWidget);

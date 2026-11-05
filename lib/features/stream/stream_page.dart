@@ -4,11 +4,13 @@ import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/controls.dart';
+import '../../ui/widgets/focus_ring.dart';
 import 'chapters_tab.dart';
 import 'favorites_controller.dart';
 import 'lab_tab.dart';
 import 'library/server_library_tab.dart';
 import 'media_server.dart';
+import 'pcm_tab.dart';
 import 'resolver_tab.dart';
 import 'samba/samba_tab.dart'
     if (dart.library.js_interop) 'samba/samba_tab_web.dart';
@@ -22,12 +24,17 @@ enum StreamTab {
   lab('Lab'),
   chapters('Chapters'),
   resolver('Resolver'),
+  pcm('Live PCM'),
   jellyfin('Jellyfin'),
   plex('Plex'),
   samba('Samba');
 
   final String label;
   const StreamTab(this.label);
+
+  /// Whether it browses a source (a server, a share), as opposed to the
+  /// tools that show what the engine does with a stream.
+  bool get isSource => this == jellyfin || this == plex || this == samba;
 
   /// The tab called [name] (`lab`, `plex`...), or null for anything else.
   static StreamTab? byName(String? name) {
@@ -42,7 +49,8 @@ enum StreamTab {
 /// reference streams and any URL with its own HTTP options; **Chapters**
 /// streams with embedded chapters; **Resolver** shows a source resolver
 /// renewing links that expire; **Jellyfin** and **Plex** sign in to a
-/// server and browse its songs and albums; **Samba** walks an SMB share.
+/// server and browse its songs and albums; **Samba** walks an SMB share;
+/// **Live PCM** plays samples made in Dart as they are made.
 ///
 /// Reads the player, the servers and the favourites from the app's
 /// [PlayerScope]; [StreamView] is the page itself.
@@ -151,6 +159,7 @@ class _StreamViewState extends State<StreamView> {
       hasGlobalUserAgent: widget.hasGlobalUserAgent,
     ),
     StreamTab.chapters => ChaptersTab(actions: widget.actions),
+    StreamTab.pcm => PcmTab(actions: widget.actions),
     StreamTab.resolver => ResolverTab(
       actions: widget.actions,
       resolver: widget.resolver,
@@ -176,6 +185,8 @@ class _StreamViewState extends State<StreamView> {
     return PageFrame(
       title: 'Stream',
       scrollable: false,
+      // Libraries are dense: a grid of covers, an album beside it.
+      maxWidth: Breakpoints.wide,
       // The tabs scroll themselves, each with the gutter at its sides and
       // under its last item; the header and the tab row share it.
       padding: layout.pagePadding.copyWith(top: 0),
@@ -205,8 +216,10 @@ class _StreamViewState extends State<StreamView> {
 }
 
 /// The Stream page's tabs: a row of pills, the selected one in the
-/// accent. It scrolls sideways when the window is too narrow for all of
-/// them, and brings the selected pill into view.
+/// accent, in two groups: the tools that show what the engine does with
+/// a stream, then the sources to browse, past a rule. It scrolls sideways
+/// when the window is too narrow for all of them, and brings the selected
+/// pill into view.
 class StreamTabRow extends StatefulWidget {
   const StreamTabRow({
     super.key,
@@ -245,7 +258,9 @@ class _StreamTabRowState extends State<StreamTabRow> {
       Scrollable.ensureVisible(
         pill,
         alignment: 0.5,
-        duration: animate ? const Duration(milliseconds: 220) : Duration.zero,
+        duration: animate
+            ? Tokens.motion(context, Tokens.motionMedium)
+            : Duration.zero,
         curve: Curves.easeOutCubic,
       );
     });
@@ -262,7 +277,10 @@ class _StreamTabRowState extends State<StreamTabRow> {
           child: Row(
             children: [
               for (final t in StreamTab.values) ...[
-                if (t.index > 0) const SizedBox(width: Tokens.s8),
+                if (t.isSource && !StreamTab.values[t.index - 1].isSource)
+                  const _GroupRule()
+                else if (t.index > 0)
+                  const SizedBox(width: Tokens.s8),
                 _TabPill(
                   key: _keys[t],
                   label: t.label,
@@ -299,27 +317,30 @@ class _TabPill extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       onTap: onTap,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: Tokens.pill,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            height: controlHeightOf(context),
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-            alignment: Alignment.center,
-            decoration: ShapeDecoration(
-              color: selected ? Tokens.accent : Tokens.surface,
-              shape: Tokens.pill,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              style: Tokens.body.copyWith(
-                fontWeight: FontWeight.w600,
-                color: selected ? Tokens.onAccent : Tokens.fgDim,
+      child: FocusRing(
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: Tokens.pill,
+            child: AnimatedContainer(
+              duration: Tokens.motion(context, Tokens.motionMedium),
+              curve: Curves.easeOutCubic,
+              // At least a control tall; large text grows it.
+              constraints: BoxConstraints(minHeight: controlHeightOf(context)),
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                color: selected ? Tokens.accent : Tokens.surface,
+                shape: Tokens.pill,
+              ),
+              child: Text(
+                label,
+                maxLines: 1,
+                style: Tokens.body.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Tokens.onAccent : Tokens.fgDim,
+                ),
               ),
             ),
           ),
@@ -327,4 +348,19 @@ class _TabPill extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The rule between the tool tabs and the source tabs.
+class _GroupRule extends StatelessWidget {
+  const _GroupRule();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: Tokens.s12),
+    child: SizedBox(
+      width: 1,
+      height: Tokens.s24,
+      child: ColoredBox(color: Tokens.lineRef),
+    ),
+  );
 }

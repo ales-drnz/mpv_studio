@@ -44,6 +44,9 @@ String describeFailure(
   FailureKind.other => 'Something went wrong: ${_detail(error)}',
 };
 
+/// The system's own words for [error], for the details of a failure.
+String failureDetail(Object error) => _detail(error);
+
 String _detail(Object error) {
   final text = switch (error) {
     StateError(:final message) => message,
