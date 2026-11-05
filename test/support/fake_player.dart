@@ -146,6 +146,8 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<CoverArt?> get coverArt => _s((s) => s.coverArt);
   @override
+  Stream<List<MpvTrack>> get tracks => _s((s) => s.tracks);
+  @override
   Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
   @override
   Stream<MpvPlaybackState> get playbackState =>
