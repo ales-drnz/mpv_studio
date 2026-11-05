@@ -99,13 +99,21 @@ Future<void> loadStudioFonts() async {
     'Roboto-Bold.ttf',
     'Roboto-Light.ttf',
   ];
-  for (final family in ['Roboto', 'monospace']) {
-    final loader = FontLoader(family);
-    for (final file in roboto) {
-      loader.addFont(read(file));
-    }
-    await loader.load();
+  final sans = FontLoader('Roboto');
+  for (final file in roboto) {
+    sans.addFont(read(file));
   }
+  await sans.load();
+  // The app's bundled mono face, from the repository.
+  final mono = FontLoader('Roboto Mono');
+  for (final weight in ['Regular', 'Medium', 'Bold']) {
+    mono.addFont(
+      File('assets/fonts/RobotoMono-$weight.ttf')
+          .readAsBytes()
+          .then(ByteData.sublistView),
+    );
+  }
+  await mono.load();
   final icons = FontLoader('MaterialIcons')
     ..addFont(read('MaterialIcons-Regular.otf'));
   await icons.load();

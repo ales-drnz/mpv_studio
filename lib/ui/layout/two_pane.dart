@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'layout_scope.dart';
+import 'window_class.dart';
 import '../widgets/section_switcher.dart';
 
 /// A list and its detail: side by side when there is room, one at a time
@@ -45,6 +46,15 @@ class TwoPane extends StatefulWidget {
 
   /// The narrowest detail worth splitting for.
   final double minDetailWidth;
+
+  /// A list width that grows with the room: 340 up to 1100, 400 up to
+  /// 1400, 440 beyond, so a wide window does not truncate the list while
+  /// the detail gets a thousand pixels.
+  static double listWidthFor(double width) => width < 1100
+      ? 340
+      : width < Breakpoints.wide
+      ? 400
+      : 440;
 
   /// Whether a [TwoPane] with these widths splits in [width].
   static bool splitsAt(

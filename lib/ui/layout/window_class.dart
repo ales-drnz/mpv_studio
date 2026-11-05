@@ -33,6 +33,13 @@ abstract final class Breakpoints {
 
   /// The maximum width of dense content such as tables and racks.
   static const double wide = 1400;
+
+  /// The width of a dialog, an info sheet on a wide window, a centred
+  /// empty state card.
+  static const double dialog = 560;
+
+  /// The width of a form: a sign-in card, a short settings form.
+  static const double form = 440;
 }
 
 /// The window width, in five classes.

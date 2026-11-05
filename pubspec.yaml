@@ -49,6 +49,16 @@ flutter:
   uses-material-design: true
   assets:
     - assets/models/
+  # Roboto Mono (Apache License 2.0): the log, readouts and figures line up
+  # on every platform, where 'monospace' falls back to a proportional face.
+  fonts:
+    - family: Roboto Mono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Regular.ttf
+        - asset: assets/fonts/RobotoMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/RobotoMono-Bold.ttf
+          weight: 700
 
 # App icons. Run `python3 tool/app_icons.py` first: it derives the sources
 # under assets/icon/ from the logo, plus the Windows .ico (every size) and

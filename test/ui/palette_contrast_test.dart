@@ -38,6 +38,17 @@ void main() {
         expect(contrast(p.bg, p.surface2), greaterThanOrEqualTo(1.15));
       });
 
+      test('tracks off and reference lines read at 3:1', () {
+        for (final c in [p.trackOff, p.lineRef]) {
+          expect(contrast(c, p.surface), greaterThanOrEqualTo(3));
+          expect(contrast(c, p.bg), greaterThanOrEqualTo(3));
+        }
+      });
+
+      test('a badge number reads on the red', () {
+        expect(contrast(p.onAccent, p.red), greaterThanOrEqualTo(4.5));
+      });
+
       test('hints read on fields', () {
         expect(contrast(p.fgFaint, p.surface3), greaterThanOrEqualTo(4.5));
         expect(contrast(p.onTonal, p.tonal), greaterThanOrEqualTo(4.5));

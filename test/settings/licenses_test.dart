@@ -37,13 +37,18 @@ void main() {
     expect(find.text('libmpv'), findsWidgets);
   });
 
-  test('the libsmb2 of dart_smb2 says where its source is', () async {
+  test('the bundled libsmb2 and Roboto Mono carry their licenses', () async {
     registerAppLicenses();
     final entries = await LicenseRegistry.licenses.toList();
-    final entry = entries.singleWhere((e) => e.packages.contains('libsmb2'));
-    final text = entry.paragraphs.map((p) => p.text).join(' ');
-    expect(text, contains('GNU Lesser General Public License'));
-    expect(text, contains('https://github.com/ales-drnz/libsmb2-scripts'));
+    String textOf(String package) => entries
+        .singleWhere((e) => e.packages.contains(package))
+        .paragraphs
+        .map((p) => p.text)
+        .join(' ');
+    final smb = textOf('libsmb2');
+    expect(smb, contains('GNU Lesser General Public License'));
+    expect(smb, contains('https://github.com/ales-drnz/libsmb2-scripts'));
+    expect(textOf('Roboto Mono'), contains('Apache License, Version 2.0'));
   });
 
   test('search finds the licenses', () {

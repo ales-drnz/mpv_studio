@@ -33,6 +33,13 @@ class Tokens {
   static Color get line => Palette.active.line;
   static Color get line2 => Palette.active.line2;
 
+  /// A reference line inside a chart (0 dB, unity), 3:1 on the card.
+  static Color get lineRef => Palette.active.lineRef;
+
+  /// The inactive part of a track (slider, switch off, a dot that reads
+  /// "no"), 3:1 on the card.
+  static Color get trackOff => Palette.active.trackOff;
+
   // Text.
   static Color get fg => Palette.active.fg;
   static Color get fgDim => Palette.active.fgDim;
@@ -88,6 +95,51 @@ class Tokens {
   /// The pill of a single line control: radius half its height.
   static const ShapeBorder pill = StadiumBorder();
 
+  /// The height of a thin bar: progress, the mini player's seek line.
+  static const double progressH = 4;
+
+  /// The stroke of every circular progress indicator.
+  static const double strokeProgress = 2;
+
+  /// The leading circle of a row ([LeadTile]) on pointer; touch uses the
+  /// tap target.
+  static const double leadSize = 40;
+
+  // ---- Icons ------------------------------------------------------
+  // Four sizes. Buttons with a label take theirs from the theme (18).
+
+  /// Marks inside a line of text: origin, status, a chevron.
+  static const double iconSm = 16;
+
+  /// Actions and modes: icon buttons, row trailing actions.
+  static const double iconMd = 20;
+
+  /// Navigation and primary icons.
+  static const double iconLg = 24;
+
+  /// The transport: skip and seek around the play button.
+  static const double iconXl = 28;
+
+  // ---- Motion -----------------------------------------------------
+  // Three durations. Pass them through [motion], which drops them to zero
+  // when the platform asks for reduced motion.
+
+  /// Small state changes: a pill, a badge, a fade.
+  static const Duration motionShort = Duration(milliseconds: 160);
+
+  /// Moves within a component: an indicator sliding, a zoom.
+  static const Duration motionMedium = Duration(milliseconds: 220);
+
+  /// Layout moves: the sidebar opening, a section change.
+  static const Duration motionLong = Duration(milliseconds: 240);
+
+  /// [duration], or zero when the platform asks for reduced motion
+  /// (`MediaQuery.disableAnimations`).
+  static Duration motion(BuildContext context, Duration duration) =>
+      MediaQuery.maybeDisableAnimationsOf(context) ?? false
+      ? Duration.zero
+      : duration;
+
   /// Height of a field-like control with a pointer (search and text
   /// fields, segmented pills, dropdowns): 40, on the 8 grid. Touch uses
   /// the 48 target.
@@ -106,10 +158,11 @@ class Tokens {
 
   // ---- Type -------------------------------------------------------
   // Roboto named explicitly (the goldens render real glyphs). Titles are
-  // larger and bolder than body text by a clear step: 28/24 bold page
-  // titles, 16 semibold headings, 14 body, 12 labels.
+  // larger and bolder than body text by a clear step: 28 bold page
+  // titles, 22 secondary titles, 16 semibold headings, 14 body, 12
+  // labels. Figures and logs are in the bundled Roboto Mono.
   static const String sans = 'Roboto';
-  static const String mono = 'monospace';
+  static const String mono = 'Roboto Mono';
 
   static TextStyle get display => TextStyle(
     fontFamily: sans,
@@ -126,6 +179,17 @@ class Tokens {
     fontWeight: FontWeight.w700,
     color: fg,
     letterSpacing: -0.5,
+  );
+
+  /// A secondary title: an album, an empty state, a page title in a
+  /// short window.
+  static TextStyle get titleSm => TextStyle(
+    fontFamily: sans,
+    fontSize: 22,
+    height: 28 / 22,
+    fontWeight: FontWeight.w700,
+    color: fg,
+    letterSpacing: -0.2,
   );
   static TextStyle get heading => TextStyle(
     fontFamily: sans,
@@ -164,4 +228,23 @@ class Tokens {
     color: fgDim,
     fontFeatures: const [FontFeature.tabularFigures()],
   );
+
+  /// A readout that is the point of its cell (Engine, the console's
+  /// suggestions): [numeric] at body size.
+  static TextStyle get numericLg => TextStyle(
+    fontFamily: mono,
+    fontSize: 14,
+    height: 20 / 14,
+    fontWeight: FontWeight.w500,
+    color: fg,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
+  /// The size of the labels painted inside charts (axes, rulers, meters),
+  /// before the text scale; see `paintChartLabel`.
+  static const double chartLabelSize = 10;
+
+  /// The largest text scale painted chart labels follow: past it they
+  /// would crowd the plot they label.
+  static const double chartLabelMaxScale = 1.5;
 }

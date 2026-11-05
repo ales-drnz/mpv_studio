@@ -22,6 +22,8 @@ class Palette {
     required this.surface4,
     required this.line,
     required this.line2,
+    required this.lineRef,
+    required this.trackOff,
     required this.fg,
     required this.fgDim,
     required this.fgFaint,
@@ -66,6 +68,15 @@ class Palette {
 
   /// The stronger divider.
   final Color line2;
+
+  /// A reference line inside a chart (0 dB, unity gain): 3:1 on the
+  /// cards, where [line2] is decoration.
+  final Color lineRef;
+
+  /// The inactive part of a control that carries state (a slider track,
+  /// a switch off, a dot that reads "no"): 3:1 on the cards and the
+  /// stage, where [surface4] is only a fill.
+  final Color trackOff;
 
   // ---- Text ---------------------------------------------------------
 
@@ -135,6 +146,8 @@ class Palette {
     surface4: Color(0xFF484C51), // T32, inactive tracks
     line: Color(0x14FFFFFF), // ~8% white, inside data views only
     line2: Color(0x26FFFFFF), // ~15% white
+    lineRef: Color(0xFF7C8085), // 3.1:1 on cards, 3.7:1 on bg
+    trackOff: Color(0xFF7C8085), // 3.1:1 on cards, 3.7:1 on bg
     fg: Color(0xFFF1F4FA), // T96, 13.5:1 on bg, 11.2:1 on cards
     fgDim: Color(0xFFBFBFBF), // the ring grey, 8.1:1 on bg, 6.7:1 on cards
     fgFaint: Color(0xFFA8ABB2), // T70, 6.5:1 on bg, 4.7:1 on fields
@@ -169,6 +182,8 @@ class Palette {
     surface4: Color(0xFFB6B9BF), // T75, a ring grey step: tracks, 2:1 on white
     line: Color(0x14000000), // ~8% black, inside data views only
     line2: Color(0x29000000), // ~16% black
+    lineRef: Color(0xFF80848A), // 3.8:1 on white, 3.2:1 on bg
+    trackOff: Color(0xFF80848A), // 3.8:1 on white, 3.2:1 on bg
     fg: Color(0xFF24282D), // graphite, 12.8:1 on bg, 14.8:1 on cards
     fgDim: Color(0xFF43474C), // T30, 8.1:1 on bg
     fgFaint: Color(0xFF4F5358), // T35, 6.7:1 on bg, 5.2:1 on fields
