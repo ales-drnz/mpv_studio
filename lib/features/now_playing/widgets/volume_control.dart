@@ -104,7 +104,11 @@ class VolumeControl extends StatelessWidget {
                 const SizedBox(width: Tokens.s8),
                 Expanded(child: slider),
                 const SizedBox(width: Tokens.s12),
-                SizedBox(width: 32, child: readout),
+                // Room for "130" at the reader's text size.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: Tokens.s32),
+                  child: readout,
+                ),
               ],
             );
           },

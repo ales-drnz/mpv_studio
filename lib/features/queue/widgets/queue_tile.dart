@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
 import '../../../util/media_labels.dart';
@@ -254,44 +255,48 @@ class _QueueTileState extends State<QueueTile> {
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
-        child: Material(
-          type: MaterialType.transparency,
-          child: Ink(
-            decoration: ShapeDecoration(
-              color: background,
-              shape: Tokens.shape(Tokens.rMd),
-            ),
-            // The ink spans the whole row, the handle included, so the
-            // hover fills the row edge to edge in every state and takes
-            // its rounded corners. A tap on the handle does nothing.
-            child: Semantics(
-              button: true,
-              selected: widget.selected,
-              label: _semanticLabel,
-              // The row's own actions, since the children (and their
-              // gestures) are hidden from the reader; the long press menu
-              // also holds the hover buttons.
-              onTap: widget.onTap,
-              onTapHint: touch ? 'play' : 'select',
-              onLongPress: () => widget.onMore(null),
-              onLongPressHint: 'show actions',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onSecondaryTapUp: (d) => widget.onMore(d.globalPosition),
-                onLongPress: touch ? () => widget.onMore(null) : null,
-                child: InkWell(
-                  onTap: widget.onTap,
-                  customBorder: Tokens.shape(Tokens.rMd),
-                  excludeFromSemantics: true,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 56),
-                    child: Row(
-                      children: [
-                        Expanded(child: ExcludeSemantics(child: content)),
-                        ExcludeSemantics(
-                          child: GestureDetector(onTap: () {}, child: handle),
-                        ),
-                      ],
+        child: FocusRing(
+          shape: Tokens.shape(Tokens.rMd),
+          inside: true,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Ink(
+              decoration: ShapeDecoration(
+                color: background,
+                shape: Tokens.shape(Tokens.rMd),
+              ),
+              // The ink spans the whole row, the handle included, so the
+              // hover fills the row edge to edge in every state and takes
+              // its rounded corners. A tap on the handle does nothing.
+              child: Semantics(
+                button: true,
+                selected: widget.selected,
+                label: _semanticLabel,
+                // The row's own actions, since the children (and their
+                // gestures) are hidden from the reader; the long press menu
+                // also holds the hover buttons.
+                onTap: widget.onTap,
+                onTapHint: touch ? 'play' : 'select',
+                onLongPress: () => widget.onMore(null),
+                onLongPressHint: 'show actions',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onSecondaryTapUp: (d) => widget.onMore(d.globalPosition),
+                  onLongPress: touch ? () => widget.onMore(null) : null,
+                  child: InkWell(
+                    onTap: widget.onTap,
+                    customBorder: Tokens.shape(Tokens.rMd),
+                    excludeFromSemantics: true,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 56),
+                      child: Row(
+                        children: [
+                          Expanded(child: ExcludeSemantics(child: content)),
+                          ExcludeSemantics(
+                            child: GestureDetector(onTap: () {}, child: handle),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

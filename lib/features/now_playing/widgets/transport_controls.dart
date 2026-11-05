@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
@@ -150,6 +151,11 @@ class TransportControls extends StatelessWidget {
                         Loop.playlist => 'Repeat the queue',
                       },
                       label: 'Repeat',
+                      value: switch (loop) {
+                        Loop.off => 'off',
+                        Loop.file => 'this track',
+                        Loop.playlist => 'the queue',
+                      },
                       onTap: () => guard(() => player.setLoop(_nextLoop(loop))),
                     ),
                   ),
@@ -224,30 +230,37 @@ class PlayPauseButton extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Material(
-                      color: Tokens.accent,
+                    FocusRing(
                       shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: onTap,
-                        customBorder: const CircleBorder(),
-                        child: SizedBox.square(
-                          dimension: size,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            transitionBuilder: (child, anim) => ScaleTransition(
-                              scale: anim,
-                              child: FadeTransition(
-                                opacity: anim,
-                                child: child,
+                      child: Material(
+                        color: Tokens.accent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: onTap,
+                          customBorder: const CircleBorder(),
+                          child: SizedBox.square(
+                            dimension: size,
+                            child: AnimatedSwitcher(
+                              duration: Tokens.motion(
+                                context,
+                                Tokens.motionShort,
                               ),
-                            ),
-                            child: Icon(
-                              playing
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                              key: ValueKey(playing),
-                              size: size * 0.45,
-                              color: Tokens.onAccent,
+                              transitionBuilder: (child, anim) =>
+                                  ScaleTransition(
+                                    scale: anim,
+                                    child: FadeTransition(
+                                      opacity: anim,
+                                      child: child,
+                                    ),
+                                  ),
+                              child: Icon(
+                                playing
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                key: ValueKey(playing),
+                                size: size * 0.45,
+                                color: Tokens.onAccent,
+                              ),
                             ),
                           ),
                         ),
@@ -361,36 +374,38 @@ class _SpeedButton extends StatelessWidget {
           child: Tooltip(
             message: 'Playback speed',
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: Tokens.motion(context, Tokens.motionShort),
               constraints: BoxConstraints(minWidth: minTap, minHeight: minTap),
               decoration: ShapeDecoration(
                 color: normal ? Colors.transparent : Tokens.accentContainer,
                 shape: Tokens.pill,
               ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  onTap: () => _pick(context, rate),
-                  customBorder: Tokens.pill,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: minTap,
-                      minHeight: minTap,
-                    ),
-                    child: Center(
-                      widthFactor: 1,
-                      heightFactor: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Tokens.s8,
-                        ),
-                        child: Text(
-                          formatRate(rate),
-                          style: Tokens.numeric.copyWith(
-                            color: normal
-                                ? Tokens.fg
-                                : Tokens.onAccentContainer,
-                            fontWeight: FontWeight.w700,
+              child: FocusRing(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: () => _pick(context, rate),
+                    customBorder: Tokens.pill,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: minTap,
+                        minHeight: minTap,
+                      ),
+                      child: Center(
+                        widthFactor: 1,
+                        heightFactor: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Tokens.s8,
+                          ),
+                          child: Text(
+                            formatRate(rate),
+                            style: Tokens.numeric.copyWith(
+                              color: normal
+                                  ? Tokens.fg
+                                  : Tokens.onAccentContainer,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
