@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../util/media_import.dart';
+import 'queue_snapshot.dart';
 
 /// Picks files or a folder and hands back the paths, empty when cancelled.
 typedef PathPicker = Future<List<String>> Function();
@@ -91,14 +92,29 @@ class QueueController {
 
   /// Loads a playlist file (.m3u, .m3u8, .pls, .cue) as the new queue: its
   /// entries are expanded by the engine (`openPlaylistFile`), unlike
-  /// `open`, which would queue the playlist as one entry.
-  Future<void> loadPlaylist() async {
+  /// `open`, which would queue the playlist as one entry. Returns the
+  /// queue it replaced, for an undo, or null when there was none.
+  Future<QueueSnapshot?> loadPlaylist() async {
     final path = await pickPlaylist();
-    if (path == null) return;
-    await guard(() => player.openPlaylistFile(Media(path), play: true));
+    if (path == null) return null;
+    return _replacing(() => player.openPlaylistFile(Media(path), play: true));
   }
 
-  Future<void> clear() => guard(player.clearPlaylist);
+  /// Empties the queue and returns what it held, for an undo, or null
+  /// when there was nothing or the call failed.
+  Future<QueueSnapshot?> clear() => _replacing(player.clearPlaylist);
+
+  /// Puts back a queue that [loadPlaylist] or [clear] replaced.
+  Future<void> putBack(QueueSnapshot before) => before.restore(player, guard);
+
+  Future<QueueSnapshot?> _replacing(Future<void> Function() action) async {
+    final before = QueueSnapshot.of(player);
+    final ok = await guard(() async {
+      await action();
+      return true;
+    });
+    return ok == true ? before : null;
+  }
 
   Future<void> play(int index) => guard(() => player.jump(index));
 

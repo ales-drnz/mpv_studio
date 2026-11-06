@@ -11,10 +11,12 @@ import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/studio_snack.dart';
 import '../../util/media_import.dart';
 import '../../util/media_labels.dart';
 import '../../util/reactive.dart';
 import 'queue_controller.dart';
+import 'queue_snapshot.dart';
 import 'queue_details.dart';
 import 'widgets/playlist_banner.dart';
 import 'widgets/queue_empty.dart';
@@ -22,7 +24,6 @@ import 'widgets/queue_entry_info.dart';
 import 'widgets/queue_header.dart';
 import 'widgets/queue_list.dart';
 import 'widgets/queue_now_playing.dart';
-import '../../ui/widgets/studio_snack.dart';
 
 /// The live playback queue, a view onto `player.stream.playlist`, for the
 /// app's player.
@@ -105,34 +106,26 @@ class _QueueViewState extends State<QueueView> {
     super.dispose();
   }
 
+  /// Empties the queue at once, with an undo instead of a question.
   Future<void> _clear() async {
-    final count = widget.player.state.playlist.items.length;
-    final ok = await showStudioDialog<bool>(
+    final before = await _queue.clear();
+    if (!mounted) return;
+    setState(() => _selected = null);
+    if (before != null) _offerUndo('Queue cleared', before);
+  }
+
+  Future<void> _loadPlaylist() async {
+    final before = await _queue.loadPlaylist();
+    if (mounted && before != null) _offerUndo('Queue replaced', before);
+  }
+
+  void _offerUndo(String message, QueueSnapshot before) {
+    showStudioSnack(
       context,
-      title: 'Clear the queue?',
-      builder: (context) => Text(
-        count == 1
-            ? 'The track is removed from the queue and playback stops.'
-            : 'All $count tracks are removed from the queue and playback '
-                  'stops.',
-        style: Tokens.body,
-      ),
-      actions: (context) => [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(backgroundColor: Tokens.red),
-          child: const Text('Clear'),
-        ),
-      ],
+      message,
+      actionLabel: 'Undo',
+      onAction: () => _queue.putBack(before),
     );
-    if (ok == true) {
-      await _queue.clear();
-      if (mounted) setState(() => _selected = null);
-    }
   }
 
   void _toast(String message) {
@@ -266,7 +259,7 @@ class _QueueViewState extends State<QueueView> {
           QueueHeaderAction(
             icon: Icons.playlist_play_rounded,
             label: 'Load playlist',
-            onPressed: _queue.loadPlaylist,
+            onPressed: _loadPlaylist,
           ),
           QueueHeaderAction(
             icon: Icons.clear_all_rounded,
@@ -362,7 +355,7 @@ class _QueueViewState extends State<QueueView> {
                             ? QueueEmpty(
                                 onAddFiles: _queue.addFiles,
                                 onAddFolder: _queue.addFolder,
-                                onLoadPlaylist: _queue.loadPlaylist,
+                                onLoadPlaylist: _loadPlaylist,
                                 onBrowseStreams: router == null
                                     ? null
                                     : () => router.go(Section.stream.path),

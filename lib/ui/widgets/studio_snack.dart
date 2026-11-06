@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// Shows a toast, with an optional action: [showStudioSnack] bound to a
+/// context, for code that has none of its own.
+typedef StudioToast =
+    void Function(
+      String message, {
+      String? actionLabel,
+      VoidCallback? onAction,
+    });
+
 /// The app's toast: a floating snack bar in the theme's snack bar colours
 /// (`AppTheme`'s `snackBarTheme`), with an optional action. Every toast of
 /// the app goes through here, so they all look and behave alike.
@@ -53,3 +62,12 @@ void showStudioSnack(
     replace: replace,
   );
 }
+
+/// A [StudioToast] on the messenger above [context].
+StudioToast studioToastFor(BuildContext context) =>
+    (message, {actionLabel, onAction}) => showStudioSnack(
+      context,
+      message,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    );
