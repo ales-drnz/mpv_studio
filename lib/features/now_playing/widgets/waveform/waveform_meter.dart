@@ -64,6 +64,8 @@ class _WaveformMeterState extends State<WaveformMeter>
   late final WaveformPan _pan = WaveformPan(
     onPan: _panBy,
     canPan: () => _view.canScroll,
+    onZoom: _zoom,
+    still: () => MediaQuery.maybeDisableAnimationsOf(context) ?? false,
   );
 
   /// The playhead between position events: [_anchor] plus the time the
@@ -386,8 +388,8 @@ class _WaveformMeterState extends State<WaveformMeter>
               ],
             ),
           ),
-          // A meter too narrow for both keeps the scrollbar; the wheel,
-          // the pinch and the keyboard still zoom.
+          // A meter too narrow for both keeps the scrollbar; Ctrl with
+          // the wheel and the trackpad's pinch still zoom.
           LayoutBuilder(
             builder: (context, c) => c.maxWidth < _zoomRowWidth
                 ? scrollBar
