@@ -4,6 +4,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../media_server.dart';
 import '../stream_actions.dart';
@@ -191,56 +192,60 @@ class AlbumCard extends StatelessWidget {
         onTap: onTap,
         child: Material(
           type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: shape,
-            child: Ink(
-              padding: const EdgeInsets.all(Tokens.s8),
-              decoration: ShapeDecoration(
-                color: selected ? Tokens.accentContainer : Tokens.surface,
-                shape: shape,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Concentric with the card: its radius less the inset.
-                  ServerCover(url: album.artUrl, radius: Tokens.rMd),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Tokens.s8,
-                      Tokens.s12,
-                      Tokens.s8,
-                      Tokens.s4,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          album.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Tokens.body.copyWith(
-                            color: selected
-                                ? Tokens.onAccentContainer
-                                : Tokens.fg,
-                            fontWeight: FontWeight.w600,
+          child: FocusRing(
+            shape: shape,
+            inside: true,
+            child: InkWell(
+              onTap: onTap,
+              customBorder: shape,
+              child: Ink(
+                padding: const EdgeInsets.all(Tokens.s8),
+                decoration: ShapeDecoration(
+                  color: selected ? Tokens.accentContainer : Tokens.surface,
+                  shape: shape,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Concentric with the card: its radius less the inset.
+                    ServerCover(url: album.artUrl, radius: Tokens.rMd),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        Tokens.s8,
+                        Tokens.s12,
+                        Tokens.s8,
+                        Tokens.s4,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            album.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Tokens.body.copyWith(
+                              color: selected
+                                  ? Tokens.onAccentContainer
+                                  : Tokens.fg,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        Text(
-                          sub.isEmpty ? ' ' : sub,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Tokens.label.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: selected
-                                ? Tokens.onAccentContainer
-                                : Tokens.fgDim,
+                          Text(
+                            sub.isEmpty ? ' ' : sub,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Tokens.label.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: selected
+                                  ? Tokens.onAccentContainer
+                                  : Tokens.fgDim,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/controls.dart';
 
 /// One option of a [ChoiceRow].
@@ -90,28 +91,30 @@ class _ChoicePill<T> extends StatelessWidget {
       onTap: enabled ? () => onSelected(choice.value) : null,
       child: Material(
         type: MaterialType.transparency,
-        child: InkWell(
-          onTap: enabled ? () => onSelected(choice.value) : null,
-          customBorder: Tokens.pill,
-          child: Ink(
-            height: controlHeightOf(context),
-            padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-            decoration: ShapeDecoration(
-              color: on ? Tokens.accent : Tokens.surface3,
-              shape: Tokens.pill,
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                choice.label,
-                maxLines: 1,
-                style: Tokens.label.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: !enabled
-                      ? Tokens.fgFaint
-                      : on
-                      ? Tokens.onAccent
-                      : Tokens.fg,
+        child: FocusRing(
+          child: InkWell(
+            onTap: enabled ? () => onSelected(choice.value) : null,
+            customBorder: Tokens.pill,
+            child: Ink(
+              height: controlHeightOf(context),
+              padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+              decoration: ShapeDecoration(
+                color: on ? Tokens.accent : Tokens.surface3,
+                shape: Tokens.pill,
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  choice.label,
+                  maxLines: 1,
+                  style: Tokens.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: !enabled
+                        ? Tokens.fgFaint
+                        : on
+                        ? Tokens.onAccent
+                        : Tokens.fg,
+                  ),
                 ),
               ),
             ),

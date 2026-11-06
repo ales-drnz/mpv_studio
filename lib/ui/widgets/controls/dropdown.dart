@@ -195,17 +195,20 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
               child: Text(widget.label!, style: Tokens.heading),
             ),
           for (final item in widget.items)
-            InkWell(
-              onTap: item.enabled
-                  ? () => Navigator.of(context).pop(_Pick<T>(item.value))
-                  : null,
-              customBorder: Tokens.pill,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: _MenuRow(
-                  active: item.value == widget.value,
-                  enabled: item.enabled,
-                  child: item.child,
+            FocusRing(
+              inside: true,
+              child: InkWell(
+                onTap: item.enabled
+                    ? () => Navigator.of(context).pop(_Pick<T>(item.value))
+                    : null,
+                customBorder: Tokens.pill,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: _MenuRow(
+                    active: item.value == widget.value,
+                    enabled: item.enabled,
+                    child: item.child,
+                  ),
                 ),
               ),
             ),

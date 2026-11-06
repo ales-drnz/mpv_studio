@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../stream_actions.dart';
 
@@ -83,22 +84,26 @@ class StreamRow extends StatelessWidget {
     );
     Widget row = Material(
       type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: shape,
-        // Ink so the hover wash shows over the card fill.
-        child: Ink(
-          decoration: ShapeDecoration(
-            color: current ? Tokens.accentContainer : Tokens.surface,
-            shape: shape,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: leadSize + 2 * Tokens.s8,
+      child: FocusRing(
+        shape: shape,
+        inside: true,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: shape,
+          // Ink so the hover wash shows over the card fill.
+          child: Ink(
+            decoration: ShapeDecoration(
+              color: current ? Tokens.accentContainer : Tokens.surface,
+              shape: shape,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(Tokens.s8),
-              child: current ? _CurrentRow(child: content) : content,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: leadSize + 2 * Tokens.s8,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Tokens.s8),
+                child: current ? _CurrentRow(child: content) : content,
+              ),
             ),
           ),
         ),
