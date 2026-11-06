@@ -5,6 +5,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_snack.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../setting_anchor.dart';
@@ -202,14 +203,28 @@ class PlayerSection extends StatelessWidget {
         ),
       ],
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
     await scope.settings.resetToDefaults();
+    if (!context.mounted) return;
     final restart = scope.restart;
     if (restart != null) {
-      await restart();
-    } else if (context.mounted) {
+      await _restartSaying(context, restart, 'Settings reset');
+    } else {
       showSettingsMessage(context, 'Settings reset. Restart the app.');
     }
+  }
+
+  /// Runs [restart] and says [done] once the player is back. The page is
+  /// rebuilt by the restart, so the toast goes through the messenger
+  /// above it, which outlives it.
+  static Future<void> _restartSaying(
+    BuildContext context,
+    Future<void> Function() restart,
+    String done,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    await restart();
+    messenger?.showStudioSnack(done);
   }
 
   @override
@@ -229,7 +244,11 @@ class PlayerSection extends StatelessWidget {
             trailing: TileButton(
               label: 'Restart',
               tooltip: 'Restart the player',
-              onPressed: restart == null ? null : () => unawaited(restart()),
+              onPressed: restart == null
+                  ? null
+                  : () => unawaited(
+                      _restartSaying(context, restart, 'Player restarted'),
+                    ),
             ),
           ),
         ),
