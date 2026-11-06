@@ -73,50 +73,48 @@ class _QuickChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = active ? Tokens.onAccentContainer : Tokens.fg;
-    return Tooltip(
-      message: kFeaturedSubtitles[d.filter] ?? d.title,
-      child: Semantics(
-        button: true,
-        toggled: active,
-        child: Material(
-          type: MaterialType.transparency,
-          child: FocusRing(
-            child: InkWell(
-              key: ValueKey('quick-${d.name}'),
-              onTap: onTap,
-              customBorder: Tokens.pill,
-              child: Ink(
-                height: context.layout.minTap,
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s12,
-                  0,
-                  Tokens.s16,
-                  0,
-                ),
-                decoration: ShapeDecoration(
-                  color: active ? Tokens.accentContainer : Tokens.surface,
-                  shape: Tokens.pill,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(d.icon, size: 18, color: fg),
-                    const SizedBox(width: Tokens.s8),
-                    Text(
-                      d.title,
-                      style: Tokens.label.copyWith(
-                        color: fg,
-                        fontWeight: FontWeight.w600,
-                      ),
+    final about = kFeaturedSubtitles[d.filter] ?? d.title;
+    final chip = Semantics(
+      button: true,
+      toggled: active,
+      hint: about,
+      child: Material(
+        type: MaterialType.transparency,
+        child: FocusRing(
+          child: InkWell(
+            key: ValueKey('quick-${d.name}'),
+            onTap: onTap,
+            customBorder: Tokens.pill,
+            child: Ink(
+              height: context.layout.minTap,
+              padding: const EdgeInsets.fromLTRB(Tokens.s12, 0, Tokens.s16, 0),
+              decoration: ShapeDecoration(
+                color: active ? Tokens.accentContainer : Tokens.surface,
+                shape: Tokens.pill,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(d.icon, size: 18, color: fg),
+                  const SizedBox(width: Tokens.s8),
+                  Text(
+                    d.title,
+                    style: Tokens.label.copyWith(
+                      color: fg,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
+    // On touch the label is on the chip, and a long press tooltip would
+    // cover the header above it.
+    if (context.layout.isTouch) return chip;
+    return Tooltip(message: about, child: chip);
   }
 }
 
