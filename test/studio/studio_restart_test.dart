@@ -60,7 +60,7 @@ Widget _pages(_Studio studio) => MaterialApp(
             guard: unguarded,
             details: studio.details,
             pickFiles: () async => const [],
-            pickFolder: () async => const [],
+            pickFolder: () async => null,
             pickPlaylist: () async => null,
           ),
         ),

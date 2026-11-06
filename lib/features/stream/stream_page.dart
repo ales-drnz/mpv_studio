@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../ui/widgets/studio_snack.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
@@ -73,6 +74,7 @@ class StreamPage extends StatelessWidget {
         player: PlayerScope.of(context),
         guard: issues.guard,
         notify: (message) => issues.notify(message, isError: true),
+        toast: studioToastFor(context),
       ),
       // The servers live at app scope, so their sessions and the playback
       // reporting outlive this page.

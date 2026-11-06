@@ -112,7 +112,7 @@ class MiniPlayer extends StatelessWidget {
       case _MiniAction.mute:
         await guard(() => player.setMute(!s.mute));
       case _MiniAction.stop:
-        await guard(player.stop);
+        await stopKeepingQueue(player, guard);
     }
   }
 

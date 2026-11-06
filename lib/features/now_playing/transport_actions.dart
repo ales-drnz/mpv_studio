@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
@@ -47,6 +49,32 @@ Future<void> skipTrack(
   );
   if (moved == false) notify?.call(forward ? 'End of queue' : 'Start of queue');
 }
+
+/// Stops playback and keeps the queue. mpv's `stop` empties the playlist,
+/// so the entries come back loaded and paused on the same one. A live PCM
+/// source (`mak-pcm://`) ends with the stop, so it does not come back.
+// TODO(kit 0.7.0): player.stop(keepPlaylist: true) once the kit has it.
+Future<void> stopKeepingQueue(PlayerApi player, CallGuard guard) =>
+    guard(() async {
+      final queue = player.state.playlist;
+      final current = queue.index >= 0 && queue.index < queue.items.length
+          ? queue.items[queue.index]
+          : null;
+      final kept = [
+        for (final m in queue.items)
+          if (!m.uri.startsWith(_pcmScheme)) m,
+      ];
+      await player.stop();
+      if (kept.isEmpty) return;
+      await player.openAll(
+        kept,
+        play: false,
+        index: current == null ? 0 : math.max(0, kept.indexOf(current)),
+      );
+    });
+
+/// The scheme of the kit's live PCM sources.
+const _pcmScheme = 'mak-pcm://';
 
 /// Plays when paused and pauses when playing, on the play intent.
 Future<void> togglePlay(PlayerApi player, CallGuard guard) =>

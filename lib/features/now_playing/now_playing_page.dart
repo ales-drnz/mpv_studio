@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../shell/sections.dart';
+import '../queue/queue_controller.dart';
 import '../../studio/playback_issues.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
@@ -57,6 +58,7 @@ class NowPlayingPage extends StatelessWidget {
     this.failed,
     this.onOpenFiles,
     this.onOpenStream,
+    this.pickFiles,
   });
 
   /// The player to show, instead of the app's.
@@ -74,11 +76,15 @@ class NowPlayingPage extends StatelessWidget {
   /// Replaces going to the Stream section (tests).
   final VoidCallback? onOpenStream;
 
+  /// Replaces the system file picker (tests).
+  final PathPicker? pickFiles;
+
   @override
   Widget build(BuildContext context) {
     final body = _PlaybackBody(
       onOpenFiles: onOpenFiles,
       onOpenStream: onOpenStream,
+      pickFiles: pickFiles,
     );
     final given = player;
     if (given != null) {
@@ -111,10 +117,11 @@ _Shape _shapeFor(Size size) {
 }
 
 class _PlaybackBody extends StatefulWidget {
-  const _PlaybackBody({this.onOpenFiles, this.onOpenStream});
+  const _PlaybackBody({this.onOpenFiles, this.onOpenStream, this.pickFiles});
 
   final VoidCallback? onOpenFiles;
   final VoidCallback? onOpenStream;
+  final PathPicker? pickFiles;
 
   @override
   State<_PlaybackBody> createState() => _PlaybackBodyState();
@@ -131,6 +138,8 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
   // restarts the analysis and wipes a streaming waveform.
   final GlobalKey _waveformKey = GlobalKey(debugLabel: 'waveform');
 
+  /// Adds picked files to the queue, like the Queue page does: they play
+  /// at once only when the queue is empty.
   Future<void> _openFiles() async {
     final open = widget.onOpenFiles;
     if (open != null) return open();
@@ -138,17 +147,17 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final notify = feedbackFor(context);
     final List<String> paths;
     try {
-      paths = await pickAudioFiles();
+      paths = await (widget.pickFiles ?? pickAudioFiles)();
     } on PlatformException catch (e) {
       notify('Could not open the file picker: ${e.message ?? e.code}');
       return;
     }
-    if (paths.isEmpty) return;
-    await scope.guard(
-      () => scope.player.openAll([
-        for (final p in paths) Media(p, extras: {'title': baseNameNoExt(p)}),
-      ], play: true),
-    );
+    final queue = QueueController(player: scope.player, guard: scope.guard);
+    try {
+      await queue.enqueue(paths);
+    } finally {
+      queue.dispose();
+    }
   }
 
   void _openStream() {
@@ -226,7 +235,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
 
   Widget _cover(double size) {
     final scope = PlaybackScope.of(context);
+    // A phone gesture, like on the waveform: a mouse has the keys and the
+    // seek bar, and a double click is not a seek on the desktop.
     return DoubleTapSeek(
+      enabled: context.layout.isTouch,
       onSeek: (by) => scope.guard(() => scope.player.seek(by, relative: true)),
       child: CoverArtView(player: scope.player, size: size),
     );
