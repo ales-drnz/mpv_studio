@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart' show kSecondaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/now_playing/playback_scope.dart';
 import 'package:mpv_studio/features/now_playing/widgets/transport_controls.dart';
 import 'package:mpv_studio/shell/mini_player.dart';
@@ -69,5 +70,24 @@ void main() {
     await tester.tap(find.byTooltip('Stop'));
     await tester.pumpAndSettle();
     expect(player.calls, ['stop']);
+  });
+
+  testWidgets('Stop drops a live PCM entry, which ends with it', (
+    tester,
+  ) async {
+    final player = QueueFakePlayer(
+      const PlayerState(
+        playlist: Playlist([Media('mak-pcm://3'), localSong], index: 0),
+      ),
+    );
+    await _pump(tester, MiniPlayer(player: player));
+    await tester.tapAt(
+      tester.getCenter(find.byKey(const ValueKey('mini-info'))),
+      buttons: kSecondaryButton,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stop'));
+    await tester.pumpAndSettle();
+    expect(player.items, [localSong]);
   });
 }

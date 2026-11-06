@@ -125,8 +125,12 @@ class _QueueViewState extends State<QueueView> {
     showStudioSnack(
       context,
       message,
-      actionLabel: 'Undo',
-      onAction: () => _queue.putBack(before),
+      actionLabel: undoLabel,
+      onAction: () async {
+        if (!await _queue.putBack(before) && mounted) {
+          showStudioSnack(context, QueueSnapshot.changedMessage);
+        }
+      },
     );
   }
 
@@ -208,7 +212,16 @@ class _QueueViewState extends State<QueueView> {
 
   /// Removes the entry at [index] with an undo that also brings back the
   /// ones removed just before. Returns whether it went.
-  Future<bool> _removeAt(int index) async {
+  Future<bool> _removeAt(int index) {
+    // One at a time: each removal reads the queue the last one left.
+    final done = _removing.then((_) => _removeNow(index));
+    _removing = done.then((_) {}, onError: (_) {});
+    return done;
+  }
+
+  Future<void> _removing = Future.value();
+
+  Future<bool> _removeNow(int index) async {
     final items = widget.player.state.playlist.items;
     if (index < 0 || index >= items.length) return false;
     final title = QueueRowInfo.of(
@@ -232,7 +245,7 @@ class _QueueViewState extends State<QueueView> {
     final toast = ++_undoToast;
     final shown = ScaffoldMessenger.maybeOf(context)?.showStudioSnack(
       count == 1 ? 'Removed "$title"' : 'Removed $count tracks',
-      actionLabel: 'Undo',
+      actionLabel: undoLabel,
       onAction: _queue.undoRemovals,
     );
     shown?.closed.then((reason) {

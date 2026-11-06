@@ -76,6 +76,21 @@ void main() {
     });
   });
 
+  testWidgets('an Undo after the queue changed again keeps the new queue', (
+    tester,
+  ) async {
+    final (player, details) = await threeEntries(() => tester.pump());
+    await pumpQueue(tester, player, details, picked: const ['/m/new.flac']);
+    await tester.tap(buttonWithText<TextButton>('Clear queue'));
+    await tester.pumpAndSettle();
+    await tester.tap(buttonWithText<FilledButton>('Add files').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(player.items.single.uri, '/m/new.flac');
+    expect(find.text('The queue changed since, so it stays'), findsOneWidget);
+  });
+
   testWidgets('Open files on Playback adds to the queue', (tester) async {
     final player = _QueueingPlayback(
       const PlayerState(playlist: Playlist([localSong, webSong], index: -1)),

@@ -80,10 +80,15 @@ class StreamActions {
     final before = QueueSnapshot.of(player);
     await guard(replace);
     if (before == null || !before.changedIn(player)) return;
+    before.seal();
     toast?.call(
       'Queue replaced',
-      actionLabel: 'Undo',
-      onAction: () => before.restore(player, guard),
+      actionLabel: undoLabel,
+      onAction: () async {
+        if (!await before.restore(player, guard)) {
+          toast?.call(QueueSnapshot.changedMessage);
+        }
+      },
     );
   }
 
@@ -99,6 +104,7 @@ class StreamActions {
   /// Appends [medias] to the queue, or plays them when the queue is empty.
   Future<void> enqueue(List<Media> medias) async {
     if (medias.isEmpty || !_loadable(medias)) return;
+    QueueSnapshot.noteEdit();
     if (_queueEmpty) {
       await guard(() => player.openAll(medias, play: true));
       return;
@@ -116,6 +122,7 @@ class StreamActions {
   /// the queue is empty.
   Future<void> playNext(List<Media> medias) async {
     if (medias.isEmpty || !_loadable(medias)) return;
+    QueueSnapshot.noteEdit();
     final pl = player.state.playlist;
     if (pl.items.isEmpty) {
       await guard(() => player.openAll(medias, play: true));

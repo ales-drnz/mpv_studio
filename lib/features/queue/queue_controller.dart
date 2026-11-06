@@ -83,6 +83,7 @@ class QueueController {
   /// when it is empty, else they are appended.
   Future<void> enqueue(List<String> paths) async {
     if (paths.isEmpty) return;
+    QueueSnapshot.noteEdit();
     _setAdding(_adding.value + paths.length);
     try {
       final medias = [for (final p in paths) mediaFor(p)];
@@ -187,7 +188,8 @@ class QueueController {
   Future<QueueSnapshot?> clear() => _replacing(player.clearPlaylist);
 
   /// Puts back a queue that [loadPlaylist] or [clear] replaced.
-  Future<void> putBack(QueueSnapshot before) => before.restore(player, guard);
+  /// False when the queue changed since, and stays.
+  Future<bool> putBack(QueueSnapshot before) => before.restore(player, guard);
 
   Future<QueueSnapshot?> _replacing(Future<void> Function() action) async {
     final before = QueueSnapshot.of(player);
@@ -195,7 +197,9 @@ class QueueController {
       await action();
       return true;
     });
-    return ok == true ? before : null;
+    if (ok != true) return null;
+    before?.seal();
+    return before;
   }
 
   Future<void> play(int index) => guard(() => player.jump(index));
@@ -220,6 +224,7 @@ class QueueController {
   /// puts back. Returns how many there are now, or null when the call
   /// failed (the entry stays).
   Future<int?> removeForUndo(int index) async {
+    QueueSnapshot.noteEdit();
     final pl = player.state.playlist;
     final current = index == pl.index;
     final playing = player.state.playWhenReady;
@@ -259,12 +264,14 @@ class QueueController {
   /// Moves the entry at [from] so that it ends up at index [to].
   Future<void> move(int from, int to) {
     if (from == to) return Future.value();
+    QueueSnapshot.noteEdit();
     // playlist-move puts the entry before the one now at the target.
     return guard(() => player.move(from, to > from ? to + 1 : to));
   }
 
   /// Moves the entry at [index] right after the current one.
   Future<void> playNext(int index) {
+    QueueSnapshot.noteEdit();
     final current = player.state.playlist.index;
     if (current < 0 || index == current || index == current + 1) {
       return Future.value();

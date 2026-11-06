@@ -47,6 +47,11 @@ class AppShell extends StatelessWidget {
             );
             try {
               await queue.addDropped(paths);
+            } catch (e) {
+              issues.notify(
+                'Could not add what was dropped: $e',
+                isError: true,
+              );
             } finally {
               queue.dispose();
             }

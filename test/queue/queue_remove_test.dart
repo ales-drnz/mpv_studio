@@ -74,6 +74,19 @@ void main() {
   });
 
   group('keyboard', () {
+    testWidgets('holding Delete removes one entry', (tester) async {
+      final (player, details) = await threeEntries(() => tester.pump());
+      await pumpQueue(tester, player, details);
+      await tester.tap(find.text('Kveld'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.delete);
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.delete);
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.delete);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(player.calls.where((c) => c.startsWith('remove')), ['remove 0']);
+    });
+
     testWidgets('Backspace does not remove', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);

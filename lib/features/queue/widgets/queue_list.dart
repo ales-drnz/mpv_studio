@@ -259,9 +259,11 @@ class _QueueListState extends State<QueueList> {
       widget.onAction(QueueAction.play, selected);
       return KeyEventResult.handled;
     }
-    // Delete only: Backspace is normal speed everywhere in the app.
+    // Delete only: Backspace is normal speed everywhere in the app. One
+    // entry per press: a held key would remove from a selection that has
+    // not caught up yet.
     if (key == LogicalKeyboardKey.delete) {
-      widget.onRemove(selected);
+      if (event is KeyDownEvent) widget.onRemove(selected);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.contextMenu ||
