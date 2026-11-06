@@ -6,6 +6,7 @@ import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
+import '../../../ui/widgets/state_pill.dart';
 import '../../../util/duration_format.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
@@ -56,10 +57,12 @@ class PositionBar extends StatelessWidget {
         Live<Duration>(
           stream: player.stream.duration,
           initial: player.state.duration,
-          builder: (context, d) => Text(
-            d > Duration.zero ? formatDuration(d) : '-:--',
-            style: Tokens.numeric,
-          ),
+          // No length but playing on: a live stream says so.
+          builder: (context, d) => d > Duration.zero
+              ? Text(formatDuration(d), style: Tokens.numeric)
+              : player.state.position > Duration.zero
+              ? const StatePill('LIVE')
+              : Text('-:--', style: Tokens.numeric),
         ),
       ],
     );

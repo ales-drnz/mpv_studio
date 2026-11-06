@@ -44,4 +44,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Live'), findsNothing);
   });
+
+  testWidgets('Live also brings the playback to the newest audio', (
+    tester,
+  ) async {
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit((s) => s.copyWith(duration: Duration.zero));
+    await pumpPlayback(tester, player, size: studioSize('1440x900'));
+    await tester.pump();
+    final bar = find.byType(WaveformScrollBar);
+    await tester.dragFrom(
+      tester.getRect(bar).centerRight - const Offset(4, 0),
+      Offset(-tester.getSize(bar).width, 0),
+    );
+    await tester.pumpAndSettle();
+    player.calls.clear();
+    await tester.tap(find.text('Live'));
+    await tester.pumpAndSettle();
+    expect(player.calls, ['seek 219000']);
+  });
+
+  testWidgets('a live stream says LIVE where a track shows its length', (
+    tester,
+  ) async {
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit(
+        (s) => s.copyWith(
+          duration: Duration.zero,
+          position: const Duration(seconds: 142),
+        ),
+      );
+    await pumpPlayback(tester, player, size: studioSize('1440x900'));
+    await tester.pump();
+    expect(find.text('LIVE'), findsOneWidget);
+    expect(find.text('-:--'), findsNothing);
+  });
+
+  testWidgets('a screen reader hears where in the live stream it plays', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit(
+        (s) => s.copyWith(
+          duration: Duration.zero,
+          position: const Duration(seconds: 142),
+        ),
+      );
+    await pumpPlayback(tester, player, size: studioSize('1440x900'));
+    await tester.pump();
+    final node = tester.getSemantics(
+      find.bySemanticsLabel('Waveform and position'),
+    );
+    expect(node.value, contains('2:22'));
+    expect(node.value, contains('live'));
+    handle.dispose();
+  });
 }

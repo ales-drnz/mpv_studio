@@ -312,12 +312,27 @@ class _WaveformMeterState extends State<WaveformMeter>
     );
   }
 
+  /// Back to the newest audio of a live stream: the view follows it
+  /// again and the playback goes there, a second short of the edge.
+  void _goLive() {
+    setState(() => _view = _view.toLive());
+    final wave = _view.wave;
+    if (wave == null) return;
+    final end = wave.start + wave.duration - const Duration(seconds: 1);
+    if (end > Duration.zero) _guard(() => _player.seek(end));
+  }
+
   @override
   Widget build(BuildContext context) {
     final touch = context.layout.isTouch;
     final canSeek = _canSeek;
     final dur = _view.duration;
     String at(Duration d) {
+      // A live stream has no length: the time it has played, and that it
+      // is live.
+      if (_view.live) {
+        return '${formatDuration(d < Duration.zero ? Duration.zero : d)}, live';
+      }
       final clamped = d < Duration.zero ? Duration.zero : (d > dur ? dur : d);
       return '${formatDuration(clamped)} of ${formatDuration(dur)}';
     }
@@ -387,7 +402,7 @@ class _WaveformMeterState extends State<WaveformMeter>
                           label: 'Live',
                           icon: Icons.fast_forward_rounded,
                           tooltip: 'Follow the live end',
-                          onTap: () => setState(() => _view = _view.toLive()),
+                          onTap: _goLive,
                         ),
                       ],
                       const SizedBox(width: Tokens.s8),
