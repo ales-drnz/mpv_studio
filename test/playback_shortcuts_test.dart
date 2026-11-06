@@ -295,7 +295,8 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.f1);
       await tester.pumpAndSettle();
       for (final (keys, action) in playbackShortcutList) {
-        expect(find.text(keys), findsOneWidget);
+        // Up and Down also move through the Console's history.
+        expect(find.text(keys), findsWidgets);
         expect(find.text(action), findsOneWidget);
       }
     });
