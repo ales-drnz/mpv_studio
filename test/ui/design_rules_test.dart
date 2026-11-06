@@ -4,9 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// The design language's hard rules, checked on the source: no squircle
 /// anywhere, no raw colour outside the palette, no sharp or one-sided
-/// corners. Colours come from `Tokens` (which reads the active `Palette`),
-/// shapes from `Tokens.shape`, `Tokens.pill` and `CircleBorder`. `lib/ui`
-/// owns the palette and the generated code is exempt.
+/// corners, no animation that ignores reduced motion. Colours come from
+/// `Tokens` (which reads the active `Palette`), shapes from
+/// `Tokens.shape`, `Tokens.pill` and `CircleBorder`. `lib/ui` owns the
+/// palette and the generated code is exempt.
 void main() {
   final rules = <String, RegExp>{
     'a squircle (ContinuousRectangleBorder)': RegExp(
@@ -22,6 +23,10 @@ void main() {
     ),
     'a one-sided or sharp corner (use Tokens.shape)': RegExp(
       r'BorderRadius\.(only|zero|vertical|horizontal)\b|Radius\.zero\b',
+    ),
+    // Reduced motion: an animation's duration goes through Tokens.motion.
+    'an animation duration outside Tokens.motion': RegExp(
+      r'duration: (const Duration\(milliseconds:|kNavTransition\b)',
     ),
   };
 

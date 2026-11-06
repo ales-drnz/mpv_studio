@@ -200,10 +200,12 @@ class _ConsoleViewState extends State<ConsoleView>
             padding: const EdgeInsets.only(bottom: Tokens.s12),
             child: Text(p, style: Tokens.body),
           ),
+        // The keys are the most used part: the label size, not a
+        // caption.
         Text(
           'Keys: Enter runs, Tab completes, Up and Down recall, Escape '
           'closes the suggestions, Ctrl+L clears the log.',
-          style: Tokens.caption,
+          style: Tokens.label,
         ),
       ],
     ),
@@ -380,23 +382,28 @@ class _ConsoleViewState extends State<ConsoleView>
                 toggled: _autoscroll,
                 label: 'Follow new lines',
                 tooltip: _autoscroll ? 'Stop following' : 'Follow new lines',
-                icon: Icons.vertical_align_bottom_rounded,
+                // Arrows down to the newest line; the old glyph read as
+                // a download.
+                icon: Icons.keyboard_double_arrow_down_rounded,
+                size: Tokens.iconMd,
               ),
               RoundIconButton(
                 onTap: _copyAll,
                 tooltip: 'Copy the log',
                 icon: Icons.copy_rounded,
-                size: 20,
+                size: Tokens.iconMd,
               ),
               RoundIconButton(
                 onTap: _clear,
                 tooltip: 'Clear the log',
                 icon: Icons.delete_outline_rounded,
+                size: Tokens.iconMd,
               ),
               RoundIconButton(
                 onTap: _showHelp,
                 tooltip: 'Console help',
                 icon: Icons.help_outline_rounded,
+                size: Tokens.iconMd,
               ),
             ],
             bottom: ConsoleFilterBar(

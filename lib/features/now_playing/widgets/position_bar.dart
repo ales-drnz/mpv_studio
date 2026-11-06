@@ -93,55 +93,66 @@ class ChapterBar extends StatelessWidget {
               final count = index < 0
                   ? '${chapters.length} chapters'
                   : 'Chapter ${index + 1} of ${chapters.length}';
-              return Row(
-                children: [
-                  RoundIconButton(
-                    icon: Icons.skip_previous_rounded,
-                    size: 20,
-                    tooltip: 'Previous chapter',
-                    onTap: () =>
-                        stepChapter(player, scope.guard, -1, notify: notify),
-                  ),
-                  Expanded(
-                    child: Semantics(
-                      label: count,
-                      value: title,
-                      excludeSemantics: true,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            title,
-                            key: const ValueKey('chapter-title'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: Tokens.label.copyWith(color: Tokens.fg),
-                          ),
-                          Text(
-                            count,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Tokens.caption,
-                          ),
-                        ],
+              // Chevrons, not the track's skip glyphs; held together
+              // under a wide wave instead of at its two far ends.
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Row(
+                    children: [
+                      RoundIconButton(
+                        icon: Icons.chevron_left_rounded,
+                        size: Tokens.iconMd,
+                        tooltip: 'Previous chapter',
+                        onTap: () => stepChapter(
+                          player,
+                          scope.guard,
+                          -1,
+                          notify: notify,
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        child: Semantics(
+                          label: count,
+                          value: title,
+                          excludeSemantics: true,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                key: const ValueKey('chapter-title'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: Tokens.label.copyWith(color: Tokens.fg),
+                              ),
+                              Text(
+                                count,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Tokens.caption,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      RoundIconButton(
+                        icon: Icons.chevron_right_rounded,
+                        size: Tokens.iconMd,
+                        tooltip: 'Next chapter',
+                        onTap: index < chapters.length - 1
+                            ? () => stepChapter(
+                                player,
+                                scope.guard,
+                                1,
+                                notify: notify,
+                              )
+                            : null,
+                      ),
+                    ],
                   ),
-                  RoundIconButton(
-                    icon: Icons.skip_next_rounded,
-                    size: 20,
-                    tooltip: 'Next chapter',
-                    onTap: index < chapters.length - 1
-                        ? () => stepChapter(
-                            player,
-                            scope.guard,
-                            1,
-                            notify: notify,
-                          )
-                        : null,
-                  ),
-                ],
+                ),
               );
             },
           ),

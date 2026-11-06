@@ -233,7 +233,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextField, 'Name'), 'Accept');
       await tester.enterText(find.widgetWithText(TextField, 'Value'), 'a, b');
       await tester.pump();
-      expect(find.text('commas are not allowed.'), findsOneWidget);
+      expect(find.text('Commas are not allowed.'), findsOneWidget);
 
       await tester.enterText(
         find.widgetWithText(TextField, 'Paste a URL'),
