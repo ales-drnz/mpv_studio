@@ -114,7 +114,7 @@ class _ParamsColumn extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(Tokens.s16),
       decoration: ShapeDecoration(
-        color: Tokens.surface3,
+        color: Tokens.inset,
         shape: Tokens.shape(Tokens.rMd),
       ),
       child: Column(
@@ -128,32 +128,42 @@ class _ParamsColumn extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Tokens.s8),
-          _line('codec', p.codec),
-          _line('format', p.format),
-          _line('rate', p.rate),
-          _line('channels', p.channels),
+          // A table, so the key column is as wide as its longest key
+          // at the reader's text size.
+          Table(
+            columnWidths: const {
+              0: IntrinsicColumnWidth(),
+              1: FlexColumnWidth(),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              _line('codec', p.codec),
+              _line('format', p.format),
+              _line('rate', p.rate),
+              _line('channels', p.channels),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  static Widget _line(String k, String v) => Padding(
-    padding: const EdgeInsets.only(bottom: Tokens.s4),
-    child: Row(
-      children: [
-        SizedBox(
-          width: 64,
-          child: Text(k, style: Tokens.numeric.copyWith(color: Tokens.fgFaint)),
+  static TableRow _line(String k, String v) => TableRow(
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(right: Tokens.s12, bottom: Tokens.s4),
+        child: Text(k, style: Tokens.numeric.copyWith(color: Tokens.fgFaint)),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: Tokens.s4),
+        child: Text(
+          v,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Tokens.numeric.copyWith(color: Tokens.fg),
         ),
-        Expanded(
-          child: Text(
-            v,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Tokens.numeric.copyWith(color: Tokens.fg),
-          ),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }

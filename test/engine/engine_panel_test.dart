@@ -68,15 +68,23 @@ WaveformData _halfWave() {
   );
 }
 
-Future<void> _pump(WidgetTester tester, Widget child, Size size) async {
+Future<void> _pump(
+  WidgetTester tester,
+  Widget child,
+  Size size, {
+  double textScale = 1,
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.dark,
-      builder: (context, child) =>
-          LayoutScope(inputMode: InputMode.pointer, child: child!),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: LayoutScope(inputMode: InputMode.pointer, child: child!),
+      ),
       home: Scaffold(body: child),
     ),
   );
@@ -232,6 +240,25 @@ void main() {
     expect(StatusView.mismatch(asked, MpvPlaybackState.loading), isNotNull);
     const raw = PlayerState(playing: true);
     expect(StatusView.mismatch(raw, MpvPlaybackState.playing), isNotNull);
+  });
+
+  // The keys of the output boxes ("channels") must keep clear of their
+  // values at any text size.
+  testWidgets('output keys keep clear of their values at 1.3x', (tester) async {
+    await _pump(
+      tester,
+      EnginePanel(player: player),
+      const Size(1280, 1600),
+      textScale: 1.3,
+    );
+    final keys = find.text('channels');
+    final values = find.text('stereo');
+    expect(keys, findsNWidgets(2));
+    for (var i = 0; i < 2; i++) {
+      final key = tester.getRect(keys.at(i));
+      final value = tester.getRect(values.at(i));
+      expect(value.left - key.right, greaterThanOrEqualTo(8));
+    }
   });
 
   test('waveform phases', () {
