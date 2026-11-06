@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../shell/sections.dart';
+import '../../shell/ui_memory.dart';
 import '../queue/queue_controller.dart';
 import '../../studio/playback_issues.dart';
 import '../../ui/layout/layout.dart';
@@ -129,7 +130,8 @@ class _PlaybackBody extends StatefulWidget {
 class _PlaybackBodyState extends State<_PlaybackBody> {
   /// The waveform's height where the user can resize it; null until they
   /// do, so each shape starts at its own default.
-  double? _meterHeight;
+  /// The waveform height the user dragged to, kept between launches.
+  late double? _meterHeight = UiMemory.recall<double>(context, 'meterHeight');
 
   // One identity for the waveform meter, so a change of shape reparents
   // it (its State and waveform subscription live on) instead of making a
@@ -281,11 +283,14 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             label: 'Waveform height',
             // From the current height: several drag events can arrive
             // before the next build.
-            onDelta: (dy) => setState(
-              () => _meterHeight = ((_meterHeight ?? height) + dy)
-                  .clamp(min, top)
-                  .toDouble(),
-            ),
+            onDelta: (dy) {
+              setState(
+                () => _meterHeight = ((_meterHeight ?? height) + dy)
+                    .clamp(min, top)
+                    .toDouble(),
+              );
+              UiMemory.keep(context, 'meterHeight', _meterHeight);
+            },
           ),
         ),
       ],

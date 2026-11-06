@@ -23,12 +23,13 @@ import 'sections.dart';
 GoRouter createAppRouter({
   Widget Function(StatefulNavigationShell navigationShell)? shell,
   Widget Function(Section section)? page,
+  Section initialSection = Section.nowPlaying,
 }) {
   final buildShell =
       shell ?? (navigationShell) => AppShell(navigationShell: navigationShell);
   final buildPage = page;
   return GoRouter(
-    initialLocation: Section.nowPlaying.path,
+    initialLocation: initialSection.path,
     routes: [
       StatefulShellRoute(
         builder: (context, state, navigationShell) =>

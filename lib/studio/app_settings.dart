@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/effects/effects_codec.dart';
+import 'saved_queue.dart';
 import 'settings_store.dart';
 import 'studio_log.dart';
 
@@ -390,6 +391,39 @@ class AppSettings {
                 listEquals(EffectsCodec.decode(before[key]), value)
             ? before[key]
             : EffectsCodec.encode(value),
+    });
+  }
+
+  // ---- Queue and places -------------------------------------------------
+
+  /// Keeps the queue as it changes, for the next launch.
+  void watchQueue(PlayerApi p) {
+    _subs.add(p.stream.playlist.listen((q) => _snap('queue', encodeQueue(q))));
+  }
+
+  /// Loads the queue of the last session on [p], paused on its entry; an
+  /// entry that no longer opens fails as any other would.
+  Future<void> restoreQueue(PlayerApi p) async {
+    final queue = decodeQueue(_store['queue']);
+    if (queue == null || p.state.playlist.items.isNotEmpty) return;
+    await p.openAll(queue.items, index: queue.index, play: false);
+  }
+
+  /// A place in the app kept between launches (the section, the open
+  /// settings group), or null.
+  T? uiValue<T>(String name) {
+    final ui = _store['ui'];
+    if (ui is! Map) return null;
+    final value = ui[name];
+    if (T == double && value is num) return value.toDouble() as T;
+    return value is T ? value : null;
+  }
+
+  void recordUiValue(String name, Object? value) {
+    final ui = _store['ui'];
+    _snap('ui', {
+      ...?(ui is Map ? ui.cast<String, Object?>() : null),
+      name: value,
     });
   }
 

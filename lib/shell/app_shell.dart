@@ -10,6 +10,7 @@ import 'playback_notice_host.dart';
 import 'playback_shortcuts.dart';
 import 'sections.dart';
 import 'studio_shell.dart';
+import 'ui_memory.dart';
 
 /// Root chrome of the running app: the [StudioShell] around the routed
 /// section bodies (carried by [navigationShell]), wired to the player. It
@@ -27,6 +28,8 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final section = Section.values[navigationShell.currentIndex];
+    // The next launch opens where this one was left.
+    UiMemory.keep(context, 'section', section.name);
     final player = PlayerScope.of(context);
     final rack = PlayerScope.rackOf(context);
     final issues = PlayerScope.issuesOf(context);

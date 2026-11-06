@@ -6,6 +6,7 @@ import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/controls.dart';
 import '../../ui/widgets/focus_ring.dart';
+import '../../shell/ui_memory.dart';
 import 'chapters_tab.dart';
 import 'favorites_controller.dart';
 import 'lab_tab.dart';
@@ -137,7 +138,20 @@ class StreamView extends StatefulWidget {
 }
 
 class _StreamViewState extends State<StreamView> {
-  late StreamTab _tab = widget.initialTab;
+  /// The tab a route asked for, else the one left last.
+  late StreamTab _tab = widget.tabRequest != null
+      ? widget.initialTab
+      : _remembered() ?? widget.initialTab;
+
+  StreamTab? _remembered() {
+    final name = UiMemory.recall<String>(context, 'streamTab');
+    return StreamTab.values.where((t) => t.name == name).firstOrNull;
+  }
+
+  void _select(StreamTab tab) {
+    setState(() => _tab = tab);
+    UiMemory.keep(context, 'streamTab', tab.name);
+  }
 
   @override
   void didUpdateWidget(StreamView oldWidget) {
@@ -198,10 +212,7 @@ class _StreamViewState extends State<StreamView> {
         // The tabs scroll themselves, each with the gutter at its sides and
         // under its last item; the header and the tab row share it.
         padding: layout.pagePadding.copyWith(top: 0),
-        bottom: StreamTabRow(
-          selected: selected,
-          onSelect: (t) => setState(() => _tab = t),
-        ),
+        bottom: StreamTabRow(selected: selected, onSelect: _select),
         body: IndexedStack(
           key: StreamView.tabsKey,
           index: selected.index,

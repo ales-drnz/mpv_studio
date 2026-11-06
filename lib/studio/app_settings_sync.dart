@@ -169,6 +169,7 @@ extension AppSettingsSync on AppSettings {
   /// Subscribes to the player's streams and snapshots every relevant
   /// value as it changes. Call once, after [applyTo].
   void attach(PlayerApi p) {
+    watchQueue(p);
     final s = p.stream;
     _subs.addAll([
       s.volume.listen((v) => _snap('volume', v)),

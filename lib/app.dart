@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import 'features/onboarding/onboarding.dart';
 import 'shell/router.dart';
+import 'shell/sections.dart';
+import 'shell/ui_memory.dart';
 import 'studio/mpv_studio.dart';
 import 'studio/player_scope.dart';
 import 'studio/startup_error_view.dart';
@@ -36,7 +38,16 @@ class MpvStudioApp extends StatefulWidget {
 
 class _MpvStudioAppState extends State<MpvStudioApp> {
   late MpvStudio _studio = widget.studio;
-  GoRouter _router = createAppRouter();
+  late GoRouter _router = createAppRouter(
+    initialSection: _lastSection(widget.studio),
+  );
+
+  /// The section the app was left on, for the next launch to open.
+  static Section _lastSection(MpvStudio studio) {
+    final name = studio.settings.uiValue<String>('section');
+    return Section.values.where((s) => s.name == name).firstOrNull ??
+        Section.nowPlaying;
+  }
 
   late final _theme = ThemeController(
     initial: widget.studio.settings.themeMode,
@@ -143,21 +154,25 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
         builder: (context, studio, restart) => PlayerScope(
           studio: studio,
           onRestart: restart.run,
-          child: MaterialApp.router(
-            title: 'MPV Studio',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.of(palette, input: InputMode.platformDefault),
-            // The palette switches at once everywhere else, so the Material
-            // theme must not cross-fade behind it.
-            themeAnimationDuration: Duration.zero,
-            // Let the mouse click-and-drag to scroll on desktop, like touch
-            // does: Flutter leaves the mouse out of the default drag devices.
-            scrollBehavior: const _DragScrollBehavior(),
-            routerConfig: _router,
-            // Above the navigator, so pages, dialogs and sheets all share the
-            // layout (and the debug viewport, when one is defined).
-            builder: (context, child) =>
-                DebugViewport(child: LayoutScope(child: child!)),
+          child: UiMemory(
+            read: (name) => studio.settings.uiValue<Object>(name),
+            write: studio.settings.recordUiValue,
+            child: MaterialApp.router(
+              title: 'MPV Studio',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.of(palette, input: InputMode.platformDefault),
+              // The palette switches at once everywhere else, so the Material
+              // theme must not cross-fade behind it.
+              themeAnimationDuration: Duration.zero,
+              // Let the mouse click-and-drag to scroll on desktop, like touch
+              // does: Flutter leaves the mouse out of the default drag devices.
+              scrollBehavior: const _DragScrollBehavior(),
+              routerConfig: _router,
+              // Above the navigator, so pages, dialogs and sheets all share the
+              // layout (and the debug viewport, when one is defined).
+              builder: (context, child) =>
+                  DebugViewport(child: LayoutScope(child: child!)),
+            ),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../shell/ui_memory.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/focus_ring.dart';
@@ -31,7 +32,10 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  SettingsGroupId? _open;
+  /// The group open, as the user left it.
+  late SettingsGroupId? _open = SettingsGroupId.values
+      .where((g) => g.name == UiMemory.recall<String>(context, 'settingsGroup'))
+      .firstOrNull;
   final _focus = SettingsFocus();
   final _query = TextEditingController();
   final _searchField = FocusNode(debugLabel: 'settings search');
@@ -50,15 +54,21 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
-  void _openGroup(SettingsGroupId group) => setState(() => _open = group);
+  void _openGroup(SettingsGroupId group) {
+    setState(() => _open = group);
+    UiMemory.keep(context, 'settingsGroup', group.name);
+  }
 
-  void _close() => setState(() => _open = null);
+  void _close() {
+    setState(() => _open = null);
+    UiMemory.keep(context, 'settingsGroup', null);
+  }
 
   /// Opens [entry]'s group and reveals the row. The search field lets go
   /// of the focus, so a soft keyboard closes over the row it jumped to.
   void _reveal(SettingEntry entry) {
     _searchField.unfocus();
-    setState(() => _open = entry.group);
+    _openGroup(entry.group);
     _focus.value = entry.id;
   }
 

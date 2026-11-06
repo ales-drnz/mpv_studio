@@ -5,6 +5,7 @@ import 'nav_parts.dart';
 import 'shell_tools.dart';
 import 'sections.dart';
 import 'snack_clearance.dart';
+import 'ui_memory.dart';
 
 /// The sidebar chrome (expanded windows and up): a tonal sidebar on the
 /// left, the section body in a rounded [StagePanel] beside it, and the
@@ -36,7 +37,21 @@ class DesktopShell extends StatefulWidget {
 }
 
 class _DesktopShellState extends State<DesktopShell> {
-  bool _collapsed = false;
+  /// As the user left it.
+  late bool _collapsed =
+      UiMemory.recall<bool>(context, 'sidebarCollapsed') ?? false;
+
+  /// Whether the items are laid out narrow. Opening, they stay narrow
+  /// until the sidebar has its width, so they never overflow on the way.
+  late bool _narrow = _collapsed;
+
+  void _toggle() {
+    setState(() {
+      _collapsed = !_collapsed;
+      if (_collapsed) _narrow = true;
+    });
+    UiMemory.keep(context, 'sidebarCollapsed', _collapsed);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +82,11 @@ class _DesktopShellState extends State<DesktopShell> {
                 section: widget.section,
                 onSelect: widget.onSelect,
                 collapsed: _collapsed,
-                onToggle: () => setState(() => _collapsed = !_collapsed),
+                narrow: _narrow,
+                onWidthSettled: () {
+                  if (!_collapsed && _narrow) setState(() => _narrow = false);
+                },
+                onToggle: _toggle,
               ),
             ),
             Expanded(
@@ -98,18 +117,25 @@ class _Sidebar extends StatelessWidget {
   final Section section;
   final ValueChanged<Section> onSelect;
   final bool collapsed;
+
+  /// Lays the items out for the collapsed width; see
+  /// `_DesktopShellState._narrow`.
+  final bool narrow;
+  final VoidCallback onWidthSettled;
   final VoidCallback onToggle;
 
   const _Sidebar({
     required this.section,
     required this.onSelect,
     required this.collapsed,
+    required this.narrow,
+    required this.onWidthSettled,
     required this.onToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final layout = collapsed ? NavItemLayout.iconOnly : NavItemLayout.inline;
+    final layout = narrow ? NavItemLayout.iconOnly : NavItemLayout.inline;
     Widget item(Section s) => Padding(
       padding: const EdgeInsets.only(bottom: Tokens.s4),
       child: SectionDestination(
@@ -128,7 +154,7 @@ class _Sidebar extends StatelessWidget {
       onTap: onToggle,
       expanded: false,
     );
-    final header = collapsed
+    final header = narrow
         ? const Center(child: StudioMark(size: 40))
         : Row(
             children: [
@@ -151,6 +177,7 @@ class _Sidebar extends StatelessWidget {
     return AnimatedContainer(
       duration: Tokens.motion(context, Tokens.motionLong),
       curve: Curves.easeOutCubic,
+      onEnd: onWidthSettled,
       // Grows by the left safe-area inset, as the rail does, so the items
       // keep their full width beside a notch.
       width:
@@ -166,7 +193,7 @@ class _Sidebar extends StatelessWidget {
             children: [
               Padding(
                 padding: EdgeInsets.only(
-                  left: collapsed ? 0 : Tokens.s4,
+                  left: narrow ? 0 : Tokens.s4,
                   bottom: Tokens.s8,
                 ),
                 child: header,
@@ -176,12 +203,12 @@ class _Sidebar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (collapsed)
+                      if (narrow)
                         const SizedBox(height: Tokens.s8)
                       else
                         const NavGroupLabel('Listen'),
                       for (final s in Section.tabs) item(s),
-                      if (collapsed)
+                      if (narrow)
                         const NavGroupGap()
                       else
                         const NavGroupLabel('Tools'),
@@ -190,7 +217,7 @@ class _Sidebar extends StatelessWidget {
                   ),
                 ),
               ),
-              _ToolRow(collapsed: collapsed, toggle: toggle),
+              _ToolRow(collapsed: narrow, toggle: toggle),
             ],
           ),
         ),

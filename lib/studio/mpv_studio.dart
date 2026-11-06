@@ -89,7 +89,11 @@ class MpvStudio {
   ///
   /// A persisted setting the player refuses does not stop the launch: it is
   /// logged to the Console and reported as one notice.
-  static Future<MpvStudio> launch() async {
+  ///
+  /// With [restoreQueue] (and "Resume" on in the settings) the queue of the
+  /// last session comes back paused on its entry, in the background; a
+  /// restart passes false and brings its own session across instead.
+  static Future<MpvStudio> launch({bool restoreQueue = true}) async {
     // Persisted settings, restored before the first frame.
     final settings = await AppSettings.load();
 
@@ -142,6 +146,11 @@ class MpvStudio {
         rack: rack,
       );
       studio._reportSettingFailures([...engine.failures, ...media.failures]);
+      if (restoreQueue && settings.resumePlayback) {
+        unawaited(
+          settings.restoreQueue(engine.player).catchError(issues.report),
+        );
+      }
       return studio;
     } on Object {
       await undoAll(undo);
@@ -196,7 +205,7 @@ class MpvStudio {
   Future<MpvStudio> restart() async {
     final snapshot = PlaybackSnapshot.of(player.state);
     await shutdown();
-    final next = await launch();
+    final next = await launch(restoreQueue: false);
     unawaited(snapshot.restoreReporting(next.player, next.issues.report));
     return next;
   }
