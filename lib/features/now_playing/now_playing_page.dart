@@ -523,7 +523,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
         // beside a very long wave.
         final deck = (c.maxWidth * 0.28).clamp(
           340.0,
-          c.maxWidth >= 1800 ? 520.0 : 440.0,
+          440 + ((c.maxWidth - 1800) * 0.2).clamp(0.0, 80.0),
         );
         // What the deck needs under the cover grows with the text.
         final rest =

@@ -205,7 +205,10 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Top aligned: an error under one field must not move the other
+        // field and the remove button down.
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 2,

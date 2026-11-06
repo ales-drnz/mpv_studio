@@ -396,7 +396,7 @@ class _SignalChainViewState extends State<SignalChainView> {
                           detail: focus == null
                               ? null
                               : Align(
-                                  alignment: Alignment.topLeft,
+                                  alignment: AlignmentDirectional.topStart,
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
                                       maxWidth: _editorMaxWidth,
