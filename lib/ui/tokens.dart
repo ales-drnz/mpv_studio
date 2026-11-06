@@ -29,6 +29,12 @@ class Tokens {
   static Color get surface3 => Palette.active.surface3;
   static Color get surface4 => Palette.active.surface4;
 
+  /// A card inside a sheet or a dialog.
+  static Color get cardOnChrome => Palette.active.cardOnChrome;
+
+  /// A readout panel set into a card (meters, a gauge's track).
+  static Color get inset => Palette.active.inset;
+
   // Hairlines (flat borders, never shadows).
   static Color get line => Palette.active.line;
   static Color get line2 => Palette.active.line2;

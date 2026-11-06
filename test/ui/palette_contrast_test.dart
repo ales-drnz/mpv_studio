@@ -34,6 +34,21 @@ void main() {
         );
       });
 
+      test('a selection reads apart from a tonal button', () {
+        expect(contrast(p.accentContainer, p.tonal), greaterThanOrEqualTo(1.3));
+      });
+
+      test('a card reads inside a sheet or a dialog', () {
+        expect(
+          contrast(p.cardOnChrome, p.surface2),
+          greaterThanOrEqualTo(1.15),
+        );
+      });
+
+      test('an inset panel reads inside a card', () {
+        expect(contrast(p.inset, p.surface), greaterThanOrEqualTo(1.1));
+      });
+
       test('the stage panel reads on the chrome', () {
         expect(contrast(p.bg, p.surface2), greaterThanOrEqualTo(1.15));
       });
