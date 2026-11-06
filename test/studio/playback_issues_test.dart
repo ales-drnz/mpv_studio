@@ -215,7 +215,8 @@ void main() {
     expect(r3, isNull);
     expect(ok, 42);
     expect(h.notices.map((n) => n.message), [
-      'mpv refused "seek": property unavailable.',
+      'The player refused "seek": property unavailable. The Console log '
+          'has the details.',
       'That queue entry is no longer there.',
     ]);
   });
@@ -244,7 +245,8 @@ void main() {
       );
       expect(
         describeEndFileError(err(MpvError.mpvErrorAoInitFailed)),
-        'The audio device could not be opened.',
+        'The audio device could not be opened. Pick another output in '
+        'Settings, Output.',
       );
       expect(
         describeEndFileError(err(MpvError.mpvErrorLoadingFailed)),
@@ -252,7 +254,8 @@ void main() {
       );
       expect(
         describeEndFileError(err(-999), title: 'Song'),
-        'Playback of "Song" stopped: mpv says no.',
+        'Playback of "Song" stopped: mpv says no. The Console log has the '
+        'details.',
       );
     });
   });

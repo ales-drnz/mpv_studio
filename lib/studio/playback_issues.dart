@@ -282,7 +282,8 @@ class PlaybackIssues {
 String describeEndFileError(EndFileError error, {String? title}) {
   final track = title == null || title.isEmpty ? 'the track' : '"$title"';
   if (error.isAudioOutputError) {
-    return 'The audio device could not be opened.';
+    return 'The audio device could not be opened. Pick another output in '
+        'Settings, Output.';
   }
   if (error.isFormatError) {
     return 'Could not play $track: no playable audio found.';
@@ -290,19 +291,22 @@ String describeEndFileError(EndFileError error, {String? title}) {
   if (error.isLoadingError) {
     return 'Could not open $track. Check the file or the connection.';
   }
-  return 'Playback of $track stopped: ${_sentence(error.message)}';
+  return 'Playback of $track stopped: ${_sentence(error.message)}$_seeLog';
 }
+
+/// Where the rest of an error the toast cannot explain is.
+const _seeLog = ' The Console log has the details.';
 
 /// The toast text for a player call that threw [error].
 String describeCallError(Object error) => switch (error) {
   MpvCommandException(:final name, :final message) =>
-    'mpv refused "$name": ${_sentence(message)}',
+    'The player refused "$name": ${_sentence(message)}$_seeLog',
   SourceException(:final uri, :final message) =>
     'Could not open "${nameFromUri(uri)}": ${_sentence(message)}',
   PlayerInitException(:final message) =>
     'The audio engine did not start: ${_sentence(message)}',
   RangeError() => 'That queue entry is no longer there.',
-  _ => 'Something went wrong: ${_sentence(error.toString())}',
+  _ => 'Something went wrong: ${_sentence(error.toString())}$_seeLog',
 };
 
 /// [text] trimmed, with a final full stop.
