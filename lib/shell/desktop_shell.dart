@@ -165,6 +165,11 @@ class _Sidebar extends StatelessWidget {
                   'MPV Studio',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  // The sidebar is fixed in width: the name grows up to
+                  // 1.3 times, so it stays whole.
+                  textScaler: MediaQuery.textScalerOf(
+                    context,
+                  ).clamp(maxScaleFactor: 1.3),
                   style: Tokens.heading.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,

@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../features/now_playing/transport_actions.dart';
+import '../features/effects/rack_controller.dart';
 import '../studio/playback_issues.dart';
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
@@ -34,7 +37,11 @@ class PlaybackShortcuts extends StatelessWidget {
     required this.child,
     this.enabled = true,
     this.guard = unguarded,
+    this.rack,
   });
+
+  /// The effects rack B bypasses; no B without.
+  final RackController? rack;
 
   static const Duration seekStep = Duration(seconds: 5);
 
@@ -61,6 +68,7 @@ class PlaybackShortcuts extends StatelessWidget {
           event,
           guard: guard,
           notify: feedbackFor(context),
+          rack: rack,
         );
       },
       child: child,
@@ -77,13 +85,61 @@ const List<(String, String)> playbackShortcutList = [
   ('M', 'Mute or unmute'),
   ('N', 'Next track'),
   ('P', 'Previous track'),
-  ('Page Up', 'Previous chapter'),
-  ('Page Down', 'Next chapter'),
+  ('Shift+Page Up', 'Previous chapter (Page Up where nothing scrolls)'),
+  ('Shift+Page Down', 'Next chapter (Page Down where nothing scrolls)'),
   ('L', 'A-B loop: set A, then B, then clear'),
   ('[ and ]', 'Slower or faster'),
   ('- and +', 'Also slower or faster (= too)'),
   ('Backspace', 'Normal speed'),
+  ('B', 'Bypass the effects, or play them again'),
   ('? or F1', 'Show these shortcuts'),
+];
+
+/// How the help names the section keys: a browser keeps Ctrl+1 to 8 for
+/// its own tabs, so there they work in the installed app only.
+String sectionKeysLabel({bool web = kIsWeb}) =>
+    web ? 'Ctrl+1 to 7 (in the app, not a browser)' : 'Ctrl+1 to 7';
+
+/// The keys of the shell and the pages, by where they work, as the help
+/// lists them after [playbackShortcutList].
+final List<(String, List<(String, String)>)> pageShortcutList = [
+  (
+    'Anywhere',
+    [
+      (
+        sectionKeysLabel(),
+        'Go to Playback, Queue, Stream, Effects, Engine, Settings or Console',
+      ),
+      ('Escape', 'Close a detail, a menu or a dialog'),
+      ('Menu, Shift+F10', 'The menu of the focused row'),
+    ],
+  ),
+  (
+    'Queue',
+    [
+      ('Enter', 'Play the selected track'),
+      ('Delete', 'Remove it (with Undo)'),
+      ('Alt+Up, Alt+Down', 'Move it one place'),
+      ('Home, End', 'Select the first or the last'),
+    ],
+  ),
+  (
+    'Effects',
+    [
+      ('Alt+Up, Alt+Down', 'Move the focused stage'),
+      ('Delete', 'Remove it (with Undo)'),
+    ],
+  ),
+  ('Settings', [('Ctrl+F', 'Search the settings')]),
+  (
+    'Console',
+    [
+      ('Up, Down', 'Earlier commands'),
+      ('Tab, Ctrl+Space', 'Complete, or list the commands'),
+      ('Ctrl+L', 'Clear the log'),
+    ],
+  ),
+  ('Sliders', [('Shift with an arrow', 'A finer step')]),
 ];
 
 /// Whether [event] asks for the shortcut help: a press of F1, or of the
@@ -95,30 +151,40 @@ bool isShortcutHelpKey(KeyEvent event) {
 
 /// Shows the list of keyboard shortcuts in a dialog.
 Future<void> showShortcutHelp(BuildContext context) {
+  Widget row((String, String) entry) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 128,
+          child: Text(
+            entry.$1,
+            style: Tokens.numeric.copyWith(color: Tokens.fg),
+          ),
+        ),
+        Expanded(child: Text(entry.$2, style: Tokens.body)),
+      ],
+    ),
+  );
   return showStudioDialog<void>(
     context,
     title: 'Keyboard shortcuts',
-    maxWidth: 460,
+    maxWidth: 520,
     builder: (context) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final (keys, action) in playbackShortcutList)
+        for (final entry in playbackShortcutList) row(entry),
+        for (final (where, entries) in pageShortcutList) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: Tokens.s8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 112,
-                  child: Text(
-                    keys,
-                    style: Tokens.numeric.copyWith(color: Tokens.fg),
-                  ),
-                ),
-                Expanded(child: Text(action, style: Tokens.body)),
-              ],
+            padding: const EdgeInsets.only(top: Tokens.s16, bottom: Tokens.s4),
+            child: Semantics(
+              header: true,
+              child: Text(where, style: Tokens.label),
             ),
           ),
+          for (final entry in entries) row(entry),
+        ],
       ],
     ),
     actions: (context) => [
@@ -137,6 +203,7 @@ KeyEventResult handlePlaybackKey(
   KeyEvent event, {
   CallGuard guard = unguarded,
   Notify? notify,
+  RackController? rack,
 }) {
   if (event is KeyUpEvent) return KeyEventResult.ignored;
   if (_focusElsewhere()) return KeyEventResult.ignored;
@@ -154,6 +221,24 @@ KeyEventResult handlePlaybackKey(
     }
     return KeyEventResult.handled;
   }
+  final key = event.logicalKey;
+  final page = switch (key) {
+    LogicalKeyboardKey.pageUp => -1,
+    LogicalKeyboardKey.pageDown => 1,
+    _ => 0,
+  };
+  // The chapters: Shift+Page Up and Down anywhere; Page Up and Down only
+  // where they would not scroll anything.
+  if (page != 0 &&
+      !keys.isControlPressed &&
+      !keys.isMetaPressed &&
+      !keys.isAltPressed &&
+      (keys.isShiftPressed || !_focusScrolls())) {
+    if (event is! KeyRepeatEvent) {
+      stepChapter(player, guard, page, notify: notify);
+    }
+    return KeyEventResult.handled;
+  }
   if (keys.isControlPressed ||
       keys.isMetaPressed ||
       keys.isAltPressed ||
@@ -161,7 +246,6 @@ KeyEventResult handlePlaybackKey(
     return KeyEventResult.ignored;
   }
 
-  final key = event.logicalKey;
   // Seeking and the volume repeat while the key is held.
   final held = switch (key) {
     LogicalKeyboardKey.arrowLeft => () => guard(
@@ -187,6 +271,14 @@ KeyEventResult handlePlaybackKey(
     return KeyEventResult.handled;
   }
 
+  if (key == LogicalKeyboardKey.keyB && rack != null) {
+    if (event is! KeyRepeatEvent && rack.canBypass) {
+      final on = !rack.bypass;
+      rack.setBypass(on);
+      notify?.call(on ? 'Effects bypassed' : 'Effects on');
+    }
+    return KeyEventResult.handled;
+  }
   final action = _pressActions[key];
   if (action == null) return KeyEventResult.ignored;
   // The app's Shortcuts map Space to ActivateIntent above this handler,
@@ -203,14 +295,25 @@ typedef _Action =
     void Function(PlayerApi player, CallGuard guard, Notify? notify);
 
 final Map<LogicalKeyboardKey, _Action> _pressActions = {
-  LogicalKeyboardKey.space: (p, g, n) => togglePlay(p, g),
-  LogicalKeyboardKey.keyM: (p, g, n) => g(() => p.setMute(!p.state.mute)),
+  LogicalKeyboardKey.space: (p, g, n) {
+    // The play button says it on screen; a screen reader hears it, once
+    // the player took it.
+    final playing = !p.state.playWhenReady;
+    togglePlay(p, g).then((_) {
+      if (p.state.playWhenReady == playing) {
+        _announce(playing ? 'Playing' : 'Paused');
+      }
+    });
+  },
+  LogicalKeyboardKey.keyM: (p, g, n) {
+    final mute = !p.state.mute;
+    _announce(mute ? 'Muted' : 'Sound on');
+    g(() => p.setMute(mute));
+  },
   LogicalKeyboardKey.keyN: (p, g, n) =>
       skipTrack(p, g, forward: true, notify: n),
   LogicalKeyboardKey.keyP: (p, g, n) =>
       skipTrack(p, g, forward: false, notify: n),
-  LogicalKeyboardKey.pageUp: (p, g, n) => stepChapter(p, g, -1, notify: n),
-  LogicalKeyboardKey.pageDown: (p, g, n) => stepChapter(p, g, 1, notify: n),
   LogicalKeyboardKey.keyL: (p, g, n) => cycleAbLoop(p, g, notify: n),
   LogicalKeyboardKey.backspace: (p, g, n) =>
       stepRate(p, g, reset: true, notify: n),
@@ -253,6 +356,23 @@ bool _focusElsewhere() {
     return true;
   }
   return ModalRoute.of(focused) is PopupRoute;
+}
+
+/// Says [message] to a screen reader.
+void _announce(String message) {
+  final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+  if (view == null) return;
+  SemanticsService.sendAnnouncement(view, message, TextDirection.ltr);
+}
+
+/// Whether the focus is inside something Page Up and Down scroll.
+bool _focusScrolls() {
+  final focused = FocusManager.instance.primaryFocus?.context;
+  if (focused == null) return false;
+  // Page Up and Down scroll up and down: a sideways list is not theirs.
+  final scrollable = Scrollable.maybeOf(focused, axis: Axis.vertical);
+  return scrollable != null &&
+      scrollable.position.maxScrollExtent > scrollable.position.minScrollExtent;
 }
 
 /// Whether the focused widget is a control that Space activates.

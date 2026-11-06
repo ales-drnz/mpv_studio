@@ -39,7 +39,12 @@ class NavDestination extends StatelessWidget {
     this.tooltip,
     this.layout = NavItemLayout.stacked,
     this.indicatorWidth = 56,
+    this.semanticsValue,
   });
+
+  /// What a screen reader says after the name: the tab's place in the
+  /// bar, the section behind More.
+  final String? semanticsValue;
 
   final IconData icon;
   final IconData? activeIcon;
@@ -135,6 +140,11 @@ class NavDestination extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: labelStyle,
+                      // A bar of five keeps its labels apart: they grow
+                      // up to 1.3 times, the tooltip says the rest.
+                      textScaler: MediaQuery.textScalerOf(
+                        context,
+                      ).clamp(maxScaleFactor: 1.3),
                     ),
                   ],
                 ),
@@ -164,6 +174,7 @@ class NavDestination extends StatelessWidget {
       selected: active,
       button: true,
       label: layout == NavItemLayout.iconOnly ? label : null,
+      value: semanticsValue,
       child: tappable,
     );
   }
@@ -179,9 +190,13 @@ class SectionDestination extends StatelessWidget {
     this.layout = NavItemLayout.stacked,
     this.short = true,
     this.indicatorWidth = 56,
+    this.semanticsValue,
   });
 
   final Section section;
+
+  /// See [NavDestination.semanticsValue].
+  final String? semanticsValue;
   final bool active;
   final VoidCallback onTap;
   final NavItemLayout layout;
@@ -201,6 +216,7 @@ class SectionDestination extends StatelessWidget {
     badge: section,
     layout: layout,
     indicatorWidth: indicatorWidth,
+    semanticsValue: semanticsValue,
   );
 }
 
@@ -331,10 +347,15 @@ class MoreDestination extends StatelessWidget {
     required this.onSelect,
     this.layout = NavItemLayout.stacked,
     this.indicatorWidth = 56,
+    this.semanticsValue,
   });
 
   final Section section;
   final ValueChanged<Section> onSelect;
+
+  /// See [NavDestination.semanticsValue]; the section on show, when it is
+  /// one of More's, goes before it.
+  final String? semanticsValue;
   final NavItemLayout layout;
   final double indicatorWidth;
 
@@ -357,6 +378,9 @@ class MoreDestination extends StatelessWidget {
     onTap: () => _open(context),
     layout: layout,
     indicatorWidth: indicatorWidth,
+    semanticsValue: section.tab
+        ? semanticsValue
+        : [section.title, ?semanticsValue].join(', '),
   );
 }
 

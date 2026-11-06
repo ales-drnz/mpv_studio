@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../ui/tokens.dart';
@@ -7,8 +8,9 @@ import 'shell_frame.dart';
 import 'snack_clearance.dart';
 
 /// The navigation behaviour of the app around the routed section bodies
-/// ([navigationShell]): section switching, the re-tap of the active
-/// section, the system back button, and the root [Scaffold] that hosts
+/// ([navigationShell]): section switching (also Ctrl+1 to Ctrl+7, which
+/// put the focus in the page), the re-tap of the active section, the
+/// system back button and Escape, and the root [Scaffold] that hosts
 /// SnackBars. The chrome itself is [ShellFrame].
 ///
 /// It needs no player, so tests run it with any [miniPlayer].
@@ -30,6 +32,82 @@ class StudioShell extends StatefulWidget {
 
 class _StudioShellState extends State<StudioShell> {
   StatefulNavigationShell get _shell => widget.navigationShell;
+
+  /// The section body's focus: a section switch puts the focus here, so
+  /// Tab goes on into the page and the page's own keys (Ctrl+F) work.
+  final _page = FocusNode(debugLabel: 'section page', skipTraversal: true);
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
+
+  /// Puts the focus in the section once the switch is built: in its
+  /// navigator's scope, which gives it back to what had it in that
+  /// section, or lets the page's autofocus take it on a first visit (as
+  /// Settings' Ctrl+F needs). Never on a control the user did not pick,
+  /// which Space would press.
+  void _focusPage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // The top route's scope, under the navigator's own node.
+      final scope = _branchNavigator(
+        _shell.currentIndex,
+      )?.focusNode.children.whereType<FocusScopeNode>().lastOrNull;
+      (scope ?? _page).requestFocus();
+    });
+  }
+
+  @override
+  void didUpdateWidget(StudioShell old) {
+    super.didUpdateWidget(old);
+    // Every way to another section (the sidebar, the keys, the
+    // mini-player, Show log, the system back) moves the focus there.
+    if (old.navigationShell.currentIndex != _shell.currentIndex) {
+      _focusPage();
+    }
+  }
+
+  /// Ctrl+1 to Ctrl+7 (Cmd on macOS) open the sections in order; Escape
+  /// closes the open section's detail when nothing below took it.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final keys = HardwareKeyboard.instance;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape &&
+        !keys.isControlPressed &&
+        !keys.isMetaPressed &&
+        !keys.isAltPressed &&
+        !keys.isShiftPressed) {
+      // Only when there is something to close: the rest (a tooltip) is
+      // left to the app.
+      final nav = _branchNavigator(_shell.currentIndex);
+      if (nav == null || !nav.canPop()) return KeyEventResult.ignored;
+      nav.maybePop();
+      return KeyEventResult.handled;
+    }
+    if ((keys.isControlPressed || keys.isMetaPressed) &&
+        !keys.isAltPressed &&
+        !keys.isShiftPressed) {
+      final index = _digits.indexOf(key);
+      if (index >= 0 && index < Section.values.length) {
+        _select(Section.values[index]);
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
+
+  static const _digits = [
+    LogicalKeyboardKey.digit1,
+    LogicalKeyboardKey.digit2,
+    LogicalKeyboardKey.digit3,
+    LogicalKeyboardKey.digit4,
+    LogicalKeyboardKey.digit5,
+    LogicalKeyboardKey.digit6,
+    LogicalKeyboardKey.digit7,
+  ];
 
   Section get _section => Section.values[_shell.currentIndex];
 
@@ -76,27 +154,32 @@ class _StudioShellState extends State<StudioShell> {
     // app at once. Off Playback the shell always handles it (back goes to
     // Playback), so this scope blocks the pop there, which is what reports
     // it. Sheets and pushed details report themselves.
-    return PopScope(
-      canPop: section == Section.nowPlaying,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _onBack();
-      },
-      child: BackButtonListener(
-        onBackButtonPressed: _onBack,
-        // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars
-        // on (the shells themselves are custom, not Scaffolds). The shells
-        // handle the soft keyboard themselves, so it must not resize. The
-        // clearance host floats the SnackBars above the shell chrome.
-        child: SnackClearanceHost(
-          child: Scaffold(
-            backgroundColor: Tokens.bg,
-            resizeToAvoidBottomInset: false,
-            body: ShellFrame(
-              section: section,
-              onSelect: _select,
-              body: _shell,
-              // Playback already shows the full transport.
-              miniPlayer: section == Section.nowPlaying ? null : mini,
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: _onKey,
+      child: PopScope(
+        canPop: section == Section.nowPlaying,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _onBack();
+        },
+        child: BackButtonListener(
+          onBackButtonPressed: _onBack,
+          // A root Scaffold gives ScaffoldMessenger a surface to host SnackBars
+          // on (the shells themselves are custom, not Scaffolds). The shells
+          // handle the soft keyboard themselves, so it must not resize. The
+          // clearance host floats the SnackBars above the shell chrome.
+          child: SnackClearanceHost(
+            child: Scaffold(
+              backgroundColor: Tokens.bg,
+              resizeToAvoidBottomInset: false,
+              body: ShellFrame(
+                section: section,
+                onSelect: _select,
+                body: Focus(focusNode: _page, child: _shell),
+                // Playback already shows the full transport.
+                miniPlayer: section == Section.nowPlaying ? null : mini,
+              ),
             ),
           ),
         ),

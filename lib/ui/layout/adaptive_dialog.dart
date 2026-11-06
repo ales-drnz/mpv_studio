@@ -117,12 +117,12 @@ Future<T?> showStudioDialog<T>(
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: Tokens.s12),
+          // Names the route: a screen reader says the title as the
+          // dialog opens.
           child: Semantics(
             header: true,
-            child: Text(
-              title,
-              style: Tokens.heading.copyWith(fontSize: 22, height: 28 / 22),
-            ),
+            namesRoute: true,
+            child: Text(title, style: Tokens.titleSm),
           ),
         ),
         // The sheet scrolls as a whole; the dialog scrolls its content

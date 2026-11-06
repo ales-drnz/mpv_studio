@@ -234,7 +234,7 @@ Future<ShellHarness> pumpShell(
     // As AppShell builds it, minus the player services.
     shell: (navigationShell) => PlaybackShortcuts(
       player: fake,
-      enabled: input == InputMode.pointer,
+      rack: rack,
       child: StudioShell(
         navigationShell: navigationShell,
         miniPlayer: (context, variant) => MiniPlayer(

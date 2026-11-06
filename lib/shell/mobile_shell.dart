@@ -158,6 +158,9 @@ class _TabBar extends StatelessWidget {
   final ValueChanged<Section> onSelect;
   const _TabBar({required this.section, required this.onSelect});
 
+  /// The section tabs and More.
+  static final _tabCount = Section.tabs.length + 1;
+
   @override
   Widget build(BuildContext context) {
     // A tonal bar, no hairline: its fill runs on into the home-indicator
@@ -168,13 +171,14 @@ class _TabBar extends StatelessWidget {
       padding: EdgeInsets.only(top: Tokens.s8, bottom: Tokens.s8 + bottomInset),
       child: Row(
         children: [
-          for (final s in Section.tabs)
+          for (final (i, s) in Section.tabs.indexed)
             Expanded(
               child: SectionDestination(
                 section: s,
                 active: s == section,
                 onTap: () => onSelect(s),
                 indicatorWidth: 64,
+                semanticsValue: 'Tab ${i + 1} of $_tabCount',
               ),
             ),
           Expanded(
@@ -182,6 +186,7 @@ class _TabBar extends StatelessWidget {
               section: section,
               onSelect: onSelect,
               indicatorWidth: 64,
+              semanticsValue: 'tab $_tabCount of $_tabCount',
             ),
           ),
         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../tokens.dart';
+import '../widgets/focus_ring.dart';
 import '../widgets/pill_menu_item.dart';
 import 'adaptive_dialog.dart';
 import 'layout_scope.dart';
@@ -94,18 +96,21 @@ Future<T?> showStudioMenu<T>(
             ),
           ),
         for (final item in items)
-          InkWell(
-            onTap: item.enabled
-                ? () => Navigator.of(context).pop(item.value)
-                : null,
-            customBorder: Tokens.pill,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _MenuRow(item: item),
+          FocusRing(
+            inside: true,
+            child: InkWell(
+              onTap: item.enabled
+                  ? () => Navigator.of(context).pop(item.value)
+                  : null,
+              customBorder: Tokens.pill,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _MenuRow(item: item),
+                  ),
                 ),
               ),
             ),
@@ -151,7 +156,7 @@ class _MenuRow<T> extends StatelessWidget {
 }
 
 /// Gives [child] a context menu: right-click on pointer devices, long
-/// press everywhere. [items] is called when the menu opens, and
+/// press everywhere, and the Menu key or Shift+F10 on a focused child. [items] is called when the menu opens, and
 /// [onSelected] gets the picked value.
 class StudioMenuRegion<T> extends StatelessWidget {
   const StudioMenuRegion({
@@ -182,11 +187,31 @@ class StudioMenuRegion<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onSecondaryTapUp: (d) => _open(context, d.globalPosition),
-      onLongPressStart: (d) => _open(context, d.globalPosition),
-      child: child,
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        final key = event.logicalKey;
+        final menuKey =
+            key == LogicalKeyboardKey.contextMenu ||
+            (key == LogicalKeyboardKey.f10 &&
+                HardwareKeyboard.instance.isShiftPressed);
+        if (!menuKey) return KeyEventResult.ignored;
+        // Under the region's middle, as a right-click there would.
+        final box = context.findRenderObject() as RenderBox?;
+        final at = box == null || !box.hasSize
+            ? Offset.zero
+            : box.localToGlobal(box.size.center(Offset.zero));
+        _open(context, at);
+        return KeyEventResult.handled;
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onSecondaryTapUp: (d) => _open(context, d.globalPosition),
+        onLongPressStart: (d) => _open(context, d.globalPosition),
+        child: child,
+      ),
     );
   }
 }

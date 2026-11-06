@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'layout_scope.dart';
 import 'window_class.dart';
@@ -70,6 +71,41 @@ class TwoPane extends StatefulWidget {
 class _TwoPaneState extends State<TwoPane> {
   final _listKey = GlobalKey();
 
+  /// The covering detail's focus: an opened detail takes the focus from
+  /// the hidden list, so the keys (Tab, Escape) go to what shows.
+  final _detailFocus = FocusNode(
+    debugLabel: 'two pane detail',
+    skipTraversal: true,
+  );
+
+  /// Whether the last build covered the list with a detail.
+  bool _covered = false;
+
+  /// Moves the focus into a detail that has just covered the list.
+  void _cover(bool covered) {
+    if (covered && !_covered) _focusDetail(3);
+    _covered = covered;
+  }
+
+  /// Focuses the detail once it is built: the switcher brings it in a
+  /// frame or two later.
+  void _focusDetail(int tries) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_covered) return;
+      if (_detailFocus.context != null) {
+        _detailFocus.requestFocus();
+      } else if (tries > 1) {
+        _focusDetail(tries - 1);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _detailFocus.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -81,6 +117,8 @@ class _TwoPaneState extends State<TwoPane> {
           listWidth: widget.listWidth,
           minDetailWidth: widget.minDetailWidth,
         )) {
+          // Side by side nothing covers: a later narrowing covers anew.
+          _covered = false;
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -94,27 +132,44 @@ class _TwoPaneState extends State<TwoPane> {
             ],
           );
         }
+        _cover(detail != null);
         return PopScope(
           canPop: detail == null,
           onPopInvokedWithResult: (didPop, _) {
             if (!didPop) widget.onCloseDetail?.call();
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Offstage(
-                offstage: detail != null,
-                child: TickerMode(enabled: detail == null, child: list),
-              ),
-              SectionSwitcher(
-                child: detail == null
-                    ? const SizedBox.shrink(key: ValueKey('two-pane-none'))
-                    : KeyedSubtree(
-                        key: const ValueKey('two-pane-detail'),
-                        child: detail,
-                      ),
-              ),
-            ],
+          // Escape closes the detail, like the system back.
+          child: Focus(
+            canRequestFocus: false,
+            skipTraversal: true,
+            onKeyEvent: (node, event) {
+              final close = widget.onCloseDetail;
+              if (detail == null ||
+                  close == null ||
+                  event is! KeyDownEvent ||
+                  event.logicalKey != LogicalKeyboardKey.escape) {
+                return KeyEventResult.ignored;
+              }
+              close();
+              return KeyEventResult.handled;
+            },
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Offstage(
+                  offstage: detail != null,
+                  child: TickerMode(enabled: detail == null, child: list),
+                ),
+                SectionSwitcher(
+                  child: detail == null
+                      ? const SizedBox.shrink(key: ValueKey('two-pane-none'))
+                      : KeyedSubtree(
+                          key: const ValueKey('two-pane-detail'),
+                          child: Focus(focusNode: _detailFocus, child: detail),
+                        ),
+                ),
+              ],
+            ),
           ),
         );
       },
