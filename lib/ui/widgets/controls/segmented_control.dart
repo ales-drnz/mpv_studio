@@ -64,6 +64,7 @@ class SegmentedControl<T> extends StatelessWidget {
 
   Widget _pill(BuildContext context) {
     Widget segment(SegmentOption<T> o) => _Segment(
+      index: options.indexOf(o),
       label: o.label,
       tooltip: o.tooltip,
       active: o.value == selected,
@@ -85,7 +86,12 @@ class SegmentedControl<T> extends StatelessWidget {
           _ => 0,
         };
         if (step == 0) return KeyEventResult.ignored;
-        final at = options.indexWhere((o) => o.value == selected);
+        // From the segment that has the focus, which Tab may have put on
+        // one that is not picked.
+        final focused = FocusManager.instance.primaryFocus?.context
+            ?.findAncestorWidgetOfExactType<_Segment>();
+        final at =
+            focused?.index ?? options.indexWhere((o) => o.value == selected);
         final next = at + step;
         if (at >= 0 && next >= 0 && next < options.length) {
           onSelect(options[next].value);
@@ -118,6 +124,8 @@ class SegmentedControl<T> extends StatelessWidget {
 }
 
 class _Segment extends StatelessWidget {
+  /// Its place among the options.
+  final int index;
   final String label;
   final String? tooltip;
   final bool active;
@@ -128,6 +136,7 @@ class _Segment extends StatelessWidget {
   final bool hugContent;
 
   const _Segment({
+    required this.index,
     required this.label,
     required this.active,
     required this.onTap,

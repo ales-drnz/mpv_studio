@@ -117,6 +117,8 @@ class _TwoPaneState extends State<TwoPane> {
           listWidth: widget.listWidth,
           minDetailWidth: widget.minDetailWidth,
         )) {
+          // Side by side nothing covers: a later narrowing covers anew.
+          _covered = false;
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

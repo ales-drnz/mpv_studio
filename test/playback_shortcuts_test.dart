@@ -296,7 +296,10 @@ void main() {
       await tester.pumpAndSettle();
       for (final (keys, action) in playbackShortcutList) {
         // Up and Down also move through the Console's history.
-        expect(find.text(keys), findsWidgets);
+        expect(
+          find.text(keys),
+          keys == 'Up, Down' ? findsWidgets : findsOneWidget,
+        );
         expect(find.text(action), findsOneWidget);
       }
     });

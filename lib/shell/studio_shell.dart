@@ -43,11 +43,30 @@ class _StudioShellState extends State<StudioShell> {
     super.dispose();
   }
 
-  /// Puts the focus in the section body once the switch is built.
+  /// Puts the focus in the section once the switch is built: in its
+  /// navigator's scope, which gives it back to what had it in that
+  /// section, or lets the page's autofocus take it on a first visit (as
+  /// Settings' Ctrl+F needs). Never on a control the user did not pick,
+  /// which Space would press.
   void _focusPage() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _page.requestFocus();
+      if (!mounted) return;
+      // The top route's scope, under the navigator's own node.
+      final scope = _branchNavigator(
+        _shell.currentIndex,
+      )?.focusNode.children.whereType<FocusScopeNode>().lastOrNull;
+      (scope ?? _page).requestFocus();
     });
+  }
+
+  @override
+  void didUpdateWidget(StudioShell old) {
+    super.didUpdateWidget(old);
+    // Every way to another section (the sidebar, the keys, the
+    // mini-player, Show log, the system back) moves the focus there.
+    if (old.navigationShell.currentIndex != _shell.currentIndex) {
+      _focusPage();
+    }
   }
 
   /// Ctrl+1 to Ctrl+7 (Cmd on macOS) open the sections in order; Escape
@@ -61,7 +80,11 @@ class _StudioShellState extends State<StudioShell> {
         !keys.isMetaPressed &&
         !keys.isAltPressed &&
         !keys.isShiftPressed) {
-      _branchNavigator(_shell.currentIndex)?.maybePop();
+      // Only when there is something to close: the rest (a tooltip) is
+      // left to the app.
+      final nav = _branchNavigator(_shell.currentIndex);
+      if (nav == null || !nav.canPop()) return KeyEventResult.ignored;
+      nav.maybePop();
       return KeyEventResult.handled;
     }
     if ((keys.isControlPressed || keys.isMetaPressed) &&
@@ -102,7 +125,6 @@ class _StudioShellState extends State<StudioShell> {
       return;
     }
     _shell.goBranch(section.index);
-    _focusPage();
   }
 
   /// The system back (Android back button, the predictive back gesture):

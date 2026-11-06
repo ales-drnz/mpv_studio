@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -94,14 +95,19 @@ const List<(String, String)> playbackShortcutList = [
   ('? or F1', 'Show these shortcuts'),
 ];
 
+/// How the help names the section keys: a browser keeps Ctrl+1 to 8 for
+/// its own tabs, so there they work in the installed app only.
+String sectionKeysLabel({bool web = kIsWeb}) =>
+    web ? 'Ctrl+1 to 7 (in the app, not a browser)' : 'Ctrl+1 to 7';
+
 /// The keys of the shell and the pages, by where they work, as the help
 /// lists them after [playbackShortcutList].
-const List<(String, List<(String, String)>)> pageShortcutList = [
+final List<(String, List<(String, String)>)> pageShortcutList = [
   (
     'Anywhere',
     [
       (
-        'Ctrl+1 to 7',
+        sectionKeysLabel(),
         'Go to Playback, Queue, Stream, Effects, Engine, Settings or Console',
       ),
       ('Escape', 'Close a detail, a menu or a dialog'),
@@ -290,9 +296,14 @@ typedef _Action =
 
 final Map<LogicalKeyboardKey, _Action> _pressActions = {
   LogicalKeyboardKey.space: (p, g, n) {
-    // The play button says it on screen; a screen reader hears it.
-    _announce(p.state.playWhenReady ? 'Paused' : 'Playing');
-    togglePlay(p, g);
+    // The play button says it on screen; a screen reader hears it, once
+    // the player took it.
+    final playing = !p.state.playWhenReady;
+    togglePlay(p, g).then((_) {
+      if (p.state.playWhenReady == playing) {
+        _announce(playing ? 'Playing' : 'Paused');
+      }
+    });
   },
   LogicalKeyboardKey.keyM: (p, g, n) {
     final mute = !p.state.mute;
@@ -358,7 +369,8 @@ void _announce(String message) {
 bool _focusScrolls() {
   final focused = FocusManager.instance.primaryFocus?.context;
   if (focused == null) return false;
-  final scrollable = Scrollable.maybeOf(focused);
+  // Page Up and Down scroll up and down: a sideways list is not theirs.
+  final scrollable = Scrollable.maybeOf(focused, axis: Axis.vertical);
   return scrollable != null &&
       scrollable.position.maxScrollExtent > scrollable.position.minScrollExtent;
 }
