@@ -85,6 +85,36 @@ void main() {
     expect(chapter, 2);
   });
 
+  // Close chapters share the lane: a tap on a dot opens that dot, not
+  // the later one whose wider box would lie over it.
+  testWidgets('on touch close dots answer their own taps', (tester) async {
+    int? chapter;
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 400,
+            child: ChapterScrubber(
+              chapters: const [
+                Chapter(time: Duration.zero, title: 'A'),
+                Chapter(time: Duration(seconds: 120), title: 'B'),
+                Chapter(time: Duration(seconds: 132), title: 'C'),
+              ],
+              position: Duration.zero,
+              duration: const Duration(minutes: 4),
+              onSeekChapter: (i) => chapter = i,
+              onSeek: (_) {},
+            ),
+          ),
+        ),
+      ),
+      input: InputMode.touch,
+    );
+    await tester.tapAt(tester.getCenter(find.bySemanticsLabel('B, 2:00')));
+    expect(chapter, 1);
+  });
+
   for (final palette in [Palette.dark, Palette.light]) {
     final theme = palette.isDark ? 'dark' : 'light';
     testWidgets('the strip on a card, $theme', (tester) async {

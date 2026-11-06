@@ -249,14 +249,20 @@ class _KneePainter extends CustomPainter {
         Offset(plot.right, y(db)),
         grid,
       );
-      paintChartLabel(
-        canvas,
-        '${db.toInt()}',
-        Offset(x(db), plot.bottom + Tokens.s4),
-        Tokens.fgFaint,
-        center: true,
-        scaler: scaler,
-      );
+      // Left out where it would run into the "0 dB" at the end.
+      if (x(db) +
+              chartLabelWidth('${db.toInt()}', scaler: scaler) / 2 +
+              Tokens.s4 <=
+          plot.right - chartLabelWidth('0 dB', scaler: scaler)) {
+        paintChartLabel(
+          canvas,
+          '${db.toInt()}',
+          Offset(x(db), plot.bottom + Tokens.s4),
+          Tokens.fgFaint,
+          center: true,
+          scaler: scaler,
+        );
+      }
       paintChartLabel(
         canvas,
         '${db.toInt()}',

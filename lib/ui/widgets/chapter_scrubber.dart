@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart' show Chapter;
 
@@ -161,22 +163,34 @@ class ChapterScrubber extends StatelessWidget {
 
         if (hasChapters) {
           final jump = onSeekChapter;
-          // Later dots paint on top, so dense chapters resolve to the
-          // nearest later one. The dot stays on the bar; its wider hit box
-          // may stick out of the edges (the Stack does not clip).
+          // The dot stays on the bar; its wider hit box answers only
+          // inside the lane.
+          // On the bar, or in its middle when it is narrower than a dot.
+          double centreOf(int i) => w < _dot
+              ? w / 2
+              : (fracOf(chapters[i].time) * w).clamp(_dot / 2, w - _dot / 2);
+          final centres = [
+            for (var i = 0; i < chapters.length; i++) centreOf(i),
+          ];
           for (var i = 0; i < chapters.length; i++) {
-            // On the bar, or in its middle when it is narrower than a dot.
-            final cx = w < _dot
-                ? w / 2
-                : (fracOf(chapters[i].time) * w).clamp(_dot / 2, w - _dot / 2);
+            final cx = centres[i];
+            // A box no wider than the room to its neighbours (but at least
+            // the dot), so close dots never lie over one another and the
+            // lane between sparse ones still seeks.
+            var dotHit = hit;
+            if (i > 0) dotHit = math.min(dotHit, cx - centres[i - 1]);
+            if (i < centres.length - 1) {
+              dotHit = math.min(dotHit, centres[i + 1] - cx);
+            }
+            dotHit = math.max(dotHit, _dot);
             final passed = position >= chapters[i].time;
             final name = '${_titleOf(i)}, ${formatDuration(chapters[i].time)}';
             children.add(
               Positioned(
-                left: cx - hit / 2,
+                left: cx - dotHit / 2,
                 top: 0,
                 bottom: 0,
-                width: hit,
+                width: dotHit,
                 child: Semantics(
                   button: jump != null,
                   label: name,

@@ -121,18 +121,6 @@ class _GaugePainter extends CustomPainter {
       ),
       Paint()..color = Tokens.surface3,
     );
-    if (reading?.momentary == null) {
-      paintChartLabel(
-        canvas,
-        'waiting for signal',
-        Offset(left + w / 2, barTop + barH / 2),
-        Tokens.fgFaint,
-        center: true,
-        middle: true,
-        scaler: scaler,
-      );
-    }
-
     // Target and its range.
     final t = target;
     if (t != null) {
@@ -154,6 +142,32 @@ class _GaugePainter extends CustomPainter {
         Offset(x(t), 6),
         Tokens.fgDim,
         center: true,
+        scaler: scaler,
+      );
+    }
+
+    // Painted over the target, which otherwise crossed the words.
+    if (reading?.momentary == null) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(left + w / 2, barTop + barH / 2),
+            width:
+                chartLabelWidth('waiting for signal', scaler: scaler) +
+                Tokens.s8,
+            height: barH - 4,
+          ),
+          const Radius.circular(Tokens.rXs),
+        ),
+        Paint()..color = Tokens.surface3,
+      );
+      paintChartLabel(
+        canvas,
+        'waiting for signal',
+        Offset(left + w / 2, barTop + barH / 2),
+        Tokens.fgFaint,
+        center: true,
+        middle: true,
         scaler: scaler,
       );
     }
@@ -217,6 +231,16 @@ class _GaugePainter extends CustomPainter {
       );
       final first = lu == _ticks.first;
       final last = lu == _ticks.last;
+      // A label that would run into the last one (which carries the
+      // unit) is left out on a narrow gauge.
+      final lastLeft =
+          x(_ticks.last.toDouble()) -
+          chartLabelWidth('${_ticks.last} LUFS', scaler: scaler);
+      if (!last &&
+          xx + chartLabelWidth('$lu', scaler: scaler) / 2 + Tokens.s4 >
+              lastLeft) {
+        continue;
+      }
       paintChartLabel(
         canvas,
         last ? '$lu LUFS' : '$lu',

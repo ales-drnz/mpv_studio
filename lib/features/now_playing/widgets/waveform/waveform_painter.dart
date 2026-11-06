@@ -130,6 +130,9 @@ class WaveformPainter extends CustomPainter {
         fontFamily: Tokens.mono,
         fontSize: Tokens.chartLabelSize,
         color: color,
+        // One line box per em, as chart_text paints: the labels stay
+        // above the notches at the largest chart scale (3 + 15 < 19).
+        height: 1.0,
       ),
     ),
   )..layout();
@@ -310,7 +313,7 @@ class WaveformPainter extends CustomPainter {
     var i = ((tLeft - waveStart) / binSecs).floor();
     if (i < 0) i = 0;
     final binPx = pxPerSec * binSecs;
-    if (binPx < 1.5) {
+    if (binPx < 1) {
       // More bins than pixels: each pixel column draws the extremes of
       // the bins that fall in it. Bars narrower than a pixel at
       // fractional positions beat against the pixel grid (moire).
@@ -352,12 +355,13 @@ class WaveformPainter extends CustomPainter {
       return;
     }
     // Each bar spans its bin's own pixel edges, rounded, so neighbours
-    // tile without beating; wide bins keep a gap between bars.
+    // tile without beating (from one pixel a bin, every column gets one);
+    // wide bins keep a gap between bars.
     final gap = binPx >= 3 ? math.max(1.0, (binPx * 0.3).roundToDouble()) : 0.0;
     for (; i < wv.bins; i++) {
       final t = waveStart + (i + 0.5) * binSecs;
-      if (t > tRight) break;
       final x0 = ((waveStart + i * binSecs - tLeft) * pxPerSec).roundToDouble();
+      if (x0 > w) break;
       final x1 = ((waveStart + (i + 1) * binSecs - tLeft) * pxPerSec)
           .roundToDouble();
       if (x1 < 0 || x0 > w) continue;

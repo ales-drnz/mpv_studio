@@ -70,7 +70,9 @@ class PrefetchView extends StatelessWidget {
                   p.mpvValue,
                   color: colorOf(p),
                   strong: p == current,
-                  swatch: PrefetchTimelinePainter.bandColor(p),
+                  swatch:
+                      PrefetchTimelinePainter.bandColor(p) ??
+                      Colors.transparent,
                 ),
             ],
           ),

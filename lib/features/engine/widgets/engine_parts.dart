@@ -132,8 +132,13 @@ class PhasePill extends StatelessWidget {
               width: Tokens.s8,
               height: Tokens.s8,
               decoration: ShapeDecoration(
-                color: swatch,
-                shape: const CircleBorder(),
+                // A state with no band reads as an empty ring.
+                color: swatch.a == 0 ? null : swatch,
+                shape: CircleBorder(
+                  side: swatch.a == 0
+                      ? BorderSide(color: Tokens.trackOff)
+                      : BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(width: Tokens.s8),
