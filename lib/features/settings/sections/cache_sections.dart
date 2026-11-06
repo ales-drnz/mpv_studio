@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
@@ -10,7 +11,6 @@ import '../settings_catalog.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
 import 'pickers.dart';
-import '../../../ui/tokens.dart';
 
 /// The network cache and its live state.
 class CacheSection extends StatelessWidget {

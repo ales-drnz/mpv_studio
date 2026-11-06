@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/tokens.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
 import '../settings_scope.dart';
-import '../../../ui/tokens.dart';
 
 /// What the output is doing right now: the active driver, its state, the
 /// decoded codec and the format reaching the hardware.

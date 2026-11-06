@@ -92,7 +92,9 @@ class AppTheme {
       // the pointer.
       hoverColor: p.accentWash,
       // The fill of a focused control that draws no FocusRing: the ring
-      // grey, which shows on an accent pill as well as on a card.
+      // grey, which shows on the cards and the chrome in both themes and
+      // on the graphite accent of light. FocusRing stays the signal on a
+      // white accent pill.
       focusColor: p.accentDim.withValues(alpha: 0.32),
       dividerColor: p.line,
       textTheme: TextTheme(

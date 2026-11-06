@@ -64,7 +64,7 @@ class StageTile extends StatelessWidget {
     final ink = selected ? Tokens.onAccentContainer : null;
     final lit = ink ?? Tokens.accent;
     final faint = ink ?? Tokens.fgFaint;
-    final faintGlyph = ink?.withValues(alpha: 0.6) ?? Tokens.fgFaint;
+    final faintGlyph = ink?.withValues(alpha: 0.8) ?? Tokens.fgFaint;
 
     final handleIcon = SizedBox.square(
       dimension: layout.minTap,

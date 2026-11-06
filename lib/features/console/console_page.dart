@@ -460,9 +460,12 @@ class _ConsoleViewState extends State<ConsoleView>
                 child: ConsoleLogView(
                   lines: visible,
                   controller: _scroll,
-                  emptyText: _query.isNotEmpty
-                      ? 'No lines match "${_search.text}".'
-                      : 'No log output yet. Type help to start.',
+                  emptyTitle: _query.isNotEmpty
+                      ? 'No matching lines'
+                      : 'No log output yet',
+                  emptyMessage: _query.isNotEmpty
+                      ? 'Nothing in the log matches "${_search.text}".'
+                      : 'Type help to start.',
                 ),
               ),
               // The popup floats over the bottom of the log, right above

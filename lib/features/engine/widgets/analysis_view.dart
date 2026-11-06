@@ -51,12 +51,15 @@ class AnalysisView extends StatelessWidget {
     LoudnessScanState.unavailable => Tokens.amber,
   };
 
-  static String _num(double? v, String unit) =>
-      v == null || !v.isFinite ? 'n/a' : '${v.toStringAsFixed(1)} $unit';
+  static String _num(double? v, String unit) => v == null || !v.isFinite
+      ? Tokens.noValue
+      : '${v.toStringAsFixed(1)} $unit';
 
   /// A peak the scan reports as a linear amplitude, in decibels.
   static String _peak(double? v, String unit) =>
-      v == null || !v.isFinite || v <= 0 ? 'n/a' : _num(amplitudeToDb(v), unit);
+      v == null || !v.isFinite || v <= 0
+      ? Tokens.noValue
+      : _num(amplitudeToDb(v), unit);
 
   @override
   Widget build(BuildContext context) {
