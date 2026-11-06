@@ -351,17 +351,20 @@ class WaveformPainter extends CustomPainter {
       flush();
       return;
     }
-    // Whole pixels, so neighbouring bars keep the same width and gap.
-    final barW = math.max(1.0, (binPx * 0.7).clamp(1.0, 6.0).roundToDouble());
+    // Each bar spans its bin's own pixel edges, rounded, so neighbours
+    // tile without beating; wide bins keep a gap between bars.
+    final gap = binPx >= 3 ? math.max(1.0, (binPx * 0.3).roundToDouble()) : 0.0;
     for (; i < wv.bins; i++) {
       final t = waveStart + (i + 0.5) * binSecs;
       if (t > tRight) break;
-      final x = ((t - tLeft) * pxPerSec).roundToDouble();
-      if (x < -barW || x > w + barW) continue;
+      final x0 = ((waveStart + i * binSecs - tLeft) * pxPerSec).roundToDouble();
+      final x1 = ((waveStart + (i + 1) * binSecs - tLeft) * pxPerSec)
+          .roundToDouble();
+      if (x1 < 0 || x0 > w) continue;
       final covered = i >= wv.filled.length || wv.filled[i] != 0;
       paintBar(
-        x,
-        barW,
+        x0,
+        math.max(1.0, x1 - x0 - gap),
         wv.min[i],
         wv.max[i],
         covered && rms != null && i < rms.length ? rms[i] : null,

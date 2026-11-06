@@ -111,33 +111,45 @@ class _CrystalPainter extends CustomPainter {
       return p;
     }
 
-    // Input (before): faint.
+    // Input (before): a thin reference line, well below the output.
     canvas.drawPath(
       build(inVals),
       Paint()
-        ..color = Tokens.fgFaint.withValues(alpha: 0.8)
+        ..color = Tokens.lineRef
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
+        ..strokeWidth = 1
         ..isAntiAlias = true,
     );
-    // Output (after): accent.
+    // Output (after): accent, twice as heavy.
     canvas.drawPath(
       build(outVals),
       Paint()
         ..color = accent
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
+        ..strokeWidth = 2
         ..strokeJoin = StrokeJoin.round
         ..isAntiAlias = true,
     );
 
+    // The legend: each name after a swatch of its line.
+    final lh = chartLabelHeight(scaler: scaler);
+    void swatch(double x, Color color, double width) => canvas.drawLine(
+      Offset(x, 4 + lh / 2),
+      Offset(x + 10, 4 + lh / 2),
+      Paint()
+        ..color = color
+        ..strokeWidth = width,
+    );
+    swatch(4, accent, 2);
     paintChartLabel(
       canvas,
       intensity >= 0 ? 'sharpen' : 'smooth',
-      const Offset(4, 4),
+      const Offset(18, 4),
       accent,
       scaler: scaler,
     );
+    final inputW = chartLabelWidth('input', scaler: scaler);
+    swatch(w - Tokens.s4 - inputW - 14, Tokens.lineRef, 1);
     paintChartLabel(
       canvas,
       'input',
