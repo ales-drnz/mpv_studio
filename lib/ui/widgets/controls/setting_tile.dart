@@ -64,10 +64,11 @@ class SettingTile extends StatelessWidget {
                 Text(
                   description!,
                   // Dim rather than faint: it stays legible on the light
-                  // palette.
+                  // palette. Faint with the title when the row is off, or
+                  // the row would read as active.
                   style: Tokens.label.copyWith(
                     fontWeight: FontWeight.w400,
-                    color: Tokens.fgDim,
+                    color: enabled ? Tokens.fgDim : Tokens.fgFaint,
                   ),
                 ),
               ],

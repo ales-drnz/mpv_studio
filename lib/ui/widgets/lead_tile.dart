@@ -14,6 +14,7 @@ class LeadTile extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.color,
+    this.selected = false,
   });
 
   final IconData icon;
@@ -25,21 +26,15 @@ class LeadTile extends StatelessWidget {
   /// theme's.
   final Color? color;
 
+  /// The row is on the selection fill: the circle inverts, so it reads as
+  /// a mark rather than a hole in the fill.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        ExcludeSemantics(
-          child: Container(
-            width: Tokens.leadSize,
-            height: Tokens.leadSize,
-            decoration: ShapeDecoration(
-              color: Tokens.surface3,
-              shape: const CircleBorder(),
-            ),
-            child: Icon(icon, size: Tokens.iconMd, color: Tokens.fg),
-          ),
-        ),
+        LeadCircle(icon: icon, selected: selected),
         const SizedBox(width: Tokens.s16),
         Expanded(
           child: Column(
@@ -62,6 +57,41 @@ class LeadTile extends StatelessWidget {
           trailing,
         ],
       ],
+    );
+  }
+}
+
+/// The icon in a circle that leads a [LeadTile] or a header (a sign-in
+/// form): [Tokens.leadSize] across by default, the field tone with the
+/// icon in [Tokens.fg], inverted on a selection fill.
+class LeadCircle extends StatelessWidget {
+  const LeadCircle({
+    super.key,
+    required this.icon,
+    this.size = Tokens.leadSize,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final double size;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: ShapeDecoration(
+          color: selected ? Tokens.onAccentContainer : Tokens.surface3,
+          shape: const CircleBorder(),
+        ),
+        child: Icon(
+          icon,
+          size: size > Tokens.leadSize ? Tokens.iconLg : Tokens.iconMd,
+          color: selected ? Tokens.accentContainer : Tokens.fg,
+        ),
+      ),
     );
   }
 }

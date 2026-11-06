@@ -10,6 +10,7 @@ import '../settings_catalog.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
 import 'pickers.dart';
+import '../../../ui/tokens.dart';
 
 /// The network cache and its live state.
 class CacheSection extends StatelessWidget {
@@ -199,8 +200,10 @@ class DemuxerSection extends StatelessWidget {
             Live<String>(
               stream: p.stream.currentDemuxer,
               initial: p.state.currentDemuxer,
-              builder: (context, v) =>
-                  InfoRow(label: 'Current demuxer', value: v.isEmpty ? '-' : v),
+              builder: (context, v) => InfoRow(
+                label: 'Current demuxer',
+                value: v.isEmpty ? Tokens.noValue : v,
+              ),
             ),
             Live<Duration>(
               stream: p.stream.bufferDuration,
@@ -227,7 +230,7 @@ class DemuxerSection extends StatelessWidget {
                   InfoRow(
                     label: 'Buffered ranges',
                     value: c.seekableRanges.isEmpty
-                        ? '-'
+                        ? Tokens.noValue
                         : [
                             for (final r in c.seekableRanges)
                               '${_time(r.start)} to ${_time(r.end)}',
@@ -236,7 +239,7 @@ class DemuxerSection extends StatelessWidget {
                   InfoRow(
                     label: 'Raw input rate',
                     value: c.rawInputRate == null
-                        ? '-'
+                        ? Tokens.noValue
                         : '${(c.rawInputRate! / 1024).toStringAsFixed(1)} KiB/s',
                   ),
                   InfoRow(label: 'Underrun', value: c.underrun ? 'yes' : 'no'),

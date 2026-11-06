@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_spinner.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/empty_state.dart';
 
@@ -27,16 +28,7 @@ class StreamLoading extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  strokeCap: StrokeCap.round,
-                  color: Tokens.accent,
-                  backgroundColor: Tokens.surface3,
-                ),
-              ),
+              const StudioSpinner(size: 24),
               if (label != null) ...[
                 const SizedBox(height: Tokens.s12),
                 ExcludeSemantics(
@@ -137,15 +129,7 @@ class StreamButton extends StatelessWidget {
       child: busy
           ? Semantics(
               label: '$label, in progress',
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  strokeCap: StrokeCap.round,
-                  color: Tokens.onAccent,
-                ),
-              ),
+              child: const StudioSpinner(onAccent: true),
             )
           : Row(
               mainAxisSize: MainAxisSize.min,

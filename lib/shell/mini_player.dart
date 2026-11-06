@@ -12,6 +12,7 @@ import '../features/now_playing/widgets/transport_controls.dart'
 import '../studio/playback_issues.dart';
 import '../ui/layout/layout.dart';
 import '../ui/tokens.dart';
+import '../ui/widgets/studio_spinner.dart';
 import '../ui/widgets/focus_ring.dart';
 import '../ui/widgets/round_icon_button.dart';
 import '../util/duration_format.dart';
@@ -696,25 +697,12 @@ class _PlayPause extends StatelessWidget {
                         alignment: Alignment.center,
                         children: [
                           if (wait != null)
-                            SizedBox.square(
+                            StudioSpinner(
                               key: const ValueKey('mini-waiting'),
-                              dimension: dimension - 2,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Tokens.accent,
-                                backgroundColor: Tokens.surface4,
-                              ),
+                              size: dimension - 2,
                             )
                           else if (progress != null)
-                            SizedBox.square(
-                              dimension: dimension - 2,
-                              child: CircularProgressIndicator(
-                                value: progress,
-                                strokeWidth: 2,
-                                color: Tokens.accent,
-                                backgroundColor: Tokens.surface4,
-                              ),
-                            ),
+                            StudioSpinner(size: dimension - 2, value: progress),
                           Container(
                             width: dimension - 8,
                             height: dimension - 8,

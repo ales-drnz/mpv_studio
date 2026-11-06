@@ -181,7 +181,9 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
           ('Range', _lu(s.range)),
           (
             'True peak',
-            tp == null ? '--' : '${amplitudeToDb(tp).toStringAsFixed(1)} dBTP',
+            tp == null
+                ? Tokens.noValue
+                : '${amplitudeToDb(tp).toStringAsFixed(1)} dBTP',
           ),
         ];
     }
@@ -197,9 +199,9 @@ class _LoudnessPanelState extends State<LoudnessPanel> {
   }
 
   static String _lufs(double? v) =>
-      v == null || v <= -70 ? '--' : '${v.toStringAsFixed(1)} LUFS';
+      v == null || v <= -70 ? Tokens.noValue : '${v.toStringAsFixed(1)} LUFS';
   static String _lu(double? v) =>
-      v == null ? '--' : '${v.toStringAsFixed(1)} LU';
+      v == null ? Tokens.noValue : '${v.toStringAsFixed(1)} LU';
 }
 
 class _Column extends StatelessWidget {

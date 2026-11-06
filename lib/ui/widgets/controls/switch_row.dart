@@ -46,10 +46,11 @@ class AppSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final track = enabled
-        ? (value ? Tokens.accent : Tokens.surface4)
+        ? (value ? Tokens.accent : Tokens.surface3)
         : Tokens.surface3;
-    // Off, the track also carries a ring at 3:1 so the state reads on
-    // any card, as Material 3 switches do.
+    // Off, the track is the field tone and carries a ring at 3:1, so the
+    // state reads on any card and off never looks half on, as Material 3
+    // switches do.
     final ring = enabled && !value
         ? BorderSide(color: Tokens.trackOff, width: 2)
         : BorderSide.none;

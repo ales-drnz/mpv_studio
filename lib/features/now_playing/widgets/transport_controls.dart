@@ -6,6 +6,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_spinner.dart';
 import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/reactive.dart';
@@ -269,14 +270,10 @@ class PlayPauseButton extends StatelessWidget {
                     ),
                     if (busy != null)
                       IgnorePointer(
-                        child: SizedBox.square(
+                        child: StudioSpinner(
                           key: const ValueKey('play-busy'),
-                          dimension: size - Tokens.s8,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            strokeCap: StrokeCap.round,
-                            color: Tokens.onAccent,
-                          ),
+                          size: size - Tokens.s8,
+                          onAccent: true,
                         ),
                       ),
                   ],

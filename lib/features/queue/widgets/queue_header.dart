@@ -173,11 +173,7 @@ class QueueSummary extends StatelessWidget {
           child: adding > 0
               ? ClipPath(
                   clipper: const ShapeBorderClipper(shape: StadiumBorder()),
-                  child: LinearProgressIndicator(
-                    minHeight: 4,
-                    color: Tokens.accent,
-                    backgroundColor: Tokens.surface4,
-                  ),
+                  child: LinearProgressIndicator(minHeight: Tokens.progressH),
                 )
               : null,
         ),

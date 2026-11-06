@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../studio/app_settings.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/inline_notice.dart';
 import 'settings_scope.dart';
 
 /// Shown while a setting the player reads only when it is created
@@ -25,49 +26,13 @@ class RestartBanner extends StatelessWidget {
         final restart = scope.restart;
         return Padding(
           padding: const EdgeInsets.only(bottom: Tokens.s12),
-          child: Semantics(
-            liveRegion: true,
-            container: true,
-            child: Material(
-              color: Tokens.amber.withValues(alpha: 0.16),
-              shape: Tokens.shape(Tokens.rMd),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Tokens.s16,
-                  Tokens.s12,
-                  Tokens.s12,
-                  Tokens.s12,
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: Tokens.s12,
-                  runSpacing: Tokens.s8,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.restart_alt_rounded,
-                          size: 20,
-                          color: Tokens.amber,
-                        ),
-                        const SizedBox(width: Tokens.s12),
-                        Flexible(
-                          child: Text(
-                            'Applies after a player restart: $names.',
-                            style: Tokens.body,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: restart,
-                      child: const Text('Restart player'),
-                    ),
-                  ],
-                ),
-              ),
+          child: InlineNotice(
+            tone: NoticeTone.warning,
+            icon: Icons.restart_alt_rounded,
+            text: 'Applies after a player restart: $names.',
+            action: TextButton(
+              onPressed: restart,
+              child: const Text('Restart player'),
             ),
           ),
         );

@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_spinner.dart';
 import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../util/duration_format.dart';
@@ -39,13 +40,9 @@ class PositionBar extends StatelessWidget {
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox.square(
-                      key: const ValueKey('position-busy'),
-                      dimension: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        color: Tokens.accent,
-                      ),
+                    const StudioSpinner(
+                      key: ValueKey('position-busy'),
+                      size: 12,
                     ),
                     const SizedBox(width: Tokens.s4),
                     Text(wait.label, style: Tokens.caption),

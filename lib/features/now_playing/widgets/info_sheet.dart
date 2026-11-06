@@ -208,19 +208,25 @@ class _InfoBody extends StatelessWidget {
               'Integrated',
               s?.integrated != null
                   ? '${s!.integrated!.toStringAsFixed(1)} LUFS'
-                  : '-',
+                  : Tokens.noValue,
             ),
             (
               'Range',
-              s?.range != null ? '${s!.range!.toStringAsFixed(1)} LU' : '-',
+              s?.range != null
+                  ? '${s!.range!.toStringAsFixed(1)} LU'
+                  : Tokens.noValue,
             ),
             (
               'True peak',
-              s?.truePeak != null ? _peakDb(s!.truePeak!, 'dBTP') : '-',
+              s?.truePeak != null
+                  ? _peakDb(s!.truePeak!, 'dBTP')
+                  : Tokens.noValue,
             ),
             (
               'Sample peak',
-              s?.samplePeak != null ? _peakDb(s!.samplePeak!, 'dBFS') : '-',
+              s?.samplePeak != null
+                  ? _peakDb(s!.samplePeak!, 'dBFS')
+                  : Tokens.noValue,
             ),
           ]),
         );
@@ -231,7 +237,7 @@ class _InfoBody extends StatelessWidget {
   /// A linear peak in decibels: dBTP for the true (inter-sample) peak,
   /// dBFS for the sample peak.
   String _peakDb(double linear, String unit) {
-    if (linear <= 0) return '-';
+    if (linear <= 0) return Tokens.noValue;
     final db = 20 * math.log(linear) / math.ln10;
     return '${db.toStringAsFixed(1)} $unit';
   }
@@ -418,7 +424,7 @@ class _InfoBody extends StatelessWidget {
   /// adaptive streams this is the protocol (HLS/DASH); for direct files
   /// it's the real container.
   static String _friendlyContainer(String f) {
-    if (f.isEmpty) return '-';
+    if (f.isEmpty) return Tokens.noValue;
     final l = f.toLowerCase();
     if (l.startsWith('hls')) return 'HLS';
     if (l.startsWith('dash')) return 'DASH';
@@ -432,25 +438,27 @@ class _InfoBody extends StatelessWidget {
     return f.split(',').first;
   }
 
-  static String _orDash(String v) => v.isEmpty ? '-' : v;
+  static String _orDash(String v) => v.isEmpty ? Tokens.noValue : v;
   static String _yn(bool v) => v ? 'yes' : 'no';
   static String _secs(Duration d) =>
       '${(d.inMicroseconds / 1e6).toStringAsFixed(3)} s';
-  static String _bitrate(double? v) =>
-      v == null || v <= 0 ? '-' : '${(v / 1000).toStringAsFixed(0)} kbps';
+  static String _bitrate(double? v) => v == null || v <= 0
+      ? Tokens.noValue
+      : '${(v / 1000).toStringAsFixed(0)} kbps';
 
   static String _bytes(int b) {
-    if (b <= 0) return '-';
+    if (b <= 0) return Tokens.noValue;
     final mib = b / (1024 * 1024);
     return mib >= 1 ? '${mib.toStringAsFixed(2)} MiB' : '$b B';
   }
 
-  static String _sampleRate(int? hz) =>
-      hz == null || hz <= 0 ? '-' : '${(hz / 1000).toStringAsFixed(1)} kHz';
+  static String _sampleRate(int? hz) => hz == null || hz <= 0
+      ? Tokens.noValue
+      : '${(hz / 1000).toStringAsFixed(1)} kHz';
 
   static String _codec(AudioParams p) {
     final c = p.codec ?? p.codecName;
-    return (c == null || c.isEmpty) ? '-' : c;
+    return (c == null || c.isEmpty) ? Tokens.noValue : c;
   }
 
   static String _channels(AudioParams p) {
@@ -458,7 +466,7 @@ class _InfoBody extends StatelessWidget {
     if (p.channelCount != null && p.channelCount! > 0) {
       return '${p.channelCount} ch';
     }
-    return '-';
+    return Tokens.noValue;
   }
 
   static String _bitDepth(Format? f) {
@@ -483,7 +491,7 @@ class _InfoBody extends StatelessWidget {
         return '64-bit float';
       case Format.auto:
       case null:
-        return '-';
+        return Tokens.noValue;
     }
   }
 }

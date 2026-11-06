@@ -445,10 +445,8 @@ class _SambaTabState extends State<SambaTab> {
             ),
             if (_listing)
               LinearProgressIndicator(
-                minHeight: 4,
-                borderRadius: BorderRadius.circular(2),
-                color: Tokens.accent,
-                backgroundColor: Colors.transparent,
+                minHeight: Tokens.progressH,
+                borderRadius: BorderRadius.circular(Tokens.progressH / 2),
               ),
           ],
         );

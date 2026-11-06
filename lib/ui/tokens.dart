@@ -62,9 +62,18 @@ class Tokens {
   static Color get onTonal => Palette.active.onTonal;
 
   // Semantic.
+
+  /// The opacity of a semantic colour filling a background (an error
+  /// notice, an error badge), so text and icon on it keep their contrast.
+  static const double semanticWash = 0.14;
+
   static Color get green => Palette.active.green;
   static Color get amber => Palette.active.amber;
   static Color get red => Palette.active.red;
+
+  /// The one placeholder of a value that is not there (no reading yet,
+  /// nothing decoding): an em dash, the same in every table and readout.
+  static const String noValue = '\u2014';
 
   // ---- Shape ------------------------------------------------------
   // Circular arcs only. Small marks 8, inner tiles 12, rows and inset

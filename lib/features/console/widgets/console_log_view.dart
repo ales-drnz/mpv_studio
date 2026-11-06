@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/empty_state.dart';
 
 /// What a Console line is.
 enum ConsoleLineKind {
@@ -128,15 +129,10 @@ class ConsoleLogView extends StatelessWidget {
 
   Widget _lines(BuildContext context) {
     if (lines.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Tokens.s24),
-          child: Text(
-            emptyText,
-            style: Tokens.body.copyWith(color: Tokens.fgDim),
-            textAlign: TextAlign.center,
-          ),
-        ),
+      return EmptyState(
+        compact: true,
+        icon: Icons.terminal_rounded,
+        title: emptyText,
       );
     }
     // One SelectionArea for the whole log, over plain Text rows: a

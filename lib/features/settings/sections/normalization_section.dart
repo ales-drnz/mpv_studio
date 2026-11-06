@@ -8,6 +8,7 @@ import '../setting_anchor.dart';
 import '../settings_catalog.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
+import '../../../ui/tokens.dart';
 
 /// Scan-based loudness normalization (EBU R128) with its live state. First
 /// because it works on any track: the engine measures each file on load.
@@ -57,7 +58,7 @@ class LoudnessSection extends StatelessWidget {
             InfoRow(
               label: 'Measured',
               value: integrated == null
-                  ? '-'
+                  ? Tokens.noValue
                   : '${integrated.toStringAsFixed(1)} LUFS$gain',
             ),
             SettingAnchor(
