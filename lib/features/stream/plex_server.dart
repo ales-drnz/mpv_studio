@@ -112,6 +112,7 @@ class PlexServer extends MediaServer {
     );
     _attach(client, music.id);
     final p = await SharedPreferences.getInstance();
+    _host = base;
     await p.setString(_kBase, base);
     await p.setString(_kToken, user.authToken);
     await p.setString(_kSection, music.id);
@@ -123,6 +124,7 @@ class PlexServer extends MediaServer {
     final base = p.getString(_kBase);
     final token = p.getString(_kToken);
     final section = p.getString(_kSection);
+    _host = base;
     if (base == null || token == null || section == null) return false;
     final client = PlexClient(credentials: _credentials);
     client.setToken(token);
@@ -137,6 +139,11 @@ class PlexServer extends MediaServer {
     _transcodes?.dispose();
     _transcodes = PlexTranscodeSessionManager(client);
   }
+
+  String? _host;
+
+  @override
+  String? get host => _host;
 
   @override
   Future<void> logout() async {

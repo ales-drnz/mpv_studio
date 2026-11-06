@@ -101,7 +101,14 @@ class FakeServer extends MediaServer {
     this.albumTracks = const {},
     this.connectError,
     this.fetchError,
+    this.host,
   });
+
+  @override
+  String? host;
+
+  /// Track fetches wait for it when set.
+  Completer<void>? trackGate;
 
   @override
   final ServerKind kind;
@@ -165,6 +172,7 @@ class FakeServer extends MediaServer {
     required int pageSize,
     String query = '',
   }) async {
+    await trackGate?.future;
     final e = fetchError;
     if (e != null) throw e;
     final hits = tracks.where((t) => t.title.contains(query)).toList();

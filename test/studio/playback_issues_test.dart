@@ -71,7 +71,9 @@ void main() {
     const radio = Media('https://radio.test/live', extras: {'title': 'Night'});
     playlist.add(const Playlist([radio], index: 0));
     duration.add(Duration.zero);
-    endFile.add(const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0));
+    endFile.add(
+      const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
+    );
     await pumpEventQueue();
     expect(got.single.message, 'The live stream "Night" stopped.');
     expect(got.single.actionLabel, 'Play again');
@@ -82,7 +84,9 @@ void main() {
     got.clear();
     playlist.add(const Playlist([_a], index: 0));
     duration.add(const Duration(minutes: 3));
-    endFile.add(const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0));
+    endFile.add(
+      const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
+    );
     await pumpEventQueue();
     expect(got, isEmpty);
   });

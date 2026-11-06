@@ -75,6 +75,7 @@ class JellyfinServer extends MediaServer {
     client.setSession(token: auth.accessToken, userId: auth.user.id);
     _client = client;
     final p = await SharedPreferences.getInstance();
+    _host = base;
     await p.setString(_kBase, base);
     await p.setString(_kToken, auth.accessToken);
     await p.setString(_kUserId, auth.user.id);
@@ -86,12 +87,18 @@ class JellyfinServer extends MediaServer {
     final base = p.getString(_kBase);
     final token = p.getString(_kToken);
     final userId = p.getString(_kUserId);
+    _host = base;
     if (base == null || token == null || userId == null) return false;
     final client = JellyfinClient(baseUrl: base, credentials: _credentials);
     client.setSession(token: token, userId: userId);
     _client = client;
     return true;
   }
+
+  String? _host;
+
+  @override
+  String? get host => _host;
 
   @override
   Future<void> logout() async {

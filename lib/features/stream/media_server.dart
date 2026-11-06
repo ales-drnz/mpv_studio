@@ -208,6 +208,10 @@ abstract class MediaServer {
   /// What the host field expects, shown as its hint.
   String get hostHint;
 
+  /// The address signed in to, to fill the form with when the session
+  /// ends; null when not known.
+  String? get host => null;
+
   /// Authenticate against [host] (IP or URL) with [username] and
   /// [password].
   Future<void> connect({

@@ -166,8 +166,43 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       final next = q.trim();
       if (next == _query) return;
       _query = next;
-      _refresh();
+      _searchKeepingResults();
     });
+  }
+
+  /// A search in flight, shown as a bar while the last results stay.
+  int _searching = 0;
+
+  /// Loads the first page of the new query and only then swaps it in, so
+  /// the list does not empty into a spinner on every keystroke. A failure
+  /// falls back to the paging's own load, which shows it.
+  Future<void> _searchKeepingResults() async {
+    final query = _query;
+    setState(() => _searching++);
+    try {
+      final (songs, albums) = await (
+        _server.fetchTracks(startIndex: 0, pageSize: _pageSize, query: query),
+        _server.fetchAlbums(startIndex: 0, pageSize: _pageSize, query: query),
+      ).wait;
+      if (!mounted || query != _query) return;
+      _songTotal = songs.total;
+      _albumTotal = albums.total;
+      _songs.value = PagingState(
+        pages: [songs.items],
+        keys: const [0],
+        hasNextPage: songs.items.length < songs.total,
+      );
+      _albums.value = PagingState(
+        pages: [albums.items],
+        keys: const [0],
+        hasNextPage: albums.items.length < albums.total,
+      );
+      setState(() => _openAlbum = null);
+    } catch (_) {
+      if (mounted && query == _query) _refresh();
+    } finally {
+      if (mounted) setState(() => _searching--);
+    }
   }
 
   void _refresh() {
@@ -288,7 +323,17 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
               ),
             ],
           ),
-          const SizedBox(height: Tokens.s12),
+          // A search in flight, in the gap under the field (as tall as
+          // the gap it had): the results above stay until it lands.
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Tokens.s4),
+            child: SizedBox(
+              height: Tokens.progressH,
+              child: _searching > 0
+                  ? const LinearProgressIndicator(minHeight: Tokens.progressH)
+                  : null,
+            ),
+          ),
           Wrap(
             spacing: Tokens.s8,
             runSpacing: Tokens.s8,

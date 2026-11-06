@@ -51,7 +51,10 @@ void main() {
     final values = <String, Object?>{'streamTab': 'resolver'};
     await pumpStudio(
       tester,
-      MapUiMemory(values: values, child: streamView(player: StreamPlayer())),
+      MapUiMemory(
+        values: values,
+        child: streamView(player: StreamPlayer()),
+      ),
       size: const Size(1440, 900),
     );
     await tester.pumpAndSettle();

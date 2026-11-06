@@ -77,6 +77,9 @@ class _ServerLibraryTabState extends State<ServerLibraryTab> {
   }
 
   Future<void> _leave({String? note}) async {
+    // Signing in again starts from the same server.
+    final host = _server.host;
+    if (host != null && _host.text.isEmpty) _host.text = host;
     try {
       await _server.logout();
     } catch (e) {
