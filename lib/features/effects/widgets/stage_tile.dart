@@ -107,10 +107,12 @@ class StageTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    // Two lines before an ellipsis: beside a tag a narrow
+                    // chain cut the name ("Loudness met…").
                     Flexible(
                       child: Text(
                         title,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Tokens.body.copyWith(
                           color: ink ?? (on ? Tokens.fg : Tokens.fgDim),
@@ -126,10 +128,9 @@ class StageTile extends StatelessWidget {
                   stageSubtitle(e),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Tokens.caption.copyWith(
-                    fontFamily: Tokens.mono,
-                    color: faint,
-                  ),
+                  // A description in words: the sans caption, mono being
+                  // for figures and filter names.
+                  style: Tokens.caption.copyWith(color: faint),
                 ),
               ],
             ),

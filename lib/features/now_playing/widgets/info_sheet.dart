@@ -22,7 +22,21 @@ Future<void> showInfoSheet(BuildContext context) {
     loudnessSeed: scope.loudnessSeed?.call(),
   );
   if (context.layout.prefersSheets) {
-    return showStudioSheet<void>(context, builder: (_) => body);
+    // The same title as the dialog's.
+    return showStudioSheet<void>(
+      context,
+      builder: (_) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: Text('Track info', style: Tokens.titleSm),
+          ),
+          const SizedBox(height: Tokens.s16),
+          body,
+        ],
+      ),
+    );
   }
   return showStudioDialog<void>(
     context,

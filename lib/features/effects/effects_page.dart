@@ -200,6 +200,9 @@ class _SignalChainViewState extends State<SignalChainView> {
     }
   }
 
+  /// The widest a stage editor runs beside the chain.
+  static const double _editorMaxWidth = 880;
+
   /// [panes] with the loudness panel as a third column, when [three].
   Widget _withLoudness(bool three, Widget panes) {
     final footer = widget.footer;
@@ -388,20 +391,30 @@ class _SignalChainViewState extends State<SignalChainView> {
                             end: layout.gap,
                             footer: !three,
                           ),
+                          // An editor past ~880 px stretched its sliders
+                          // and flattened its curve (6:1 at 2560).
                           detail: focus == null
                               ? null
-                              : StageDetail(
-                                  key: ValueKey('detail-$focus'),
-                                  rack: rack,
-                                  id: focus,
-                                  padding: EdgeInsets.fromLTRB(
-                                    layout.gap,
-                                    Tokens.s8,
-                                    0,
-                                    PageEnd.of(context),
+                              : Align(
+                                  alignment: Alignment.topLeft,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: _editorMaxWidth,
+                                    ),
+                                    child: StageDetail(
+                                      key: ValueKey('detail-$focus'),
+                                      rack: rack,
+                                      id: focus,
+                                      padding: EdgeInsets.fromLTRB(
+                                        layout.gap,
+                                        Tokens.s8,
+                                        0,
+                                        PageEnd.of(context),
+                                      ),
+                                      onClose: rack.closeAll,
+                                      onAction: (a) => _action(focus, a),
+                                    ),
                                   ),
-                                  onClose: rack.closeAll,
-                                  onAction: (a) => _action(focus, a),
                                 ),
                           placeholder: const _NoStageOpen(),
                           onCloseDetail: rack.closeAll,
