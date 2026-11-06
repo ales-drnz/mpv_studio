@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
-import '../../../ui/tokens.dart';
+import '../../../ui/widgets/empty_state.dart';
 import 'queue_header.dart';
 
 /// The empty queue: what it is and the ways to fill it.
@@ -28,86 +28,41 @@ class QueueEmpty extends StatelessWidget {
         ? 'Add files, a folder or a playlist, or drop them here.'
         : 'Add files, a folder or a playlist to start listening.';
     final buttonSize = Size(0, layout.minTap);
-    return Center(
-      child: SingleChildScrollView(
-        // Centred, so as far from the top as from the page end.
-        padding: PageEnd.centred(context),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 560),
-          padding: const EdgeInsets.all(Tokens.s24),
-          decoration: ShapeDecoration(
-            color: Tokens.surface,
-            shape: Tokens.shape(Tokens.rLg),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: ShapeDecoration(
-                  color: Tokens.surface3,
-                  shape: const CircleBorder(),
-                ),
-                child: Icon(
-                  Icons.queue_music_rounded,
-                  size: 36,
-                  color: Tokens.fg,
-                ),
-              ),
-              const SizedBox(height: Tokens.s16),
-              Semantics(
-                header: true,
-                child: Text(
-                  'The queue is empty',
-                  style: Tokens.heading,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: Tokens.s8),
-              Text(
-                hint,
-                style: Tokens.body.copyWith(color: Tokens.fgDim),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: Tokens.s24),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: Tokens.s8,
-                runSpacing: Tokens.s8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: onAddFiles,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add files'),
-                    style: FilledButton.styleFrom(minimumSize: buttonSize),
-                  ),
-                  if (canPickFolder)
-                    OutlinedButton.icon(
-                      onPressed: onAddFolder,
-                      icon: const Icon(Icons.folder_open_rounded, size: 18),
-                      label: const Text('Add folder'),
-                      style: _outlined(buttonSize),
-                    ),
-                  OutlinedButton.icon(
-                    onPressed: onLoadPlaylist,
-                    icon: const Icon(Icons.playlist_play_rounded, size: 18),
-                    label: const Text('Load playlist'),
-                    style: _outlined(buttonSize),
-                  ),
-                  if (onBrowseStreams != null)
-                    OutlinedButton.icon(
-                      onPressed: onBrowseStreams,
-                      icon: const Icon(Icons.podcasts_rounded, size: 18),
-                      label: const Text('Browse streams'),
-                      style: _outlined(buttonSize),
-                    ),
-                ],
-              ),
-            ],
-          ),
+    // The app's one empty state, as on Playback: no card of its own.
+    return EmptyState(
+      icon: Icons.queue_music_rounded,
+      title: 'The queue is empty',
+      message: hint,
+      // Centred, so as far from the top as from the page end.
+      padding: PageEnd.centred(context),
+      actions: [
+        FilledButton.icon(
+          onPressed: onAddFiles,
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: const Text('Add files'),
+          style: FilledButton.styleFrom(minimumSize: buttonSize),
         ),
-      ),
+        if (canPickFolder)
+          OutlinedButton.icon(
+            onPressed: onAddFolder,
+            icon: const Icon(Icons.folder_open_rounded, size: 18),
+            label: const Text('Add folder'),
+            style: _outlined(buttonSize),
+          ),
+        OutlinedButton.icon(
+          onPressed: onLoadPlaylist,
+          icon: const Icon(Icons.playlist_play_rounded, size: 18),
+          label: const Text('Load playlist'),
+          style: _outlined(buttonSize),
+        ),
+        if (onBrowseStreams != null)
+          OutlinedButton.icon(
+            onPressed: onBrowseStreams,
+            icon: const Icon(Icons.podcasts_rounded, size: 18),
+            label: const Text('Browse streams'),
+            style: _outlined(buttonSize),
+          ),
+      ],
     );
   }
 

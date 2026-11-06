@@ -71,17 +71,21 @@ class _EqualizerState extends State<Equalizer> {
   /// Index of the band the pointer is currently shaping, for highlight.
   int? _active;
 
-  // Plot insets: a slim right gutter for the dB scale, a bottom gutter
-  // for the frequency labels. The curve lives inside what's left.
-  static const double _rightGutter = 26;
-  static const double _bottomGutter = 16;
+  // Plot insets: a right gutter for the dB scale and a bottom one for
+  // the frequency labels, both measured at the reader's text size, and
+  // the active node's radius on both sides so no node meets a label.
+  // The curve lives inside what's left.
   static const double _topPad = 8;
+  static const double nodeRadius = 4.5;
+
+  /// The chart text scale of the last build, for the plot geometry.
+  TextScaler _scaler = TextScaler.noScaling;
 
   Rect _plot(Size s) => Rect.fromLTRB(
-    2,
+    nodeRadius + 1,
     _topPad,
-    s.width - _rightGutter,
-    s.height - _bottomGutter,
+    s.width - nodeRadius - Tokens.s4 - chartLabelWidth('+12', scaler: _scaler),
+    s.height - chartLabelHeight(scaler: _scaler) - Tokens.s4 - 2,
   );
 
   /// Maps a pointer position to (band index, dB) and pushes the change.
@@ -124,6 +128,7 @@ class _EqualizerState extends State<Equalizer> {
 
   @override
   Widget build(BuildContext context) {
+    _scaler = chartTextScaler(context);
     return LayoutBuilder(
       builder: (context, c) {
         // Taller on wide editors so the curve keeps its shape.
@@ -172,7 +177,7 @@ class _EqualizerState extends State<Equalizer> {
               child: CustomPaint(
                 size: size,
                 painter: _EqPainter(
-                  scaler: chartTextScaler(context),
+                  scaler: _scaler,
                   bandsDb: widget.bandsDb,
                   active: _active,
                   enabled: widget.enabled,
@@ -229,9 +234,10 @@ class _EqPainter extends CustomPainter {
       paintChartLabel(
         canvas,
         db == 0 ? '0' : '${db > 0 ? '+' : ''}${db.toInt()}',
-        Offset(r.right + 4, y - 6),
+        Offset(r.right + _EqualizerState.nodeRadius + Tokens.s4, y),
         Tokens.fgFaint,
         scaler: scaler,
+        middle: true,
       );
     }
 
@@ -255,10 +261,7 @@ class _EqPainter extends CustomPainter {
       ..close();
     canvas.save();
     canvas.clipRect(r.inflate(1));
-    canvas.drawPath(
-      fill,
-      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
-    );
+    canvas.drawPath(fill, Paint()..color = chartFill(enabled: enabled));
     canvas.restore();
 
     // Curve stroke.
@@ -274,8 +277,15 @@ class _EqPainter extends CustomPainter {
     );
 
     // ── Nodes + frequency labels ────────────────────────────────────
-    // On narrow canvases, thin the labels so they don't collide.
-    final labelStep = r.width / n < 26 ? 2 : 1;
+    // Thin the labels to every second or third band when the widest
+    // would not clear its neighbour at the reader's text size.
+    final widest = [
+      for (final b in kEqBands) chartLabelWidth(b.label, scaler: scaler),
+    ].reduce(math.max);
+    final spacing = r.width / (n - 1);
+    final labelStep = (spacing <= 0 ? n : ((widest + Tokens.s4) / spacing))
+        .ceil()
+        .clamp(1, n);
     for (var i = 0; i < n; i++) {
       final p = pts[i];
       final isActive = i == active;
@@ -294,12 +304,26 @@ class _EqPainter extends CustomPainter {
           ..isAntiAlias = true,
       );
       if (i % labelStep == 0) {
+        // The outer labels stay inside the plot's width: the last one
+        // would run into the dB scale.
+        final label = kEqBands[i].label;
+        final half = chartLabelWidth(label, scaler: scaler) / 2;
+        final first = p.dx - half < 0;
+        final last = p.dx + half > r.right;
         paintChartLabel(
           canvas,
-          kEqBands[i].label,
-          Offset(p.dx, r.bottom + 3),
+          label,
+          Offset(
+            first
+                ? 0
+                : last
+                ? r.right
+                : p.dx,
+            r.bottom + Tokens.s4 + 2,
+          ),
           isActive ? accent : Tokens.fgFaint,
-          center: true,
+          center: !first && !last,
+          end: last,
           scaler: scaler,
         );
       }

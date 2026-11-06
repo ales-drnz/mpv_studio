@@ -168,7 +168,7 @@ class QueueSummary extends StatelessWidget {
                 : adding > 0
                 ? 'Adding ${adding == 1 ? '1 file' : '$adding files'}'
                 : describe(count, known, unknown),
-            style: Tokens.caption,
+            style: Tokens.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -179,11 +179,7 @@ class QueueSummary extends StatelessWidget {
           child: adding > 0 || looking
               ? ClipPath(
                   clipper: const ShapeBorderClipper(shape: StadiumBorder()),
-                  child: LinearProgressIndicator(
-                    minHeight: 4,
-                    color: Tokens.accent,
-                    backgroundColor: Tokens.surface4,
-                  ),
+                  child: LinearProgressIndicator(minHeight: Tokens.progressH),
                 )
               : null,
         ),

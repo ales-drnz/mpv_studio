@@ -47,12 +47,13 @@ class ChainView extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const _End('decoder'),
-            for (final (i, e) in active.indexed) ...[
-              const _Arrow(),
-              _Stage(index: i + 1, title: nameOf(e), wire: e.filterName),
-            ],
-            const _Arrow(),
-            const _End('output'),
+            // Each arrow travels with what it points at, so a wrapped
+            // line never ends on a dangling arrow.
+            for (final (i, e) in active.indexed)
+              _Arrowed(
+                _Stage(index: i + 1, title: nameOf(e), wire: e.filterName),
+              ),
+            const _Arrowed(_End('output')),
           ],
         ),
       ),
@@ -85,7 +86,7 @@ class _Stage extends StatelessWidget {
             Text(
               '$index',
               style: Tokens.numeric.copyWith(
-                color: Tokens.onAccentContainer.withValues(alpha: 0.7),
+                color: Tokens.onAccentContainer.withValues(alpha: 0.85),
               ),
             ),
             const SizedBox(width: Tokens.s8),
@@ -118,10 +119,28 @@ class _End extends StatelessWidget {
   );
 }
 
+class _Arrowed extends StatelessWidget {
+  final Widget child;
+  const _Arrowed(this.child);
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const _Arrow(),
+      const SizedBox(width: Tokens.s4),
+      child,
+    ],
+  );
+}
+
 class _Arrow extends StatelessWidget {
   const _Arrow();
 
   @override
-  Widget build(BuildContext context) =>
-      Icon(Icons.arrow_forward_rounded, size: 14, color: Tokens.fgFaint);
+  Widget build(BuildContext context) => Icon(
+    Icons.arrow_forward_rounded,
+    size: Tokens.iconSm,
+    color: Tokens.fgFaint,
+  );
 }

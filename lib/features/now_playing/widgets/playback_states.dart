@@ -233,7 +233,7 @@ class _Banner extends StatelessWidget {
           Tokens.s4,
         ),
         decoration: ShapeDecoration(
-          color: color.withValues(alpha: 0.14),
+          color: color.withValues(alpha: Tokens.semanticWash),
           shape: Tokens.shape(Tokens.rMd),
         ),
         child: Wrap(
@@ -252,7 +252,9 @@ class _Banner extends StatelessWidget {
                     message,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Tokens.body.copyWith(color: color),
+                    // The body colour: the tone's own on its wash sits
+                    // near 4.5:1; the icon carries the tone.
+                    style: Tokens.body,
                   ),
                 ),
               ],

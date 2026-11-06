@@ -179,14 +179,14 @@ class ShownActionTile extends StatelessWidget {
                         dimension: tap,
                         child: Icon(
                           Icons.drag_indicator_rounded,
-                          size: 18,
+                          size: Tokens.iconMd,
                           color: Tokens.fgFaint,
                         ),
                       ),
                     ),
                   ),
                 ),
-                Icon(m.icon, size: 18, color: Tokens.accent),
+                Icon(m.icon, size: Tokens.iconMd, color: Tokens.accent),
                 const SizedBox(width: Tokens.s12),
                 Expanded(child: Text(m.label, style: Tokens.body)),
                 RoundIconButton(

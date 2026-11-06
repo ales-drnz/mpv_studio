@@ -57,7 +57,7 @@ class TileButton extends StatelessWidget {
     final color = !enabled
         ? Tokens.fgFaint
         : accent
-        ? Tokens.onAccentContainer
+        ? Tokens.onAccent
         : Tokens.onTonal;
     final button = Semantics(
       button: true,
@@ -84,7 +84,9 @@ class TileButton extends StatelessWidget {
                     vertical: Tokens.s8,
                   ),
                   decoration: ShapeDecoration(
-                    color: accent ? Tokens.accentContainer : Tokens.tonal,
+                    // The primary action takes the accent, as every primary
+                    // button does; the selection grey would read as a state.
+                    color: accent && enabled ? Tokens.accent : Tokens.tonal,
                     shape: Tokens.pill,
                   ),
                   child: Text(

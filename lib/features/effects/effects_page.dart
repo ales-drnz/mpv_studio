@@ -203,12 +203,20 @@ class _SignalChainViewState extends State<SignalChainView> {
     }
     target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
     if ((target - position.pixels).abs() < 1) return;
-    position.animateTo(
-      target,
-      duration: kNavTransition,
-      curve: Curves.easeOutCubic,
-    );
+    final duration = Tokens.motion(context, kNavTransition);
+    if (duration == Duration.zero) {
+      position.jumpTo(target);
+    } else {
+      position.animateTo(
+        target,
+        duration: duration,
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
+
+  /// The widest a stage editor runs beside the chain.
+  static const double _editorMaxWidth = 880;
 
   /// [panes] with the loudness panel as a third column, when [three].
   Widget _withLoudness(bool three, Widget panes) {
@@ -398,20 +406,30 @@ class _SignalChainViewState extends State<SignalChainView> {
                             end: layout.gap,
                             footer: !three,
                           ),
+                          // An editor past ~880 px stretched its sliders
+                          // and flattened its curve (6:1 at 2560).
                           detail: focus == null
                               ? null
-                              : StageDetail(
-                                  key: ValueKey('detail-$focus'),
-                                  rack: rack,
-                                  id: focus,
-                                  padding: EdgeInsets.fromLTRB(
-                                    layout.gap,
-                                    Tokens.s8,
-                                    0,
-                                    PageEnd.of(context),
+                              : Align(
+                                  alignment: AlignmentDirectional.topStart,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: _editorMaxWidth,
+                                    ),
+                                    child: StageDetail(
+                                      key: ValueKey('detail-$focus'),
+                                      rack: rack,
+                                      id: focus,
+                                      padding: EdgeInsets.fromLTRB(
+                                        layout.gap,
+                                        Tokens.s8,
+                                        0,
+                                        PageEnd.of(context),
+                                      ),
+                                      onClose: rack.closeAll,
+                                      onAction: (a) => _action(focus, a),
+                                    ),
                                   ),
-                                  onClose: rack.closeAll,
-                                  onAction: (a) => _action(focus, a),
                                 ),
                           placeholder: const _NoStageOpen(),
                           onCloseDetail: rack.closeAll,

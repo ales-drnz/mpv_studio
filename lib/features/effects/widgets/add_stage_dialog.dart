@@ -163,7 +163,11 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
               if (q.isEmpty || groups.isEmpty) return;
               _pick(groups.first.$2.first);
             },
-            leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
+            leading: Icon(
+              Icons.search_rounded,
+              size: Tokens.iconMd,
+              color: Tokens.fgDim,
+            ),
           ),
           const SizedBox(height: Tokens.s4),
           Expanded(

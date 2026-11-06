@@ -346,6 +346,16 @@ class _QueueViewState extends State<QueueView> {
               available,
               three ? Breakpoints.full : Breakpoints.wide,
             );
+            // In three columns the list takes the room beyond a detail
+            // card at its readable width; a fixed list left the card
+            // twice as wide as its values.
+            final gap = context.layout.gap;
+            final listWidth = three
+                ? math.max(
+                    _listWidth,
+                    content - _nowPlayingWidth - 2 * gap - _detailMax,
+                  )
+                : _listWidth;
             // The width follows the window, not whether there is a
             // detail yet: the header stays put when the first file
             // comes in.
@@ -353,7 +363,7 @@ class _QueueViewState extends State<QueueView> {
                 context.layout.isPointer &&
                 TwoPane.splitsAt(
                   content,
-                  listWidth: _listWidth,
+                  listWidth: listWidth,
                   minDetailWidth: _detailWidth,
                 );
             final split = items.isNotEmpty && roomy;
@@ -400,7 +410,7 @@ class _QueueViewState extends State<QueueView> {
                             three && items.isNotEmpty,
                             playlist,
                             TwoPane(
-                              listWidth: _listWidth,
+                              listWidth: listWidth,
                               minDetailWidth: _detailWidth,
                               list: _list(playlist, selected, split),
                               // A card at its content's height, scrolling
@@ -461,6 +471,9 @@ class _QueueViewState extends State<QueueView> {
 
   /// The Now playing column's width.
   static const double _nowPlayingWidth = 320;
+
+  /// The widest the detail card runs beside a three column list.
+  static const double _detailMax = 520;
 
   Widget _summary(Playlist playlist) => ListenableBuilder(
     listenable: Listenable.merge([

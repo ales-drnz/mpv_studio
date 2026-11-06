@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/empty_state.dart';
 
 /// What a Console line is.
 enum ConsoleLineKind {
@@ -86,12 +87,16 @@ class ConsoleLogView extends StatelessWidget {
     super.key,
     required this.lines,
     required this.controller,
-    required this.emptyText,
+    required this.emptyTitle,
+    this.emptyMessage,
   });
 
   final List<ConsoleLine> lines;
   final ScrollController controller;
-  final String emptyText;
+
+  /// What an empty log says: a short title and a line on what to do.
+  final String emptyTitle;
+  final String? emptyMessage;
 
   static TextStyle get _mono => Tokens.numeric.copyWith(
     height: 1.5,
@@ -128,15 +133,11 @@ class ConsoleLogView extends StatelessWidget {
 
   Widget _lines(BuildContext context) {
     if (lines.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Tokens.s24),
-          child: Text(
-            emptyText,
-            style: Tokens.body.copyWith(color: Tokens.fgDim),
-            textAlign: TextAlign.center,
-          ),
-        ),
+      return EmptyState(
+        compact: true,
+        icon: Icons.terminal_rounded,
+        title: emptyTitle,
+        message: emptyMessage,
       );
     }
     // One SelectionArea for the whole log, over plain Text rows: a
@@ -167,34 +168,59 @@ class ConsoleLogView extends StatelessWidget {
 
   Widget _row(ConsoleLine l) {
     final mono = _mono;
+    final Widget line;
+    if (l.kind == ConsoleLineKind.log) {
+      // The level is a column of its own: a wrapped message hangs under
+      // its first line, not back under the level.
+      line = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${l.level.mpvValue.padRight(5)} ',
+            style: mono.copyWith(color: _color(l), fontWeight: FontWeight.w600),
+          ),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                // Verbose, debug and trace sit a tone below info, too
+                // close to tell apart by colour alone: they are also
+                // slanted.
+                style: _quiet(l)
+                    ? mono.copyWith(fontStyle: FontStyle.italic)
+                    : mono,
+                children: [
+                  if (l.prefix.isNotEmpty)
+                    TextSpan(
+                      text: '${l.prefix}: ',
+                      style: TextStyle(color: Tokens.fgFaint),
+                    ),
+                  TextSpan(text: l.text),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      line = Text(
+        l.text,
+        // A command reads apart from its answer by weight: in light the
+        // accent and the text are the same graphite.
+        style: mono.copyWith(
+          color: _color(l),
+          fontWeight: l.kind == ConsoleLineKind.input ? FontWeight.w700 : null,
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Text.rich(
-        TextSpan(
-          style: mono,
-          children: [
-            if (l.kind == ConsoleLineKind.log) ...[
-              TextSpan(
-                text: '${l.level.mpvValue.padRight(5)} ',
-                style: mono.copyWith(
-                  color: _color(l),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (l.prefix.isNotEmpty)
-                TextSpan(
-                  text: '${l.prefix}: ',
-                  style: mono.copyWith(color: Tokens.fgFaint),
-                ),
-              TextSpan(text: l.text),
-            ] else
-              TextSpan(
-                text: l.text,
-                style: mono.copyWith(color: _color(l)),
-              ),
-          ],
-        ),
-      ),
+      child: line,
     );
   }
+
+  static bool _quiet(ConsoleLine l) =>
+      l.level != LogLevel.fatal &&
+      l.level != LogLevel.error &&
+      l.level != LogLevel.warn &&
+      l.level != LogLevel.info;
 }

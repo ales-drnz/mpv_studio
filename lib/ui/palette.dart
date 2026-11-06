@@ -20,6 +20,8 @@ class Palette {
     required this.surface2,
     required this.surface3,
     required this.surface4,
+    required this.cardOnChrome,
+    required this.inset,
     required this.line,
     required this.line2,
     required this.lineRef,
@@ -60,6 +62,16 @@ class Palette {
   /// The highest tone: inactive slider and switch tracks, the phone
   /// mini-player card's cover.
   final Color surface4;
+
+  /// A card inside a sheet or a dialog, which sit on [surface2]: in
+  /// light [surface] and [surface2] are both white, so a card there
+  /// takes the stage's tone.
+  final Color cardOnChrome;
+
+  /// A panel set into a card that only frames a readout (meters, a
+  /// gauge's track, a key and value box). [surface3] stays for fields,
+  /// which it marks as editable; in light it would outweigh the readout.
+  final Color inset;
 
   // ---- Hairlines (only inside data views: rulers, grids) ------------
 
@@ -144,6 +156,8 @@ class Palette {
     surface2: Color(0xFF181C21), // T10, chrome, sheets, dialogs
     surface3: Color(0xFF3A3E43), // T26, fields, segmented tracks
     surface4: Color(0xFF484C51), // T32, inactive tracks
+    cardOnChrome: Color(0xFF31353A), // the card tone, 1.39:1 on chrome
+    inset: Color(0xFF3A3E43), // the field tone, 1.15:1 on cards
     line: Color(0x14FFFFFF), // ~8% white, inside data views only
     line2: Color(0x26FFFFFF), // ~15% white
     lineRef: Color(0xFF7C8085), // 3.1:1 on cards, 3.7:1 on bg
@@ -180,6 +194,8 @@ class Palette {
     // T84, fields: 1.5:1 on white, 1.29:1 on bg, 1.23:1 to the ring grey.
     surface3: Color(0xFFD0D3DA),
     surface4: Color(0xFFB6B9BF), // T75, a ring grey step: tracks, 2:1 on white
+    cardOnChrome: Color(0xFFEBEEF5), // the stage tone, 1.16:1 on white
+    inset: Color(0xFFEBEEF5), // the stage tone, 1.16:1 on white cards
     line: Color(0x14000000), // ~8% black, inside data views only
     line2: Color(0x29000000), // ~16% black
     lineRef: Color(0xFF80848A), // 3.8:1 on white, 3.2:1 on bg
@@ -193,8 +209,11 @@ class Palette {
     accentDim: Color(0xFF8D9197),
     onAccent: Color(0xFFFFFFFF), // white on graphite, 14.8:1
     accentWash: Color(0x1A24282D), // ~10% graphite: hover
-    accentContainer: Color(0xFFBFBFBF), // the ring grey: secondary selection
-    onAccentContainer: Color(0xFF24282D), // 8.1:1
+    // A step below the ring grey: on white the ring grey sat 1.14:1 from
+    // the tonal buttons, so a mode on looked like any button.
+    // 1.34:1 to tonal, 2.15:1 on white, 1.43:1 on fields.
+    accentContainer: Color(0xFFAEB1B7),
+    onAccentContainer: Color(0xFF24282D), // 6.9:1
     tonal: Color(0xFFC9CCD3), // T81, secondary buttons, 1.6:1 on white
     onTonal: Color(0xFF24282D), // 9.2:1
     green: Color(0xFF006C46), // 5.6:1 on bg

@@ -65,11 +65,15 @@ class StageTile extends StatelessWidget {
     final ink = selected ? Tokens.onAccentContainer : null;
     final lit = ink ?? Tokens.accent;
     final faint = ink ?? Tokens.fgFaint;
-    final faintGlyph = ink?.withValues(alpha: 0.6) ?? Tokens.fgFaint;
+    final faintGlyph = ink?.withValues(alpha: 0.8) ?? Tokens.fgFaint;
 
     final handleIcon = SizedBox.square(
       dimension: layout.minTap,
-      child: Icon(Icons.drag_indicator_rounded, size: 18, color: faintGlyph),
+      child: Icon(
+        Icons.drag_indicator_rounded,
+        size: Tokens.iconMd,
+        color: faintGlyph,
+      ),
     );
     final handle = Semantics(
       label: 'Reorder $title',
@@ -94,7 +98,7 @@ class StageTile extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Tokens.s8),
-        Icon(stageIcon(e), size: 18, color: live ? lit : faintGlyph),
+        Icon(stageIcon(e), size: Tokens.iconMd, color: live ? lit : faintGlyph),
         const SizedBox(width: Tokens.s12),
         Expanded(
           child: Padding(
@@ -104,10 +108,12 @@ class StageTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    // Two lines before an ellipsis: beside a tag a narrow
+                    // chain cut the name ("Loudness met…").
                     Flexible(
                       child: Text(
                         title,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Tokens.body.copyWith(
                           color: ink ?? (on ? Tokens.fg : Tokens.fgDim),
@@ -123,10 +129,9 @@ class StageTile extends StatelessWidget {
                   stageSubtitle(e),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Tokens.caption.copyWith(
-                    fontFamily: Tokens.mono,
-                    color: faint,
-                  ),
+                  // A description in words: the sans caption, mono being
+                  // for figures and filter names.
+                  style: Tokens.caption.copyWith(color: faint),
                 ),
               ],
             ),
@@ -252,7 +257,13 @@ class StageTile extends StatelessWidget {
             width: Tokens.s4,
             child: DecoratedBox(
               decoration: ShapeDecoration(
-                color: live ? (meter ? Tokens.amber : lit) : Colors.transparent,
+                // A meter's amber vanishes on the selection grey (1.1:1):
+                // there it takes the selection's ink like the rest.
+                color: !live
+                    ? Colors.transparent
+                    : meter && !selected
+                    ? Tokens.amber
+                    : lit,
                 shape: Tokens.pill,
               ),
             ),

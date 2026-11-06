@@ -4,14 +4,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../studio/app_settings.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/empty_state.dart';
 import '../../../ui/widgets/reorder_proxy.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
-import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'session_parts.dart';
 
@@ -233,14 +234,12 @@ class _SessionSectionState extends State<SessionSection> {
   Widget _shownList() {
     final shown = _shownSupported;
     if (shown.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: Tokens.s24),
-        alignment: Alignment.center,
-        decoration: ShapeDecoration(
-          color: Tokens.surface3,
-          shape: Tokens.shape(Tokens.rMd),
-        ),
-        child: Text('No controls yet. Add some below.', style: Tokens.caption),
+      return const EmptyState(
+        compact: true,
+        scrolls: false,
+        icon: Icons.tune_rounded,
+        title: 'No controls yet',
+        message: 'Add some below.',
       );
     }
     return ReorderableListView(

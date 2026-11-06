@@ -24,11 +24,7 @@ class SectionHeader extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: Tokens.label.copyWith(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Tokens.accent,
-          ),
+          style: Tokens.labelLg.copyWith(color: Tokens.accent),
         ),
       ),
     );

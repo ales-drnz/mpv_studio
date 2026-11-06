@@ -86,7 +86,9 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
         maxHeight: visibleRows * rowHeight + 2 * Tokens.s4,
       ),
       decoration: ShapeDecoration(
-        color: Tokens.surface3,
+        // It floats over the log card: in dark the field tone sits only
+        // 1.15:1 off the card, the sheet tone stands clear of it.
+        color: Tokens.palette.isDark ? Tokens.surface2 : Tokens.surface3,
         shape: Tokens.shape(Tokens.rMd),
       ),
       clipBehavior: Clip.antiAlias,
@@ -154,7 +156,6 @@ class _SuggestionPopupState extends State<SuggestionPopup> {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.end,
                             style: Tokens.numeric.copyWith(
-                              fontSize: 11,
                               color:
                                   ink ??
                                   (s.kind == SuggestionKind.command
@@ -190,8 +191,8 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = Tokens.numeric.copyWith(
-      fontSize: 13,
+    final base = Tokens.numericLg.copyWith(
+      fontWeight: FontWeight.w500,
       color: active ? Tokens.onAccentContainer : Tokens.fgDim,
     );
     final i = match.isEmpty

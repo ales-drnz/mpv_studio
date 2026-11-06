@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import '../../../studio/playback_issues.dart';
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_spinner.dart';
 import '../../../ui/widgets/focus_ring.dart';
 import '../../../ui/widgets/round_icon_button.dart';
 import '../../../ui/widgets/state_pill.dart';
@@ -40,13 +41,9 @@ class PositionBar extends StatelessWidget {
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox.square(
-                      key: const ValueKey('position-busy'),
-                      dimension: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        color: Tokens.accent,
-                      ),
+                    const StudioSpinner(
+                      key: ValueKey('position-busy'),
+                      size: 12,
                     ),
                     const SizedBox(width: Tokens.s4),
                     Text(wait.label, style: Tokens.caption),
@@ -99,55 +96,66 @@ class ChapterBar extends StatelessWidget {
               final count = index < 0
                   ? '${chapters.length} chapters'
                   : 'Chapter ${index + 1} of ${chapters.length}';
-              return Row(
-                children: [
-                  RoundIconButton(
-                    icon: Icons.skip_previous_rounded,
-                    size: 20,
-                    tooltip: 'Previous chapter',
-                    onTap: () =>
-                        stepChapter(player, scope.guard, -1, notify: notify),
-                  ),
-                  Expanded(
-                    child: Semantics(
-                      label: count,
-                      value: title,
-                      excludeSemantics: true,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            title,
-                            key: const ValueKey('chapter-title'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: Tokens.label.copyWith(color: Tokens.fg),
-                          ),
-                          Text(
-                            count,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Tokens.caption,
-                          ),
-                        ],
+              // Chevrons, not the track's skip glyphs; held together
+              // under a wide wave instead of at its two far ends.
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Row(
+                    children: [
+                      RoundIconButton(
+                        icon: Icons.chevron_left_rounded,
+                        size: Tokens.iconMd,
+                        tooltip: 'Previous chapter',
+                        onTap: () => stepChapter(
+                          player,
+                          scope.guard,
+                          -1,
+                          notify: notify,
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        child: Semantics(
+                          label: count,
+                          value: title,
+                          excludeSemantics: true,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                key: const ValueKey('chapter-title'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: Tokens.label.copyWith(color: Tokens.fg),
+                              ),
+                              Text(
+                                count,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Tokens.caption,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      RoundIconButton(
+                        icon: Icons.chevron_right_rounded,
+                        size: Tokens.iconMd,
+                        tooltip: 'Next chapter',
+                        onTap: index < chapters.length - 1
+                            ? () => stepChapter(
+                                player,
+                                scope.guard,
+                                1,
+                                notify: notify,
+                              )
+                            : null,
+                      ),
+                    ],
                   ),
-                  RoundIconButton(
-                    icon: Icons.skip_next_rounded,
-                    size: 20,
-                    tooltip: 'Next chapter',
-                    onTap: index < chapters.length - 1
-                        ? () => stepChapter(
-                            player,
-                            scope.guard,
-                            1,
-                            notify: notify,
-                          )
-                        : null,
-                  ),
-                ],
+                ),
               );
             },
           ),

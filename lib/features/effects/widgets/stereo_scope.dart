@@ -143,8 +143,12 @@ class _ScopePainter extends CustomPainter {
     final side = math.min(size.width, scopeH);
     final cx = size.width / 2;
     final cy = scopeH / 2;
-    // 95% of the radius is "full scale" so peaks don't clip at the edge.
-    final radius = side / 2 * 0.92;
+    // Room outside the circle for the M label above it at the reader's
+    // text size; peaks stay inside the circle.
+    final radius = math.max(
+      8.0,
+      side / 2 - chartLabelHeight(scaler: scaler) - 6,
+    );
     final accent = enabled ? Tokens.accent : Tokens.fgFaint;
 
     // Frame: circle + the mono(vertical)/anti-phase(horizontal) crosshair.
@@ -173,26 +177,36 @@ class _ScopePainter extends CustomPainter {
     final d = radius * 0.70710678;
     canvas.drawLine(Offset(cx - d, cy - d), Offset(cx + d, cy + d), diag);
     canvas.drawLine(Offset(cx + d, cy - d), Offset(cx - d, cy + d), diag);
+    // The axis names sit just off the circle, at the distance their
+    // own size asks for.
+    final lh = chartLabelHeight(scaler: scaler);
+    final off = lh / 2 + 3;
     paintChartLabel(
       canvas,
       'L',
-      Offset(cx - d - 10, cy - d - 10),
+      Offset(cx - d - off, cy - d - off),
       Tokens.fgFaint,
       scaler: scaler,
+      center: true,
+      middle: true,
     );
     paintChartLabel(
       canvas,
       'R',
-      Offset(cx + d + 4, cy - d - 10),
+      Offset(cx + d + off, cy - d - off),
       Tokens.fgFaint,
       scaler: scaler,
+      center: true,
+      middle: true,
     );
     paintChartLabel(
       canvas,
       'M',
-      Offset(cx + 4, cy - radius - 1),
+      Offset(cx, cy - radius - off),
       Tokens.fgFaint,
       scaler: scaler,
+      center: true,
+      middle: true,
     );
 
     // Scatter: newest points brightest. Draw as tiny dots.
@@ -235,7 +249,7 @@ class _ScopePainter extends CustomPainter {
         Rect.fromLTRB(lo, barRect.top, hi, barRect.bottom),
         Radius.circular(barRect.height / 2),
       ),
-      Paint()..color = enabled ? fillColor : Tokens.fgFaint,
+      Paint()..color = enabled && n > 0 ? fillColor : Tokens.fgFaint,
     );
     canvas.drawLine(
       Offset(mid, barRect.top),
@@ -246,17 +260,24 @@ class _ScopePainter extends CustomPainter {
     );
     paintChartLabel(
       canvas,
-      '−1',
+      '-1',
       Offset(4, barTop + _barH - 8),
       Tokens.fgFaint,
       scaler: scaler,
     );
+    // No samples yet reads as no value, not as a green "good" 0.00.
+    final reading = enabled && n > 0;
     paintChartLabel(
       canvas,
-      enabled ? c.toStringAsFixed(2) : 'corr',
-      Offset(mid - 9, barTop + _barH - 8),
-      enabled ? fillColor : Tokens.fgFaint,
+      reading
+          ? c.toStringAsFixed(2)
+          : enabled
+          ? Tokens.noValue
+          : 'corr',
+      Offset(mid, barTop + _barH - 8),
+      reading ? fillColor : Tokens.fgFaint,
       scaler: scaler,
+      center: true,
     );
     paintChartLabel(
       canvas,

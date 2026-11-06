@@ -7,6 +7,7 @@ import '../../../../studio/playback_issues.dart';
 import '../../../../ui/chart_text.dart';
 import '../../../../ui/layout/layout.dart';
 import '../../../../ui/tokens.dart';
+import '../../../../ui/widgets/round_icon_button.dart';
 import '../../../../ui/widgets/studio_chip.dart';
 import '../../../../util/duration_format.dart';
 import '../../../../util/reactive.dart';
@@ -389,10 +390,24 @@ class _WaveformMeterState extends State<WaveformMeter>
             ),
           ),
           // A meter too narrow for both keeps the scrollbar; Ctrl with
-          // the wheel and the trackpad's pinch still zoom.
+          // the wheel and the trackpad's pinch still zoom. Scrolled back on
+          // a live stream it keeps the way to the live end, as an icon.
           LayoutBuilder(
             builder: (context, c) => c.maxWidth < _zoomRowWidth
-                ? scrollBar
+                ? Row(
+                    children: [
+                      Expanded(child: scrollBar),
+                      if (_view.live && !_view.followsLive) ...[
+                        const SizedBox(width: Tokens.s4),
+                        RoundIconButton(
+                          icon: Icons.fast_forward_rounded,
+                          size: Tokens.iconMd,
+                          tooltip: 'Follow the live end',
+                          onTap: _goLive,
+                        ),
+                      ],
+                    ],
+                  )
                 : Row(
                     children: [
                       Expanded(child: scrollBar),

@@ -68,15 +68,23 @@ WaveformData _halfWave() {
   );
 }
 
-Future<void> _pump(WidgetTester tester, Widget child, Size size) async {
+Future<void> _pump(
+  WidgetTester tester,
+  Widget child,
+  Size size, {
+  double textScale = 1,
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.dark,
-      builder: (context, child) =>
-          LayoutScope(inputMode: InputMode.pointer, child: child!),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: LayoutScope(inputMode: InputMode.pointer, child: child!),
+      ),
       home: Scaffold(body: child),
     ),
   );
@@ -109,13 +117,13 @@ void main() {
       expect(find.byTooltip('playWhenReady'), findsOneWidget);
       expect(find.text('mpv v0.41.0+r16'), findsOneWidget);
       expect(find.text('8.1.1'), findsOneWidget);
-      expect(find.text('Network'), findsOneWidget);
+      expect(find.text('network'), findsOneWidget);
       expect(find.text('35.0 s'), findsOneWidget, reason: 'cached ahead');
       expect(find.text('Next: Track B'), findsOneWidget);
       expect(find.text('12.0 s of 1:00'), findsOneWidget);
       expect(find.text('progressive'), findsOneWidget);
       expect(find.text('scanning'), findsOneWidget);
-      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('active'), findsOneWidget);
       expect(find.text('pipewire'), findsOneWidget);
       expect(find.text('96 kHz'), findsOneWidget);
       expect(find.text('48 kHz'), findsOneWidget);
@@ -136,7 +144,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Playing'), findsOneWidget);
-    expect(find.text('Paused for cache'), findsOneWidget);
+    expect(find.text('paused for cache'), findsOneWidget);
     // The header pill and the legend both name the current state.
     expect(find.text('used'), findsNWidgets(2));
   });
@@ -158,7 +166,7 @@ void main() {
     });
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Bypass'), findsOneWidget);
+    expect(find.text('bypass'), findsOneWidget);
     expect(
       find.text('Bypassed: the audio plays dry until the bypass is released.'),
       findsOneWidget,
@@ -232,6 +240,25 @@ void main() {
     expect(StatusView.mismatch(asked, MpvPlaybackState.loading), isNotNull);
     const raw = PlayerState(playing: true);
     expect(StatusView.mismatch(raw, MpvPlaybackState.playing), isNotNull);
+  });
+
+  // The keys of the output boxes ("channels") must keep clear of their
+  // values at any text size.
+  testWidgets('output keys keep clear of their values at 1.3x', (tester) async {
+    await _pump(
+      tester,
+      EnginePanel(player: player),
+      const Size(1280, 1600),
+      textScale: 1.3,
+    );
+    final keys = find.text('channels');
+    final values = find.text('stereo');
+    expect(keys, findsNWidgets(2));
+    for (var i = 0; i < 2; i++) {
+      final key = tester.getRect(keys.at(i));
+      final value = tester.getRect(values.at(i));
+      expect(value.left - key.right, greaterThanOrEqualTo(8));
+    }
   });
 
   test('waveform phases', () {

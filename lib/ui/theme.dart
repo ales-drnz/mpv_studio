@@ -50,7 +50,13 @@ class AppTheme {
       fontWeight: weight,
       color: color,
     );
-    const pillPadding = EdgeInsets.symmetric(horizontal: Tokens.s24);
+    // The vertical padding never shows at the default text size (a 14 px
+    // label is well under the minimum height) but keeps a scaled label
+    // off the pill's edges: the button grows instead.
+    const pillPadding = EdgeInsets.symmetric(
+      horizontal: Tokens.s24,
+      vertical: Tokens.s8,
+    );
     // Every button is one tap target tall, whatever the density: the
     // compact density of pointer layouts would take 8 off each minimum.
     final buttonSize = Size.square(input.minTap);
@@ -84,7 +90,12 @@ class AppTheme {
       // App-wide hover: a faint accent wash so every InkWell-backed element
       // (sidebar, settings and effects grids, lists, tiles) lights up under
       // the pointer.
-      hoverColor: p.accent.withValues(alpha: 0.10),
+      hoverColor: p.accentWash,
+      // The fill of a focused control that draws no FocusRing: the ring
+      // grey, which shows on the cards and the chrome in both themes and
+      // on the graphite accent of light. FocusRing stays the signal on a
+      // white accent pill.
+      focusColor: p.accentDim.withValues(alpha: 0.32),
       dividerColor: p.line,
       textTheme: TextTheme(
         headlineMedium: Tokens.display.copyWith(color: p.fg),
@@ -126,7 +137,7 @@ class AppTheme {
         style: ButtonStyle(
           shape: const WidgetStatePropertyAll(StadiumBorder()),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: Tokens.s16),
+            EdgeInsets.symmetric(horizontal: Tokens.s16, vertical: Tokens.s8),
           ),
           minimumSize: WidgetStatePropertyAll(buttonSize),
           visualDensity: buttonDensity,

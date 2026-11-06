@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/painting.dart';
 
 import '../../../../ui/tokens.dart';
@@ -147,10 +149,13 @@ void paintChapterTicks(
     for (var y = rulerBottom; y < h; y += 6) {
       canvas.drawLine(Offset(x, y), Offset(x, (y + 3).clamp(0, h)), line);
     }
+    // Kept whole inside the card (a chapter at 0:00 sat half off its
+    // edge) and low enough to clear the ruler's labels at any size.
+    final nx = x.clamp(4.0, math.max(4.0, w - 4)).toDouble();
     final notch = Path()
-      ..moveTo(x - 4, rulerBottom)
-      ..lineTo(x + 4, rulerBottom)
-      ..lineTo(x, rulerBottom - 6)
+      ..moveTo(nx - 4, rulerBottom)
+      ..lineTo(nx + 4, rulerBottom)
+      ..lineTo(nx, rulerBottom - 5)
       ..close();
     canvas.drawPath(
       notch,

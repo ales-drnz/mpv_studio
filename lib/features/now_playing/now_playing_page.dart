@@ -13,6 +13,7 @@ import '../queue/queue_controller.dart';
 import '../../studio/playback_issues.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/scroll_fade.dart';
 import '../../ui/widgets/resize_handle.dart';
 import '../../util/media_import.dart';
 import '../../util/reactive.dart';
@@ -362,7 +363,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
   /// scrollbar and the zoom pill) is a touch target tall, so the meter
   /// grows by as much to keep the same wave.
   static double _leastMeter(BuildContext context) =>
-      context.layout.isTouch ? 128 : 96;
+      context.layout.isTouch ? 144 : 96;
 
   /// Phones in portrait, tall tablets: one column, the spectrum filling
   /// what is left, scrolling when the content does not fit. [page] is the
@@ -372,9 +373,11 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       builder: (context, c) {
         final h = c.maxHeight;
         final side = math.max(0.0, (page - c.maxWidth) / 2);
-        final cover = math.min(c.maxWidth * 0.62, h * 0.27).clamp(120.0, 320.0);
+        // The cover gives the wave room: on a phone the meter's ruler
+        // and controls took most of a smaller meter.
+        final cover = math.min(c.maxWidth * 0.62, h * 0.22).clamp(120.0, 320.0);
         final least = _leastMeter(context);
-        final meter = (_meterHeight ?? h * 0.16)
+        final meter = (_meterHeight ?? h * 0.2)
             .clamp(least, math.max(least, h * 0.4))
             .toDouble();
         final end = PageEnd.of(context);
@@ -533,7 +536,15 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       builder: (context, c) {
         final h = c.maxHeight;
         final side = math.max(0.0, (page - c.maxWidth) / 2);
-        final deck = (c.maxWidth * 0.28).clamp(340.0, 440.0);
+        // Wider on ultrawide windows, where 440 left the deck small
+        // beside a very long wave.
+        final deck = (c.maxWidth * 0.28).clamp(
+          340.0,
+          440 + ((c.maxWidth - 1800) * 0.2).clamp(0.0, 80.0),
+        );
+        // What the deck needs under the cover grows with the text.
+        final rest =
+            _deckRest + MediaQuery.textScalerOf(context).scale(100) - 100;
         // The spectrum starts at a quarter of the height.
         final band = (h * 0.25).clamp(120.0, 280.0);
         return _resizable(
@@ -545,29 +556,34 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
             children: [
               SizedBox(
                 width: deck,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // The cover takes what the deck leaves (the title,
-                      // the transport, the volume and the meter).
-                      Center(
-                        child: _cover(
-                          (height - _deckRest).clamp(
-                            96.0,
-                            math.max(96.0, math.min(deck, h * 0.42)),
+                // When the deck still runs past the height its foot
+                // fades, the cue that it scrolls.
+                child: ScrollFade(
+                  axis: Axis.vertical,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // The cover takes what the deck leaves (the title,
+                        // the transport, the volume and the meter).
+                        Center(
+                          child: _cover(
+                            (height - rest).clamp(
+                              96.0,
+                              math.max(96.0, math.min(deck, h * 0.42)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: Tokens.s16),
-                      const TrackInfo(),
-                      const SizedBox(height: Tokens.s16),
-                      const TransportControls(),
-                      const SizedBox(height: Tokens.s12),
-                      const VolumeControl(),
-                      const SizedBox(height: Tokens.s8),
-                      const VuMeter(),
-                    ],
+                        const SizedBox(height: Tokens.s16),
+                        const TrackInfo(),
+                        const SizedBox(height: Tokens.s16),
+                        const TransportControls(),
+                        const SizedBox(height: Tokens.s12),
+                        const VolumeControl(),
+                        const SizedBox(height: Tokens.s8),
+                        const VuMeter(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -592,7 +608,8 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
   }
 
   /// The deck of the split layout under its cover: the title, the
-  /// transport, the volume and the meter, with the gaps between them.
+  /// transport, the volume and the meter, with the gaps between them, at
+  /// the default text size; about 100 px of it is text.
   static const double _deckRest = 312;
 }
 

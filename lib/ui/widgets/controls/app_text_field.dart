@@ -45,10 +45,15 @@ class AppTextField extends StatelessWidget {
     this.autofocus = false,
     this.minLines,
     this.maxLines = 1,
+    this.errorText,
   });
 
   final TextEditingController controller;
   final FocusNode? focusNode;
+
+  /// What is wrong with the text: rings the pill in red and says it under
+  /// it, as a validator does in a form.
+  final String? errorText;
   final bool enabled;
   final String? hint;
 
@@ -153,6 +158,7 @@ class AppTextField extends StatelessWidget {
         filled: true,
         fillColor: Tokens.surface3,
         hoverColor: Colors.transparent,
+        errorText: errorText,
         errorStyle: Tokens.label.copyWith(color: Tokens.red),
         errorMaxLines: 3,
         prefixIcon: leading == null

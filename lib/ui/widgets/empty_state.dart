@@ -25,6 +25,9 @@ class EmptyState extends StatefulWidget {
     this.actions = const [],
     this.tone = EmptyTone.neutral,
     this.details,
+    this.compact = false,
+    this.padding,
+    this.scrolls = true,
   });
 
   final IconData icon;
@@ -38,12 +41,31 @@ class EmptyState extends StatefulWidget {
   /// The technical cause, shown on request.
   final String? details;
 
+  /// The small form, for a state inside a panel or a card (a log with no
+  /// lines, a chart with nothing to draw): a smaller badge and a heading
+  /// instead of a title.
+  final bool compact;
+
+  /// The space around it; [Tokens.s24] (16 when [compact]) by default.
+  final EdgeInsetsGeometry? padding;
+
+  /// Whether it centres and scrolls in the height it gets (a page, a
+  /// panel); false inside a list that already scrolls.
+  final bool scrolls;
+
   /// The badge's diameter and its icon's size.
   static const double badge = 72;
   static const double glyph = 32;
 
+  /// The same in the [compact] form.
+  static const double badgeCompact = 48;
+  static const double glyphCompact = 24;
+
   /// The widest the text runs.
   static const double maxWidth = 440;
+
+  /// The widest the row of actions runs: three buttons side by side.
+  static const double actionsMaxWidth = 560;
 
   @override
   State<EmptyState> createState() => _EmptyStateState();
@@ -56,79 +78,96 @@ class _EmptyStateState extends State<EmptyState> {
   Widget build(BuildContext context) {
     final error = widget.tone == EmptyTone.error;
     final details = widget.details;
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Tokens.s24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: EmptyState.maxWidth),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ExcludeSemantics(
-                child: Container(
-                  width: EmptyState.badge,
-                  height: EmptyState.badge,
-                  decoration: ShapeDecoration(
-                    color: error
-                        ? Tokens.red.withValues(alpha: 0.14)
-                        : Tokens.surface3,
-                    shape: const CircleBorder(),
-                  ),
-                  child: Icon(
-                    widget.icon,
-                    size: EmptyState.glyph,
-                    color: error ? Tokens.red : Tokens.fgDim,
-                  ),
-                ),
+    final compact = widget.compact;
+    final badge = compact ? EmptyState.badgeCompact : EmptyState.badge;
+    final padding =
+        widget.padding ?? EdgeInsets.all(compact ? Tokens.s16 : Tokens.s24);
+    Widget text(Widget child) => ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: EmptyState.maxWidth),
+      child: child,
+    );
+    final body = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: EmptyState.actionsMaxWidth),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: badge,
+              height: badge,
+              decoration: ShapeDecoration(
+                color: error
+                    ? Tokens.red.withValues(alpha: Tokens.semanticWash)
+                    : Tokens.surface3,
+                shape: const CircleBorder(),
               ),
-              const SizedBox(height: Tokens.s16),
-              Semantics(
-                header: true,
-                child: Text(
-                  widget.title,
-                  textAlign: TextAlign.center,
-                  style: Tokens.titleSm,
-                ),
+              child: Icon(
+                widget.icon,
+                size: compact ? EmptyState.glyphCompact : EmptyState.glyph,
+                color: error ? Tokens.red : Tokens.fgDim,
               ),
-              if (widget.message case final message?) ...[
-                const SizedBox(height: Tokens.s8),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: Tokens.body.copyWith(color: Tokens.fgDim),
-                ),
-              ],
-              if (widget.actions.isNotEmpty) ...[
-                const SizedBox(height: Tokens.s24),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: Tokens.s8,
-                  runSpacing: Tokens.s8,
-                  children: widget.actions,
-                ),
-              ],
-              if (details != null) ...[
-                const SizedBox(height: Tokens.s16),
-                TextButton.icon(
-                  onPressed: () => setState(() => _details = !_details),
-                  icon: Icon(
-                    _details
-                        ? Icons.expand_less_rounded
-                        : Icons.expand_more_rounded,
-                  ),
-                  label: const Text('Details'),
-                ),
-                if (_details)
-                  SelectableText(
-                    details,
-                    textAlign: TextAlign.center,
-                    style: Tokens.numeric,
-                  ),
-              ],
-            ],
+            ),
           ),
-        ),
+          SizedBox(height: compact ? Tokens.s12 : Tokens.s16),
+          text(
+            Semantics(
+              header: true,
+              child: Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: compact ? Tokens.heading : Tokens.titleSm,
+              ),
+            ),
+          ),
+          if (widget.message case final message?) ...[
+            const SizedBox(height: Tokens.s8),
+            text(
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Tokens.body.copyWith(color: Tokens.fgDim),
+              ),
+            ),
+          ],
+          if (widget.actions.isNotEmpty) ...[
+            SizedBox(height: compact ? Tokens.s16 : Tokens.s24),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: Tokens.s8,
+              runSpacing: Tokens.s8,
+              children: widget.actions,
+            ),
+          ],
+          if (details != null) ...[
+            const SizedBox(height: Tokens.s16),
+            TextButton.icon(
+              onPressed: () => setState(() => _details = !_details),
+              icon: Icon(
+                _details
+                    ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded,
+              ),
+              label: const Text('Details'),
+            ),
+            if (_details)
+              SelectableText(
+                details,
+                textAlign: TextAlign.center,
+                style: Tokens.numeric,
+              ),
+          ],
+        ],
       ),
+    );
+    // Inside a list that already scrolls it simply takes its height.
+    if (!widget.scrolls) {
+      return Padding(
+        padding: padding,
+        child: Center(child: body),
+      );
+    }
+    return Center(
+      child: SingleChildScrollView(padding: padding, child: body),
     );
   }
 }

@@ -204,6 +204,7 @@ class OnboardingView extends StatelessWidget {
         ),
         const SizedBox(height: Tokens.s32),
         _Choice(
+          onChrome: card,
           icon: Icons.library_music_rounded,
           title: 'Open audio files',
           description: 'Pick files on this device to fill the queue.',
@@ -212,6 +213,7 @@ class OnboardingView extends StatelessWidget {
         ),
         const SizedBox(height: Tokens.s12),
         _Choice(
+          onChrome: card,
           icon: Icons.radio_rounded,
           title: 'Try a demo stream',
           description: 'Play a public internet radio stream right away.',
@@ -219,6 +221,7 @@ class OnboardingView extends StatelessWidget {
         ),
         const SizedBox(height: Tokens.s12),
         _Choice(
+          onChrome: card,
           icon: Icons.dns_rounded,
           title: 'Connect a server',
           description: 'Browse a Jellyfin, Plex or Samba music library.',
@@ -305,6 +308,7 @@ class _Choice extends StatelessWidget {
     this.onTap,
     this.footer,
     this.autofocus = false,
+    this.onChrome = false,
   });
 
   final IconData icon;
@@ -316,11 +320,15 @@ class _Choice extends StatelessWidget {
   final Widget? footer;
   final bool autofocus;
 
+  /// Whether it sits in the welcome card (chrome) rather than on the
+  /// page: in light both the card and a plain row are white.
+  final bool onChrome;
+
   @override
   Widget build(BuildContext context) {
     final shape = Tokens.shape(Tokens.rLg);
     return Material(
-      color: Tokens.surface,
+      color: onChrome ? Tokens.cardOnChrome : Tokens.surface,
       shape: shape,
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -368,7 +376,9 @@ class _Choice extends StatelessWidget {
             ),
           if (footer != null)
             Padding(
-              // Under the title, or the card's full width on a phone.
+              // Under the title, or the card's full width on a phone,
+              // where the indent would push the third chip to a line of
+              // its own.
               padding: EdgeInsets.fromLTRB(
                 context.layout.isCompact
                     ? Tokens.s16

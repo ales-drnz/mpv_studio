@@ -18,6 +18,7 @@ import 'ui/layout/layout.dart';
 import 'ui/theme.dart';
 import 'ui/theme_host.dart';
 import 'ui/tokens.dart';
+import 'ui/widgets/studio_spinner.dart';
 
 /// Root widget. Renders the running [MpvStudio]: exposes it to the tree via
 /// [PlayerScope], applies the persisted theme ([StudioThemeHost]) and the
@@ -203,13 +204,7 @@ class _RestartingView extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Tokens.accent,
-                    ),
-                  ),
+                  const StudioSpinner(),
                   const SizedBox(width: Tokens.s12),
                   Text('Restarting the player', style: Tokens.body),
                 ],

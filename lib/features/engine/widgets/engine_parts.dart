@@ -92,8 +92,10 @@ class Spy extends StatelessWidget {
   }
 }
 
-/// A pill naming a state: [color] at 16% with the colour as text, or a
-/// quiet tonal pill when not [strong].
+/// A pill naming a state: [color] at 12% with the colour as text, or a
+/// quiet tonal pill when not [strong]. Always lower case in mono, like
+/// the mpv values it sits among ("idle", "progressive"), whatever case
+/// [text] comes in.
 class PhasePill extends StatelessWidget {
   final String text;
   final Color color;
@@ -104,7 +106,12 @@ class PhasePill extends StatelessWidget {
     super.key,
     required this.color,
     this.strong = true,
+    this.swatch,
   });
+
+  /// A dot before the text in the colour a chart draws this state with,
+  /// so the pill reads as a legend.
+  final Color? swatch;
 
   @override
   Widget build(BuildContext context) {
@@ -117,12 +124,33 @@ class PhasePill extends StatelessWidget {
         color: strong ? color.withValues(alpha: 0.12) : Tokens.surface3,
         shape: Tokens.pill,
       ),
-      child: Text(
-        text,
-        style: Tokens.numeric.copyWith(
-          color: strong ? color : Tokens.fgFaint,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (swatch case final swatch?) ...[
+            Container(
+              width: Tokens.s8,
+              height: Tokens.s8,
+              decoration: ShapeDecoration(
+                // A state with no band reads as an empty ring.
+                color: swatch.a == 0 ? null : swatch,
+                shape: CircleBorder(
+                  side: swatch.a == 0
+                      ? BorderSide(color: Tokens.trackOff)
+                      : BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(width: Tokens.s8),
+          ],
+          Text(
+            text.toLowerCase(),
+            style: Tokens.numeric.copyWith(
+              color: strong ? color : Tokens.fgFaint,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -148,10 +176,7 @@ class Readout extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Tokens.numeric.copyWith(
-            color: color ?? Tokens.fg,
-            fontSize: 13,
-          ),
+          style: Tokens.numericLg.copyWith(color: color),
         ),
       ],
     );

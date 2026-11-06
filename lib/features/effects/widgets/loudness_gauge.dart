@@ -121,7 +121,6 @@ class _GaugePainter extends CustomPainter {
       ),
       Paint()..color = Tokens.surface3,
     );
-
     // Target and its range.
     final t = target;
     if (t != null) {
@@ -147,6 +146,32 @@ class _GaugePainter extends CustomPainter {
       );
     }
 
+    // Painted over the target, which otherwise crossed the words.
+    if (reading?.momentary == null) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(left + w / 2, barTop + barH / 2),
+            width:
+                chartLabelWidth('waiting for signal', scaler: scaler) +
+                Tokens.s8,
+            height: barH - 4,
+          ),
+          const Radius.circular(Tokens.rXs),
+        ),
+        Paint()..color = Tokens.surface3,
+      );
+      paintChartLabel(
+        canvas,
+        'waiting for signal',
+        Offset(left + w / 2, barTop + barH / 2),
+        Tokens.fgFaint,
+        center: true,
+        middle: true,
+        scaler: scaler,
+      );
+    }
+
     // Momentary bar.
     final r = reading;
     final m = r?.momentary;
@@ -162,9 +187,15 @@ class _GaugePainter extends CustomPainter {
     // Short-term tick.
     final s = r?.shortTerm;
     if (s != null && s > _luMin) {
+      // A gap in the card's tone around it: on the white momentary bar
+      // of dark the near-white tick would merge into it.
+      canvas.drawRect(
+        Rect.fromLTWH(x(s) - 3.5, barTop + 2, 7, barH - 4),
+        Paint()..color = Tokens.surface,
+      );
       canvas.drawRect(
         Rect.fromLTWH(x(s) - 1.5, barTop + 2, 3, barH - 4),
-        Paint()..color = Tokens.fg,
+        Paint()..color = Tokens.fgDim,
       );
     }
     // Integrated marker, below the rail.
@@ -189,6 +220,8 @@ class _GaugePainter extends CustomPainter {
     }
 
     // Scale.
+    // The labels clear the integrated marker's row; the outer ones stay
+    // inside the card, the last carrying the unit.
     for (final lu in _ticks) {
       final xx = x(lu.toDouble());
       canvas.drawLine(
@@ -196,12 +229,25 @@ class _GaugePainter extends CustomPainter {
         Offset(xx, barTop + barH + 3),
         Paint()..color = Tokens.fgFaint,
       );
+      final first = lu == _ticks.first;
+      final last = lu == _ticks.last;
+      // A label that would run into the last one (which carries the
+      // unit) is left out on a narrow gauge.
+      final lastLeft =
+          x(_ticks.last.toDouble()) -
+          chartLabelWidth('${_ticks.last} LUFS', scaler: scaler);
+      if (!last &&
+          xx + chartLabelWidth('$lu', scaler: scaler) / 2 + Tokens.s4 >
+              lastLeft) {
+        continue;
+      }
       paintChartLabel(
         canvas,
-        '$lu',
-        Offset(xx, barTop + barH + 10),
+        last ? '$lu LUFS' : '$lu',
+        Offset(xx, barTop + barH + 12),
         Tokens.fgFaint,
-        center: true,
+        center: !first && !last,
+        end: last,
         scaler: scaler,
       );
     }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mpv_studio/ui/tokens.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/widgets/loudness_panel.dart';
 
@@ -34,7 +35,11 @@ void main() {
         ),
       ),
     );
-    expect(find.text('--'), findsNWidgets(4), reason: 'no reading yet');
+    expect(
+      find.text(Tokens.noValue),
+      findsNWidgets(4),
+      reason: 'no reading yet',
+    );
 
     readings.add(
       const Loudness(

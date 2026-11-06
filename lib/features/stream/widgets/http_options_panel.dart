@@ -197,14 +197,18 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
   Widget _headerRow(int i) {
     final row = _rows[i];
     final n = row.name.text.trim();
-    final problems = [
-      if (n.isNotEmpty) ?headerNameProblem(n),
-      ?headerValueProblem(row.value.text),
-    ];
+    // Each problem on its own field, which rings red, in a sentence.
+    String? sentence(String? p) =>
+        p == null ? null : '${p[0].toUpperCase()}${p.substring(1)}';
+    final nameProblem = n.isEmpty ? null : sentence(headerNameProblem(n));
+    final valueProblem = sentence(headerValueProblem(row.value.text));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Top aligned: an error under one field must not move the other
+        // field and the remove button down.
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 2,
@@ -212,6 +216,7 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
                 controller: row.name,
                 onChanged: (_) => setState(_emit),
                 label: 'Header name',
+                errorText: nameProblem,
                 autocorrect: false,
                 enableSuggestions: false,
                 hint: 'Name',
@@ -225,6 +230,7 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
                 controller: row.value,
                 onChanged: (_) => setState(_emit),
                 label: 'Header value',
+                errorText: valueProblem,
                 autocorrect: false,
                 enableSuggestions: false,
                 hint: 'Value',
@@ -239,19 +245,6 @@ class _HttpOptionsPanelState extends State<HttpOptionsPanel> {
             ),
           ],
         ),
-        for (final p in problems)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Tokens.s16,
-              Tokens.s4,
-              Tokens.s16,
-              0,
-            ),
-            child: Semantics(
-              liveRegion: true,
-              child: Text(p, style: Tokens.label.copyWith(color: Tokens.red)),
-            ),
-          ),
       ],
     );
   }

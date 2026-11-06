@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
@@ -57,7 +58,7 @@ class LoudnessSection extends StatelessWidget {
             InfoRow(
               label: 'Measured',
               value: integrated == null
-                  ? '-'
+                  ? Tokens.noValue
                   : '${integrated.toStringAsFixed(1)} LUFS$gain',
             ),
             SettingAnchor(

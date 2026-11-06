@@ -63,9 +63,9 @@ void main() {
     await pumpSettings(tester);
     await tester.enterText(find.byType(TextField).first, 'proxy');
     await tester.pumpAndSettle();
-    expect(find.text('Network, Connection'), findsOneWidget);
+    expect(find.text('Network \u203a Connection'), findsOneWidget);
 
-    await tester.tap(find.text('Network, Connection'));
+    await tester.tap(find.text('Network \u203a Connection'));
     await tester.pumpAndSettle();
     // The Network group is open and the row is on screen.
     expect(find.text(SettingsCatalog.tlsVerify.title), findsOneWidget);
@@ -86,7 +86,7 @@ void main() {
     expect(search.hasFocus, isTrue);
     expect(tester.testTextInput.isVisible, isTrue);
 
-    await tester.tap(find.text('Network, Connection'));
+    await tester.tap(find.text('Network \u203a Connection'));
     await tester.pumpAndSettle();
     expect(find.text(SettingsCatalog.tlsVerify.title), findsOneWidget);
     expect(search.hasFocus, isFalse);

@@ -239,6 +239,7 @@ class _GroupTile extends StatelessWidget {
                   title: group.title,
                   subtitle: group.summary,
                   color: ink,
+                  selected: selected,
                   trailing: pushes
                       ? Icon(
                           Icons.chevron_right_rounded,
@@ -303,7 +304,7 @@ class _GroupDetail extends StatelessWidget {
                     ),
                     child: Semantics(
                       header: true,
-                      child: Text(group.title, style: Tokens.heading),
+                      child: Text(group.title, style: Tokens.titleSm),
                     ),
                   ),
                 if (two)

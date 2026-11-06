@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/lead_tile.dart';
+import '../../../ui/widgets/inline_notice.dart';
 import '../../../ui/widgets/controls.dart';
 import 'stream_states.dart';
 
@@ -114,8 +116,10 @@ class SignInCard extends StatelessWidget {
       onPressed: onSubmit,
       expand: layout.isCompact,
     );
+    // At the page's start, under its title and tabs, not centred apart
+    // from them on a wide window.
     return Align(
-      alignment: Alignment.topCenter,
+      alignment: AlignmentDirectional.topStart,
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: PageEnd.padding(
@@ -139,17 +143,7 @@ class SignInCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        ExcludeSemantics(
-                          child: Container(
-                            width: Tokens.s48,
-                            height: Tokens.s48,
-                            decoration: ShapeDecoration(
-                              color: Tokens.surface3,
-                              shape: const CircleBorder(),
-                            ),
-                            child: Icon(icon, size: 24, color: Tokens.fg),
-                          ),
-                        ),
+                        LeadCircle(icon: icon, size: Tokens.s48),
                         const SizedBox(width: Tokens.s16),
                         Expanded(
                           child: Column(
@@ -177,34 +171,10 @@ class SignInCard extends StatelessWidget {
                       const SizedBox(height: Tokens.s16),
                     ],
                     if (error != null) ...[
-                      Semantics(
-                        liveRegion: true,
-                        child: Container(
-                          padding: const EdgeInsets.all(Tokens.s12),
-                          decoration: ShapeDecoration(
-                            color: Tokens.red.withValues(alpha: 0.14),
-                            shape: Tokens.shape(Tokens.rMd),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: 20,
-                                color: Tokens.red,
-                              ),
-                              const SizedBox(width: Tokens.s8),
-                              Expanded(
-                                child: Text(
-                                  error,
-                                  style: Tokens.body.copyWith(
-                                    color: Tokens.red,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      InlineNotice(
+                        tone: NoticeTone.error,
+                        icon: Icons.error_outline_rounded,
+                        text: error,
                       ),
                       const SizedBox(height: Tokens.s16),
                     ],

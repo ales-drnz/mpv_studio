@@ -198,7 +198,10 @@ class PlayerSection extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(backgroundColor: Tokens.red),
+          style: FilledButton.styleFrom(
+            backgroundColor: Tokens.red,
+            foregroundColor: Tokens.onAccent,
+          ),
           child: const Text('Reset'),
         ),
       ],
@@ -288,7 +291,7 @@ class AboutSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = SettingsScope.of(context).player.state;
-    String or(String v) => v.isEmpty ? '-' : v;
+    String or(String v) => v.isEmpty ? Tokens.noValue : v;
     return SettingsGroup(
       label: SettingsSections.about,
       children: [
