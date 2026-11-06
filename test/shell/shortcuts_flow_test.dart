@@ -106,7 +106,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.f1);
     await tester.pumpAndSettle();
     for (final keys in [
-      'Ctrl+1 to 6',
+      'Ctrl+1 to 7',
       'Escape',
       'B',
       'Ctrl+F',

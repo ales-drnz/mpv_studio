@@ -101,9 +101,8 @@ const List<(String, List<(String, String)>)> pageShortcutList = [
     'Anywhere',
     [
       (
-        'Ctrl+1 to 6',
-        'Go to Playback, Queue, Stream, Effects, Engine or '
-            'Console',
+        'Ctrl+1 to 7',
+        'Go to Playback, Queue, Stream, Effects, Engine, Settings or Console',
       ),
       ('Escape', 'Close a detail, a menu or a dialog'),
       ('Menu, Shift+F10', 'The menu of the focused row'),
