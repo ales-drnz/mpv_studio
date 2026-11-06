@@ -65,7 +65,7 @@ void main() {
       expect(find.text('Load playlist'), findsOneWidget);
       await tester.tap(find.text('Clear queue'));
       await tester.pumpAndSettle();
-      expect(find.text('Clear the queue?'), findsOneWidget);
+      expect(find.text('Queue cleared'), findsOneWidget);
     });
   });
 
@@ -185,21 +185,14 @@ void main() {
       expect(player.items.last, serverSong);
     });
 
-    testWidgets('clearing asks first', (tester) async {
+    testWidgets('clearing empties at once, with an undo', (tester) async {
       final (player, details) = await threeEntries(() => tester.pump());
       await pumpQueue(tester, player, details);
       await tester.tap(buttonWithText<TextButton>('Clear queue'));
       await tester.pumpAndSettle();
-      expect(find.text('Clear the queue?'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(player.calls, isNot(contains('clearPlaylist')));
-      await tester.tap(buttonWithText<TextButton>('Clear queue'));
-      await tester.pumpAndSettle();
-      await tester.tap(buttonWithText<FilledButton>('Clear'));
-      await tester.pumpAndSettle();
       expect(player.calls.last, 'clearPlaylist');
       expect(find.text('The queue is empty'), findsOneWidget);
+      expect(find.text('Queue cleared'), findsOneWidget);
     });
 
     testWidgets('the details show a location without the token', (

@@ -3,7 +3,9 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../ui/layout/layout.dart';
+import '../../ui/widgets/studio_snack.dart';
 import '../../util/mixed_content.dart';
+import '../queue/queue_snapshot.dart';
 
 /// What a row of the Stream page can do with its media, the entries of its
 /// context menu.
@@ -34,13 +36,21 @@ enum RowAction {
 /// on a request the browser blocks: it is not sent to the player, and
 /// [notify] says why instead.
 class StreamActions {
-  const StreamActions({required this.player, required this.guard, this.notify});
+  const StreamActions({
+    required this.player,
+    required this.guard,
+    this.notify,
+    this.toast,
+  });
 
   final PlayerApi player;
   final CallGuard guard;
 
   /// Shows an error notice; the notices of the app's [PlaybackIssues].
   final void Function(String message)? notify;
+
+  /// Says what an action did, with an optional undo.
+  final StudioToast? toast;
 
   bool get _queueEmpty => player.state.playlist.items.isEmpty;
 
@@ -56,33 +66,69 @@ class StreamActions {
   /// Replaces the queue with [media] and plays it.
   Future<void> play(Media media) async {
     if (!_loadable([media])) return;
-    await guard(() => player.open(media, play: true));
+    await _replacing(() => player.open(media, play: true));
   }
 
   /// Replaces the queue with [medias] and plays the one at [index].
   Future<void> playAll(List<Media> medias, {int index = 0}) async {
     if (medias.isEmpty || !_loadable(medias)) return;
-    await guard(() => player.openAll(medias, play: true, index: index));
+    await _replacing(() => player.openAll(medias, play: true, index: index));
   }
+
+  /// Runs [replace] and offers to put back the queue it replaced.
+  Future<void> _replacing(Future<void> Function() replace) async {
+    final before = QueueSnapshot.of(player);
+    await guard(replace);
+    if (before == null || !before.changedIn(player)) return;
+    before.seal();
+    toast?.call(
+      'Queue replaced',
+      actionLabel: undoLabel,
+      onAction: () async {
+        if (!await before.restore(player, guard)) {
+          toast?.call(QueueSnapshot.changedMessage);
+        }
+      },
+    );
+  }
+
+  /// Says that [count] entries joined a queue that was playing already.
+  void _added(int count, {required bool next}) =>
+      toast?.call(switch ((count, next)) {
+        (1, false) => 'Added to the queue',
+        (_, false) => '$count tracks added to the queue',
+        (1, true) => 'Plays next',
+        (_, true) => '$count tracks play next',
+      });
 
   /// Appends [medias] to the queue, or plays them when the queue is empty.
   Future<void> enqueue(List<Media> medias) async {
     if (medias.isEmpty || !_loadable(medias)) return;
-    await guard(() async {
-      if (_queueEmpty) return player.openAll(medias, play: true);
+    QueueSnapshot.noteEdit();
+    if (_queueEmpty) {
+      await guard(() => player.openAll(medias, play: true));
+      return;
+    }
+    final ok = await guard(() async {
       for (final m in medias) {
         await player.add(m);
       }
+      return true;
     });
+    if (ok == true) _added(medias.length, next: false);
   }
 
   /// Inserts [medias] right after the current entry, or plays them when
   /// the queue is empty.
   Future<void> playNext(List<Media> medias) async {
     if (medias.isEmpty || !_loadable(medias)) return;
-    await guard(() async {
-      final pl = player.state.playlist;
-      if (pl.items.isEmpty) return player.openAll(medias, play: true);
+    QueueSnapshot.noteEdit();
+    final pl = player.state.playlist;
+    if (pl.items.isEmpty) {
+      await guard(() => player.openAll(medias, play: true));
+      return;
+    }
+    final ok = await guard(() async {
       var end = pl.items.length;
       var to = pl.index < 0 ? end : pl.index + 1;
       for (final m in medias) {
@@ -91,7 +137,9 @@ class StreamActions {
         end++;
         to++;
       }
+      return true;
     });
+    if (ok == true) _added(medias.length, next: true);
   }
 
   /// Runs the queue [action] for [medias] (the favourite actions are the

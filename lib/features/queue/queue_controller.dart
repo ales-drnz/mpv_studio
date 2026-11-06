@@ -1,12 +1,20 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
 import '../../util/media_import.dart';
+import 'queue_snapshot.dart';
 
 /// Picks files or a folder and hands back the paths, empty when cancelled.
 typedef PathPicker = Future<List<String>> Function();
+
+/// Picks a folder and hands back its path, null when cancelled.
+typedef FolderPicker = Future<String?> Function();
+
+/// Lists the audio files under a folder.
+typedef FolderScanner = Future<List<String>> Function(String folder);
 
 /// Picks one playlist file, null when cancelled.
 typedef PlaylistPicker = Future<String?> Function();
@@ -35,15 +43,25 @@ class QueueController {
     required this.player,
     required this.guard,
     this.pickFiles = pickAudioFiles,
-    this.pickFolder = pickAudioFolder,
+    this.pickFolder = pickFolderPath,
+    this.scanFolder = scanAudioFolder,
     this.pickPlaylist = pickPlaylistFile,
+    this.notify,
   });
 
   final PlayerApi player;
   final CallGuard guard;
   final PathPicker pickFiles;
-  final PathPicker pickFolder;
+  final FolderPicker pickFolder;
+  final FolderScanner scanFolder;
   final PlaylistPicker pickPlaylist;
+
+  /// Says why an add did nothing (no audio, a picker that failed).
+  final void Function(String message)? notify;
+
+  /// Whether a folder is being searched for audio files.
+  ValueListenable<bool> get looking => _lookingFor;
+  final _lookingFor = ValueNotifier<bool>(false);
 
   /// How many picked files are still being added to the queue.
   ValueListenable<int> get adding => _adding;
@@ -65,6 +83,7 @@ class QueueController {
   /// when it is empty, else they are appended.
   Future<void> enqueue(List<String> paths) async {
     if (paths.isEmpty) return;
+    QueueSnapshot.noteEdit();
     _setAdding(_adding.value + paths.length);
     try {
       final medias = [for (final p in paths) mediaFor(p)];
@@ -85,20 +104,103 @@ class QueueController {
     }
   }
 
-  Future<void> addFiles() async => enqueue(await pickFiles());
+  Future<void> addFiles() async {
+    final paths = await _pick(pickFiles);
+    if (paths != null) await enqueue(paths);
+  }
 
-  Future<void> addFolder() async => enqueue(await pickFolder());
+  /// Queues the audio files of a picked folder, searched without holding
+  /// the UI up and shown as [looking] meanwhile.
+  Future<void> addFolder() async {
+    final dir = await _pick(pickFolder);
+    if (dir == null) return;
+    final paths = await _looking(() => scanFolder(dir));
+    if (paths.isEmpty) {
+      _notify('No audio files in this folder');
+      return;
+    }
+    await enqueue(paths);
+  }
+
+  /// Queues what was dropped: audio files, and the audio files of folders.
+  /// A drop with none says why.
+  Future<void> addDropped(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final audio = await _looking(() => resolveDroppedPaths(paths));
+    if (audio.isNotEmpty) {
+      // A drop can land on any section: say what it did, unless it
+      // started playing.
+      final appended = _items.isNotEmpty;
+      final before = _items.length;
+      await enqueue(audio);
+      final added = _items.length - before;
+      if (appended && added > 0) {
+        _notify(
+          added == 1
+              ? 'Added to the queue'
+              : '$added tracks added to the queue',
+        );
+      }
+      return;
+    }
+    _notify(
+      paths.any(isPlaylistPath)
+          ? 'Playlists open with Load playlist'
+          : 'No audio files in what was dropped',
+    );
+  }
+
+  /// Runs a system picker, saying so when it cannot open; null then.
+  Future<T?> _pick<T>(Future<T> Function() picker) async {
+    try {
+      return await picker();
+    } on PlatformException catch (e) {
+      _notify('Could not open the file picker: ${e.message ?? e.code}');
+      return null;
+    }
+  }
+
+  Future<T> _looking<T>(Future<T> Function() search) async {
+    if (!_disposed) _lookingFor.value = true;
+    try {
+      return await search();
+    } finally {
+      if (!_disposed) _lookingFor.value = false;
+    }
+  }
+
+  void _notify(String message) {
+    if (!_disposed) notify?.call(message);
+  }
 
   /// Loads a playlist file (.m3u, .m3u8, .pls, .cue) as the new queue: its
   /// entries are expanded by the engine (`openPlaylistFile`), unlike
-  /// `open`, which would queue the playlist as one entry.
-  Future<void> loadPlaylist() async {
-    final path = await pickPlaylist();
-    if (path == null) return;
-    await guard(() => player.openPlaylistFile(Media(path), play: true));
+  /// `open`, which would queue the playlist as one entry. Returns the
+  /// queue it replaced, for an undo, or null when there was none.
+  Future<QueueSnapshot?> loadPlaylist() async {
+    final path = await _pick(pickPlaylist);
+    if (path == null) return null;
+    return _replacing(() => player.openPlaylistFile(Media(path), play: true));
   }
 
-  Future<void> clear() => guard(player.clearPlaylist);
+  /// Empties the queue and returns what it held, for an undo, or null
+  /// when there was nothing or the call failed.
+  Future<QueueSnapshot?> clear() => _replacing(player.clearPlaylist);
+
+  /// Puts back a queue that [loadPlaylist] or [clear] replaced.
+  /// False when the queue changed since, and stays.
+  Future<bool> putBack(QueueSnapshot before) => before.restore(player, guard);
+
+  Future<QueueSnapshot?> _replacing(Future<void> Function() action) async {
+    final before = QueueSnapshot.of(player);
+    final ok = await guard(() async {
+      await action();
+      return true;
+    });
+    if (ok != true) return null;
+    before?.seal();
+    return before;
+  }
 
   Future<void> play(int index) => guard(() => player.jump(index));
 
@@ -114,6 +216,42 @@ class QueueController {
     return ok == null ? null : media;
   }
 
+  /// The entries [removeForUndo] took since the last undo toast went,
+  /// oldest first, so one Undo puts them all back.
+  final _removals = <_Removal>[];
+
+  /// Removes the entry at [index] and adds it to the removals one undo
+  /// puts back. Returns how many there are now, or null when the call
+  /// failed (the entry stays).
+  Future<int?> removeForUndo(int index) async {
+    QueueSnapshot.noteEdit();
+    final pl = player.state.playlist;
+    final current = index == pl.index;
+    final playing = player.state.playWhenReady;
+    final media = await remove(index);
+    if (media == null) return null;
+    _removals.add(_Removal(media, index, current: current, playing: playing));
+    return _removals.length;
+  }
+
+  /// Puts back every entry of [removeForUndo], newest first so each lands
+  /// at its index again. The one that was current becomes current again.
+  Future<void> undoRemovals() async {
+    final removals = List.of(_removals.reversed);
+    _removals.clear();
+    for (final r in removals) {
+      await restore(r.media, r.index);
+      if (!r.current) continue;
+      await guard(() async {
+        await player.jump(r.index);
+        if (!r.playing) await player.pause();
+      });
+    }
+  }
+
+  /// Drops the removals, once their undo is no longer offered.
+  void forgetRemovals() => _removals.clear();
+
   /// Puts [media] back at [index] after a [remove].
   Future<void> restore(Media media, int index) => guard(() async {
     // The appended entry lands at the current length, unless the queue
@@ -126,12 +264,14 @@ class QueueController {
   /// Moves the entry at [from] so that it ends up at index [to].
   Future<void> move(int from, int to) {
     if (from == to) return Future.value();
+    QueueSnapshot.noteEdit();
     // playlist-move puts the entry before the one now at the target.
     return guard(() => player.move(from, to > from ? to + 1 : to));
   }
 
   /// Moves the entry at [index] right after the current one.
   Future<void> playNext(int index) {
+    QueueSnapshot.noteEdit();
     final current = player.state.playlist.index;
     if (current < 0 || index == current || index == current + 1) {
       return Future.value();
@@ -161,5 +301,23 @@ class QueueController {
   void dispose() {
     _disposed = true;
     _adding.dispose();
+    _lookingFor.dispose();
   }
+}
+
+/// An entry [QueueController.removeForUndo] took out.
+class _Removal {
+  _Removal(
+    this.media,
+    this.index, {
+    required this.current,
+    required this.playing,
+  });
+
+  final Media media;
+  final int index;
+
+  /// Whether it was the current entry, and playback was on.
+  final bool current;
+  final bool playing;
 }

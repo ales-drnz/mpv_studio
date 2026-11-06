@@ -97,4 +97,151 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Playback failed'), findsNothing);
   });
+
+  testWidgets('a plain toast waits for one with an undo', (tester) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) {
+            host = context;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    showStudioSnack(host, 'Removed', actionLabel: 'Undo', onAction: () {});
+    await tester.pumpAndSettle();
+    showStudioSnack(host, 'End of queue');
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('End of queue'), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('End of queue'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('with a screen reader a toast with an action stays', (
+    tester,
+  ) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(accessibleNavigation: true),
+        child: ScaffoldMessenger(
+          child: Scaffold(
+            body: Builder(
+              builder: (context) {
+                host = context;
+                return const SizedBox.expand();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    showStudioSnack(host, 'Removed', actionLabel: 'Undo', onAction: () {});
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+  });
+
+  testWidgets('an error with Show log waits for an Undo too', (tester) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) {
+            host = context;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    showStudioSnack(
+      host,
+      'Queue replaced',
+      actionLabel: 'Undo',
+      onAction: () {},
+    );
+    await tester.pumpAndSettle();
+    showStudioSnack(
+      host,
+      'Could not play "Gone"',
+      actionLabel: 'Show log',
+      onAction: () {},
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not play "Gone"'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('behind an Undo only the latest plain toast waits', (
+    tester,
+  ) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) {
+            host = context;
+            return const SizedBox.expand();
+          },
+        ),
+      ),
+    );
+    showStudioSnack(host, 'Removed', actionLabel: 'Undo', onAction: () {});
+    await tester.pumpAndSettle();
+    for (final speed in ['1.1', '1.2', '1.3']) {
+      showStudioSnack(host, 'Speed $speed');
+    }
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Speed 1.3'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Speed'), findsNothing);
+  });
+
+  testWidgets('with a screen reader an error still times out', (tester) async {
+    late BuildContext host;
+    await pumpStudio(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(accessibleNavigation: true),
+        child: ScaffoldMessenger(
+          child: Scaffold(
+            body: Builder(
+              builder: (context) {
+                host = context;
+                return const SizedBox.expand();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    showStudioSnack(
+      host,
+      'Could not play',
+      duration: const Duration(seconds: 6),
+      actionLabel: 'Show log',
+      onAction: () {},
+    );
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not play'), findsNothing);
+  });
 }

@@ -60,11 +60,15 @@ class _DesktopShellState extends State<DesktopShell> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Sidebar(
-              section: widget.section,
-              onSelect: widget.onSelect,
-              collapsed: _collapsed,
-              onToggle: () => setState(() => _collapsed = !_collapsed),
+            // Toasts float over the stage, beside the sidebar.
+            SnackObstacle(
+              edge: SnackEdge.left,
+              child: _Sidebar(
+                section: widget.section,
+                onSelect: widget.onSelect,
+                collapsed: _collapsed,
+                onToggle: () => setState(() => _collapsed = !_collapsed),
+              ),
             ),
             Expanded(
               child: mini == null

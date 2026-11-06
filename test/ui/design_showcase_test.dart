@@ -160,7 +160,7 @@ void main() {
         guard: unguarded,
         details: details,
         pickFiles: () async => const [],
-        pickFolder: () async => const [],
+        pickFolder: () async => null,
         pickPlaylist: () async => null,
       ),
     );

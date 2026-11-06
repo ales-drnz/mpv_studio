@@ -128,6 +128,7 @@ class QueueSummary extends StatelessWidget {
     required this.known,
     required this.unknown,
     required this.adding,
+    this.looking = false,
   });
 
   final int count;
@@ -140,6 +141,9 @@ class QueueSummary extends StatelessWidget {
 
   /// Files still being added.
   final int adding;
+
+  /// Whether a folder is being searched for audio files.
+  final bool looking;
 
   /// The summary text, e.g. "12 tracks, 47:13".
   static String describe(int count, Duration known, int unknown) {
@@ -159,7 +163,9 @@ class QueueSummary extends StatelessWidget {
         Semantics(
           liveRegion: true,
           child: Text(
-            adding > 0
+            looking
+                ? 'Looking for audio files'
+                : adding > 0
                 ? 'Adding ${adding == 1 ? '1 file' : '$adding files'}'
                 : describe(count, known, unknown),
             style: Tokens.caption,
@@ -170,7 +176,7 @@ class QueueSummary extends StatelessWidget {
         const SizedBox(height: Tokens.s4),
         SizedBox(
           height: 4,
-          child: adding > 0
+          child: adding > 0 || looking
               ? ClipPath(
                   clipper: const ShapeBorderClipper(shape: StadiumBorder()),
                   child: LinearProgressIndicator(

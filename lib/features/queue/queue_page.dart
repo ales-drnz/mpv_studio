@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -11,10 +10,12 @@ import '../../studio/playback_issues.dart';
 import '../../studio/player_scope.dart';
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/studio_snack.dart';
 import '../../util/media_import.dart';
 import '../../util/media_labels.dart';
 import '../../util/reactive.dart';
 import 'queue_controller.dart';
+import 'queue_snapshot.dart';
 import 'queue_details.dart';
 import 'widgets/playlist_banner.dart';
 import 'widgets/queue_empty.dart';
@@ -22,7 +23,6 @@ import 'widgets/queue_entry_info.dart';
 import 'widgets/queue_header.dart';
 import 'widgets/queue_list.dart';
 import 'widgets/queue_now_playing.dart';
-import '../../ui/widgets/studio_snack.dart';
 
 /// The live playback queue, a view onto `player.stream.playlist`, for the
 /// app's player.
@@ -48,7 +48,8 @@ class QueueView extends StatefulWidget {
     required this.guard,
     required this.details,
     this.pickFiles = pickAudioFiles,
-    this.pickFolder = pickAudioFolder,
+    this.pickFolder = pickFolderPath,
+    this.scanFolder = scanAudioFolder,
     this.pickPlaylist = pickPlaylistFile,
   });
 
@@ -58,7 +59,8 @@ class QueueView extends StatefulWidget {
   final CallGuard guard;
   final QueueDetails details;
   final PathPicker pickFiles;
-  final PathPicker pickFolder;
+  final FolderPicker pickFolder;
+  final FolderScanner scanFolder;
   final PlaylistPicker pickPlaylist;
 
   @override
@@ -67,7 +69,6 @@ class QueueView extends StatefulWidget {
 
 class _QueueViewState extends State<QueueView> {
   late QueueController _queue = _controller();
-  bool _dragging = false;
 
   /// The selected entry (pointer layouts), shown in the detail pane. Kept
   /// by identity, so it follows the entry through moves, removals above
@@ -87,7 +88,9 @@ class _QueueViewState extends State<QueueView> {
     guard: widget.guard,
     pickFiles: widget.pickFiles,
     pickFolder: widget.pickFolder,
+    scanFolder: widget.scanFolder,
     pickPlaylist: widget.pickPlaylist,
+    notify: (message) => showStudioSnack(context, message),
   );
 
   @override
@@ -105,34 +108,30 @@ class _QueueViewState extends State<QueueView> {
     super.dispose();
   }
 
+  /// Empties the queue at once, with an undo instead of a question.
   Future<void> _clear() async {
-    final count = widget.player.state.playlist.items.length;
-    final ok = await showStudioDialog<bool>(
+    final before = await _queue.clear();
+    if (!mounted) return;
+    setState(() => _selected = null);
+    if (before != null) _offerUndo('Queue cleared', before);
+  }
+
+  Future<void> _loadPlaylist() async {
+    final before = await _queue.loadPlaylist();
+    if (mounted && before != null) _offerUndo('Queue replaced', before);
+  }
+
+  void _offerUndo(String message, QueueSnapshot before) {
+    showStudioSnack(
       context,
-      title: 'Clear the queue?',
-      builder: (context) => Text(
-        count == 1
-            ? 'The track is removed from the queue and playback stops.'
-            : 'All $count tracks are removed from the queue and playback '
-                  'stops.',
-        style: Tokens.body,
-      ),
-      actions: (context) => [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(backgroundColor: Tokens.red),
-          child: const Text('Clear'),
-        ),
-      ],
+      message,
+      actionLabel: undoLabel,
+      onAction: () async {
+        if (!await _queue.putBack(before) && mounted) {
+          showStudioSnack(context, QueueSnapshot.changedMessage);
+        }
+      },
     );
-    if (ok == true) {
-      await _queue.clear();
-      if (mounted) setState(() => _selected = null);
-    }
   }
 
   void _toast(String message) {
@@ -203,19 +202,58 @@ class _QueueViewState extends State<QueueView> {
       case QueueAction.replace:
         await _queue.replace(index);
       case QueueAction.remove:
-        // Removing the selected entry hands the selection to the entry
-        // after it, else the one before.
-        final selectedAt = _selected?.resolve(items);
-        final neighbour = index + 1 < items.length ? index + 1 : index - 1;
-        final removed = await _queue.remove(index);
-        if (removed != null && mounted && selectedAt == index) {
-          setState(
-            () => _selected = neighbour < 0
-                ? null
-                : EntryRef(items[neighbour], neighbour),
-          );
-        }
+        await _removeAt(index);
     }
+  }
+
+  /// Bumped by each removal toast, so only the latest one forgets the
+  /// removals when it goes.
+  int _undoToast = 0;
+
+  /// Removes the entry at [index] with an undo that also brings back the
+  /// ones removed just before. Returns whether it went.
+  Future<bool> _removeAt(int index) {
+    // One at a time: each removal reads the queue the last one left.
+    final done = _removing.then((_) => _removeNow(index));
+    _removing = done.then((_) {}, onError: (_) {});
+    return done;
+  }
+
+  Future<void> _removing = Future.value();
+
+  Future<bool> _removeNow(int index) async {
+    final items = widget.player.state.playlist.items;
+    if (index < 0 || index >= items.length) return false;
+    final title = QueueRowInfo.of(
+      items[index],
+      widget.details.details.value[items[index]],
+    ).title;
+    // Removing the selected entry hands the selection to the entry after
+    // it, else the one before.
+    final selectedAt = _selected?.resolve(items);
+    final neighbour = index + 1 < items.length ? index + 1 : index - 1;
+    final count = await _queue.removeForUndo(index);
+    if (count == null) return false;
+    if (!mounted) return true;
+    if (selectedAt == index) {
+      setState(
+        () => _selected = neighbour < 0
+            ? null
+            : EntryRef(items[neighbour], neighbour),
+      );
+    }
+    final toast = ++_undoToast;
+    final shown = ScaffoldMessenger.maybeOf(context)?.showStudioSnack(
+      count == 1 ? 'Removed "$title"' : 'Removed $count tracks',
+      actionLabel: undoLabel,
+      onAction: _queue.undoRemovals,
+    );
+    shown?.closed.then((reason) {
+      if (toast == _undoToast && reason != SnackBarClosedReason.action) {
+        _queue.forgetRemovals();
+      }
+    });
+    return true;
   }
 
   Widget _info(Playlist pl, int index, {VoidCallback? close}) {
@@ -266,7 +304,7 @@ class _QueueViewState extends State<QueueView> {
           QueueHeaderAction(
             icon: Icons.playlist_play_rounded,
             label: 'Load playlist',
-            onPressed: _queue.loadPlaylist,
+            onPressed: _loadPlaylist,
           ),
           QueueHeaderAction(
             icon: Icons.clear_all_rounded,
@@ -280,131 +318,119 @@ class _QueueViewState extends State<QueueView> {
   Widget build(BuildContext context) {
     final player = widget.player;
     final router = GoRouter.maybeOf(context);
-    return DropTarget(
-      onDragEntered: (_) => setState(() => _dragging = true),
-      onDragExited: (_) => setState(() => _dragging = false),
-      onDragDone: (detail) {
-        setState(() => _dragging = false);
-        _queue.enqueue(resolveDroppedFiles(detail.files));
-      },
-      child: ColoredBox(
-        // A drag-over wash signals the drop target.
-        color: _dragging ? Tokens.accentWash : Colors.transparent,
-        child: Live<Playlist>(
-          stream: player.stream.playlist,
-          initial: player.state.playlist,
-          builder: (context, playlist) {
-            final items = playlist.items;
-            final selected = _selected?.resolve(items);
-            // Remember where the entry is now, for the next change.
-            if (selected != null) {
-              _selected = EntryRef(items[selected], selected);
-            }
-            // The detail pane follows the selection, else the current entry.
-            final shown =
-                selected ?? (playlist.index >= 0 ? playlist.index : null);
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final gutter = context.layout.gutter;
-                final available = constraints.maxWidth - 2 * gutter;
-                // With room for three columns, what plays and what comes
-                // next stand beside the list and the details.
-                // The width follows the window, the column the queue: the
-                // header stays put when the first file comes in.
-                final three =
-                    context.layout.isPointer &&
-                    available >= Breakpoints.threeColumns;
-                final content = math.min(
-                  available,
-                  three ? Breakpoints.full : Breakpoints.wide,
+    // Drops land anywhere on the window: the shell's FileDropHost.
+    return Live<Playlist>(
+      stream: player.stream.playlist,
+      initial: player.state.playlist,
+      builder: (context, playlist) {
+        final items = playlist.items;
+        final selected = _selected?.resolve(items);
+        // Remember where the entry is now, for the next change.
+        if (selected != null) {
+          _selected = EntryRef(items[selected], selected);
+        }
+        // The detail pane follows the selection, else the current entry.
+        final shown = selected ?? (playlist.index >= 0 ? playlist.index : null);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final gutter = context.layout.gutter;
+            final available = constraints.maxWidth - 2 * gutter;
+            // With room for three columns, what plays and what comes
+            // next stand beside the list and the details.
+            // The width follows the window, the column the queue: the
+            // header stays put when the first file comes in.
+            final three =
+                context.layout.isPointer &&
+                available >= Breakpoints.threeColumns;
+            final content = math.min(
+              available,
+              three ? Breakpoints.full : Breakpoints.wide,
+            );
+            // The width follows the window, not whether there is a
+            // detail yet: the header stays put when the first file
+            // comes in.
+            final roomy =
+                context.layout.isPointer &&
+                TwoPane.splitsAt(
+                  content,
+                  listWidth: _listWidth,
+                  minDetailWidth: _detailWidth,
                 );
-                // The width follows the window, not whether there is a
-                // detail yet: the header stays put when the first file
-                // comes in.
-                final roomy =
-                    context.layout.isPointer &&
-                    TwoPane.splitsAt(
-                      content,
-                      listWidth: _listWidth,
-                      minDetailWidth: _detailWidth,
-                    );
-                final split = items.isNotEmpty && roomy;
-                return PageFrame(
-                  title: 'Queue',
-                  scrollable: false,
-                  maxWidth: three
-                      ? Breakpoints.full
-                      : roomy
-                      ? Breakpoints.wide
-                      : Breakpoints.readable,
-                  actions: queueHeaderButtons(
-                    context,
-                    _headerActions(items.isEmpty),
-                    available: content,
+            final split = items.isNotEmpty && roomy;
+            return PageFrame(
+              title: 'Queue',
+              scrollable: false,
+              maxWidth: three
+                  ? Breakpoints.full
+                  : roomy
+                  ? Breakpoints.wide
+                  : Breakpoints.readable,
+              actions: queueHeaderButtons(
+                context,
+                _headerActions(items.isEmpty),
+                available: content,
+              ),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _summary(playlist),
+                  Live<String>(
+                    stream: player.stream.playlistPath,
+                    initial: player.state.playlistPath,
+                    builder: (context, path) => path.isEmpty
+                        ? const SizedBox.shrink()
+                        : PlaylistBanner(
+                            path: path,
+                            onPrevious: _queue.previousPlaylist,
+                            onNext: _queue.nextPlaylist,
+                          ),
                   ),
-                  body: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _summary(playlist),
-                      Live<String>(
-                        stream: player.stream.playlistPath,
-                        initial: player.state.playlistPath,
-                        builder: (context, path) => path.isEmpty
-                            ? const SizedBox.shrink()
-                            : PlaylistBanner(
-                                path: path,
-                                onPrevious: _queue.previousPlaylist,
-                                onNext: _queue.nextPlaylist,
-                              ),
-                      ),
-                      Expanded(
-                        child: items.isEmpty
-                            ? QueueEmpty(
-                                onAddFiles: _queue.addFiles,
-                                onAddFolder: _queue.addFolder,
-                                onLoadPlaylist: _queue.loadPlaylist,
-                                onBrowseStreams: router == null
-                                    ? null
-                                    : () => router.go(Section.stream.path),
-                              )
-                            : split
-                            ? _withNowPlaying(
-                                three && items.isNotEmpty,
-                                playlist,
-                                TwoPane(
-                                  listWidth: _listWidth,
-                                  minDetailWidth: _detailWidth,
-                                  list: _list(playlist, selected, split),
-                                  // A card at its content's height, scrolling
-                                  // when it does not fit.
-                                  detail: shown == null
-                                      ? null
-                                      : SingleChildScrollView(
-                                          padding: PageEnd.padding(context),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(
-                                              Tokens.s16,
-                                            ),
-                                            decoration: ShapeDecoration(
-                                              color: Tokens.surface,
-                                              shape: Tokens.shape(Tokens.rLg),
-                                            ),
-                                            child: _info(playlist, shown),
-                                          ),
+                  Expanded(
+                    child: items.isEmpty
+                        ? QueueEmpty(
+                            onAddFiles: _queue.addFiles,
+                            onAddFolder: _queue.addFolder,
+                            onLoadPlaylist: _loadPlaylist,
+                            onBrowseStreams: router == null
+                                ? null
+                                : () => router.go(Section.stream.path),
+                          )
+                        : split
+                        ? _withNowPlaying(
+                            three && items.isNotEmpty,
+                            playlist,
+                            TwoPane(
+                              listWidth: _listWidth,
+                              minDetailWidth: _detailWidth,
+                              list: _list(playlist, selected, split),
+                              // A card at its content's height, scrolling
+                              // when it does not fit.
+                              detail: shown == null
+                                  ? null
+                                  : SingleChildScrollView(
+                                      padding: PageEnd.padding(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(
+                                          Tokens.s16,
                                         ),
-                                  placeholder: const _DetailPlaceholder(),
-                                ),
-                              )
-                            : _list(playlist, selected, split),
-                      ),
-                    ],
+                                        decoration: ShapeDecoration(
+                                          color: Tokens.surface,
+                                          shape: Tokens.shape(Tokens.rLg),
+                                        ),
+                                        child: _info(playlist, shown),
+                                      ),
+                                    ),
+                              placeholder: const _DetailPlaceholder(),
+                            ),
+                          )
+                        : _list(playlist, selected, split),
                   ),
-                );
-              },
+                ],
+              ),
             );
           },
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -437,9 +463,15 @@ class _QueueViewState extends State<QueueView> {
   static const double _nowPlayingWidth = 320;
 
   Widget _summary(Playlist playlist) => ListenableBuilder(
-    listenable: Listenable.merge([widget.details.details, _queue.adding]),
+    listenable: Listenable.merge([
+      widget.details.details,
+      _queue.adding,
+      _queue.looking,
+    ]),
     builder: (context, _) {
-      if (playlist.items.isEmpty && _queue.adding.value == 0) {
+      if (playlist.items.isEmpty &&
+          _queue.adding.value == 0 &&
+          !_queue.looking.value) {
         return const SizedBox.shrink();
       }
       var known = Duration.zero;
@@ -457,6 +489,7 @@ class _QueueViewState extends State<QueueView> {
         known: known,
         unknown: unknown,
         adding: _queue.adding.value,
+        looking: _queue.looking.value,
       );
     },
   );
@@ -475,6 +508,7 @@ class _QueueViewState extends State<QueueView> {
           selected: selected,
           onSelect: (i) => _select(playlist.items, i),
           onAction: (action, i) => _onAction(action, i, split: split),
+          onRemove: _removeAt,
         ),
       );
 }

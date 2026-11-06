@@ -134,7 +134,7 @@ class TransportControls extends StatelessWidget {
                     icon: Icons.stop_rounded,
                     size: 20,
                     tooltip: 'Stop',
-                    onTap: () => guard(player.stop),
+                    onTap: () => stopKeepingQueue(player, guard),
                   ),
                   SizedBox(width: modeGap),
                   Live<Loop>(

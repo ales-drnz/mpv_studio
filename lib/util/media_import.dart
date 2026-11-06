@@ -80,23 +80,19 @@ String _pickedPath(XFile file) {
   return file.path;
 }
 
-/// Opens a folder picker and returns every audio file inside it,
-/// recursively, sorted by path. Empty if cancelled or none found.
+/// Opens a folder picker and returns the folder, null if cancelled.
 ///
 /// Folder selection is a desktop-only operation (file_selector does not
 /// support it on iOS/Android); on mobile users add individual files.
-Future<List<String>> pickAudioFolder() async {
-  final dir = await getDirectoryPath(
-    confirmButtonText: 'Add a folder of audio',
-  );
-  if (dir == null) return const [];
-  return scanAudioFolder(dir);
-}
+Future<String?> pickFolderPath() =>
+    getDirectoryPath(confirmButtonText: 'Add a folder of audio');
 
 /// Expands a set of dropped paths into playable audio files: directories
 /// are scanned recursively, plain files kept if they look like audio.
 /// Order is preserved; duplicates are dropped.
-List<String> resolveDroppedPaths(Iterable<String> paths) {
+Future<List<String>> resolveDroppedPaths(Iterable<String> paths) async {
+  // Browser drops are files only, already kept to audio.
+  if (kIsWeb) return paths.toSet().toList();
   final out = <String>[];
   final seen = <String>{};
   void addPath(String p) {
@@ -104,8 +100,8 @@ List<String> resolveDroppedPaths(Iterable<String> paths) {
   }
 
   for (final p in paths) {
-    if (FileSystemEntity.isDirectorySync(p)) {
-      scanAudioFolder(p).forEach(addPath);
+    if (await FileSystemEntity.isDirectory(p)) {
+      (await scanAudioFolder(p)).forEach(addPath);
     } else if (isAudioPath(p)) {
       addPath(p);
     }
@@ -113,30 +109,41 @@ List<String> resolveDroppedPaths(Iterable<String> paths) {
   return out;
 }
 
-/// [resolveDroppedPaths] for the files of a drop. In the browser a drop
-/// gives files only, each with its name and a `blob:` URL.
-List<String> resolveDroppedFiles(Iterable<XFile> files) {
-  if (!kIsWeb) return resolveDroppedPaths(files.map((f) => f.path));
+/// The paths of the files of a drop. In the browser a drop gives files
+/// only, each with its name and a `blob:` URL; those keep only audio.
+List<String> droppedFilePaths(Iterable<XFile> files) {
+  if (!kIsWeb) return [for (final f in files) f.path];
   return [
     for (final f in files)
       if (isAudioPath(f.name)) _pickedPath(f),
   ];
 }
 
-/// Recursively lists audio files under [dirPath]. Tolerates unreadable
-/// entries (permissions, broken links).
-List<String> scanAudioFolder(String dirPath) {
+/// Whether [path] names a playlist file, which opens with Load playlist.
+bool isPlaylistPath(String path) {
+  final dot = path.lastIndexOf('.');
+  if (dot < 0) return false;
+  return const {
+    'm3u',
+    'm3u8',
+    'pls',
+    'cue',
+  }.contains(path.substring(dot + 1).toLowerCase());
+}
+
+/// Recursively lists audio files under [dirPath], sorted by path, without
+/// holding the UI up. Tolerates unreadable entries (permissions, broken
+/// links).
+Future<List<String>> scanAudioFolder(String dirPath) async {
   final dir = Directory(dirPath);
-  if (!dir.existsSync()) return const [];
+  if (!await dir.exists()) return const [];
   final out = <String>[];
-  try {
-    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
-      if (entity is File && isAudioPath(entity.path)) {
-        out.add(entity.path);
-      }
-    }
-  } on FileSystemException {
-    // Partial results are fine.
+  final entries = dir
+      .list(recursive: true, followLinks: false)
+      // Partial results are fine.
+      .handleError((Object _) {}, test: (e) => e is FileSystemException);
+  await for (final entity in entries) {
+    if (entity is File && isAudioPath(entity.path)) out.add(entity.path);
   }
   out.sort();
   return out;
