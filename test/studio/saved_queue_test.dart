@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/studio/app_settings.dart';
 import 'package:mpv_studio/studio/saved_queue.dart';
+import 'package:mpv_studio/studio/settings_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../queue/queue_fake.dart';
@@ -62,5 +63,14 @@ void main() {
     expect(again.uiValue<double>('meterHeight'), 212.0);
     expect(again.uiValue<String>('nothing'), isNull);
     await again.dispose();
+  });
+
+  test('a save asked for now does not wait for the debounce', () async {
+    final settings = await AppSettings.load();
+    settings.recordUiValue('section', 'queue');
+    await settings.saveNow();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString(SettingsStore.key), contains('"queue"'));
+    await settings.dispose();
   });
 }

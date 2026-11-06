@@ -66,6 +66,9 @@ class _MpvStudioAppState extends State<MpvStudioApp> {
     _exitGate = AppLifecycleListener(
       onExitRequested: _onExitRequested,
       onDetach: () => unawaited(_teardown()),
+      // A phone may end a paused app without a word: what changed in the
+      // last moments is written now.
+      onPause: () => unawaited(_studio.settings.saveNow()),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _welcome());
   }

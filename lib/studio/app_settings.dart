@@ -428,6 +428,10 @@ class AppSettings {
   }
 
   // ---- Lifecycle --------------------------------------------------------
+
+  /// Writes what is pending at once, without the debounce: the app is
+  /// going to the background, where a phone may end it without notice.
+  Future<void> saveNow() => _store.flush();
   List<String> _strings(String k) {
     final raw = _store[k];
     return raw is List ? [for (final e in raw) ?(e is String ? e : null)] : [];
