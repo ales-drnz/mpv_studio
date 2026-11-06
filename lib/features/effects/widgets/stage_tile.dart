@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
@@ -167,7 +168,7 @@ class StageTile extends StatelessWidget {
     // The ink spans the whole header, the handle included, so the hover
     // and the splash fill the tile edge to edge and the tile's clip gives
     // them its rounded corners. A tap on the handle does nothing.
-    final header = FocusRing(
+    final ring = FocusRing(
       shape: Tokens.shape(open ? Tokens.rLg : Tokens.rMd),
       inside: true,
       child: InkWell(
@@ -200,6 +201,33 @@ class StageTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+
+    final header = Focus(
+      // Keys on the focused header: Alt+Up and Alt+Down move the stage,
+      // Delete removes it (with an undo). Not a stop of its own.
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+          return KeyEventResult.ignored;
+        }
+        final key = event.logicalKey;
+        final alt = HardwareKeyboard.instance.isAltPressed;
+        final last = rack.chain.length - 1;
+        final action = switch (key) {
+          LogicalKeyboardKey.arrowUp when alt && index > 0 =>
+            StageAction.moveUp,
+          LogicalKeyboardKey.arrowDown when alt && index < last =>
+            StageAction.moveDown,
+          LogicalKeyboardKey.delete => StageAction.remove,
+          _ => null,
+        };
+        if (action == null) return KeyEventResult.ignored;
+        onAction(action);
+        return KeyEventResult.handled;
+      },
+      child: ring,
     );
 
     // An off stage reads by its dim title and glyphs and the missing

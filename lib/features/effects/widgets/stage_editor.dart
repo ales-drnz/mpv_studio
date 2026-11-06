@@ -3,6 +3,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
+import '../../../ui/widgets/studio_snack.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
 import '../rack_environment.dart';
@@ -126,7 +127,15 @@ class StageEditor extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: () => change(d.setEnabled(d.create(), e.enabled)),
+              onPressed: () {
+                change(d.setEnabled(d.create(), e.enabled));
+                showStudioSnack(
+                  context,
+                  '${stageTitle(e)} reset',
+                  actionLabel: 'Undo',
+                  onAction: () => rack.edit(id, e),
+                );
+              },
               icon: const Icon(Icons.restart_alt_rounded, size: 16),
               label: const Text('Reset'),
               style: TextButton.styleFrom(

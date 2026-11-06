@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
+import '../../../ui/widgets/studio_snack.dart';
 import '../rack_catalog.dart';
 import '../rack_controller.dart';
 
@@ -86,4 +87,20 @@ Offset? centreOf(BuildContext context) {
   final box = context.findRenderObject();
   if (box is! RenderBox || !box.hasSize) return null;
   return box.localToGlobal(box.size.center(Offset.zero));
+}
+
+/// Removes stage [id] and offers to put it back where it was, open if it
+/// was open.
+void removeStage(BuildContext context, RackController rack, int id) {
+  final stage = rack.chain.stage(id);
+  if (stage == null) return;
+  final index = rack.chain.indexOf(id);
+  final open = rack.isExpanded(id);
+  rack.remove(id);
+  showStudioSnack(
+    context,
+    'Removed "${stageTitle(stage.effect)}"',
+    actionLabel: 'Undo',
+    onAction: () => rack.putBack(stage.effect, index, open: open),
+  );
 }

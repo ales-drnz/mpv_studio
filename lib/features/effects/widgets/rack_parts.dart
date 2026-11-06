@@ -27,7 +27,9 @@ class RackHeaderButton extends StatelessWidget {
   final String tooltip;
   final bool active;
   final bool compact;
-  final VoidCallback onTap;
+
+  /// Null shows the button disabled.
+  final VoidCallback? onTap;
 
   const RackHeaderButton({
     super.key,

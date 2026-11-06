@@ -185,6 +185,18 @@ class RackController extends ChangeNotifier {
     _set(_chain.remove(id));
   }
 
+  /// Puts back [effect] at [index] (an undo of [remove]), open when
+  /// [open], and returns its id.
+  int putBack(AudioEffect effect, int index, {bool open = false}) {
+    final (next, id) = _chain.insert(
+      effect,
+      index: index.clamp(0, _chain.length),
+    );
+    if (open) _expanded.add(id);
+    _set(next);
+    return id;
+  }
+
   /// Copies stage [id] right after it and returns the copy's id.
   int? duplicate(int id) {
     final r = _chain.duplicate(id);
@@ -248,8 +260,13 @@ class RackController extends ChangeNotifier {
   /// chain (a model file that could not be copied, a file picker error).
   void reportError(String message) {
     _error = message;
+    _errorSeq = _seq;
     notifyListeners();
   }
+
+  /// The last write sent when [error] was set: a later write the engine
+  /// accepts clears it.
+  int _errorSeq = 0;
 
   void clearError() {
     if (_error == null) return;
@@ -320,6 +337,11 @@ class RackController extends ChangeNotifier {
               _acceptedSeq = seq;
               _accepted = sent;
             }
+            // The problem is behind: a chain sent after it played.
+            if (_error != null && seq > _errorSeq && !_disposed) {
+              _error = null;
+              notifyListeners();
+            }
           },
           onError: (Object e) {
             if (_disposed) return;
@@ -332,6 +354,7 @@ class RackController extends ChangeNotifier {
             } else {
               _error = 'The chain could not be applied: $e';
             }
+            _errorSeq = _seq;
             // A later write already replaced this one: it decides.
             if (seq == _seq) {
               _throttleTimer?.cancel();

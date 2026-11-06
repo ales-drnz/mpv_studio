@@ -158,7 +158,7 @@ class _SignalChainViewState extends State<SignalChainView> {
       case StageAction.addAfter:
         _add(index: i + 1);
       case StageAction.remove:
-        rack.remove(id);
+        removeStage(context, rack, id);
     }
   }
 
@@ -432,7 +432,10 @@ class _SignalChainViewState extends State<SignalChainView> {
                             : 'Hear the audio without the chain',
                         active: rack.bypass,
                         compact: layout.isCompact,
-                        onTap: () => rack.setBypass(!rack.bypass),
+                        // Off when nothing is on to bypass.
+                        onTap: rack.canBypass
+                            ? () => rack.setBypass(!rack.bypass)
+                            : null,
                       ),
                       RackHeaderButton(
                         key: const ValueKey('rack-add'),
