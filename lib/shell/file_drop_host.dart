@@ -57,11 +57,7 @@ class FileDropHostState extends State<FileDropHost> {
             child: Semantics(
               liveRegion: true,
               label: 'Adding the dropped files',
-              child: LinearProgressIndicator(
-                minHeight: 3,
-                color: Tokens.accent,
-                backgroundColor: Colors.transparent,
-              ),
+              child: const LinearProgressIndicator(minHeight: Tokens.progressH),
             ),
           ),
       ],
