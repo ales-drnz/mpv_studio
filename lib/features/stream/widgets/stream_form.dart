@@ -116,8 +116,10 @@ class SignInCard extends StatelessWidget {
       onPressed: onSubmit,
       expand: layout.isCompact,
     );
+    // At the page's start, under its title and tabs, not centred apart
+    // from them on a wide window.
     return Align(
-      alignment: Alignment.topCenter,
+      alignment: AlignmentDirectional.topStart,
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: PageEnd.padding(
