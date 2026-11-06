@@ -1,3 +1,62 @@
+## [0.5.0] - 6-11-2026
+
+### All platforms
+**Added**
+- Removing a queue entry, clearing the queue, replacing it and removing or resetting an effect stage show Undo.
+- Named effect chains: save, load with Undo, copy and paste as text, delete.
+- The queue comes back on launch, stopped on the last track, when Resume is on.
+- The app reopens the section, the sidebar, the Stream tab, the waveform height and the Settings group as you left them.
+- Live streams show LIVE instead of a length; Live also brings playback back to the present.
+- A live stream that drops says so, with Play again.
+- Zoom the waveform with a pinch or with Ctrl and the wheel.
+- A narrow waveform keeps a button back to the live end.
+- Ctrl+1 to Ctrl+7 open the sections; B toggles the effects bypass; F1 lists every key.
+- The Menu key and Shift+F10 open the menu of stream rows and albums.
+- Alt and the arrows move the selected queue entry or effect stage; Delete removes the focused stage.
+- A Command history button in the Console, also on a phone.
+
+**Changed**
+- Stop stops playback and keeps the queue on the same track.
+- Open files on Playback adds to the queue instead of replacing it.
+- Page Up and Page Down scroll the page; Shift with them steps through chapters.
+- Errors in playback and in the Console say what to do next.
+- Settings search opens the first result with Enter, says which word found a result and suggests a close word.
+- The Console and Settings share one log level.
+- The light theme's selection is a step darker, apart from the buttons beside it.
+- Cards in sheets, dialogs and the welcome screen show in the light theme.
+- One empty state, one loading spinner and one inline notice across the app.
+- Missing values read as a dash everywhere.
+- Chart labels, scales and gutters follow the text size; the EQ, response, compressor, gauge, scope and Engine charts no longer overlap their labels.
+- The waveform draws whole pixel columns, without moire, and labels its ruler about every 120 px.
+- Chapter buttons use chevrons, apart from the track's skip buttons.
+- On a phone the waveform is taller and the volume fits above the tab bar.
+- At a large text size the playback deck scrolls with a fade, and buttons and fields grow with the text.
+- In three columns the queue list takes the room past a readable detail card.
+- A stage editor stops at 880 px wide.
+- Console commands are bold, and wrapped log lines hang under their first line.
+- The Engine state pills are lower case, like the mpv values; the prefetch legend shows each colour.
+- A dragged row stands out from the rows it passes.
+
+**Fixed**
+- Enter and Delete in the queue act on the focused button, not on the selected row.
+- An Undo is no longer pushed away by other notices, and stays while a screen reader is on.
+- Folders load without freezing the window; empty folders and non audio files say why nothing was added.
+- Files can be dropped anywhere on the window.
+- Notices no longer cover the sidebar.
+- Focus rings on stream rows, albums, pills and sheet rows; the focused control gets a fill where it has no ring.
+- Dialog titles are announced; the tab bar says each tab's position.
+- The tab bar and the sidebar name keep their labels apart at a large text size.
+- Shortcuts work on any device with a keyboard.
+- On the web the browser menu no longer opens over the app's menu.
+- Jellyfin and Plex search keep their results while loading.
+- An expired session keeps the server address.
+- The welcome screen no longer closes on a tap outside.
+- Settings are saved when the app goes to the background.
+- A chapter dot takes a whole tap target on touch, and close dots open their own chapter.
+- "channels" no longer touches its value in Engine.
+- Reduced motion also stops the Effects reveal and the Lab options panel.
+- The short rail keeps the mini player off the window's foot.
+
 ## [0.4.4] - 5-11-2026
 
 ### Changed

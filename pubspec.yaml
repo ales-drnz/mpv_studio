@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.4.4
+version: 0.5.0
 
 environment:
   sdk: ^3.10.0
