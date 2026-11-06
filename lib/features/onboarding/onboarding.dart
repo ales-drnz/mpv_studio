@@ -14,6 +14,7 @@ import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets/focus_ring.dart';
 import '../../ui/widgets/lead_tile.dart';
+import '../../ui/widgets/studio_snack.dart';
 import '../../util/media_import.dart';
 
 /// The public stream the welcome screen offers as a demo: the Lab's MP3
@@ -103,7 +104,7 @@ Future<void> welcomeOnFirstLaunch(
 
 /// Opens the welcome screen over the whole app: full screen on a phone, a
 /// centred card on larger windows. Whatever closes it (a choice, Skip,
-/// Escape, Android back, a tap outside the card) calls [onSeen], so it
+/// Escape, Android back) calls [onSeen], so it
 /// opens by itself only on the first launch.
 Future<void> presentOnboarding(
   BuildContext context, {
@@ -116,7 +117,9 @@ Future<void> presentOnboarding(
   await navigator.push<void>(
     PageRouteBuilder<void>(
       opaque: !card,
-      barrierDismissible: card,
+      // A tap beside the card is not a choice: it stays until one is
+      // made, Skip, Escape or back.
+      barrierDismissible: false,
       barrierColor: card ? Tokens.bg.withValues(alpha: 0.7) : null,
       barrierLabel: 'Close the welcome screen',
       settings: const RouteSettings(name: 'onboarding'),
@@ -155,7 +158,18 @@ class OnboardingView extends StatelessWidget {
   }
 
   Future<void> _openFiles(BuildContext context) async {
-    final paths = await actions.pickFiles();
+    final List<String> paths;
+    try {
+      paths = await actions.pickFiles();
+    } on PlatformException catch (e) {
+      if (context.mounted) {
+        showStudioSnack(
+          context,
+          'Could not open the file picker: ${e.message ?? e.code}',
+        );
+      }
+      return;
+    }
     if (paths.isEmpty || !context.mounted) return;
     if (_finish(context, Section.queue.path)) await actions.enqueue(paths);
   }
@@ -208,7 +222,7 @@ class OnboardingView extends StatelessWidget {
           icon: Icons.dns_rounded,
           title: 'Connect a server',
           description: 'Browse a Jellyfin, Plex or Samba music library.',
-          onTap: () => _finish(context, ServerChoice.jellyfin.location),
+          // The buttons below name the server: the card itself picks none.
           footer: Wrap(
             spacing: Tokens.s8,
             runSpacing: Tokens.s8,
@@ -288,7 +302,7 @@ class _Choice extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
-    required this.onTap,
+    this.onTap,
     this.footer,
     this.autofocus = false,
   });
@@ -296,7 +310,9 @@ class _Choice extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final VoidCallback onTap;
+
+  /// Null for a card whose [footer] holds the choices: it heads them.
+  final VoidCallback? onTap;
   final Widget? footer;
   final bool autofocus;
 
@@ -312,30 +328,37 @@ class _Choice extends StatelessWidget {
         children: [
           // The tappable part is a rounded row inset in the card: its
           // hover keeps its own corners whether or not a footer follows.
-          Padding(
-            padding: const EdgeInsets.all(Tokens.s4),
-            child: Semantics(
-              button: true,
-              child: FocusRing(
-                shape: Tokens.shape(Tokens.rMd),
-                inside: true,
-                child: InkWell(
-                  onTap: onTap,
-                  autofocus: autofocus,
-                  customBorder: Tokens.shape(Tokens.rMd),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: context.layout.minTap,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Tokens.s12),
-                      child: LeadTile(
-                        icon: icon,
-                        title: title,
-                        subtitle: description,
-                        trailing: Icon(
-                          Icons.chevron_right_rounded,
-                          color: Tokens.fgDim,
+          if (onTap == null)
+            Padding(
+              padding: const EdgeInsets.all(Tokens.s16),
+              child: LeadTile(icon: icon, title: title, subtitle: description),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(Tokens.s4),
+              child: Semantics(
+                button: true,
+                child: FocusRing(
+                  shape: Tokens.shape(Tokens.rMd),
+                  inside: true,
+                  child: InkWell(
+                    onTap: onTap,
+                    autofocus: autofocus,
+                    customBorder: Tokens.shape(Tokens.rMd),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: context.layout.minTap,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(Tokens.s12),
+                        child: LeadTile(
+                          icon: icon,
+                          title: title,
+                          subtitle: description,
+                          trailing: Icon(
+                            Icons.chevron_right_rounded,
+                            color: Tokens.fgDim,
+                          ),
                         ),
                       ),
                     ),
@@ -343,7 +366,6 @@ class _Choice extends StatelessWidget {
                 ),
               ),
             ),
-          ),
           if (footer != null)
             Padding(
               // Under the title, or the card's full width on a phone.

@@ -77,6 +77,39 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  testWidgets('a tap beside the card leaves it open', (tester) async {
+    final app = await pumpWelcome(tester, size: '1440x900');
+    await tester.tapAt(const Offset(5, 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to MPV Studio'), findsOneWidget);
+    expect(app.settings.onboarded, isFalse);
+  });
+
+  testWidgets('the server card asks which server', (tester) async {
+    await pumpWelcome(tester, size: '1440x900');
+    await tester.tap(find.text('Connect a server'));
+    await tester.pumpAndSettle();
+    // Still open: the buttons below name the server.
+    expect(find.text('Welcome to MPV Studio'), findsOneWidget);
+  });
+
+  testWidgets('a picker that fails says so', (tester) async {
+    await pumpWelcome(
+      tester,
+      size: '1440x900',
+      pick: () async =>
+          throw PlatformException(code: 'busy', message: 'Picker busy'),
+    );
+    await tester.tap(find.text('Open audio files'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Could not open the file picker: Picker busy'),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('does not show once seen', (tester) async {
     await pumpWelcome(tester, stored: {'onboarded': true});
     expect(find.text('Welcome to MPV Studio'), findsNothing);
