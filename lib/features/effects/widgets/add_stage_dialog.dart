@@ -156,7 +156,11 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
             label: 'Search filters',
             autocorrect: false,
             textInputAction: TextInputAction.search,
-            leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
+            leading: Icon(
+              Icons.search_rounded,
+              size: Tokens.iconMd,
+              color: Tokens.fgDim,
+            ),
           ),
           const SizedBox(height: Tokens.s4),
           Expanded(

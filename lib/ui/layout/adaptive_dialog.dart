@@ -16,7 +16,7 @@ class SheetHandle extends StatelessWidget {
       width: 32,
       height: 4,
       margin: const EdgeInsets.only(bottom: Tokens.s16),
-      decoration: ShapeDecoration(color: Tokens.fgFaint, shape: Tokens.pill),
+      decoration: ShapeDecoration(color: Tokens.trackOff, shape: Tokens.pill),
     ),
   );
 }

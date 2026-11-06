@@ -101,8 +101,8 @@ class RoundIconButton extends StatelessWidget {
       ),
       _ when on => (Tokens.accentContainer, Tokens.onAccentContainer),
       RoundTone.primary => (
-        enabled ? Tokens.accent : Tokens.surface4,
-        enabled ? Tokens.onAccent : Tokens.fgFaint,
+        enabled ? Tokens.accent : Tokens.surface3,
+        enabled ? Tokens.onAccent : Tokens.fgDim,
       ),
       RoundTone.tonal => (
         Tokens.tonal,

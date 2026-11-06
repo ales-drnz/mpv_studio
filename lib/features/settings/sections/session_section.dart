@@ -236,6 +236,7 @@ class _SessionSectionState extends State<SessionSection> {
     if (shown.isEmpty) {
       return const EmptyState(
         compact: true,
+        scrolls: false,
         icon: Icons.tune_rounded,
         title: 'No controls yet',
         message: 'Add some below.',

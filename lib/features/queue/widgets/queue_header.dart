@@ -162,7 +162,7 @@ class QueueSummary extends StatelessWidget {
             adding > 0
                 ? 'Adding ${adding == 1 ? '1 file' : '$adding files'}'
                 : describe(count, known, unknown),
-            style: Tokens.caption,
+            style: Tokens.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

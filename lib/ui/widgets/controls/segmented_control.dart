@@ -133,9 +133,7 @@ class _Segment extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Tokens.label.copyWith(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                style: Tokens.labelLg.copyWith(
                   color: active ? Tokens.onAccent : Tokens.fgDim,
                 ),
               ),

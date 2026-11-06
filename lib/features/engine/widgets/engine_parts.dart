@@ -92,8 +92,10 @@ class Spy extends StatelessWidget {
   }
 }
 
-/// A pill naming a state: [color] at 16% with the colour as text, or a
-/// quiet tonal pill when not [strong].
+/// A pill naming a state: [color] at 12% with the colour as text, or a
+/// quiet tonal pill when not [strong]. Always lower case in mono, like
+/// the mpv values it sits among ("idle", "progressive"), whatever case
+/// [text] comes in.
 class PhasePill extends StatelessWidget {
   final String text;
   final Color color;
@@ -118,7 +120,7 @@ class PhasePill extends StatelessWidget {
         shape: Tokens.pill,
       ),
       child: Text(
-        text,
+        text.toLowerCase(),
         style: Tokens.numeric.copyWith(
           color: strong ? color : Tokens.fgFaint,
           fontWeight: FontWeight.w600,
@@ -148,10 +150,7 @@ class Readout extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Tokens.numeric.copyWith(
-            color: color ?? Tokens.fg,
-            fontSize: 13,
-          ),
+          style: Tokens.numericLg.copyWith(color: color),
         ),
       ],
     );

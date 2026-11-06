@@ -228,6 +228,17 @@ class Tokens {
     color: fgDim,
     letterSpacing: 0.1,
   );
+
+  /// A short label that heads or picks (a section header, a segment):
+  /// [label] a step larger and bolder.
+  static TextStyle get labelLg => TextStyle(
+    fontFamily: sans,
+    fontSize: 13,
+    height: 16 / 13,
+    fontWeight: FontWeight.w600,
+    color: fgDim,
+    letterSpacing: 0.1,
+  );
   static TextStyle get caption => TextStyle(
     fontFamily: sans,
     fontSize: 11,

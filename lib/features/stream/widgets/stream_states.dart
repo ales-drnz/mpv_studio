@@ -122,8 +122,8 @@ class StreamButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         // Busy keeps the accent so the spinner reads as progress, not as
         // a disabled button.
-        disabledBackgroundColor: busy ? Tokens.accent : Tokens.surface4,
-        disabledForegroundColor: busy ? Tokens.onAccent : Tokens.fgFaint,
+        disabledBackgroundColor: busy ? Tokens.accent : Tokens.surface3,
+        disabledForegroundColor: busy ? Tokens.onAccent : Tokens.fgDim,
         minimumSize: Size(expand ? double.infinity : 96, h),
       ),
       child: busy

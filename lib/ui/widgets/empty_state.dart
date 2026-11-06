@@ -27,6 +27,7 @@ class EmptyState extends StatefulWidget {
     this.details,
     this.compact = false,
     this.padding,
+    this.scrolls = true,
   });
 
   final IconData icon;
@@ -48,6 +49,10 @@ class EmptyState extends StatefulWidget {
   /// The space around it; [Tokens.s24] (16 when [compact]) by default.
   final EdgeInsetsGeometry? padding;
 
+  /// Whether it centres and scrolls in the height it gets (a page, a
+  /// panel); false inside a list that already scrolls.
+  final bool scrolls;
+
   /// The badge's diameter and its icon's size.
   static const double badge = 72;
   static const double glyph = 32;
@@ -58,6 +63,9 @@ class EmptyState extends StatefulWidget {
 
   /// The widest the text runs.
   static const double maxWidth = 440;
+
+  /// The widest the row of actions runs: three buttons side by side.
+  static const double actionsMaxWidth = 560;
 
   @override
   State<EmptyState> createState() => _EmptyStateState();
@@ -74,8 +82,12 @@ class _EmptyStateState extends State<EmptyState> {
     final badge = compact ? EmptyState.badgeCompact : EmptyState.badge;
     final padding =
         widget.padding ?? EdgeInsets.all(compact ? Tokens.s16 : Tokens.s24);
-    final body = ConstrainedBox(
+    Widget text(Widget child) => ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: EmptyState.maxWidth),
+      child: child,
+    );
+    final body = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: EmptyState.actionsMaxWidth),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -97,20 +109,24 @@ class _EmptyStateState extends State<EmptyState> {
             ),
           ),
           SizedBox(height: compact ? Tokens.s12 : Tokens.s16),
-          Semantics(
-            header: true,
-            child: Text(
-              widget.title,
-              textAlign: TextAlign.center,
-              style: compact ? Tokens.heading : Tokens.titleSm,
+          text(
+            Semantics(
+              header: true,
+              child: Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: compact ? Tokens.heading : Tokens.titleSm,
+              ),
             ),
           ),
           if (widget.message case final message?) ...[
             const SizedBox(height: Tokens.s8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Tokens.body.copyWith(color: Tokens.fgDim),
+            text(
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Tokens.body.copyWith(color: Tokens.fgDim),
+              ),
             ),
           ],
           if (widget.actions.isNotEmpty) ...[
@@ -143,17 +159,15 @@ class _EmptyStateState extends State<EmptyState> {
         ],
       ),
     );
-    // Scrolls where its height is bounded (a page, a panel); inside a
-    // list that already scrolls it simply takes its own height.
-    return LayoutBuilder(
-      builder: (context, constraints) => constraints.hasBoundedHeight
-          ? Center(
-              child: SingleChildScrollView(padding: padding, child: body),
-            )
-          : Padding(
-              padding: padding,
-              child: Center(child: body),
-            ),
+    // Inside a list that already scrolls it simply takes its height.
+    if (!widget.scrolls) {
+      return Padding(
+        padding: padding,
+        child: Center(child: body),
+      );
+    }
+    return Center(
+      child: SingleChildScrollView(padding: padding, child: body),
     );
   }
 }

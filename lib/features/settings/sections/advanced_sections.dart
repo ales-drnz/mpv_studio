@@ -197,7 +197,10 @@ class PlayerSection extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(backgroundColor: Tokens.red),
+          style: FilledButton.styleFrom(
+            backgroundColor: Tokens.red,
+            foregroundColor: Tokens.onAccent,
+          ),
           child: const Text('Reset'),
         ),
       ],

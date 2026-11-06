@@ -68,7 +68,11 @@ class StageTile extends StatelessWidget {
 
     final handleIcon = SizedBox.square(
       dimension: layout.minTap,
-      child: Icon(Icons.drag_indicator_rounded, size: 18, color: faintGlyph),
+      child: Icon(
+        Icons.drag_indicator_rounded,
+        size: Tokens.iconMd,
+        color: faintGlyph,
+      ),
     );
     final handle = Semantics(
       label: 'Reorder $title',
@@ -93,7 +97,7 @@ class StageTile extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Tokens.s8),
-        Icon(stageIcon(e), size: 18, color: live ? lit : faintGlyph),
+        Icon(stageIcon(e), size: Tokens.iconMd, color: live ? lit : faintGlyph),
         const SizedBox(width: Tokens.s12),
         Expanded(
           child: Padding(

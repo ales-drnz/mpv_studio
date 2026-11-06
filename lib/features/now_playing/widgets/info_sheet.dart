@@ -501,7 +501,7 @@ class _InfoBody extends StatelessWidget {
 /// tone on the dark chrome, the stage tone on the white light chrome,
 /// where the white card tone would vanish. The text keeps its contrast
 /// (light: fg 12.8:1, the caption 6.7:1 on the stage).
-Color get _boxFill => Palette.active.isDark ? Tokens.surface : Tokens.bg;
+Color get _boxFill => Tokens.cardOnChrome;
 
 /// A small stat cell: a caption label over a numeric value, in a tonal
 /// box that reads on the sheet and dialog chrome in both themes.
@@ -536,11 +536,7 @@ class _StatCell extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Tokens.numeric.copyWith(
-              fontSize: 13,
-              color: Tokens.fg,
-              fontWeight: FontWeight.w600,
-            ),
+            style: Tokens.numericLg.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
