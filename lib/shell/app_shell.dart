@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/queue/queue_controller.dart';
 import '../studio/player_scope.dart';
 import '../ui/layout/layout.dart';
+import 'file_drop_host.dart';
 import 'mini_player.dart';
 import 'playback_notice_host.dart';
 import 'playback_shortcuts.dart';
@@ -12,7 +14,8 @@ import 'studio_shell.dart';
 /// Root chrome of the running app: the [StudioShell] around the routed
 /// section bodies (carried by [navigationShell]), wired to the player. It
 /// adds the mini-player, the keyboard shortcuts on pointer devices, and
-/// readable playback errors as SnackBars ([PlaybackNoticeHost]). The
+/// readable playback errors as SnackBars ([PlaybackNoticeHost]), and takes
+/// files dropped anywhere on the window into the queue ([FileDropHost]). The
 /// bodies live in a single keep-alive IndexedStack built by the router, so
 /// player subscriptions (and the Now Playing visualizers) survive section
 /// switches.
@@ -26,7 +29,8 @@ class AppShell extends StatelessWidget {
     final section = Section.values[navigationShell.currentIndex];
     final player = PlayerScope.of(context);
     final rack = PlayerScope.rackOf(context);
-    final guard = PlayerScope.issuesOf(context).guard;
+    final issues = PlayerScope.issuesOf(context);
+    final guard = issues.guard;
     return PlaybackNoticeHost(
       consoleVisible: section == Section.console,
       onShowLog: () => navigationShell.goBranch(Section.console.index),
@@ -34,14 +38,28 @@ class AppShell extends StatelessWidget {
         player: player,
         enabled: context.layout.isPointer,
         guard: guard,
-        child: StudioShell(
-          navigationShell: navigationShell,
-          miniPlayer: (context, variant) => MiniPlayer(
-            player: player,
-            rack: rack,
-            variant: variant,
-            guard: guard,
-            onOpen: () => navigationShell.goBranch(Section.nowPlaying.index),
+        child: FileDropHost(
+          onDrop: (paths) async {
+            final queue = QueueController(
+              player: player,
+              guard: guard,
+              notify: issues.notify,
+            );
+            try {
+              await queue.addDropped(paths);
+            } finally {
+              queue.dispose();
+            }
+          },
+          child: StudioShell(
+            navigationShell: navigationShell,
+            miniPlayer: (context, variant) => MiniPlayer(
+              player: player,
+              rack: rack,
+              variant: variant,
+              guard: guard,
+              onOpen: () => navigationShell.goBranch(Section.nowPlaying.index),
+            ),
           ),
         ),
       ),

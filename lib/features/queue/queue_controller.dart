@@ -1,5 +1,6 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../studio/playback_issues.dart';
@@ -8,6 +9,12 @@ import 'queue_snapshot.dart';
 
 /// Picks files or a folder and hands back the paths, empty when cancelled.
 typedef PathPicker = Future<List<String>> Function();
+
+/// Picks a folder and hands back its path, null when cancelled.
+typedef FolderPicker = Future<String?> Function();
+
+/// Lists the audio files under a folder.
+typedef FolderScanner = Future<List<String>> Function(String folder);
 
 /// Picks one playlist file, null when cancelled.
 typedef PlaylistPicker = Future<String?> Function();
@@ -36,15 +43,25 @@ class QueueController {
     required this.player,
     required this.guard,
     this.pickFiles = pickAudioFiles,
-    this.pickFolder = pickAudioFolder,
+    this.pickFolder = pickFolderPath,
+    this.scanFolder = scanAudioFolder,
     this.pickPlaylist = pickPlaylistFile,
+    this.notify,
   });
 
   final PlayerApi player;
   final CallGuard guard;
   final PathPicker pickFiles;
-  final PathPicker pickFolder;
+  final FolderPicker pickFolder;
+  final FolderScanner scanFolder;
   final PlaylistPicker pickPlaylist;
+
+  /// Says why an add did nothing (no audio, a picker that failed).
+  final void Function(String message)? notify;
+
+  /// Whether a folder is being searched for audio files.
+  ValueListenable<bool> get looking => _lookingFor;
+  final _lookingFor = ValueNotifier<bool>(false);
 
   /// How many picked files are still being added to the queue.
   ValueListenable<int> get adding => _adding;
@@ -86,16 +103,81 @@ class QueueController {
     }
   }
 
-  Future<void> addFiles() async => enqueue(await pickFiles());
+  Future<void> addFiles() async {
+    final paths = await _pick(pickFiles);
+    if (paths != null) await enqueue(paths);
+  }
 
-  Future<void> addFolder() async => enqueue(await pickFolder());
+  /// Queues the audio files of a picked folder, searched without holding
+  /// the UI up and shown as [looking] meanwhile.
+  Future<void> addFolder() async {
+    final dir = await _pick(pickFolder);
+    if (dir == null) return;
+    final paths = await _looking(() => scanFolder(dir));
+    if (paths.isEmpty) {
+      _notify('No audio files in this folder');
+      return;
+    }
+    await enqueue(paths);
+  }
+
+  /// Queues what was dropped: audio files, and the audio files of folders.
+  /// A drop with none says why.
+  Future<void> addDropped(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final audio = await _looking(() => resolveDroppedPaths(paths));
+    if (audio.isNotEmpty) {
+      // A drop can land on any section: say what it did, unless it
+      // started playing.
+      final appended = _items.isNotEmpty;
+      final before = _items.length;
+      await enqueue(audio);
+      final added = _items.length - before;
+      if (appended && added > 0) {
+        _notify(
+          added == 1
+              ? 'Added to the queue'
+              : '$added tracks added to the queue',
+        );
+      }
+      return;
+    }
+    _notify(
+      paths.any(isPlaylistPath)
+          ? 'Playlists open with Load playlist'
+          : 'No audio files in what was dropped',
+    );
+  }
+
+  /// Runs a system picker, saying so when it cannot open; null then.
+  Future<T?> _pick<T>(Future<T> Function() picker) async {
+    try {
+      return await picker();
+    } on PlatformException catch (e) {
+      _notify('Could not open the file picker: ${e.message ?? e.code}');
+      return null;
+    }
+  }
+
+  Future<T> _looking<T>(Future<T> Function() search) async {
+    if (!_disposed) _lookingFor.value = true;
+    try {
+      return await search();
+    } finally {
+      if (!_disposed) _lookingFor.value = false;
+    }
+  }
+
+  void _notify(String message) {
+    if (!_disposed) notify?.call(message);
+  }
 
   /// Loads a playlist file (.m3u, .m3u8, .pls, .cue) as the new queue: its
   /// entries are expanded by the engine (`openPlaylistFile`), unlike
   /// `open`, which would queue the playlist as one entry. Returns the
   /// queue it replaced, for an undo, or null when there was none.
   Future<QueueSnapshot?> loadPlaylist() async {
-    final path = await pickPlaylist();
+    final path = await _pick(pickPlaylist);
     if (path == null) return null;
     return _replacing(() => player.openPlaylistFile(Media(path), play: true));
   }
@@ -212,6 +294,7 @@ class QueueController {
   void dispose() {
     _disposed = true;
     _adding.dispose();
+    _lookingFor.dispose();
   }
 }
 
