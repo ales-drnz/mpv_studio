@@ -105,8 +105,19 @@ Future<void> _save(
     check: (text) => text.trim().isEmpty ? 'Give the chain a name.' : null,
   );
   if (name == null || !context.mounted) return;
-  library.save(name.trim(), rack.chain.effects);
-  showStudioSnack(context, 'Saved "${name.trim()}"');
+  final key = name.trim();
+  final replaced = library.chains[key];
+  library.save(key, rack.chain.effects);
+  if (replaced == null) {
+    showStudioSnack(context, 'Saved "$key"');
+  } else {
+    showStudioSnack(
+      context,
+      'Replaced "$key"',
+      actionLabel: 'Undo',
+      onAction: () => library.save(key, replaced),
+    );
+  }
 }
 
 Future<void> _paste(BuildContext context, RackController rack) async {

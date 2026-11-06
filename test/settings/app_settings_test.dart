@@ -194,6 +194,25 @@ void main() {
       await s.dispose();
     });
 
+    test('a saved chain this build cannot read stays as stored', () async {
+      final unknown = {
+        'v': 2,
+        'chain': [
+          {'filter': 'from-a-newer-build', 'enabled': true},
+        ],
+      };
+      final s = await loadSettings({
+        'savedChains': {'Future': unknown},
+      });
+      s.recordSavedChains({
+        ...s.savedChains,
+        'Warm': [const BassEffect(gain: 4)],
+      });
+      await s.dispose();
+      final blob = (await _savedBlob())['savedChains'] as Map;
+      expect(blob['Future'], unknown);
+    });
+
     test('saved chains are kept, also through a reset', () async {
       final s = await loadSettings();
       s.recordSavedChains({

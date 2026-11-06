@@ -109,6 +109,33 @@ void main() {
     },
   );
 
+  test('a notice carried over a restart goes to the next studio', () async {
+    PlaybackIssues.carryOver('Player restarted');
+    final next = PlaybackIssues(
+      errors: const Stream.empty(),
+      endFile: const Stream.empty(),
+      playlist: const Stream.empty(),
+      loaded: const Stream.empty(),
+    );
+    addTearDown(next.dispose);
+    final got = <String>[];
+    next.notices.listen((n) => got.add(n.message));
+    await pumpEventQueue();
+    expect(got, ['Player restarted']);
+    // Once only.
+    final after = PlaybackIssues(
+      errors: const Stream.empty(),
+      endFile: const Stream.empty(),
+      playlist: const Stream.empty(),
+      loaded: const Stream.empty(),
+    );
+    addTearDown(after.dispose);
+    final none = <String>[];
+    after.notices.listen((n) => none.add(n.message));
+    await pumpEventQueue();
+    expect(none, isEmpty);
+  });
+
   test('notices raised before anyone listens wait for the first', () async {
     final quiet = PlaybackIssues(
       errors: const Stream.empty(),

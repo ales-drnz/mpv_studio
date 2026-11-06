@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:mpv_studio/studio/playback_issues.dart';
 import 'package:mpv_studio/ui/widgets/controls.dart';
 
 import '../support/finders.dart';
@@ -16,7 +17,8 @@ void main() {
     await tester.pumpAndSettle();
     await tapVisible(tester, find.text('Restart'));
     expect(h.restarts, 1);
-    expect(find.text('Player restarted'), findsOneWidget);
+    // The page goes with the restart: the next studio says it.
+    expect(PlaybackIssues.takeCarriedOver(), 'Player restarted');
   });
 
   testWidgets('Reset all says it is done', (tester) async {
@@ -27,6 +29,6 @@ void main() {
     await tester.tap(buttonWithText<FilledButton>('Reset'));
     await tester.pumpAndSettle();
     expect(h.restarts, 1);
-    expect(find.text('Settings reset'), findsOneWidget);
+    expect(PlaybackIssues.takeCarriedOver(), 'Settings reset');
   });
 }

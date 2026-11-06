@@ -186,8 +186,11 @@ class RackController extends ChangeNotifier {
   }
 
   /// Puts back [effect] at [index] (an undo of [remove]), open when
-  /// [open], and returns its id.
-  int putBack(AudioEffect effect, int index, {bool open = false}) {
+  /// [open], and returns its id; null when it was the meter and the
+  /// chain has one again.
+  int? putBack(AudioEffect effect, int index, {bool open = false}) {
+    // The meter came back meanwhile: there is one meter, not two.
+    if (isMeterStage(effect) && _chain.effects.any(isMeterStage)) return null;
     final (next, id) = _chain.insert(
       effect,
       index: index.clamp(0, _chain.length),

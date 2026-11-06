@@ -17,6 +17,9 @@ void main() {
     );
     final chip = find.byKey(const ValueKey('quick-superequalizer'));
     expect(chip, findsOneWidget);
-    expect(find.ancestor(of: chip, matching: find.byType(Tooltip)), findsNothing);
+    expect(
+      find.ancestor(of: chip, matching: find.byType(Tooltip)),
+      findsNothing,
+    );
   });
 }

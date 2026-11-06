@@ -6,9 +6,8 @@ import 'package:mpv_studio/features/settings/settings_catalog.dart';
 import '../support/layout_harness.dart';
 import 'settings_page_test.dart' show pumpSettings;
 
-Finder _row(SettingEntry entry) => find.byWidgetPredicate(
-  (w) => w is SettingAnchor && w.entry == entry,
-);
+Finder _row(SettingEntry entry) =>
+    find.byWidgetPredicate((w) => w is SettingAnchor && w.entry == entry);
 
 void main() {
   setUpAll(loadStudioFonts);

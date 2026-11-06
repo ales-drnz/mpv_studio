@@ -26,12 +26,16 @@ class ConsolePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = PlayerScope.settingsOf(context);
-    return ConsoleView(
-      player: PlayerScope.of(context),
-      log: PlayerScope.consoleLogOf(context),
-      // One log level for the app: the setting's, recorded from here too.
-      level: settings.logLevel,
-      onLevel: settings.recordLogLevel,
+    // One log level for the app: the setting's, recorded from here too,
+    // and followed when Settings changes it.
+    return ListenableBuilder(
+      listenable: settings.changes,
+      builder: (context, _) => ConsoleView(
+        player: PlayerScope.of(context),
+        log: PlayerScope.consoleLogOf(context),
+        level: settings.logLevel,
+        onLevel: settings.recordLogLevel,
+      ),
     );
   }
 }
@@ -134,6 +138,15 @@ class _ConsoleViewState extends State<ConsoleView>
               ),
       ),
     );
+  }
+
+  @override
+  void didUpdateWidget(ConsoleView old) {
+    super.didUpdateWidget(old);
+    // The level changed in Settings while the Console stayed alive.
+    if (old.level != widget.level && widget.level != _level) {
+      setState(() => _level = widget.level);
+    }
   }
 
   @override
@@ -417,6 +430,9 @@ class _ConsoleViewState extends State<ConsoleView>
       }
       if (popupOpen) {
         _accept(_selected);
+      } else if (_input.text.trim().isEmpty) {
+        // An empty line has nothing to complete: Tab moves on.
+        node.nextFocus();
       } else {
         // Nothing to complete: Tab moves on, like everywhere else.
         _recompute(acceptSingle: true, onNone: node.nextFocus);

@@ -5,12 +5,12 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
-import '../../../ui/widgets/studio_snack.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
 import '../../../studio/app_info.dart';
+import '../../../studio/playback_issues.dart';
 import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
@@ -214,17 +214,16 @@ class PlayerSection extends StatelessWidget {
     }
   }
 
-  /// Runs [restart] and says [done] once the player is back. The page is
-  /// rebuilt by the restart, so the toast goes through the messenger
-  /// above it, which outlives it.
+  /// Runs [restart] and says [done] once the player is back: the restart
+  /// takes this page and the app's messenger down, so the next studio's
+  /// notices say it.
   static Future<void> _restartSaying(
     BuildContext context,
     Future<void> Function() restart,
     String done,
-  ) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    await restart();
-    messenger?.showStudioSnack(done);
+  ) {
+    PlaybackIssues.carryOver(done);
+    return restart();
   }
 
   @override

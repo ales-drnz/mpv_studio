@@ -377,11 +377,21 @@ class AppSettings {
     };
   }
 
-  void recordSavedChains(Map<String, List<AudioEffect>> chains) =>
-      _snap('savedChains', {
-        for (final MapEntry(:key, :value) in chains.entries)
-          key: EffectsCodec.encode(value),
-      });
+  /// Records [chains]. A chain that reads back as it is stored keeps the
+  /// stored form, so stages this build cannot read (from a newer one)
+  /// are not lost when another chain is saved.
+  void recordSavedChains(Map<String, List<AudioEffect>> chains) {
+    final stored = _store['savedChains'];
+    final before = stored is Map ? stored : const {};
+    _snap('savedChains', {
+      for (final MapEntry(:key, :value) in chains.entries)
+        key:
+            before[key] != null &&
+                listEquals(EffectsCodec.decode(before[key]), value)
+            ? before[key]
+            : EffectsCodec.encode(value),
+    });
+  }
 
   // ---- Lifecycle --------------------------------------------------------
   List<String> _strings(String k) {

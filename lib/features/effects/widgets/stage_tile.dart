@@ -220,7 +220,7 @@ class StageTile extends StatelessWidget {
             StageAction.moveUp,
           LogicalKeyboardKey.arrowDown when alt && index < last =>
             StageAction.moveDown,
-          LogicalKeyboardKey.delete => StageAction.remove,
+          LogicalKeyboardKey.delete when !_modified() => StageAction.remove,
           _ => null,
         };
         if (action == null) return KeyEventResult.ignored;
@@ -280,6 +280,15 @@ class StageTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Whether a modifier is held: Delete with one is someone else's key.
+bool _modified() {
+  final keys = HardwareKeyboard.instance;
+  return keys.isControlPressed ||
+      keys.isMetaPressed ||
+      keys.isAltPressed ||
+      keys.isShiftPressed;
 }
 
 /// A small pill naming the kind of stage (meter, raw).

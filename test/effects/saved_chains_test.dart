@@ -80,10 +80,7 @@ void main() {
     await _openChains(tester);
     await tester.tap(find.text('Paste a chain…'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byType(TextField).last,
-      chainToText([_comp]),
-    );
+    await tester.enterText(find.byType(TextField).last, chainToText([_comp]));
     await tester.tap(buttonWithText<FilledButton>('Load'));
     await tester.pumpAndSettle();
     expect(engine.current, [_comp]);

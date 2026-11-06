@@ -106,22 +106,24 @@ class ConsoleRunner {
     }
   }
 
-  /// mpv's refusal of [args] in words that say what to do next.
+  /// mpv's refusal of [args] in words that say what to do next. The
+  /// command is the first word after the prefixes (no-osd, async), with
+  /// mpv's `_` spelling read as `-`.
   static String _explain(List<String> args, MpvCommandException e) {
-    final name = args.first;
-    if (e.name != name) return '${e.name}: ${e.message}';
+    final words = args.skipWhile(kCommandPrefixes.contains).toList();
+    if (words.isEmpty) return '${e.name}: ${e.message}';
+    final name = words.first.replaceAll('_', '-');
     MpvCommand? known;
     for (final c in kMpvCommands) {
       if (c.name == name) known = c;
     }
+    if (e.code != _invalidParameter) return '$name: ${e.message}';
     if (known == null) {
-      return "Unknown command '$name'. Type help, or press Tab for the list.";
+      return "Unknown command '${words.first}'. Type help, or press Tab "
+          'for the list.';
     }
-    if (e.code == _invalidParameter) {
-      return '$name did not take those arguments. Its form: '
-          '$name ${known.signature}';
-    }
-    return '$name: ${e.message}';
+    return '$name did not take those arguments. Its form: '
+        '$name ${known.signature}';
   }
 
   /// mpv's MPV_ERROR_INVALID_PARAMETER, also its answer to a bad command.

@@ -63,5 +63,7 @@ List<AudioEffect>? chainFromText(String text) {
   }
   if (json is! Map || json['chain'] is! List) return null;
   final chain = EffectsCodec.decode(json);
-  return chain.isEmpty && (json['chain'] as List).isNotEmpty ? null : chain;
+  // Every stage or none: a chain with a stage left out is not the one
+  // that was copied.
+  return chain.length == (json['chain'] as List).length ? chain : null;
 }

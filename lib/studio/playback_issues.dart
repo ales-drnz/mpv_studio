@@ -57,6 +57,22 @@ class PlaybackIssues {
       errors.listen(_onError),
       loaded.listen((_) => _onLoaded()),
     ];
+    final carried = takeCarriedOver();
+    if (carried != null) notify(carried);
+  }
+
+  /// A notice for the studio a restart brings up, which the page that
+  /// asked for the restart does not live to show.
+  static String? _carried;
+
+  /// Hands [message] to the next [PlaybackIssues] made, once.
+  static void carryOver(String message) => _carried = message;
+
+  /// The message [carryOver] holds, cleared.
+  static String? takeCarriedOver() {
+    final message = _carried;
+    _carried = null;
+    return message;
   }
 
   /// Wires the service to [player]'s streams.
