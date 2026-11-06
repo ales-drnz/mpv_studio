@@ -97,6 +97,16 @@ void main() {
     await _dismiss(tester);
   });
 
+  testWidgets('on the sidebar layout a toast stays clear of the sidebar', (
+    tester,
+  ) async {
+    await pumpShell(tester, size: const Size(1280, 800));
+    expect(find.byType(DesktopShell), findsOneWidget);
+    final toast = await _showToast(tester);
+    expect(toast.left, greaterThanOrEqualTo(DesktopShell.openWidth));
+    await _dismiss(tester);
+  });
+
   testWidgets('without a mini-player the toast keeps its base margin', (
     tester,
   ) async {
