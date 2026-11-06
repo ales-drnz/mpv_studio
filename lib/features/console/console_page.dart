@@ -24,10 +24,16 @@ class ConsolePage extends StatelessWidget {
   const ConsolePage({super.key});
 
   @override
-  Widget build(BuildContext context) => ConsoleView(
-    player: PlayerScope.of(context),
-    log: PlayerScope.consoleLogOf(context),
-  );
+  Widget build(BuildContext context) {
+    final settings = PlayerScope.settingsOf(context);
+    return ConsoleView(
+      player: PlayerScope.of(context),
+      log: PlayerScope.consoleLogOf(context),
+      // One log level for the app: the setting's, recorded from here too.
+      level: settings.logLevel,
+      onLevel: settings.recordLogLevel,
+    );
+  }
 }
 
 /// The engine console: the live mpv and library log with a command line.
@@ -40,12 +46,24 @@ class ConsolePage extends StatelessWidget {
 /// also raises mpv's runtime log level, so the log can show everything
 /// from errors down to trace.
 class ConsoleView extends StatefulWidget {
-  const ConsoleView({super.key, required this.player, required this.log});
+  const ConsoleView({
+    super.key,
+    required this.player,
+    required this.log,
+    this.level = LogLevel.info,
+    this.onLevel,
+  });
 
   final PlayerApi player;
 
   /// The log captured since launch, so the Console starts with it.
   final ConsoleLog log;
+
+  /// The log level to start at: the one the engine runs at.
+  final LogLevel level;
+
+  /// Records a level picked here, the app's single log level setting.
+  final ValueChanged<LogLevel>? onLevel;
 
   @override
   State<ConsoleView> createState() => _ConsoleViewState();
@@ -69,8 +87,8 @@ class _ConsoleViewState extends State<ConsoleView>
   final _inputGroup = Object();
 
   /// The selected verbosity: the level asked of mpv and the display floor.
-  /// Starts at info, the engine's configured level.
-  LogLevel _level = LogLevel.info;
+  /// Starts at the engine's configured level.
+  late LogLevel _level = widget.level;
   bool _autoscroll = true;
   bool _scrollScheduled = false;
   String _query = '';
@@ -84,6 +102,13 @@ class _ConsoleViewState extends State<ConsoleView>
 
   /// `_history.length` stands for the line being typed.
   int _historyIndex = 0;
+
+  /// The line being typed when Up went into the history, back on Down.
+  String _draft = '';
+
+  /// Whether the popup came from typing: then Up and Down move in it.
+  /// A popup from a click or a recalled line leaves them to the history.
+  bool _typed = false;
 
   @override
   void onSubscribe() {
@@ -173,12 +198,45 @@ class _ConsoleViewState extends State<ConsoleView>
     setState(() => _level = level);
     // The display filter alone cannot show lines mpv never sent.
     widget.player.setLogLevel(level);
+    widget.onLevel?.call(level);
   }
 
-  void _clear() => setState(_lines.clear);
+  /// Empties the log, with an undo that puts the lines back before the
+  /// ones that came since.
+  void _clear() {
+    if (_lines.isEmpty) return;
+    final cleared = List.of(_lines);
+    setState(_lines.clear);
+    showStudioSnack(
+      context,
+      'Log cleared',
+      actionLabel: 'Undo',
+      onAction: () {
+        if (!mounted) return;
+        setState(() {
+          final since = List.of(_lines);
+          _lines
+            ..clear()
+            ..addAll(cleared)
+            ..addAll(since);
+          while (_lines.length > _max) {
+            _lines.removeFirst();
+          }
+        });
+      },
+    );
+  }
 
   Future<void> _copyAll() async {
     final text = _lines.where(_visible).map((l) => l.plain).join('\n');
+    if (text.isEmpty) {
+      showStudioSnack(
+        context,
+        'Nothing to copy',
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     showStudioSnack(
@@ -186,6 +244,28 @@ class _ConsoleViewState extends State<ConsoleView>
       'Log copied',
       duration: const Duration(seconds: 2),
     );
+  }
+
+  /// The history newest first, in a menu; the line picked goes to the
+  /// field. For the layouts without the side panel's history.
+  Future<void> _pickHistory() async {
+    final picked = await showStudioMenu<String>(
+      context,
+      title: 'Command history',
+      items: [
+        for (final line in _history.reversed.toSet())
+          StudioMenuItem(value: line, label: line, icon: Icons.history),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    _historyIndex = _history.length;
+    _input.value = TextEditingValue(
+      text: picked,
+      selection: TextSelection.collapsed(offset: picked.length),
+    );
+    _inputFocus.requestFocus();
+    _typed = false;
+    _recompute();
   }
 
   Future<void> _showHelp() => showStudioDialog<void>(
@@ -241,7 +321,10 @@ class _ConsoleViewState extends State<ConsoleView>
 
   // ---- completion --------------------------------------------------
 
-  Future<void> _recompute({bool acceptSingle = false}) async {
+  Future<void> _recompute({
+    bool acceptSingle = false,
+    VoidCallback? onNone,
+  }) async {
     final text = _input.text;
     final cursor = _input.selection.baseOffset < 0
         ? text.length
@@ -250,6 +333,10 @@ class _ConsoleViewState extends State<ConsoleView>
     // Empty input is valid: it lists every command.
     final result = await _completion.compute(text, cursor);
     if (!mounted || seq != _computeSeq) return; // a newer keystroke won
+    if (onNone != null && result.suggestions.isEmpty) {
+      onNone();
+      return;
+    }
     if (acceptSingle && result.suggestions.length == 1) {
       _result = result;
       _accept(0);
@@ -306,8 +393,10 @@ class _ConsoleViewState extends State<ConsoleView>
     if (_history.isEmpty) return;
     final next = (_historyIndex + delta).clamp(0, _history.length);
     if (next == _historyIndex) return;
+    if (_historyIndex == _history.length) _draft = _input.text;
     _historyIndex = next;
-    final text = next == _history.length ? '' : _history[next];
+    _typed = false;
+    final text = next == _history.length ? _draft : _history[next];
     _input.value = TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
@@ -329,7 +418,8 @@ class _ConsoleViewState extends State<ConsoleView>
       if (popupOpen) {
         _accept(_selected);
       } else {
-        _recompute(acceptSingle: true);
+        // Nothing to complete: Tab moves on, like everywhere else.
+        _recompute(acceptSingle: true, onNone: node.nextFocus);
       }
       return KeyEventResult.handled;
     }
@@ -342,12 +432,20 @@ class _ConsoleViewState extends State<ConsoleView>
       _closePopup();
       return KeyEventResult.ignored;
     }
+    final inPopup = popupOpen && _typed;
     if (key == LogicalKeyboardKey.arrowDown) {
-      popupOpen ? _moveSelection(1) : _recallHistory(1);
+      inPopup ? _moveSelection(1) : _recallHistory(1);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.arrowUp) {
-      popupOpen ? _moveSelection(-1) : _recallHistory(-1);
+      inPopup ? _moveSelection(-1) : _recallHistory(-1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.space &&
+        HardwareKeyboard.instance.isControlPressed) {
+      // The full list on demand, to move through with the arrows.
+      _typed = true;
+      _recompute();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -521,8 +619,15 @@ class _ConsoleViewState extends State<ConsoleView>
                 child: ConsoleInput(
                   controller: _input,
                   focusNode: _inputFocus,
-                  onTap: _recompute,
-                  onChanged: (_) => _recompute(),
+                  onTap: () {
+                    _typed = false;
+                    _recompute();
+                  },
+                  onChanged: (_) {
+                    _typed = true;
+                    _recompute();
+                  },
+                  onHistory: _history.isEmpty ? null : _pickHistory,
                   onSubmitted: _run,
                 ),
               ),

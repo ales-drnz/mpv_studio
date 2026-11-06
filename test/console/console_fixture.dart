@@ -48,11 +48,18 @@ Future<void> pumpConsole(
   Palette palette = Palette.dark,
   double textScale = 1,
   EdgeInsets padding = EdgeInsets.zero,
+  LogLevel level = LogLevel.info,
+  ValueChanged<LogLevel>? onLevel,
 }) async {
   await pumpStudio(
     tester,
     Scaffold(
-      body: ConsoleView(player: player, log: log),
+      body: ConsoleView(
+        player: player,
+        log: log,
+        level: level,
+        onLevel: onLevel,
+      ),
     ),
     size: size,
     input: input,
