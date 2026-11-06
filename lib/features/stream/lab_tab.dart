@@ -125,7 +125,7 @@ class _UrlEntryState extends State<UrlEntry> {
           ),
         ],
         AnimatedSize(
-          duration: const Duration(milliseconds: 180),
+          duration: Tokens.motion(context, Tokens.motionShort),
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
           child: _open

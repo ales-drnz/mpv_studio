@@ -188,11 +188,16 @@ class _SignalChainViewState extends State<SignalChainView> {
     }
     target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
     if ((target - position.pixels).abs() < 1) return;
-    position.animateTo(
-      target,
-      duration: kNavTransition,
-      curve: Curves.easeOutCubic,
-    );
+    final duration = Tokens.motion(context, kNavTransition);
+    if (duration == Duration.zero) {
+      position.jumpTo(target);
+    } else {
+      position.animateTo(
+        target,
+        duration: duration,
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   /// [panes] with the loudness panel as a third column, when [three].

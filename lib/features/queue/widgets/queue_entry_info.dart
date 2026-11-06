@@ -71,8 +71,9 @@ class QueueEntryInfo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // The title centred on the cover; it takes only the lines it
+        // needs (up to three).
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             QueueThumb(
               artUrl: info.artUrl,
@@ -86,6 +87,7 @@ class QueueEntryInfo extends StatelessWidget {
               child: SelectableText(
                 info.title,
                 style: Tokens.heading,
+                minLines: 1,
                 maxLines: 3,
               ),
             ),

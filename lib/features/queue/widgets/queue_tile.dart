@@ -189,13 +189,17 @@ class _QueueTileState extends State<QueueTile> {
           ),
           const SizedBox(width: Tokens.s12),
           Expanded(child: text),
-          if (info.duration != null) ...[
-            const SizedBox(width: Tokens.s8),
-            Text(
-              formatDuration(info.duration!),
-              style: Tokens.numeric.copyWith(color: on),
+          // An unknown length keeps the column, so the right edge of
+          // the list stays even.
+          const SizedBox(width: Tokens.s8),
+          Text(
+            info.duration == null
+                ? Tokens.noValue
+                : formatDuration(info.duration!),
+            style: Tokens.numeric.copyWith(
+              color: on ?? (info.duration == null ? Tokens.fgFaint : null),
             ),
-          ],
+          ),
           if (showActions) ...[
             const SizedBox(width: Tokens.s4),
             RoundIconButton(
