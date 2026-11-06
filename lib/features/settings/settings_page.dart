@@ -102,12 +102,26 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SettingsSearchField(controller: _query, focusNode: _searchField),
+          SettingsSearchField(
+            controller: _query,
+            focusNode: _searchField,
+            onSubmit: () {
+              final results = searchSettings(_query.text.trim());
+              if (results.isNotEmpty) _reveal(results.first);
+            },
+          ),
           const SizedBox(height: Tokens.s12),
           Expanded(
             child: query.isEmpty
                 ? _GroupList(selected: split ? open : null, onOpen: _openGroup)
-                : SettingsSearchResults(query: query, onOpen: _reveal),
+                : SettingsSearchResults(
+                    query: query,
+                    onOpen: _reveal,
+                    onSearch: (word) => _query.value = TextEditingValue(
+                      text: word,
+                      selection: TextSelection.collapsed(offset: word.length),
+                    ),
+                  ),
           ),
         ],
       ),

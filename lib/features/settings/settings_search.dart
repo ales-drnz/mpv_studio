@@ -15,10 +15,14 @@ class SettingsSearchField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.focusNode,
+    this.onSubmit,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
+
+  /// Enter: opens the first result.
+  final VoidCallback? onSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +37,7 @@ class SettingsSearchField extends StatelessWidget {
         label: 'Search settings',
         autocorrect: false,
         textInputAction: TextInputAction.search,
+        onSubmitted: (_) => onSubmit?.call(),
         leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
         action: controller.text.isEmpty
             ? null
@@ -55,23 +60,39 @@ class SettingsSearchResults extends StatelessWidget {
     super.key,
     required this.query,
     required this.onOpen,
+    this.onSearch,
   });
 
   final String query;
   final ValueChanged<SettingEntry> onOpen;
 
+  /// Searches for a suggested word instead.
+  final ValueChanged<String>? onSearch;
+
   @override
   Widget build(BuildContext context) {
     final results = searchSettings(query);
     if (results.isEmpty) {
+      final close = closestSettingWord(query);
       return Padding(
         padding: const EdgeInsets.all(Tokens.s16),
-        child: Semantics(
-          liveRegion: true,
-          child: Text(
-            'No setting matches "$query".',
-            style: Tokens.body.copyWith(color: Tokens.fgDim),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                'No setting matches "$query".',
+                style: Tokens.body.copyWith(color: Tokens.fgDim),
+              ),
+            ),
+            if (close != null && onSearch != null)
+              TextButton(
+                onPressed: () => onSearch!(close),
+                child: Text('Search for "$close"'),
+              ),
+          ],
         ),
       );
     }
@@ -107,6 +128,7 @@ class SettingsSearchResults extends StatelessWidget {
             child: _ResultTile(
               entry: e,
               words: query.toLowerCase().split(RegExp(r'\s+')),
+              foundBy: e.keywordsFor(query),
               onTap: () => onOpen(e),
             ),
           );
@@ -121,11 +143,15 @@ class _ResultTile extends StatelessWidget {
     required this.entry,
     required this.words,
     required this.onTap,
+    this.foundBy = const [],
   });
 
   final SettingEntry entry;
   final List<String> words;
   final VoidCallback onTap;
+
+  /// The keywords that matched, when no shown word did.
+  final List<String> foundBy;
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +195,13 @@ class _ResultTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (foundBy.isNotEmpty)
+                      Text(
+                        'Found by: ${foundBy.join(', ')}',
+                        style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                   ],
                 ),
               ),
