@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../layout/layout_scope.dart';
 import '../../tokens.dart';
@@ -69,18 +70,47 @@ class SegmentedControl<T> extends StatelessWidget {
       onTap: enabled ? () => onSelect(o.value) : null,
       hugContent: !expand,
     );
-    return Opacity(
-      opacity: enabled ? 1 : 0.5,
-      child: Container(
-        height: controlHeightOf(context),
-        decoration: ShapeDecoration(color: Tokens.surface3, shape: Tokens.pill),
-        padding: const EdgeInsets.all(Tokens.s4),
-        child: Row(
-          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-          children: [
-            for (final o in options)
-              if (expand) Expanded(child: segment(o)) else segment(o),
-          ],
+    // Left and Right move the pick, like a radio group, and stay here
+    // instead of seeking the playback.
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (!enabled || (event is! KeyDownEvent && event is! KeyRepeatEvent)) {
+          return KeyEventResult.ignored;
+        }
+        final step = switch (event.logicalKey) {
+          LogicalKeyboardKey.arrowLeft => -1,
+          LogicalKeyboardKey.arrowRight => 1,
+          _ => 0,
+        };
+        if (step == 0) return KeyEventResult.ignored;
+        final at = options.indexWhere((o) => o.value == selected);
+        final next = at + step;
+        if (at >= 0 && next >= 0 && next < options.length) {
+          onSelect(options[next].value);
+          FocusManager.instance.primaryFocus?.focusInDirection(
+            step < 0 ? TraversalDirection.left : TraversalDirection.right,
+          );
+        }
+        return KeyEventResult.handled;
+      },
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: Container(
+          height: controlHeightOf(context),
+          decoration: ShapeDecoration(
+            color: Tokens.surface3,
+            shape: Tokens.pill,
+          ),
+          padding: const EdgeInsets.all(Tokens.s4),
+          child: Row(
+            mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+            children: [
+              for (final o in options)
+                if (expand) Expanded(child: segment(o)) else segment(o),
+            ],
+          ),
         ),
       ),
     );
@@ -111,7 +141,8 @@ class _Segment extends StatelessWidget {
       button: true,
       selected: active,
       inMutuallyExclusiveGroup: true,
-      label: tooltip ?? label,
+      // The visible label first, so a spoken name holds what shows.
+      label: tooltip == null ? label : '$label, $tooltip',
       excludeSemantics: true,
       onTap: onTap,
       child: FocusRing(
