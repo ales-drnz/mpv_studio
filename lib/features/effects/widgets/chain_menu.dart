@@ -247,18 +247,9 @@ class _AskState extends State<_Ask> {
           maxLines: widget.lines,
           minLines: widget.lines,
           onSubmitted: widget.lines == 1 ? (_) => _submit() : null,
+          // In the field, as every form says what is wrong.
+          errorText: problem,
         ),
-        if (problem != null)
-          Padding(
-            padding: const EdgeInsets.only(top: Tokens.s8),
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                problem,
-                style: Tokens.caption.copyWith(color: Tokens.red),
-              ),
-            ),
-          ),
         const SizedBox(height: Tokens.s12),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,

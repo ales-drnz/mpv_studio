@@ -106,11 +106,16 @@ class RailShell extends StatelessWidget {
             ),
             if (railMini != null)
               Padding(
+                // Off the window's foot like the stage card, where the
+                // height allows: a phone in landscape (360) has none to
+                // spare under More.
                 padding: EdgeInsets.fromLTRB(
                   Tokens.s8,
                   0,
                   Tokens.s8,
-                  labels ? Tokens.s8 : 0,
+                  labels || MediaQuery.sizeOf(context).height >= 400
+                      ? Tokens.s8
+                      : 0,
                 ),
                 child: railMini,
               ),

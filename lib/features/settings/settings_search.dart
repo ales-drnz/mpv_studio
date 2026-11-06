@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets/empty_state.dart';
 import '../../ui/widgets/focus_ring.dart';
 import '../../ui/widgets/controls.dart';
 import '../../ui/widgets/round_icon_button.dart';
@@ -38,7 +39,11 @@ class SettingsSearchField extends StatelessWidget {
         autocorrect: false,
         textInputAction: TextInputAction.search,
         onSubmitted: (_) => onSubmit?.call(),
-        leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
+        leading: Icon(
+          Icons.search_rounded,
+          size: Tokens.iconMd,
+          color: Tokens.fgDim,
+        ),
         action: controller.text.isEmpty
             ? null
             : RoundIconButton(
@@ -74,19 +79,15 @@ class SettingsSearchResults extends StatelessWidget {
     final results = searchSettings(query);
     if (results.isEmpty) {
       final close = closestSettingWord(query);
-      return Padding(
-        padding: const EdgeInsets.all(Tokens.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                'No setting matches "$query".',
-                style: Tokens.body.copyWith(color: Tokens.fgDim),
-              ),
-            ),
+      // The app's empty state, read out as it appears.
+      return Semantics(
+        liveRegion: true,
+        child: EmptyState(
+          compact: true,
+          icon: Icons.search_off_rounded,
+          title: 'No setting matches',
+          message: 'Nothing in Settings matches "$query".',
+          actions: [
             if (close != null && onSearch != null)
               TextButton(
                 onPressed: () => onSearch!(close),
@@ -177,13 +178,18 @@ class _ResultTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text.rich(
-                      highlightMatches(entry.title, words, Tokens.body),
+                      // The weight of a settings row's title.
+                      highlightMatches(
+                        entry.title,
+                        words,
+                        Tokens.body.copyWith(fontWeight: FontWeight.w500),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '${entry.group.title}, ${entry.section}',
-                      style: Tokens.caption.copyWith(color: Tokens.fgDim),
+                      '${entry.group.title} \u203a ${entry.section}',
+                      style: Tokens.label,
                     ),
                     const SizedBox(height: Tokens.s4),
                     Text.rich(
