@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import 'app.dart';
@@ -13,6 +15,9 @@ import 'util/redact.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // The app has its own right-click menus (queue rows, the waveform, the
+  // mini-player); in a browser its menu would open over them.
+  if (kIsWeb) await BrowserContextMenu.disableContextMenu();
   MpvAudioKit.ensureInitialized();
   registerAppLicenses();
 
