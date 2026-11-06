@@ -87,12 +87,16 @@ class ConsoleLogView extends StatelessWidget {
     super.key,
     required this.lines,
     required this.controller,
-    required this.emptyText,
+    required this.emptyTitle,
+    this.emptyMessage,
   });
 
   final List<ConsoleLine> lines;
   final ScrollController controller;
-  final String emptyText;
+
+  /// What an empty log says: a short title and a line on what to do.
+  final String emptyTitle;
+  final String? emptyMessage;
 
   static TextStyle get _mono => Tokens.numeric.copyWith(
     height: 1.5,
@@ -132,7 +136,8 @@ class ConsoleLogView extends StatelessWidget {
       return EmptyState(
         compact: true,
         icon: Icons.terminal_rounded,
-        title: emptyText,
+        title: emptyTitle,
+        message: emptyMessage,
       );
     }
     // One SelectionArea for the whole log, over plain Text rows: a
@@ -177,8 +182,9 @@ class ConsoleLogView extends StatelessWidget {
           Expanded(
             child: Text.rich(
               TextSpan(
-                // Debug and trace sit a tone below info, too close to
-                // tell apart by colour alone: they are also slanted.
+                // Verbose, debug and trace sit a tone below info, too
+                // close to tell apart by colour alone: they are also
+                // slanted.
                 style: _quiet(l)
                     ? mono.copyWith(fontStyle: FontStyle.italic)
                     : mono,

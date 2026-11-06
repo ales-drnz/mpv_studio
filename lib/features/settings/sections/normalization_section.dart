@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../ui/tokens.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../util/reactive.dart';
@@ -8,7 +9,6 @@ import '../setting_anchor.dart';
 import '../settings_catalog.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
-import '../../../ui/tokens.dart';
 
 /// Scan-based loudness normalization (EBU R128) with its live state. First
 /// because it works on any track: the engine measures each file on load.

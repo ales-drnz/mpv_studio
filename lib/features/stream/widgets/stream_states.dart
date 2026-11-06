@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
-import '../../../ui/widgets/studio_spinner.dart';
 import '../../../ui/widgets/controls.dart';
 import '../../../ui/widgets/empty_state.dart';
+import '../../../ui/widgets/studio_spinner.dart';
 
 /// The widest a sign-in card gets: the form width, under the narrowest
 /// medium window, so it reads as one column at every size.
@@ -122,8 +122,8 @@ class StreamButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         // Busy keeps the accent so the spinner reads as progress, not as
         // a disabled button.
-        disabledBackgroundColor: busy ? Tokens.accent : Tokens.surface3,
-        disabledForegroundColor: busy ? Tokens.onAccent : Tokens.fgDim,
+        disabledBackgroundColor: busy ? Tokens.accent : Tokens.surface4,
+        disabledForegroundColor: busy ? Tokens.onAccent : Tokens.fgFaint,
         minimumSize: Size(expand ? double.infinity : 96, h),
       ),
       child: busy

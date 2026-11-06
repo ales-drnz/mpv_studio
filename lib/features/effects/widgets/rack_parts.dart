@@ -117,7 +117,7 @@ class RackErrorBanner extends StatelessWidget {
           Tokens.s4,
         ),
         decoration: ShapeDecoration(
-          color: Tokens.red.withValues(alpha: 0.14),
+          color: Tokens.red.withValues(alpha: Tokens.semanticWash),
           shape: Tokens.shape(Tokens.rMd),
         ),
         child: Row(

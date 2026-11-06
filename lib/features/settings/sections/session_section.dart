@@ -4,15 +4,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../studio/app_settings.dart';
 import '../../../ui/tokens.dart';
-import '../../../ui/widgets/empty_state.dart';
 import '../../../ui/widgets/controls.dart';
+import '../../../ui/widgets/empty_state.dart';
 import '../../../ui/widgets/reorder_proxy.dart';
 import '../../../ui/widgets/section_body.dart';
 import '../../../ui/widgets/section_header.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
-import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'session_parts.dart';
 

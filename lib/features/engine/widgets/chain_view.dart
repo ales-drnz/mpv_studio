@@ -86,7 +86,7 @@ class _Stage extends StatelessWidget {
             Text(
               '$index',
               style: Tokens.numeric.copyWith(
-                color: Tokens.onAccentContainer.withValues(alpha: 0.7),
+                color: Tokens.onAccentContainer.withValues(alpha: 0.85),
               ),
             ),
             const SizedBox(width: Tokens.s8),

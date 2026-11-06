@@ -354,9 +354,13 @@ class _Choice extends StatelessWidget {
           ),
           if (footer != null)
             Padding(
-              // Under the title at every width, as the text it belongs to.
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.s16 + Tokens.leadSize + Tokens.s16,
+              // Under the title, or the card's full width on a phone,
+              // where the indent would push the third chip to a line of
+              // its own.
+              padding: EdgeInsets.fromLTRB(
+                context.layout.isCompact
+                    ? Tokens.s16
+                    : Tokens.s16 + Tokens.leadSize + Tokens.s16,
                 0,
                 Tokens.s16,
                 Tokens.s16,
