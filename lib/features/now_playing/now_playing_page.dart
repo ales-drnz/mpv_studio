@@ -234,7 +234,10 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
 
   Widget _cover(double size) {
     final scope = PlaybackScope.of(context);
+    // A phone gesture, like on the waveform: a mouse has the keys and the
+    // seek bar, and a double click is not a seek on the desktop.
     return DoubleTapSeek(
+      enabled: context.layout.isTouch,
       onSeek: (by) => scope.guard(() => scope.player.seek(by, relative: true)),
       child: CoverArtView(player: scope.player, size: size),
     );

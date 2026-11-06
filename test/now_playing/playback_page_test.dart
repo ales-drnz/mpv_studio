@@ -287,6 +287,18 @@ void main() {
     });
   });
 
+  testWidgets('a double click on the cover does not seek', (tester) async {
+    final player = playingTrack();
+    await _pumpPage(tester, player, size: const Size(1280, 800));
+    final cover = tester.getRect(find.bySemanticsLabel('No cover art'));
+    final right = Offset(cover.right - 10, cover.center.dy);
+    await tester.tapAt(right);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tapAt(right);
+    await tester.pump(const Duration(seconds: 1));
+    expect(player.calls, isNot(contains('seek +10000')));
+  });
+
   group('touch', () {
     testWidgets('a double tap on the cover skips 10 s', (tester) async {
       final player = playingTrack();
