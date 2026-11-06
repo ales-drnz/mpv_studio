@@ -93,16 +93,18 @@ class _ResponsePainter extends CustomPainter {
     required this.markerHz,
   });
 
-  static const double _rightGutter = 22;
-  static const double _bottomGutter = 14;
-
   @override
   void paint(Canvas canvas, Size size) {
+    // Gutters for the dB scale and the frequencies, measured at the
+    // reader's text size.
+    final labelH = chartLabelHeight(scaler: scaler);
     final plot = Rect.fromLTRB(
       2,
-      6,
-      size.width - _rightGutter,
-      size.height - _bottomGutter,
+      math.max(6, labelH / 2),
+      size.width -
+          Tokens.s4 -
+          chartLabelWidth('-${maxDb.toInt()}', scaler: scaler),
+      size.height - labelH - Tokens.s4,
     );
     if (plot.width <= 0 || plot.height <= 0) return;
 
@@ -122,20 +124,21 @@ class _ResponsePainter extends CustomPainter {
       grid.color = db == 0 ? Tokens.lineRef : Tokens.line;
       canvas.drawLine(Offset(plot.left, yy), Offset(plot.right, yy), grid);
     }
-    paintChartLabel(
-      canvas,
-      '+${maxDb.toInt()}',
-      Offset(plot.right + 3, yOf(maxDb) - 5),
-      Tokens.fgFaint,
-      scaler: scaler,
-    );
-    paintChartLabel(
-      canvas,
-      '${(-maxDb).toInt()}',
-      Offset(plot.right + 3, yOf(-maxDb) - 5),
-      Tokens.fgFaint,
-      scaler: scaler,
-    );
+    // The scale's ends and its reference, each centred on its line.
+    for (final (db, text) in [
+      (maxDb, '+${maxDb.toInt()}'),
+      (0.0, '0'),
+      (-maxDb, '${(-maxDb).toInt()}'),
+    ]) {
+      paintChartLabel(
+        canvas,
+        text,
+        Offset(plot.right + Tokens.s4, yOf(db)),
+        Tokens.fgFaint,
+        scaler: scaler,
+        middle: true,
+      );
+    }
 
     // Frequency decade lines + labels.
     for (final d in _decades) {
@@ -145,12 +148,15 @@ class _ResponsePainter extends CustomPainter {
         Offset(xx, plot.bottom),
         Paint()..color = Tokens.line,
       );
+      // Kept inside the plot's width, clear of the dB scale.
+      final last = xx + chartLabelWidth(d.$2, scaler: scaler) / 2 > plot.right;
       paintChartLabel(
         canvas,
         d.$2,
-        Offset(xx, plot.bottom + 2),
+        Offset(last ? plot.right : xx, plot.bottom + Tokens.s4),
         Tokens.fgFaint,
-        center: true,
+        center: !last,
+        end: last,
         scaler: scaler,
       );
     }
@@ -187,10 +193,7 @@ class _ResponsePainter extends CustomPainter {
       ..close();
     canvas.save();
     canvas.clipRect(plot.inflate(1));
-    canvas.drawPath(
-      fill,
-      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
-    );
+    canvas.drawPath(fill, Paint()..color = chartFill(enabled: enabled));
     canvas.restore();
 
     canvas.drawPath(

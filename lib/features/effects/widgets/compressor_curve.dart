@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -199,8 +201,6 @@ class _KneePainter extends CustomPainter {
     required this.grDb,
   }) : super(repaint: Listenable.merge([inDb, grDb]));
 
-  static const double _rightGutter = 24;
-  static const double _bottomGutter = 16;
   static const _grid = [-48.0, -36.0, -24.0, -12.0];
 
   double _kneeOut(double inDb) => compressorKneeDb(
@@ -213,11 +213,13 @@ class _KneePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Gutters for the two scales, measured at the reader's text size.
+    final labelH = chartLabelHeight(scaler: scaler);
     final plot = Rect.fromLTRB(
       2,
-      6,
-      size.width - _rightGutter,
-      size.height - _bottomGutter,
+      math.max(6, labelH / 2),
+      size.width - Tokens.s4 - chartLabelWidth('-48', scaler: scaler),
+      size.height - labelH - Tokens.s4,
     );
     if (plot.width <= 0 || plot.height <= 0) return;
 
@@ -250,7 +252,7 @@ class _KneePainter extends CustomPainter {
       paintChartLabel(
         canvas,
         '${db.toInt()}',
-        Offset(x(db), plot.bottom + 3),
+        Offset(x(db), plot.bottom + Tokens.s4),
         Tokens.fgFaint,
         center: true,
         scaler: scaler,
@@ -258,11 +260,30 @@ class _KneePainter extends CustomPainter {
       paintChartLabel(
         canvas,
         '${db.toInt()}',
-        Offset(plot.right + 3, y(db) - 5),
+        Offset(plot.right + Tokens.s4, y(db)),
         Tokens.fgFaint,
         scaler: scaler,
+        middle: true,
       );
     }
+    // The top of both scales, with the unit once: input on x, output on
+    // y, both in dB.
+    paintChartLabel(
+      canvas,
+      '0 dB',
+      Offset(plot.right, plot.bottom + Tokens.s4),
+      Tokens.fgFaint,
+      end: true,
+      scaler: scaler,
+    );
+    paintChartLabel(
+      canvas,
+      '0',
+      Offset(plot.right + Tokens.s4, y(_dbCeil)),
+      Tokens.fgFaint,
+      scaler: scaler,
+      middle: true,
+    );
 
     // Unity reference (no compression).
     canvas.drawLine(
@@ -309,10 +330,7 @@ class _KneePainter extends CustomPainter {
     wedge.close();
     canvas.save();
     canvas.clipRect(plot);
-    canvas.drawPath(
-      wedge,
-      Paint()..color = enabled ? Tokens.accentWash : Tokens.surface3,
-    );
+    canvas.drawPath(wedge, Paint()..color = chartFill(enabled: enabled));
     canvas.restore();
     canvas.drawPath(
       curve,

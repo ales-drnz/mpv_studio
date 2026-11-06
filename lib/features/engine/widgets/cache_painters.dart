@@ -148,7 +148,18 @@ class CacheBarPainter extends CustomPainter {
       final t = g.position + secondsOf(secs);
       if (t < g.axisEnd) {
         final cx = x(t);
-        _dashed(canvas, Offset(cx, _top - 4), Offset(cx, _top + _barH + 30));
+        // Broken around the row of the behind and ahead labels, which
+        // it would otherwise cross.
+        final labelsTop = _top + _barH + 16;
+        final labelsBottom = labelsTop + chartLabelHeight(scaler: scaler) + 2;
+        _dashed(canvas, Offset(cx, _top - 4), Offset(cx, labelsTop - 4));
+        if (_top + _barH + 30 > labelsBottom) {
+          _dashed(
+            canvas,
+            Offset(cx, labelsBottom),
+            Offset(cx, _top + _barH + 30),
+          );
+        }
         paintChartLabel(
           canvas,
           'cache duration',
@@ -298,18 +309,30 @@ class CacheHistoryPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const left = 34.0;
-    final w = size.width - left;
-    // Room under the plot for the axis labels at the reader's size.
-    final h = size.height - chartLabelHeight(scaler: scaler) - 4;
     final t0 = now - window;
-    double x(double t) => left + ((t - t0) / window).clamp(0.0, 1.0) * w;
-
+    // The scale follows what is on screen: an old peak that scrolled out
+    // no longer flattens the curve, nor labels a plot it is not in.
+    final visible = samples.where((s) => s.t >= t0 - 1).toList();
+    final collecting = visible.length < 2;
     var top = pauseWait == null ? 1.0 : pauseWait! * 2;
-    for (final s in samples) {
+    for (final s in visible) {
       top = math.max(top, s.ahead);
     }
     top *= 1.1;
+    final topLabel = EngineFormat.seconds(
+      Duration(milliseconds: (top * 1000).round()),
+    );
+    // The gutter fits the widest value label at the reader's size.
+    final left =
+        math.max(
+          chartLabelWidth(topLabel, scaler: scaler),
+          chartLabelWidth('0 s', scaler: scaler),
+        ) +
+        Tokens.s4;
+    final w = size.width - left;
+    // Room under the plot for the axis labels at the reader's size.
+    final h = size.height - chartLabelHeight(scaler: scaler) - 4;
+    double x(double t) => left + ((t - t0) / window).clamp(0.0, 1.0) * w;
     double y(double v) => h - (v / top).clamp(0.0, 1.0) * h;
 
     // Paused stretches.
@@ -334,17 +357,20 @@ class CacheHistoryPainter extends CustomPainter {
     paintChartLabel(
       canvas,
       '0 s',
-      Offset(0, h - 5),
+      Offset(0, h),
       Tokens.fgFaint,
       scaler: scaler,
+      middle: true,
     );
-    paintChartLabel(
-      canvas,
-      EngineFormat.seconds(Duration(milliseconds: (top * 1000).round())),
-      const Offset(0, 0),
-      Tokens.fgFaint,
-      scaler: scaler,
-    );
+    if (!collecting) {
+      paintChartLabel(
+        canvas,
+        topLabel,
+        Offset.zero,
+        Tokens.fgFaint,
+        scaler: scaler,
+      );
+    }
     if (pauseWait != null) {
       final py = y(pauseWait!);
       for (var d = left; d < size.width; d += 6) {
@@ -371,9 +397,19 @@ class CacheHistoryPainter extends CustomPainter {
       end: true,
     );
 
-    // The curve.
-    final visible = samples.where((s) => s.t >= t0 - 1).toList();
-    if (visible.length < 2) return;
+    // The curve, or a word on why there is none yet.
+    if (collecting) {
+      paintChartLabel(
+        canvas,
+        'collecting\u2026',
+        Offset(left + w / 2, h / 2),
+        Tokens.fgFaint,
+        scaler: scaler,
+        center: true,
+        middle: true,
+      );
+      return;
+    }
     final path = Path()..moveTo(x(visible.first.t), y(visible.first.ahead));
     for (final s in visible.skip(1)) {
       path.lineTo(x(s.t), y(s.ahead));

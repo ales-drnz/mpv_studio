@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
@@ -169,51 +170,64 @@ class _MetersPainter extends CustomPainter {
     this.scaler = TextScaler.noScaling,
   }) : super(repaint: tick);
 
-  static const _readoutW = 92.0;
-
   @override
   void paint(Canvas canvas, Size size) {
-    final plot = Rect.fromLTRB(6, 6, size.width - _readoutW, size.height - 6);
+    final inDb = pre.rmsDb;
+    final outDb = post.rmsDb;
+    // No signal yet: one line in the middle, as the meters-off state
+    // reads, rather than empty readouts crowded in a corner.
+    if (inDb <= _floor + 1 && outDb <= _floor + 1) {
+      paintChartLabel(
+        canvas,
+        'no signal',
+        size.center(Offset.zero),
+        Tokens.fgFaint,
+        scaler: scaler,
+        center: true,
+        middle: true,
+      );
+      return;
+    }
+    // The readout column fits its widest line at the reader's size.
+    final readoutW =
+        chartLabelWidth('OUT  -00.0', scaler: scaler, weight: FontWeight.w700) +
+        Tokens.s16;
+    final plot = Rect.fromLTRB(6, 6, size.width - readoutW, size.height - 6);
     if (plot.width > 8) {
       _bands(canvas, plot, pre.shown, fill: false);
       _bands(canvas, plot, post.shown, fill: true);
     }
-    // Readouts: IN, OUT and the change.
-    final x = size.width - _readoutW + 8;
-    // Three 10 px lines spread over the height.
-    final step = (size.height - 30) / 4;
-    final inDb = pre.rmsDb;
-    final outDb = post.rmsDb;
+    // Readouts: IN, OUT and the change, three lines centred in the
+    // height with equal gaps.
+    final x = size.width - readoutW + Tokens.s8;
+    final lh = chartLabelHeight(scaler: scaler);
+    final gap = math.max(2.0, (size.height - 3 * lh) / 4);
+    double row(int i) => gap + i * (lh + gap);
     paintChartLabel(
       canvas,
       'IN  ${_db(inDb)}',
-      Offset(x, step),
+      Offset(x, row(0)),
       Tokens.fgDim,
-      fontSize: 10,
       scaler: scaler,
     );
+    // OUT is the reading that matters: bolder, so it reads apart from
+    // IN in light, where the two colours are close.
     paintChartLabel(
       canvas,
       'OUT ${_db(outDb)}',
-      Offset(x, 2 * step + 10),
+      Offset(x, row(1)),
       Tokens.accent,
-      fontSize: 10,
       scaler: scaler,
+      weight: FontWeight.w700,
     );
-    final silent = inDb <= _floor + 1 && outDb <= _floor + 1;
     final delta = outDb - inDb;
     paintChartLabel(
       canvas,
-      silent
-          ? 'no signal'
-          : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} dB',
-      Offset(x, 3 * step + 20),
-      silent
-          ? Tokens.fgFaint
-          : delta.abs() < 0.5
+      '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} dB',
+      Offset(x, row(2)),
+      delta.abs() < 0.5
           ? Tokens.fgDim
           : (delta > 0 ? Tokens.amber : Tokens.green),
-      fontSize: 10,
       scaler: scaler,
     );
   }

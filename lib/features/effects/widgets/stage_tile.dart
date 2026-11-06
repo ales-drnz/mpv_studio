@@ -228,7 +228,13 @@ class StageTile extends StatelessWidget {
             width: Tokens.s4,
             child: DecoratedBox(
               decoration: ShapeDecoration(
-                color: live ? (meter ? Tokens.amber : lit) : Colors.transparent,
+                // A meter's amber vanishes on the selection grey (1.1:1):
+                // there it takes the selection's ink like the rest.
+                color: !live
+                    ? Colors.transparent
+                    : meter && !selected
+                    ? Tokens.amber
+                    : lit,
                 shape: Tokens.pill,
               ),
             ),

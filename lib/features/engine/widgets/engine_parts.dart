@@ -106,7 +106,12 @@ class PhasePill extends StatelessWidget {
     super.key,
     required this.color,
     this.strong = true,
+    this.swatch,
   });
+
+  /// A dot before the text in the colour a chart draws this state with,
+  /// so the pill reads as a legend.
+  final Color? swatch;
 
   @override
   Widget build(BuildContext context) {
@@ -119,12 +124,28 @@ class PhasePill extends StatelessWidget {
         color: strong ? color.withValues(alpha: 0.12) : Tokens.surface3,
         shape: Tokens.pill,
       ),
-      child: Text(
-        text.toLowerCase(),
-        style: Tokens.numeric.copyWith(
-          color: strong ? color : Tokens.fgFaint,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (swatch case final swatch?) ...[
+            Container(
+              width: Tokens.s8,
+              height: Tokens.s8,
+              decoration: ShapeDecoration(
+                color: swatch,
+                shape: const CircleBorder(),
+              ),
+            ),
+            const SizedBox(width: Tokens.s8),
+          ],
+          Text(
+            text.toLowerCase(),
+            style: Tokens.numeric.copyWith(
+              color: strong ? color : Tokens.fgFaint,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

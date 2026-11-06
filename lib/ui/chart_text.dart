@@ -10,6 +10,13 @@ TextScaler chartTextScaler(BuildContext context) => MediaQuery.textScalerOf(
   context,
 ).clamp(maxScaleFactor: Tokens.chartLabelMaxScale);
 
+/// The wash under a chart's curve (an EQ, a response, a knee): the
+/// accent wash when the stage is on, half of it when off, so an off
+/// stage always reads quieter than an on one in both themes.
+Color chartFill({required bool enabled}) => enabled
+    ? Tokens.accentWash
+    : Tokens.accentWash.withValues(alpha: Tokens.accentWash.a / 2);
+
 /// Paints a short monospace label onto a [Canvas]: the single text helper
 /// shared by every chart and meter painter (response curve, knee plot,
 /// goniometer, gauges, VU meter and the Engine charts).
@@ -29,8 +36,9 @@ void paintChartLabel(
   bool center = false,
   bool middle = false,
   bool end = false,
+  FontWeight? weight,
 }) {
-  final tp = _layout(text, color, fontSize, scaler);
+  final tp = _layout(text, color, fontSize, scaler, weight);
   tp.paint(
     canvas,
     Offset(
@@ -49,7 +57,8 @@ double chartLabelWidth(
   String text, {
   double fontSize = Tokens.chartLabelSize,
   TextScaler scaler = TextScaler.noScaling,
-}) => _layout(text, const Color(0xFF000000), fontSize, scaler).width;
+  FontWeight? weight,
+}) => _layout(text, const Color(0xFF000000), fontSize, scaler, weight).width;
 
 /// The height [paintChartLabel] gives a line, to reserve room for an
 /// axis.
@@ -62,8 +71,9 @@ TextPainter _layout(
   String text,
   Color color,
   double fontSize,
-  TextScaler scaler,
-) => TextPainter(
+  TextScaler scaler, [
+  FontWeight? weight,
+]) => TextPainter(
   textDirection: TextDirection.ltr,
   textScaler: scaler,
   text: TextSpan(
@@ -71,6 +81,7 @@ TextPainter _layout(
     style: TextStyle(
       fontFamily: Tokens.mono,
       fontSize: fontSize,
+      fontWeight: weight,
       color: color,
       height: 1.0,
     ),

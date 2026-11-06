@@ -66,7 +66,12 @@ class PrefetchView extends StatelessWidget {
             runSpacing: Tokens.s8,
             children: [
               for (final p in PrefetchState.values)
-                PhasePill(p.mpvValue, color: colorOf(p), strong: p == current),
+                PhasePill(
+                  p.mpvValue,
+                  color: colorOf(p),
+                  strong: p == current,
+                  swatch: PrefetchTimelinePainter.bandColor(p),
+                ),
             ],
           ),
           const SizedBox(height: Tokens.s12),
@@ -179,6 +184,15 @@ class PrefetchTimelinePainter extends CustomPainter {
     );
   }
 
+  /// The fill of a stretch in state [s], null for idle (no band): the
+  /// legend's swatches use it too.
+  static Color? bandColor(PrefetchState s) => switch (s) {
+    PrefetchState.idle => null,
+    PrefetchState.loading || PrefetchState.ready => Tokens.accentDim,
+    PrefetchState.used => Tokens.green.withValues(alpha: 0.45),
+    PrefetchState.failed => Tokens.red.withValues(alpha: 0.35),
+  };
+
   void _band(Canvas canvas, Rect r, PrefetchState s) {
     if (s == PrefetchState.idle) return;
     // Each stretch is a rounded band, a pixel in from its neighbours, so
@@ -194,7 +208,7 @@ class PrefetchTimelinePainter extends CustomPainter {
       case PrefetchState.idle:
         return;
       case PrefetchState.loading:
-        canvas.drawRRect(band, Paint()..color = Tokens.accentDim);
+        canvas.drawRRect(band, Paint()..color = bandColor(s)!);
         canvas.save();
         canvas.clipRRect(band);
         final stripe = Paint()
@@ -209,24 +223,20 @@ class PrefetchTimelinePainter extends CustomPainter {
         }
         canvas.restore();
       case PrefetchState.ready:
-        canvas.drawRRect(band, Paint()..color = Tokens.accentDim);
       case PrefetchState.used:
-        canvas.drawRRect(
-          band,
-          Paint()..color = Tokens.green.withValues(alpha: 0.45),
-        );
       case PrefetchState.failed:
-        canvas.drawRRect(
-          band,
-          Paint()..color = Tokens.red.withValues(alpha: 0.35),
-        );
+        canvas.drawRRect(band, Paint()..color = bandColor(s)!);
     }
     if (r.width > 44) {
       paintChartLabel(
         canvas,
         s.mpvValue,
         Offset(r.left + math.min(r.width / 2, 40), r.center.dy),
-        Tokens.fg,
+        // The ring grey bands are light in both themes (white text on
+        // them was 1.7:1 in dark): the ink drawn on a selection fill.
+        s == PrefetchState.loading || s == PrefetchState.ready
+            ? Tokens.onAccentContainer
+            : Tokens.fg,
         center: true,
         middle: true,
         scaler: scaler,

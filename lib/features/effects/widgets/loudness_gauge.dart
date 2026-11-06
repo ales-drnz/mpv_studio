@@ -121,6 +121,17 @@ class _GaugePainter extends CustomPainter {
       ),
       Paint()..color = Tokens.surface3,
     );
+    if (reading?.momentary == null) {
+      paintChartLabel(
+        canvas,
+        'waiting for signal',
+        Offset(left + w / 2, barTop + barH / 2),
+        Tokens.fgFaint,
+        center: true,
+        middle: true,
+        scaler: scaler,
+      );
+    }
 
     // Target and its range.
     final t = target;
@@ -162,9 +173,15 @@ class _GaugePainter extends CustomPainter {
     // Short-term tick.
     final s = r?.shortTerm;
     if (s != null && s > _luMin) {
+      // A gap in the card's tone around it: on the white momentary bar
+      // of dark the near-white tick would merge into it.
+      canvas.drawRect(
+        Rect.fromLTWH(x(s) - 3.5, barTop + 2, 7, barH - 4),
+        Paint()..color = Tokens.surface,
+      );
       canvas.drawRect(
         Rect.fromLTWH(x(s) - 1.5, barTop + 2, 3, barH - 4),
-        Paint()..color = Tokens.fg,
+        Paint()..color = Tokens.fgDim,
       );
     }
     // Integrated marker, below the rail.
@@ -189,6 +206,8 @@ class _GaugePainter extends CustomPainter {
     }
 
     // Scale.
+    // The labels clear the integrated marker's row; the outer ones stay
+    // inside the card, the last carrying the unit.
     for (final lu in _ticks) {
       final xx = x(lu.toDouble());
       canvas.drawLine(
@@ -196,12 +215,15 @@ class _GaugePainter extends CustomPainter {
         Offset(xx, barTop + barH + 3),
         Paint()..color = Tokens.fgFaint,
       );
+      final first = lu == _ticks.first;
+      final last = lu == _ticks.last;
       paintChartLabel(
         canvas,
-        '$lu',
-        Offset(xx, barTop + barH + 10),
+        last ? '$lu LUFS' : '$lu',
+        Offset(xx, barTop + barH + 12),
         Tokens.fgFaint,
-        center: true,
+        center: !first && !last,
+        end: last,
         scaler: scaler,
       );
     }
