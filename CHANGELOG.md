@@ -4,7 +4,7 @@
 **Added**
 - Removing a queue entry, clearing the queue, replacing it and removing or resetting an effect stage show Undo.
 - Named effect chains: save, load with Undo, copy and paste as text, delete.
-- The queue comes back on launch, stopped on the last track, when Resume is on.
+- The queue comes back on launch, paused on the track it was on, when Resume is on.
 - The app reopens the section, the sidebar, the Stream tab, the waveform height and the Settings group as you left them.
 - Live streams show LIVE instead of a length; Live also brings playback back to the present.
 - A live stream that drops says so, with Play again.
@@ -14,6 +14,8 @@
 - The Menu key and Shift+F10 open the menu of stream rows and albums.
 - Alt and the arrows move the selected queue entry or effect stage; Delete removes the focused stage.
 - A Command history button in the Console, also on a phone.
+- In the Console Up and Down recall the history and keep the line you were typing; Clear has Undo.
+- Enter in Add stage adds the first match; a stage waiting for an option says which.
 
 **Changed**
 - Stop stops playback and keeps the queue on the same track.
@@ -22,6 +24,9 @@
 - Errors in playback and in the Console say what to do next.
 - Settings search opens the first result with Enter, says which word found a result and suggests a close word.
 - The Console and Settings share one log level.
+- Add to queue and Play next say what they did.
+- Escape closes a detail; switching sections puts the focus in the page.
+- Restart and Reset all say when they are done.
 - The light theme's selection is a step darker, apart from the buttons beside it.
 - Cards in sheets, dialogs and the welcome screen show in the light theme.
 - One empty state, one loading spinner and one inline notice across the app.
