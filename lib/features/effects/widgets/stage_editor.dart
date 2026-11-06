@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import '../../../generated/filter_catalog.dart';
+
 import '../../../ui/layout/layout.dart';
 import '../../../ui/tokens.dart';
 import '../../../ui/widgets/studio_snack.dart';
@@ -121,6 +123,22 @@ class StageEditor extends StatelessWidget {
             ),
           );
         }
+      }
+      final waiting = [
+        for (final p in d.params.whereType<StringParam>())
+          if (p.required && p.get(e).trim().isEmpty) p.name,
+      ];
+      if (waiting.isNotEmpty) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(top: Tokens.s8),
+            child: Text(
+              'Off until ${waiting.join(' and ')} '
+              '${waiting.length == 1 ? 'is' : 'are'} filled in.',
+              style: Tokens.caption,
+            ),
+          ),
+        );
       }
       if (d.params.isNotEmpty) {
         children.add(

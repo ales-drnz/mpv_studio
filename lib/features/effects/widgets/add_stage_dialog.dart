@@ -84,6 +84,13 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
     ];
   }
 
+  /// Adds the stage for [d], switched off while it waits for a
+  /// mandatory option.
+  void _pick(FilterDescriptor d) {
+    final e = d.create();
+    Navigator.of(context).pop(stageReady(e) ? e : d.setEnabled(e, false));
+  }
+
   @override
   Widget build(BuildContext context) {
     final groups = _groups();
@@ -123,12 +130,7 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
               icon: d.icon,
               title: d.title,
               subtitle: kFeaturedSubtitles[d.filter] ?? d.wire,
-              onTap: () {
-                final e = d.create();
-                Navigator.of(
-                  context,
-                ).pop(stageReady(e) ? e : d.setEnabled(e, false));
-              },
+              onTap: () => _pick(d),
             ),
         ]),
       ],
@@ -156,6 +158,11 @@ class _AddStageCatalogState extends State<AddStageCatalog> {
             label: 'Search filters',
             autocorrect: false,
             textInputAction: TextInputAction.search,
+            // Enter adds the first match, so a known name is two keys.
+            onSubmitted: (_) {
+              if (q.isEmpty || groups.isEmpty) return;
+              _pick(groups.first.$2.first);
+            },
             leading: Icon(Icons.search_rounded, size: 18, color: Tokens.fgDim),
           ),
           const SizedBox(height: Tokens.s4),
