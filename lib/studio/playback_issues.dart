@@ -18,9 +18,19 @@ Future<T?> unguarded<T>(FutureOr<T> Function() call) async => call();
 /// One readable problem for the user, shown as a toast by the shell.
 @immutable
 class PlaybackNotice {
-  const PlaybackNotice(this.message, {this.isError = true});
+  const PlaybackNotice(
+    this.message, {
+    this.isError = true,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final String message;
+
+  /// A way out the toast offers (play a stream again), instead of the
+  /// way to the log.
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   /// A problem (shown longer, with a way to the log) rather than plain
   /// information such as "End of queue".
@@ -50,12 +60,15 @@ class PlaybackIssues {
     required Stream<MpvFileEndedEvent> endFile,
     required Stream<Playlist> playlist,
     required Stream<void> loaded,
+    Stream<Duration>? duration,
+    this.retry,
   }) {
     _subs = [
       playlist.listen(_onPlaylist),
       endFile.listen(_onEndFile),
       errors.listen(_onError),
       loaded.listen((_) => _onLoaded()),
+      ?duration?.listen((d) => _length = d),
     ];
     final carried = takeCarriedOver();
     if (carried != null) notify(carried);
@@ -81,6 +94,15 @@ class PlaybackIssues {
     endFile: player.stream.endFile,
     playlist: player.stream.playlist,
     loaded: player.stream.seekCompleted,
+    duration: player.stream.duration,
+    retry: (media) async {
+      final at = player.state.playlist.items.indexOf(media);
+      if (at >= 0) {
+        await player.jump(at);
+      } else {
+        await player.open(media, play: true);
+      }
+    },
   );
 
   late final List<StreamSubscription<Object?>> _subs;
@@ -131,6 +153,12 @@ class PlaybackIssues {
     if (visible) _unseenLogErrors.value = 0;
   }
 
+  /// Plays [Media] again (a live stream that stopped).
+  final Future<void> Function(Media media)? retry;
+
+  /// The length of the entry mpv is on: zero for a live stream.
+  Duration _length = Duration.zero;
+
   /// The entry mpv is on, as last reported by the playlist stream.
   Media? _current;
 
@@ -149,11 +177,31 @@ class PlaybackIssues {
 
   void _onEndFile(MpvFileEndedEvent event) {
     final entry = _current;
+    if (event.reason == MpvEndFileReason.eof &&
+        entry != null &&
+        _length == Duration.zero &&
+        entry.uri.startsWith('http')) {
+      _liveStopped(entry);
+      return;
+    }
     if (event.reason != MpvEndFileReason.error) return;
     _lastFailed = entry;
     if (entry != null && !_failed.value.contains(entry)) {
       _failed.value = {..._failed.value, entry};
     }
+  }
+
+  /// A live stream (an HTTP entry with no length) reached an end: its
+  /// connection dropped, as a live stream has no end of its own.
+  void _liveStopped(Media entry) {
+    final again = retry;
+    _add(
+      PlaybackNotice(
+        'The live stream "${titleOf(entry)}" stopped.',
+        actionLabel: again == null ? null : 'Play again',
+        onAction: again == null ? null : () => again(entry),
+      ),
+    );
   }
 
   void _onLoaded() {

@@ -65,13 +65,15 @@ class _PlaybackNoticeHostState extends State<PlaybackNoticeHost>
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) return;
     // A burst of failures (a queue of dead links) shows the latest only.
-    final showLog = notice.isError && !widget.consoleVisible;
+    // The notice's own way out first (play a stream again), else the log.
+    final own = notice.actionLabel != null && notice.onAction != null;
+    final showLog = !own && notice.isError && !widget.consoleVisible;
     messenger.showStudioSnack(
       notice.message,
       // Information passes quickly and has nothing to show in the log.
       duration: Duration(seconds: notice.isError ? 6 : 2),
-      actionLabel: showLog ? 'Show log' : null,
-      onAction: showLog ? widget.onShowLog : null,
+      actionLabel: own ? notice.actionLabel : (showLog ? 'Show log' : null),
+      onAction: own ? notice.onAction : (showLog ? widget.onShowLog : null),
     );
   }
 
