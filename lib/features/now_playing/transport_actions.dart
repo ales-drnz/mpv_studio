@@ -48,6 +48,21 @@ Future<void> skipTrack(
   if (moved == false) notify?.call(forward ? 'End of queue' : 'Start of queue');
 }
 
+/// Stops playback and keeps the queue. mpv's `stop` empties the playlist,
+/// so the entries come back loaded and paused on the same one.
+// TODO(kit 0.7.0): player.stop(keepPlaylist: true) once the kit has it.
+Future<void> stopKeepingQueue(PlayerApi player, CallGuard guard) =>
+    guard(() async {
+      final queue = player.state.playlist;
+      await player.stop();
+      if (queue.items.isEmpty) return;
+      await player.openAll(
+        queue.items,
+        play: false,
+        index: queue.index.clamp(0, queue.items.length - 1),
+      );
+    });
+
 /// Plays when paused and pauses when playing, on the play intent.
 Future<void> togglePlay(PlayerApi player, CallGuard guard) =>
     guard(player.state.playWhenReady ? player.pause : player.play);

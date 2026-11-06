@@ -135,6 +135,12 @@ class FakePlayerStream implements PlayerStream {
   @override
   Stream<bool> get mute => _s((s) => s.mute);
   @override
+  Stream<bool> get shuffle => _s((s) => s.shuffle);
+  @override
+  Stream<Loop> get loop => _s((s) => s.loop);
+  @override
+  Stream<double> get rate => _s((s) => s.rate);
+  @override
   Stream<Playlist> get playlist => _s((s) => s.playlist);
   @override
   Stream<Map<String, String>> get metadata => _s((s) => s.metadata);
