@@ -130,6 +130,41 @@ class QueueController {
     return ok == null ? null : media;
   }
 
+  /// The entries [removeForUndo] took since the last undo toast went,
+  /// oldest first, so one Undo puts them all back.
+  final _removals = <_Removal>[];
+
+  /// Removes the entry at [index] and adds it to the removals one undo
+  /// puts back. Returns how many there are now, or null when the call
+  /// failed (the entry stays).
+  Future<int?> removeForUndo(int index) async {
+    final pl = player.state.playlist;
+    final current = index == pl.index;
+    final playing = player.state.playWhenReady;
+    final media = await remove(index);
+    if (media == null) return null;
+    _removals.add(_Removal(media, index, current: current, playing: playing));
+    return _removals.length;
+  }
+
+  /// Puts back every entry of [removeForUndo], newest first so each lands
+  /// at its index again. The one that was current becomes current again.
+  Future<void> undoRemovals() async {
+    final removals = List.of(_removals.reversed);
+    _removals.clear();
+    for (final r in removals) {
+      await restore(r.media, r.index);
+      if (!r.current) continue;
+      await guard(() async {
+        await player.jump(r.index);
+        if (!r.playing) await player.pause();
+      });
+    }
+  }
+
+  /// Drops the removals, once their undo is no longer offered.
+  void forgetRemovals() => _removals.clear();
+
   /// Puts [media] back at [index] after a [remove].
   Future<void> restore(Media media, int index) => guard(() async {
     // The appended entry lands at the current length, unless the queue
@@ -178,4 +213,21 @@ class QueueController {
     _disposed = true;
     _adding.dispose();
   }
+}
+
+/// An entry [QueueController.removeForUndo] took out.
+class _Removal {
+  _Removal(
+    this.media,
+    this.index, {
+    required this.current,
+    required this.playing,
+  });
+
+  final Media media;
+  final int index;
+
+  /// Whether it was the current entry, and playback was on.
+  final bool current;
+  final bool playing;
 }

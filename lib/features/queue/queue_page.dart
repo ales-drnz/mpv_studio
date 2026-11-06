@@ -196,19 +196,49 @@ class _QueueViewState extends State<QueueView> {
       case QueueAction.replace:
         await _queue.replace(index);
       case QueueAction.remove:
-        // Removing the selected entry hands the selection to the entry
-        // after it, else the one before.
-        final selectedAt = _selected?.resolve(items);
-        final neighbour = index + 1 < items.length ? index + 1 : index - 1;
-        final removed = await _queue.remove(index);
-        if (removed != null && mounted && selectedAt == index) {
-          setState(
-            () => _selected = neighbour < 0
-                ? null
-                : EntryRef(items[neighbour], neighbour),
-          );
-        }
+        await _removeAt(index);
     }
+  }
+
+  /// Bumped by each removal toast, so only the latest one forgets the
+  /// removals when it goes.
+  int _undoToast = 0;
+
+  /// Removes the entry at [index] with an undo that also brings back the
+  /// ones removed just before. Returns whether it went.
+  Future<bool> _removeAt(int index) async {
+    final items = widget.player.state.playlist.items;
+    if (index < 0 || index >= items.length) return false;
+    final title = QueueRowInfo.of(
+      items[index],
+      widget.details.details.value[items[index]],
+    ).title;
+    // Removing the selected entry hands the selection to the entry after
+    // it, else the one before.
+    final selectedAt = _selected?.resolve(items);
+    final neighbour = index + 1 < items.length ? index + 1 : index - 1;
+    final count = await _queue.removeForUndo(index);
+    if (count == null) return false;
+    if (!mounted) return true;
+    if (selectedAt == index) {
+      setState(
+        () => _selected = neighbour < 0
+            ? null
+            : EntryRef(items[neighbour], neighbour),
+      );
+    }
+    final toast = ++_undoToast;
+    final shown = ScaffoldMessenger.maybeOf(context)?.showStudioSnack(
+      count == 1 ? 'Removed "$title"' : 'Removed $count tracks',
+      actionLabel: 'Undo',
+      onAction: _queue.undoRemovals,
+    );
+    shown?.closed.then((reason) {
+      if (toast == _undoToast && reason != SnackBarClosedReason.action) {
+        _queue.forgetRemovals();
+      }
+    });
+    return true;
   }
 
   Widget _info(Playlist pl, int index, {VoidCallback? close}) {
@@ -468,6 +498,7 @@ class _QueueViewState extends State<QueueView> {
           selected: selected,
           onSelect: (i) => _select(playlist.items, i),
           onAction: (action, i) => _onAction(action, i, split: split),
+          onRemove: _removeAt,
         ),
       );
 }

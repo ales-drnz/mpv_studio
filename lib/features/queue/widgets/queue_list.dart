@@ -11,7 +11,6 @@ import '../../../ui/widgets/reorder_proxy.dart';
 import '../queue_controller.dart';
 import '../queue_details.dart';
 import 'queue_tile.dart';
-import '../../../ui/widgets/studio_snack.dart';
 
 /// What the row menu offers.
 enum QueueAction {
@@ -81,8 +80,9 @@ List<StudioMenuItem<QueueAction>> queueMenuItems({
 /// The queue as a reorderable list.
 ///
 /// With a pointer: a click selects, a double click plays, right click
-/// opens the menu, the arrow keys move the selection, Enter plays it and
-/// Delete removes it. On touch: a tap plays, a long press opens the
+/// opens the menu, the arrow keys move the selection, Alt with an arrow
+/// moves the selected entry, Enter plays it and Delete removes it (with
+/// undo). Keys typed on a focused row button go to that button. On touch: a tap plays, a long press opens the
 /// action sheet, a swipe removes (with undo) and the handle reorders after
 /// a long press.
 class QueueList extends StatefulWidget {
@@ -95,6 +95,7 @@ class QueueList extends StatefulWidget {
     required this.selected,
     required this.onSelect,
     required this.onAction,
+    required this.onRemove,
   });
 
   final Playlist playlist;
@@ -108,6 +109,9 @@ class QueueList extends StatefulWidget {
 
   /// Runs a menu [QueueAction] on an entry.
   final void Function(QueueAction action, int index) onAction;
+
+  /// Removes an entry, with undo; completes with whether it went.
+  final Future<bool> Function(int index) onRemove;
 
   @override
   State<QueueList> createState() => _QueueListState();
@@ -205,11 +209,35 @@ class _QueueListState extends State<QueueList> {
     if (count == 0) return KeyEventResult.ignored;
     final selected = widget.selected;
     final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.arrowDown) {
+    final onButton = !node.hasPrimaryFocus;
+    final up = key == LogicalKeyboardKey.arrowUp;
+    final down = key == LogicalKeyboardKey.arrowDown;
+    if ((up || down) && HardwareKeyboard.instance.isAltPressed) {
+      if (selected == null || selected >= count) return KeyEventResult.handled;
+      final to = (selected + (up ? -1 : 1)).clamp(0, count - 1);
+      // The selection follows its entry; the view follows the selection.
+      if (to != selected) {
+        widget.controller.move(selected, to).then((_) {
+          if (mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(to));
+          }
+        });
+      }
+      return KeyEventResult.handled;
+    }
+    // The arrows move the selection, and the focus with it off a row
+    // button, so the ring and the highlight never part.
+    if (up ||
+        down ||
+        key == LogicalKeyboardKey.home ||
+        key == LogicalKeyboardKey.end) {
+      if (onButton) _focus.requestFocus();
+    }
+    if (down) {
       _select(selected == null ? 0 : (selected + 1).clamp(0, count - 1));
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.arrowUp) {
+    if (up) {
       _select(
         selected == null ? count - 1 : (selected - 1).clamp(0, count - 1),
       );
@@ -224,14 +252,16 @@ class _QueueListState extends State<QueueList> {
       return KeyEventResult.handled;
     }
     if (selected == null || selected >= count) return KeyEventResult.ignored;
+    // Enter and Delete belong to a focused row button: Enter runs it.
+    if (onButton) return KeyEventResult.ignored;
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter) {
       widget.onAction(QueueAction.play, selected);
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.delete ||
-        key == LogicalKeyboardKey.backspace) {
-      widget.onAction(QueueAction.remove, selected);
+    // Delete only: Backspace is normal speed everywhere in the app.
+    if (key == LogicalKeyboardKey.delete) {
+      widget.onRemove(selected);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.contextMenu ||
@@ -243,28 +273,14 @@ class _QueueListState extends State<QueueList> {
     return KeyEventResult.ignored;
   }
 
-  /// Removes a swiped row and offers to put it back.
+  /// Removes a swiped row; the page offers to put it back.
   Future<void> _dismiss(int index) async {
-    final title = QueueRowInfo.of(
-      _items[index],
-      widget.details[_items[index]],
-    ).title;
     setState(() {
       _dismissed = index;
       _dismissedFrom = widget.playlist;
     });
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final removed = await widget.controller.remove(index);
-    if (!mounted) return;
-    if (removed == null) {
-      setState(() => _dismissed = null);
-      return;
-    }
-    messenger?.showStudioSnack(
-      'Removed "$title"',
-      actionLabel: 'Undo',
-      onAction: () => widget.controller.restore(removed, index),
-    );
+    final removed = await widget.onRemove(index);
+    if (mounted && !removed) setState(() => _dismissed = null);
   }
 
   @override
@@ -315,7 +331,7 @@ class _QueueListState extends State<QueueList> {
               onTap: () =>
                   touch ? widget.onAction(QueueAction.play, i) : _click(i),
               onPlay: () => widget.onAction(QueueAction.play, i),
-              onRemove: () => widget.onAction(QueueAction.remove, i),
+              onRemove: () => widget.onRemove(i),
               onMore: (position) => _openMenu(i, position),
               gap: gap,
             ),
