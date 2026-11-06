@@ -366,17 +366,35 @@ class AppSettings {
   void recordEffects(List<AudioEffect> fx) =>
       _snap('effects', EffectsCodec.encode(fx));
 
+  /// The effects chains saved under a name, in the order they were saved.
+  /// A chain that cannot be read is left out.
+  Map<String, List<AudioEffect>> get savedChains {
+    final raw = _store['savedChains'];
+    if (raw is! Map) return const {};
+    return {
+      for (final MapEntry(:key, :value) in raw.entries)
+        if (key is String) key: EffectsCodec.decode(value),
+    };
+  }
+
+  void recordSavedChains(Map<String, List<AudioEffect>> chains) =>
+      _snap('savedChains', {
+        for (final MapEntry(:key, :value) in chains.entries)
+          key: EffectsCodec.encode(value),
+      });
+
   // ---- Lifecycle --------------------------------------------------------
   List<String> _strings(String k) {
     final raw = _store[k];
     return raw is List ? [for (final e in raw) ?(e is String ? e : null)] : [];
   }
 
-  /// The keys a reset keeps: the theme and the welcome screen choice.
-  static const _keptOnReset = {'themeMode', 'onboarded'};
+  /// The keys a reset keeps: the theme, the welcome screen choice and the
+  /// saved effects chains (the user's own work, not a setting).
+  static const _keptOnReset = {'themeMode', 'onboarded', 'savedChains'};
 
-  /// Stops recording and forgets every value but the theme and the
-  /// welcome screen choice, saved at once. Restart the player afterwards
+  /// Stops recording and forgets every value but the theme, the welcome
+  /// screen choice and the saved chains, saved at once. Restart the player afterwards
   /// so the defaults take effect.
   Future<void> resetToDefaults() async {
     await _detach();

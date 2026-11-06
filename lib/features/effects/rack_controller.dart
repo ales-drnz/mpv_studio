@@ -197,6 +197,13 @@ class RackController extends ChangeNotifier {
     return id;
   }
 
+  /// Plays [effects] as the whole chain (a saved chain loaded), every
+  /// stage closed.
+  void replaceAll(List<AudioEffect> effects) {
+    _expanded.clear();
+    _set(RackChain.of(effects));
+  }
+
   /// Copies stage [id] right after it and returns the copy's id.
   int? duplicate(int id) {
     final r = _chain.duplicate(id);

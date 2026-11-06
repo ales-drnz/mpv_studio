@@ -188,7 +188,7 @@ class PlayerSection extends StatelessWidget {
       title: 'Reset all settings?',
       builder: (context) => Text(
         'Every engine, effect and network setting goes back to its default '
-        'and the player restarts. The theme is kept.',
+        'and the player restarts. The theme and the saved chains are kept.',
         style: Tokens.body,
       ),
       actions: (context) => [
