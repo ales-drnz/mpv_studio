@@ -10,6 +10,7 @@ import '../../../ui/widgets/section_body.dart';
 import '../setting_anchor.dart';
 import '../settings_catalog.dart';
 import '../../../studio/app_info.dart';
+import '../../../studio/playback_issues.dart';
 import '../../../studio/app_settings.dart';
 import '../settings_scope.dart';
 import 'anchored_rows.dart';
@@ -187,7 +188,7 @@ class PlayerSection extends StatelessWidget {
       title: 'Reset all settings?',
       builder: (context) => Text(
         'Every engine, effect and network setting goes back to its default '
-        'and the player restarts. The theme is kept.',
+        'and the player restarts. The theme and the saved chains are kept.',
         style: Tokens.body,
       ),
       actions: (context) => [
@@ -205,14 +206,27 @@ class PlayerSection extends StatelessWidget {
         ),
       ],
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !context.mounted) return;
     await scope.settings.resetToDefaults();
+    if (!context.mounted) return;
     final restart = scope.restart;
     if (restart != null) {
-      await restart();
-    } else if (context.mounted) {
+      await _restartSaying(context, restart, 'Settings reset');
+    } else {
       showSettingsMessage(context, 'Settings reset. Restart the app.');
     }
+  }
+
+  /// Runs [restart] and says [done] once the player is back: the restart
+  /// takes this page and the app's messenger down, so the next studio's
+  /// notices say it.
+  static Future<void> _restartSaying(
+    BuildContext context,
+    Future<void> Function() restart,
+    String done,
+  ) {
+    PlaybackIssues.carryOver(done);
+    return restart();
   }
 
   @override
@@ -232,7 +246,11 @@ class PlayerSection extends StatelessWidget {
             trailing: TileButton(
               label: 'Restart',
               tooltip: 'Restart the player',
-              onPressed: restart == null ? null : () => unawaited(restart()),
+              onPressed: restart == null
+                  ? null
+                  : () => unawaited(
+                      _restartSaying(context, restart, 'Player restarted'),
+                    ),
             ),
           ),
         ),

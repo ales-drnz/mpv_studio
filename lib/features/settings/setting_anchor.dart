@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../ui/layout/layout.dart';
 import '../../ui/tokens.dart';
 import 'settings_catalog.dart';
 
@@ -45,6 +46,11 @@ class _SettingAnchorState extends State<SettingAnchor>
 
   SettingsFocus? _focus;
   late final _glow = AnimationController(vsync: this, duration: _flash);
+  final _node = FocusNode(
+    debugLabel: 'setting anchor',
+    canRequestFocus: false,
+    skipTraversal: true,
+  );
 
   @override
   void didChangeDependencies() {
@@ -72,6 +78,14 @@ class _SettingAnchorState extends State<SettingAnchor>
       );
       // With reduced motion the row is scrolled to, not flashed.
       if (!still) _glow.forward(from: 0);
+      // The keyboard lands on the row's control, not back at the top. On
+      // touch it stays put: focusing a field would open the soft keyboard
+      // over the row.
+      if (context.layout.isTouch) return;
+      _node.traversalDescendants
+          .where((n) => n.canRequestFocus)
+          .firstOrNull
+          ?.requestFocus();
     });
   }
 
@@ -79,6 +93,7 @@ class _SettingAnchorState extends State<SettingAnchor>
   void dispose() {
     _focus?.removeListener(_check);
     _glow.dispose();
+    _node.dispose();
     super.dispose();
   }
 
@@ -98,7 +113,7 @@ class _SettingAnchorState extends State<SettingAnchor>
           child: child,
         );
       },
-      child: widget.child,
+      child: Focus(focusNode: _node, child: widget.child),
     );
   }
 }

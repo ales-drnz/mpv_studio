@@ -103,8 +103,68 @@ class SettingEntry {
     return total;
   }
 
+  /// The keywords that brought this entry up for [query], for the words
+  /// that are in neither its title nor its description: the reason a
+  /// result that shows none of the words is there.
+  List<String> keywordsFor(String query) {
+    final shown = '$title $description'.toLowerCase();
+    final words = query.toLowerCase().split(RegExp(r'\s+'))
+      ..removeWhere((w) => w.isEmpty || shown.contains(w));
+    return [
+      for (final k in keywords)
+        if (words.any(k.toLowerCase().contains)) k,
+    ];
+  }
+
   @override
   String toString() => 'SettingEntry($id)';
+}
+
+/// A word of the settings close to [query] (one or two letters off), for
+/// a search that finds nothing; null when none is.
+String? closestSettingWord(String query, {bool web = kIsWeb}) {
+  final q = query.trim().toLowerCase();
+  if (q.length < 3) return null;
+  final limit = q.length < 6 ? 1 : 2;
+  String? best;
+  var bestDistance = limit + 1;
+  for (final e in SettingsCatalog.all) {
+    if (web && e.nativeOnly) continue;
+    final words = '${e.title} ${e.keywords.join(' ')}'.toLowerCase().split(
+      RegExp(r'[^a-z0-9]+'),
+    );
+    for (final w in words) {
+      if (w.length < 3) continue;
+      final d = _distance(q, w, bestDistance);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = w;
+      }
+    }
+  }
+  return best;
+}
+
+/// The edit distance of [a] and [b], or [cap] once it reaches it.
+int _distance(String a, String b, int cap) {
+  if ((a.length - b.length).abs() >= cap) return cap;
+  var prev = List<int>.generate(b.length + 1, (i) => i);
+  for (var i = 1; i <= a.length; i++) {
+    final row = List<int>.filled(b.length + 1, 0)..[0] = i;
+    var low = row[0];
+    for (var j = 1; j <= b.length; j++) {
+      final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+      row[j] = [
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + cost,
+      ].reduce((x, y) => x < y ? x : y);
+      if (row[j] < low) low = row[j];
+    }
+    if (low >= cap) return cap;
+    prev = row;
+  }
+  return prev[b.length] < cap ? prev[b.length] : cap;
 }
 
 /// The settings matching [query], best first, then in page order.

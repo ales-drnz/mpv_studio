@@ -15,8 +15,10 @@ import 'rack_catalog.dart';
 import 'rack_controller.dart';
 import 'rack_environment.dart';
 import 'rack_mode.dart';
+import 'saved_chains.dart';
 import 'stage_presets.dart';
 import 'widgets/add_stage_dialog.dart';
+import 'widgets/chain_menu.dart';
 import 'widgets/loudness_panel.dart';
 import 'widgets/quick_editors.dart';
 import 'widgets/rack_parts.dart';
@@ -37,6 +39,7 @@ class EffectsPage extends StatelessWidget {
     final player = PlayerScope.of(context);
     final rack = PlayerScope.rackOf(context);
     final normalizer = PlayerScope.normalizerOf(context);
+    final settings = PlayerScope.settingsOf(context);
     return Live<SpectrumSettings>(
       stream: player.stream.spectrum,
       initial: player.state.spectrum,
@@ -48,6 +51,10 @@ class EffectsPage extends StatelessWidget {
         loudness: player.stream.loudnessMeter,
         child: SignalChainView(
           rack: rack,
+          chains: MemoryChainLibrary(
+            initial: settings.savedChains,
+            onChanged: settings.recordSavedChains,
+          ),
           footer: ListenableBuilder(
             listenable: Listenable.merge([rack, normalizer]),
             builder: (context, _) => LoudnessPanel(
@@ -78,7 +85,15 @@ class SignalChainView extends StatefulWidget {
   final RackController rack;
   final Widget? footer;
 
-  const SignalChainView({super.key, required this.rack, this.footer});
+  /// The named chains of the header's Chains menu; none without.
+  final ChainLibrary? chains;
+
+  const SignalChainView({
+    super.key,
+    required this.rack,
+    this.footer,
+    this.chains,
+  });
 
   @override
   State<SignalChainView> createState() => _SignalChainViewState();
@@ -158,7 +173,7 @@ class _SignalChainViewState extends State<SignalChainView> {
       case StageAction.addAfter:
         _add(index: i + 1);
       case StageAction.remove:
-        rack.remove(id);
+        removeStage(context, rack, id);
     }
   }
 
@@ -441,6 +456,22 @@ class _SignalChainViewState extends State<SignalChainView> {
                       ),
                     ]
                   : [
+                      if (widget.chains case final library?)
+                        Builder(
+                          builder: (context) => RackHeaderButton(
+                            key: const ValueKey('rack-chains'),
+                            icon: Icons.bookmarks_outlined,
+                            label: 'Chains',
+                            tooltip: 'Save, load and share chains',
+                            compact: layout.isCompact,
+                            onTap: () => openChainMenu(
+                              context,
+                              rack,
+                              library,
+                              position: centreOf(context),
+                            ),
+                          ),
+                        ),
                       RackHeaderButton(
                         key: const ValueKey('rack-bypass'),
                         icon: Icons.compare_arrows_rounded,
@@ -450,7 +481,10 @@ class _SignalChainViewState extends State<SignalChainView> {
                             : 'Hear the audio without the chain',
                         active: rack.bypass,
                         compact: layout.isCompact,
-                        onTap: () => rack.setBypass(!rack.bypass),
+                        // Off when nothing is on to bypass.
+                        onTap: rack.canBypass
+                            ? () => rack.setBypass(!rack.bypass)
+                            : null,
                       ),
                       RackHeaderButton(
                         key: const ValueKey('rack-add'),

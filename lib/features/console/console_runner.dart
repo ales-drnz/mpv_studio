@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
+import 'command_catalog.dart';
+
 import 'console_tokenizer.dart';
 import 'hook_monitor.dart';
 
@@ -94,6 +96,8 @@ class ConsoleRunner {
     if (args.isEmpty) return const [];
     try {
       return await _run(args);
+    } on MpvCommandException catch (e) {
+      return [ConsoleResult.error(_explain(args, e))];
     } on PlayerException catch (e) {
       return [ConsoleResult.error(e.toString())];
     } on ArgumentError catch (e) {
@@ -102,8 +106,43 @@ class ConsoleRunner {
     }
   }
 
+  /// mpv's refusal of [args] in words that say what to do next. The
+  /// command is the first word after the prefixes (no-osd, async), with
+  /// mpv's `_` spelling read as `-`.
+  static String _explain(List<String> args, MpvCommandException e) {
+    final words = args.skipWhile(kCommandPrefixes.contains).toList();
+    if (words.isEmpty) return '${e.name}: ${e.message}';
+    final name = words.first.replaceAll('_', '-');
+    MpvCommand? known;
+    for (final c in kMpvCommands) {
+      if (c.name == name) known = c;
+    }
+    if (e.code != _invalidParameter) return '$name: ${e.message}';
+    if (known == null) {
+      return "Unknown command '${words.first}'. Type help, or press Tab "
+          'for the list.';
+    }
+    return '$name did not take those arguments. Its form: '
+        '$name ${known.signature}';
+  }
+
+  /// mpv's MPV_ERROR_INVALID_PARAMETER, also its answer to a bad command.
+  static const _invalidParameter = -4;
+
   Future<List<ConsoleResult>> _run(List<String> args) async {
     switch (args.first) {
+      case 'get' || 'getnode' when args.length == 1:
+        return [
+          ConsoleResult.error(
+            '${args.first} needs a property, like ${args.first} volume',
+          ),
+        ];
+      case 'set' when args.length < 3:
+        return [
+          const ConsoleResult.error(
+            'set needs a property and a value, like set volume 50',
+          ),
+        ];
       case 'get' when args.length >= 2:
         final value = await player.getRawProperty(args[1]);
         return [ConsoleResult.output('${args[1]} = ${value ?? '<null>'}')];

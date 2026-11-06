@@ -136,6 +136,7 @@ class ConsoleInput extends StatelessWidget {
     required this.onChanged,
     required this.onTap,
     required this.onSubmitted,
+    this.onHistory,
   });
 
   final TextEditingController controller;
@@ -143,6 +144,9 @@ class ConsoleInput extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onTap;
   final ValueChanged<String> onSubmitted;
+
+  /// Lists the earlier lines to pick one; null while there are none.
+  final VoidCallback? onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +176,14 @@ class ConsoleInput extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: field),
+        const SizedBox(width: Tokens.s8),
+        RoundIconButton(
+          tooltip: 'Command history',
+          diameter: h,
+          size: 20,
+          onTap: onHistory,
+          icon: Icons.history,
+        ),
         const SizedBox(width: Tokens.s8),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: controller,

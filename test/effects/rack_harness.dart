@@ -4,6 +4,7 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:mpv_studio/features/effects/effects_page.dart';
 import 'package:mpv_studio/features/effects/rack_controller.dart';
 import 'package:mpv_studio/features/effects/rack_environment.dart';
+import 'package:mpv_studio/features/effects/saved_chains.dart';
 import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/palette.dart';
 
@@ -32,6 +33,7 @@ Future<RackController> pumpRack(
   RecordingTaps? taps,
   Widget? footer,
   void Function(RackController rack)? before,
+  ChainLibrary? chains,
 }) async {
   final rack = RackController(engine);
   addTearDown(rack.dispose);
@@ -44,7 +46,7 @@ Future<RackController> pumpRack(
         pcm: const Stream.empty(),
         spectrum: const SpectrumSettings(),
         loudness: const Stream.empty(),
-        child: SignalChainView(rack: rack, footer: footer),
+        child: SignalChainView(rack: rack, footer: footer, chains: chains),
       ),
     ),
     size: size,
