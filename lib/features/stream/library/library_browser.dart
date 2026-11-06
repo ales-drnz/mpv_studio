@@ -187,6 +187,10 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
       if (!mounted || query != _query) return;
       _songTotal = songs.total;
       _albumTotal = albums.total;
+      // A next page of the old search still loading must not land on
+      // the new results.
+      _songs.cancel();
+      _albums.cancel();
       _songs.value = PagingState(
         pages: [songs.items],
         keys: const [0],

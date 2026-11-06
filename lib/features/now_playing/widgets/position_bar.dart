@@ -57,9 +57,17 @@ class PositionBar extends StatelessWidget {
           // No length but playing on: a live stream says so.
           builder: (context, d) => d > Duration.zero
               ? Text(formatDuration(d), style: Tokens.numeric)
-              : player.state.position > Duration.zero
-              ? const StatePill('LIVE')
-              : Text('-:--', style: Tokens.numeric),
+              // Followed too: a radio started from idle has no length
+              // before it plays.
+              : Live<bool>(
+                  stream: player.stream.position
+                      .map((p) => p > Duration.zero)
+                      .distinct(),
+                  initial: player.state.position > Duration.zero,
+                  builder: (context, playing) => playing
+                      ? const StatePill('LIVE')
+                      : Text('-:--', style: Tokens.numeric),
+                ),
         ),
       ],
     );

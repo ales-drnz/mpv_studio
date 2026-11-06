@@ -139,4 +139,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(back, findsNothing);
   });
+
+  testWidgets('Live at the edge moves only the view', (tester) async {
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit(
+        (s) => s.copyWith(
+          duration: Duration.zero,
+          position: const Duration(seconds: 219, milliseconds: 500),
+        ),
+      );
+    await pumpPlayback(tester, player, size: studioSize('1440x900'));
+    await tester.pump();
+    final bar = find.byType(WaveformScrollBar);
+    await tester.dragFrom(
+      tester.getRect(bar).centerRight - const Offset(4, 0),
+      Offset(-tester.getSize(bar).width, 0),
+    );
+    await tester.pumpAndSettle();
+    player.calls.clear();
+    await tester.tap(find.text('Live'));
+    await tester.pumpAndSettle();
+    expect(player.calls, isEmpty);
+  });
+
+  testWidgets('a radio that starts from idle turns to LIVE', (tester) async {
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit(
+        (s) => s.copyWith(duration: Duration.zero, position: Duration.zero),
+      );
+    await pumpPlayback(tester, player, size: studioSize('1440x900'));
+    await tester.pump();
+    expect(find.text('-:--'), findsOneWidget);
+    player.emit((s) => s.copyWith(position: const Duration(seconds: 3)));
+    await tester.pump();
+    expect(find.text('LIVE'), findsOneWidget);
+  });
 }

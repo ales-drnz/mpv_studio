@@ -61,6 +61,7 @@ class PlaybackIssues {
     required Stream<Playlist> playlist,
     required Stream<void> loaded,
     Stream<Duration>? duration,
+    Stream<bool>? completed,
     this.retry,
   }) {
     _subs = [
@@ -69,6 +70,13 @@ class PlaybackIssues {
       errors.listen(_onError),
       loaded.listen((_) => _onLoaded()),
       ?duration?.listen((d) => _length = d),
+      // The last entry does not end: it completes and stays open.
+      ?completed?.listen((done) {
+        final entry = _current;
+        if (done && entry != null && _isLive(entry, _length)) {
+          _liveStopped(entry);
+        }
+      }),
     ];
     final carried = takeCarriedOver();
     if (carried != null) notify(carried);
@@ -95,6 +103,7 @@ class PlaybackIssues {
     playlist: player.stream.playlist,
     loaded: player.stream.seekCompleted,
     duration: player.stream.duration,
+    completed: player.stream.completed,
     retry: (media) async {
       final at = player.state.playlist.items.indexOf(media);
       if (at >= 0) {
@@ -177,11 +186,15 @@ class PlaybackIssues {
 
   void _onEndFile(MpvFileEndedEvent event) {
     final entry = _current;
+    // A live stream has no end of its own: one that stops reading on an
+    // error mid-queue lost its connection. The event's own entry and
+    // length, as the current ones may already be the next's.
+    final ended = event.media ?? entry;
     if (event.reason == MpvEndFileReason.eof &&
-        entry != null &&
-        _length == Duration.zero &&
-        entry.uri.startsWith('http')) {
-      _liveStopped(entry);
+        event.readError == true &&
+        ended != null &&
+        _isLive(ended, event.duration ?? Duration.zero)) {
+      _liveStopped(ended);
       return;
     }
     if (event.reason != MpvEndFileReason.error) return;
@@ -190,6 +203,11 @@ class PlaybackIssues {
       _failed.value = {..._failed.value, entry};
     }
   }
+
+  /// Whether [entry], of [length], is a live stream: an HTTP entry with
+  /// no length.
+  static bool _isLive(Media entry, Duration length) =>
+      length == Duration.zero && entry.uri.startsWith('http');
 
   /// A live stream (an HTTP entry with no length) reached an end: its
   /// connection dropped, as a live stream has no end of its own.

@@ -30,9 +30,7 @@ void main() {
       onZoom: zooms.add,
     );
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    pan.signal(
-      const PointerScrollEvent(scrollDelta: Offset(0, -40)),
-    );
+    pan.signal(const PointerScrollEvent(scrollDelta: Offset(0, -40)));
     GestureBinding.instance.pointerSignalResolver.resolve(
       const PointerScrollEvent(scrollDelta: Offset(0, -40)),
     );

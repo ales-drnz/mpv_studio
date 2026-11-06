@@ -322,6 +322,8 @@ class _WaveformMeterState extends State<WaveformMeter>
     final wave = _view.wave;
     if (wave == null) return;
     final end = wave.start + wave.duration - const Duration(seconds: 1);
+    // Already at the edge, only the view had moved: the audio stays.
+    if (end <= _livePos() + const Duration(seconds: 2)) return;
     if (end > Duration.zero) _guard(() => _player.seek(end));
   }
 

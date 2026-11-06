@@ -52,43 +52,76 @@ const _a = Media('/music/a.flac', extras: {'title': 'Alpha'});
 const _b = Media('/music/b.flac', extras: {'title': 'Beta'});
 
 void main() {
-  test('a live stream that ends says so and can be played again', () async {
-    final endFile = StreamController<MpvFileEndedEvent>.broadcast();
-    final playlist = StreamController<Playlist>.broadcast();
-    final duration = StreamController<Duration>.broadcast();
-    final retried = <Media>[];
-    final issues = PlaybackIssues(
-      errors: const Stream.empty(),
-      endFile: endFile.stream,
-      playlist: playlist.stream,
-      loaded: const Stream.empty(),
-      duration: duration.stream,
-      retry: (m) async => retried.add(m),
-    );
-    addTearDown(issues.dispose);
-    final got = <PlaybackNotice>[];
-    issues.notices.listen(got.add);
+  group('a live stream that stops', () {
     const radio = Media('https://radio.test/live', extras: {'title': 'Night'});
-    playlist.add(const Playlist([radio], index: 0));
-    duration.add(Duration.zero);
-    endFile.add(
-      const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
-    );
-    await pumpEventQueue();
-    expect(got.single.message, 'The live stream "Night" stopped.');
-    expect(got.single.actionLabel, 'Play again');
-    got.single.onAction!();
-    expect(retried, [radio]);
+    late StreamController<MpvFileEndedEvent> endFile;
+    late StreamController<Playlist> playlist;
+    late StreamController<bool> completed;
+    late List<Media> retried;
+    late List<PlaybackNotice> got;
 
-    // A track that reaches its end says nothing.
-    got.clear();
-    playlist.add(const Playlist([_a], index: 0));
-    duration.add(const Duration(minutes: 3));
-    endFile.add(
-      const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
-    );
-    await pumpEventQueue();
-    expect(got, isEmpty);
+    setUp(() {
+      endFile = StreamController.broadcast();
+      playlist = StreamController.broadcast();
+      completed = StreamController.broadcast();
+      retried = [];
+      got = [];
+      final issues = PlaybackIssues(
+        errors: const Stream.empty(),
+        endFile: endFile.stream,
+        playlist: playlist.stream,
+        loaded: const Stream.empty(),
+        completed: completed.stream,
+        retry: (m) async => retried.add(m),
+      );
+      addTearDown(issues.dispose);
+      issues.notices.listen(got.add);
+    });
+
+    test('mid-queue: its connection dropped, Play again plays it', () async {
+      endFile.add(
+        const MpvFileEndedEvent(
+          reason: MpvEndFileReason.eof,
+          error: 0,
+          media: radio,
+          readError: true,
+        ),
+      );
+      await pumpEventQueue();
+      expect(got.single.message, 'The live stream "Night" stopped.');
+      expect(got.single.actionLabel, 'Play again');
+      got.single.onAction!();
+      expect(retried, [radio]);
+    });
+
+    test('last in the queue: it completes with no length', () async {
+      playlist.add(const Playlist([radio], index: 0));
+      completed.add(true);
+      await pumpEventQueue();
+      expect(got.single.message, 'The live stream "Night" stopped.');
+    });
+
+    test('a file that reached its end says nothing', () async {
+      endFile.add(
+        const MpvFileEndedEvent(
+          reason: MpvEndFileReason.eof,
+          error: 0,
+          media: Media('https://podcast.test/ep1.mp3'),
+          readError: false,
+        ),
+      );
+      endFile.add(
+        const MpvFileEndedEvent(
+          reason: MpvEndFileReason.eof,
+          error: 0,
+          media: Media('https://jf.test/a.flac'),
+          duration: Duration(minutes: 3),
+          readError: true,
+        ),
+      );
+      await pumpEventQueue();
+      expect(got, isEmpty);
+    });
   });
 
   late _Harness h;

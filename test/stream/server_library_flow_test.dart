@@ -72,4 +72,43 @@ void main() {
       contains('https://jf.home.test'),
     );
   });
+
+  testWidgets('a page still loading for the old search stays out', (
+    tester,
+  ) async {
+    final server = FakeServer(
+      connected: true,
+      tracks: [
+        for (var i = 0; i < 60; i++) _t('$i', i < 55 ? 'Song $i' : 'Amber $i'),
+      ],
+    );
+    await pumpStudio(
+      tester,
+      streamView(
+        player: StreamPlayer(),
+        jellyfin: server,
+        tab: StreamTab.jellyfin,
+      ),
+      size: const Size(1440, 900),
+    );
+    await tester.pumpAndSettle();
+    // The next page of the first search starts and waits.
+    server.trackGate = Completer();
+    await tester.dragUntilVisible(
+      find.text('Song 49'),
+      find.byType(Scrollable).last,
+      const Offset(0, -400),
+    );
+    await tester.pump();
+    // A new search lands first.
+    final gate = server.trackGate!;
+    server.trackGate = null;
+    await tester.enterText(find.byType(TextField).first, 'Amber');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Song 5'), findsNothing);
+    expect(find.text('Amber 55'), findsOneWidget);
+  });
 }

@@ -397,8 +397,13 @@ class AppSettings {
   // ---- Queue and places -------------------------------------------------
 
   /// Keeps the queue as it changes, for the next launch.
+  /// Only with Resume on: off, nothing is kept and what was is dropped.
   void watchQueue(PlayerApi p) {
-    _subs.add(p.stream.playlist.listen((q) => _snap('queue', encodeQueue(q))));
+    _subs.add(
+      p.stream.playlist.listen(
+        (q) => _snap('queue', resumePlayback ? encodeQueue(q) : null),
+      ),
+    );
   }
 
   /// Loads the queue of the last session on [p], paused on its entry; an
