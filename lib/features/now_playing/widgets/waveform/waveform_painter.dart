@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
@@ -109,9 +111,10 @@ class WaveformPainter extends CustomPainter {
   /// Half the playhead pip's width.
   static const double _pipHalf = 5;
 
-  static double _niceStep(double visibleSecs) {
+  /// A round step between ruler labels about every 120 px of [width].
+  static double _niceStep(double visibleSecs, double width) {
     const steps = <double>[1, 2, 5, 10, 15, 20, 30, 60, 120, 300, 600];
-    final target = visibleSecs / 5;
+    final target = visibleSecs * 120 / math.max(width, 120);
     for (final s in steps) {
       if (s >= target) return s;
     }
@@ -215,7 +218,7 @@ class WaveformPainter extends CustomPainter {
     final tick = Paint()
       ..color = palette.fgFaint
       ..strokeWidth = 1;
-    final step = _niceStep(view.visibleSecs);
+    final step = _niceStep(view.visibleSecs, w);
     for (final t in rulerTicks(
       viewStart: tLeft,
       viewEnd: tRight,
@@ -224,7 +227,7 @@ class WaveformPainter extends CustomPainter {
       end: end,
     )) {
       final x = (t - tLeft) * pxPerSec;
-      canvas.drawLine(Offset(x, rulerHeight - 5), Offset(x, rulerHeight), tick);
+      canvas.drawLine(Offset(x, rulerHeight - 4), Offset(x, rulerHeight), tick);
       final tp = _label(
         formatDuration(Duration(microseconds: (t * 1e6).round())),
         palette.fgDim,
@@ -236,7 +239,7 @@ class WaveformPainter extends CustomPainter {
       // A label the playhead's pip would cover is left out.
       final covered =
           playheadX >= dx - _pipHalf && playheadX <= dx + tp.width + _pipHalf;
-      if (!covered) tp.paint(canvas, Offset(dx, 5));
+      if (!covered) tp.paint(canvas, Offset(dx, 3));
       tp.dispose();
     }
   }
@@ -274,24 +277,23 @@ class WaveformPainter extends CustomPainter {
     final waveStart = wv.start.inMicroseconds / 1e6;
     final binSecs = wv.duration.inMicroseconds / 1e6 / wv.bins;
     final maxHalf = waveH / 2 - 3;
-    final barW = (pxPerSec * binSecs * 0.7).clamp(0.6, 6.0);
-    var i = ((tLeft - waveStart) / binSecs).floor();
-    if (i < 0) i = 0;
-    for (; i < wv.bins; i++) {
-      final t = waveStart + (i + 0.5) * binSecs;
-      if (t > tRight) break;
-      final x = (t - tLeft) * pxPerSec;
-      if (x < -barW || x > w + barW) continue;
-      final covered = i >= wv.filled.length || wv.filled[i] != 0;
+    void paintBar(
+      double x,
+      double width,
+      double lo,
+      double hi,
+      double? r,
+      bool covered,
+      bool isPlayed,
+    ) {
       final bar = waveBar(
-        lo: wv.min[i],
-        hi: wv.max[i],
-        rms: covered && rms != null && i < rms.length ? rms[i] : null,
+        lo: lo,
+        hi: hi,
+        rms: covered ? r : null,
         centreY: centreY,
         maxHalf: maxHalf,
       );
-      final isPlayed = t <= posSecs;
-      final peaks = Rect.fromLTRB(x, bar.top, x + barW, bar.bottom);
+      final peaks = Rect.fromLTRB(x, bar.top, x + width, bar.bottom);
       if (!covered) {
         canvas.drawRect(peaks, unloaded);
       } else if (bar.body == null) {
@@ -299,10 +301,73 @@ class WaveformPainter extends CustomPainter {
       } else {
         canvas.drawRect(peaks, isPlayed ? playedPeak : upcomingPeak);
         canvas.drawRect(
-          Rect.fromLTRB(x, bar.body!.top, x + barW, bar.body!.bottom),
+          Rect.fromLTRB(x, bar.body!.top, x + width, bar.body!.bottom),
           isPlayed ? played : upcoming,
         );
       }
+    }
+
+    var i = ((tLeft - waveStart) / binSecs).floor();
+    if (i < 0) i = 0;
+    final binPx = pxPerSec * binSecs;
+    if (binPx < 1.5) {
+      // More bins than pixels: each pixel column draws the extremes of
+      // the bins that fall in it. Bars narrower than a pixel at
+      // fractional positions beat against the pixel grid (moire).
+      int? col;
+      var lo = 0.0, hi = 0.0;
+      double? r;
+      var covered = false;
+      void flush() {
+        final c = col;
+        if (c == null) return;
+        final colT = tLeft + (c + 0.5) / pxPerSec;
+        paintBar(c.toDouble(), 1, lo, hi, r, covered, colT <= posSecs);
+      }
+
+      for (; i < wv.bins; i++) {
+        final t = waveStart + (i + 0.5) * binSecs;
+        if (t > tRight) break;
+        final x = ((t - tLeft) * pxPerSec).floor();
+        if (x < 0 || x >= w) continue;
+        final binCovered = i >= wv.filled.length || wv.filled[i] != 0;
+        final binRms = binCovered && rms != null && i < rms.length
+            ? rms[i]
+            : null;
+        if (x != col) {
+          flush();
+          col = x;
+          lo = wv.min[i];
+          hi = wv.max[i];
+          r = binRms;
+          covered = binCovered;
+        } else {
+          lo = math.min(lo, wv.min[i]);
+          hi = math.max(hi, wv.max[i]);
+          if (binRms != null) r = r == null ? binRms : math.max(r, binRms);
+          covered = covered || binCovered;
+        }
+      }
+      flush();
+      return;
+    }
+    // Whole pixels, so neighbouring bars keep the same width and gap.
+    final barW = math.max(1.0, (binPx * 0.7).clamp(1.0, 6.0).roundToDouble());
+    for (; i < wv.bins; i++) {
+      final t = waveStart + (i + 0.5) * binSecs;
+      if (t > tRight) break;
+      final x = ((t - tLeft) * pxPerSec).roundToDouble();
+      if (x < -barW || x > w + barW) continue;
+      final covered = i >= wv.filled.length || wv.filled[i] != 0;
+      paintBar(
+        x,
+        barW,
+        wv.min[i],
+        wv.max[i],
+        covered && rms != null && i < rms.length ? rms[i] : null,
+        covered,
+        t <= posSecs,
+      );
     }
   }
 

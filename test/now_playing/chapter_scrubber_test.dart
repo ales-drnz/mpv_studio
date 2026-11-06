@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/ui/layout/layout.dart';
 import 'package:mpv_studio/ui/tokens.dart';
 import 'package:mpv_studio/ui/widgets/chapter_scrubber.dart';
 
@@ -20,6 +21,7 @@ void main() {
     String? activeTitle,
     ValueChanged<int>? onSeekChapter,
     ValueChanged<Duration>? onSeek,
+    InputMode input = InputMode.pointer,
   }) => pumpStudio(
     tester,
     Scaffold(
@@ -37,6 +39,7 @@ void main() {
         ),
       ),
     ),
+    input: input,
   );
 
   testWidgets('names the active chapter, untitled ones by number', (
@@ -66,6 +69,20 @@ void main() {
     final bar = tester.getRect(find.byType(ChapterScrubber));
     await tester.tapAt(Offset(bar.left + bar.width / 2, bar.bottom - 6));
     expect(at, const Duration(minutes: 2));
+  });
+
+  // A dot is drawn small but takes a whole finger on touch.
+  testWidgets('on touch a dot answers a whole tap target', (tester) async {
+    int? chapter;
+    await pump(
+      tester,
+      onSeekChapter: (i) => chapter = i,
+      onSeek: (_) {},
+      input: InputMode.touch,
+    );
+    final dot = tester.getCenter(find.bySemanticsLabel('Outro, 3:00'));
+    await tester.tapAt(dot + const Offset(20, 0));
+    expect(chapter, 2);
   });
 
   for (final palette in [Palette.dark, Palette.light]) {

@@ -114,7 +114,9 @@ class ChapterScrubber extends StatelessWidget {
     final layout = context.layout;
     // The lane is the tap target: a full one on touch.
     final lane = layout.isTouch ? layout.minTap : 24.0;
-    final hit = layout.isTouch ? 32.0 : 24.0;
+    // A dot's hit box: a whole tap target on touch, though it is drawn
+    // small.
+    final hit = layout.isTouch ? layout.minTap : 24.0;
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
