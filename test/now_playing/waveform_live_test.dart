@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'package:mpv_studio/features/now_playing/playback_scope.dart';
 import 'package:mpv_studio/features/now_playing/widgets/waveform/waveform_controls.dart';
+import 'package:mpv_studio/features/now_playing/widgets/waveform/waveform_meter.dart';
 
 import '../support/layout_harness.dart';
 import 'playback_fake.dart';
@@ -43,5 +46,41 @@ void main() {
     await tester.tap(find.text('Live'));
     await tester.pumpAndSettle();
     expect(find.text('Live'), findsNothing);
+  });
+
+  // Too narrow for the zoom pill, the meter still offers the way back to
+  // the live end.
+  testWidgets('a narrow meter keeps a way back to live', (tester) async {
+    final player = playingTrack()
+      ..waveform = live(100, 120)
+      ..emit((s) => s.copyWith(duration: Duration.zero));
+    await pumpStudio(
+      tester,
+      Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 180,
+            height: 160,
+            child: PlaybackScope(
+              player: player,
+              child: const WaveformMeter(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final bar = find.byType(WaveformScrollBar);
+    await tester.dragFrom(
+      tester.getRect(bar).centerRight - const Offset(4, 0),
+      Offset(-tester.getSize(bar).width, 0),
+    );
+    await tester.pumpAndSettle();
+    final back = find.byTooltip('Follow the live end');
+    expect(back, findsOneWidget);
+
+    await tester.tap(back);
+    await tester.pumpAndSettle();
+    expect(back, findsNothing);
   });
 }
