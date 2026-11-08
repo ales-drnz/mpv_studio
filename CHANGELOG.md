@@ -1,3 +1,8 @@
+## [0.4.6] - 8-11-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.6.4`, with libmpv-r23: a queue that comes back on launch, or a stream opened at one of its tracks, shows its list at once; a pause in the last moments of a track keeps the rest; on the web, closing a player no longer holds the page.
+
 ## [0.4.5] - 7-11-2026
 
 ### All platforms
