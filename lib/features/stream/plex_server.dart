@@ -213,7 +213,7 @@ class PlexServer extends MediaServer {
       type: PlexMetadataType.track,
       start: startIndex,
       size: pageSize,
-      sort: 'titleSort',
+      sort: PlexSort.titleSort,
     );
     return LibraryPage([for (final m in res.items) _track(m)], res.totalSize);
   }
@@ -251,7 +251,7 @@ class PlexServer extends MediaServer {
       sectionId: _section,
       type: type,
       size: size,
-      sort: 'titleSort',
+      sort: PlexSort.titleSort,
       filters: [PlexFilter.titleContains(query)],
     );
     return res.items;
@@ -276,7 +276,7 @@ class PlexServer extends MediaServer {
       type: PlexMetadataType.album,
       start: startIndex,
       size: pageSize,
-      sort: 'titleSort',
+      sort: PlexSort.titleSort,
     );
     return LibraryPage([for (final m in res.items) _album(m)], res.totalSize);
   }

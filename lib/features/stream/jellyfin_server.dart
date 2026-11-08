@@ -208,11 +208,7 @@ class JellyfinServer extends MediaServer {
   }
 
   Future<JellyfinQueryResult<JellyfinItem>> _matchingArtists(String query) =>
-      _connected.artists.list(
-        searchTerm: query,
-        sortBy: const [JellyfinSortField.sortName],
-        limit: MergedSearch.maxOwners,
-      );
+      _connected.artists.list(searchTerm: query, limit: MergedSearch.maxOwners);
 
   Future<JellyfinQueryResult<JellyfinItem>> _matchingAlbums(String query) =>
       _connected.items.list(

@@ -37,19 +37,24 @@ void main() {
     expect(find.text('libmpv'), findsWidgets);
   });
 
-  test('the bundled libsmb2 and Roboto Mono carry their licenses', () async {
-    registerAppLicenses();
-    final entries = await LicenseRegistry.licenses.toList();
-    String textOf(String package) => entries
-        .singleWhere((e) => e.packages.contains(package))
-        .paragraphs
-        .map((p) => p.text)
-        .join(' ');
-    final smb = textOf('libsmb2');
-    expect(smb, contains('GNU Lesser General Public License'));
-    expect(smb, contains('https://github.com/ales-drnz/libsmb2-scripts'));
-    expect(textOf('Roboto Mono'), contains('Apache License, Version 2.0'));
-  });
+  test(
+    'the bundled libsmb2, OpenSSL and Roboto Mono carry their licenses',
+    () async {
+      registerAppLicenses();
+      final entries = await LicenseRegistry.licenses.toList();
+      String textOf(String package) => entries
+          .singleWhere((e) => e.packages.contains(package))
+          .paragraphs
+          .map((p) => p.text)
+          .join(' ');
+      final smb = textOf('libsmb2');
+      expect(smb, contains('GNU Lesser General Public License'));
+      expect(smb, contains('https://github.com/ales-drnz/libsmb2-scripts'));
+      expect(textOf('OpenSSL'), contains('libcrypto'));
+      expect(textOf('OpenSSL'), contains('Apache License'));
+      expect(textOf('Roboto Mono'), contains('Apache License, Version 2.0'));
+    },
+  );
 
   test('search finds the licenses', () {
     expect(searchSettings('licence').first, SettingsCatalog.licenses);

@@ -55,9 +55,7 @@ class PlexTranscodeSessionManager {
 
   /// Register a transcode session for [ratingKey] and return the
   /// `plex-transcode://{id}` marker URL to hand to mpv. The real
-  /// `/decision` call is deferred to [resolveSource]. [fallbackUrl] (Plex's
-  /// universal direct-play URL when null) is the last resort if the media
-  /// Part cannot be found. [protocol] (`dash` → start.mpd,
+  /// `/decision` call is deferred to [resolveSource]. [protocol] (`dash` → start.mpd,
   /// `hls` → start.m3u8) defaults to DASH; [container]
   /// (`mp4` → fMP4, `mpegts`) defaults to the protocol's natural one
   /// (DASH→mp4, HLS→mpegts). Both are captured per-session so different
@@ -65,7 +63,6 @@ class PlexTranscodeSessionManager {
   String register({
     required String ratingKey,
     required String codec,
-    String? fallbackUrl,
     int? bitrateKbps,
     bool transcode = true,
     String? protocol,
@@ -76,7 +73,6 @@ class PlexTranscodeSessionManager {
       marker,
       ratingKey: ratingKey,
       codec: codec,
-      fallbackUrl: fallbackUrl,
       bitrateKbps: bitrateKbps,
       transcode: transcode,
       protocol: protocol,
@@ -134,7 +130,6 @@ class PlexTranscodeSessionManager {
     String marker, {
     required String ratingKey,
     required String codec,
-    String? fallbackUrl,
     int? bitrateKbps,
     required bool transcode,
     String? protocol,
@@ -161,7 +156,6 @@ class PlexTranscodeSessionManager {
           'musicBitrate': bitrateKbps,
         },
       },
-      fallbackUrl: fallbackUrl ?? _fallbackFor(ratingKey),
     );
     final pending = _pending[marker]!;
     if (_pending.length > 200) {
@@ -170,17 +164,19 @@ class PlexTranscodeSessionManager {
     return pending;
   }
 
-  /// Plex's universal direct-play URL for [ratingKey]: the last resort when
-  /// the media Part cannot be found. dart_plex 0.2 deprecates it, since a
-  /// recent PMS refuses it without a decision for its session; the
-  /// transcodes above make that decision, and only this fallback keeps it.
-  // ignore: deprecated_member_use
-  String _fallbackFor(String ratingKey) => _client.streaming.universalAudioUrl(
-    ratingKey: ratingKey,
-    protocol: 'http',
-    directPlay: true,
-    directStream: true,
-  );
+  /// The last resort when the media Part of [ratingKey] cannot be found:
+  /// an AAC transcode over HLS with a decision of its own, under
+  /// [session]. dart_plex 0.3 dropped the universal direct-play URL this
+  /// used to be, which a recent PMS refuses without a decision. Throws when
+  /// the server cannot be asked: the player then reports the track as not
+  /// loaded.
+  Future<String> _lastResort(String ratingKey, String session) async {
+    final transcode = await _client.streaming.startAudioTranscode(
+      ratingKey: ratingKey,
+      session: session,
+    );
+    return transcode.url;
+  }
 
   // ─── Source resolver ─────────────────────────────────────────────────
 
@@ -232,7 +228,7 @@ class PlexTranscodeSessionManager {
     if (!pending.transcode) {
       final direct = await _directPlayUrl(
         pending.params['path'] as String,
-        pending.fallbackUrl,
+        pending.session,
       );
       StudioLog.write(
         'PlexTranscode: direct play $session → ${redactUri(direct)}',
@@ -283,7 +279,7 @@ class PlexTranscodeSessionManager {
         );
         final direct = await _directPlayUrl(
           params['path'] as String,
-          pending.fallbackUrl,
+          pending.session,
         );
         return pending.resolved = direct;
       }
@@ -326,7 +322,7 @@ class PlexTranscodeSessionManager {
       );
       final direct = await _directPlayUrl(
         params['path'] as String,
-        pending.fallbackUrl,
+        pending.session,
       );
       return pending.resolved = direct;
     }
@@ -339,9 +335,10 @@ class PlexTranscodeSessionManager {
   /// serves the original file from its media Part instead. So we fetch the
   /// item metadata, take the first media Part's key and build
   /// `{baseUrl}{partKey}?download=0&X-Plex-Token=…` (the form a working Plex
-  /// client uses). [metadataPath] is `/library/metadata/{ratingKey}`;
-  /// [lastResort] is returned only if no part can be resolved.
-  Future<String> _directPlayUrl(String metadataPath, String lastResort) async {
+  /// client uses). [metadataPath] is `/library/metadata/{ratingKey}`; when
+  /// no part can be resolved the track is transcoded under [session]
+  /// ([_lastResort]).
+  Future<String> _directPlayUrl(String metadataPath, String session) async {
     final ratingKey = metadataPath.split('/').last;
     try {
       final meta = await _client.library.item(ratingKey: ratingKey);
@@ -352,7 +349,7 @@ class PlexTranscodeSessionManager {
           ? media!.parts.first
           : null;
       final partKey = part?.key;
-      if (partKey == null) return lastResort;
+      if (partKey == null) return await _lastResort(ratingKey, session);
       final token = _client.token ?? '';
       return '${_client.baseUrl}$partKey?download=0'
           '&X-Plex-Token=${Uri.encodeQueryComponent(token)}';
@@ -361,7 +358,7 @@ class PlexTranscodeSessionManager {
         'PlexTranscode: directPlayUrl fetch failed for $ratingKey: $e',
         level: LogLevel.warn,
       );
-      return lastResort;
+      return _lastResort(ratingKey, session);
     }
   }
 
@@ -400,7 +397,6 @@ class PlexTranscodeSessionManager {
 class _PendingTranscode {
   _PendingTranscode({
     required this.params,
-    required this.fallbackUrl,
     required this.transcode,
     required this.protocol,
     required this.container,
@@ -410,7 +406,6 @@ class _PendingTranscode {
   /// The `/decision` parameters, without the session identifiers (see
   /// [sessionParams]).
   final Map<String, dynamic> params;
-  final String fallbackUrl;
 
   /// Plex transcode protocol for this session: `dash` (start.mpd) or `hls`
   /// (start.m3u8).

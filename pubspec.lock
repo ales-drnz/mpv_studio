@@ -69,10 +69,10 @@ packages:
     dependency: transitive
     description:
       name: code_assets
-      sha256: "828110d598123b5ea96c00c9f3c72105bf79f8ee36c20a39b26209ade421ec57"
+      sha256: "1ef22a0be3af9370bd9481ac76db114db92bfe75d5ca2b2d7bc911764478a4d9"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "2.2.0"
   collection:
     dependency: transitive
     description:
@@ -97,6 +97,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.8"
+  cryptography:
+    dependency: transitive
+    description:
+      name: cryptography
+      sha256: "3eda3029d34ec9095a27a198ac9785630fe525c0eb6a49f3d575272f8e792ef0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.9.0"
   cupertino_ui:
     dependency: transitive
     description:
@@ -109,26 +117,26 @@ packages:
     dependency: "direct main"
     description:
       name: dart_jellyfin
-      sha256: bdac0be7f62957ea0c1e0083fc6680f99c7d535ed4c83de9e432ff489ed188e4
+      sha256: bcee24830282d25a08d1d59b83c45b69fe5fc4cb9994a5658331e1d72d81a01c
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.1"
+    version: "0.4.0"
   dart_plex:
     dependency: "direct main"
     description:
       name: dart_plex
-      sha256: "7672464a82e588413fbcbd2752ac9f21d920964f7f5d1019f72a80486686e356"
+      sha256: "4964306c32d985db92daed016c7bb0a9bae138552cc750df4e81cef7b6fd45c5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1"
+    version: "0.3.0"
   dart_smb2:
     dependency: "direct main"
     description:
       name: dart_smb2
-      sha256: da6393b629259625041cac96941b6929e6e5e36d82f7944a0bb10c4e9f79663e
+      sha256: "82ddf735dced05be9b4edfa8e7400277ebcc68484d61a54cdc0c410e8f04fdc9"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.3"
+    version: "0.3.0"
   dbus:
     dependency: transitive
     description:

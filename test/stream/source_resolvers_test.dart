@@ -59,11 +59,7 @@ void main() {
   tearDown(() => plex.dispose());
 
   test('a Plex marker goes to Plex', () async {
-    final marker = plex.register(
-      ratingKey: '7',
-      codec: 'aac',
-      fallbackUrl: 'http://plex.test/fallback',
-    );
+    final marker = plex.register(ratingKey: '7', codec: 'aac');
     final url = await chain(_first(marker));
     expect(url, contains('/music/:/transcode/universal/start.mpd'));
     expect(signed.log, isEmpty);

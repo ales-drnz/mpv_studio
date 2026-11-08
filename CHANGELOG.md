@@ -1,3 +1,12 @@
+## [0.4.7] - 8-11-2026
+
+### Changed
+- Updated `dart_smb2` to version `0.3.0`, with libsmb2-r11: Samba seals SMB 3.1.1 sessions with AES-GCM through OpenSSL's libcrypto, and refuses a libsmb2 of another release.
+- Updated `dart_plex` to version `0.3.0` and `dart_jellyfin` to version `0.4.0`.
+- Jellyfin search finds artists among the people credited as artist, as Jellyfin 12 lists them.
+- When Plex cannot name the file of a track played without transcoding, the track is transcoded to AAC over HLS instead of opening a URL a recent server refuses.
+- The license page lists OpenSSL, with its license text.
+
 ## [0.4.6] - 8-11-2026
 
 ### Changed

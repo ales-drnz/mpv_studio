@@ -69,11 +69,7 @@ void main() {
   });
 
   test('resolves a marker once and reuses the URL on a re-open', () async {
-    final marker = manager.register(
-      ratingKey: '42',
-      codec: 'aac',
-      fallbackUrl: 'http://plex.test/fallback',
-    );
+    final marker = manager.register(ratingKey: '42', codec: 'aac');
     final first = await manager.resolveSource(_request(marker));
     expect(first, contains('/music/:/transcode/universal/start.mpd'));
     final again = await manager.resolveSource(_request(marker));
@@ -82,11 +78,7 @@ void main() {
   });
 
   test('a retry opens a fresh session with a new URL', () async {
-    final marker = manager.register(
-      ratingKey: '42',
-      codec: 'aac',
-      fallbackUrl: 'http://plex.test/fallback',
-    );
+    final marker = manager.register(ratingKey: '42', codec: 'aac');
     final first = (await manager.resolveSource(_request(marker)))!;
     // On a retry the entry is still the marker; the uri is the failed URL.
     final retry = (await manager.resolveSource(
@@ -98,19 +90,18 @@ void main() {
   });
 
   test(
-    'direct play falls back to the given URL when the part is unknown',
+    'direct play falls back to a transcode when the part is unknown',
     () async {
       final marker = manager.register(
         ratingKey: '42',
         codec: 'aac',
-        fallbackUrl: 'http://plex.test/fallback',
         transcode: false,
       );
-      expect(
-        await manager.resolveSource(_request(marker)),
-        'http://plex.test/fallback',
-      );
-      expect(fake.decisions, 0);
+      final url = await manager.resolveSource(_request(marker));
+      expect(url, contains('/music/:/transcode/universal/start.m3u8'));
+      expect(url, contains('path=%2Flibrary%2Fmetadata%2F42'));
+      expect(marker, endsWith(_session(url!)!));
+      expect(fake.decisions, 1);
     },
   );
 

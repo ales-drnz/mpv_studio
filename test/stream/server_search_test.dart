@@ -69,10 +69,13 @@ List<String> _list(Object? v) => [
 
 Object? _jellyfin(String path, Map<String, dynamic> q) {
   final term = (q['searchTerm'] as String?)?.toLowerCase();
-  if (path.endsWith('/Artists')) {
+  // dart_jellyfin 0.4 lists artists as people credited `Artist`; a person
+  // id filters songs and albums like an artist id (measured on 12.4).
+  if (path.endsWith('/Persons')) {
+    if (!_list(q['personTypes']).contains('Artist')) return _jfPage([]);
     return _jfPage([
       if (term != null && 'lantern coast'.contains(term))
-        {'Id': 'a1', 'Name': 'Lantern Coast', 'Type': 'MusicArtist'},
+        {'Id': 'a1', 'Name': 'Lantern Coast', 'Type': 'Person'},
     ]);
   }
   if (!path.endsWith('/Items')) return null;
