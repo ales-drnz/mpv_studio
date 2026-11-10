@@ -39,16 +39,16 @@ class CacheGeometry {
   static Duration _d(num s) => Duration(microseconds: (s * 1e6).round());
 
   factory CacheGeometry.of(PlayerState s) {
-    final pos = secondsOf(s.position);
+    final pos = secondsOf(s.playback.position);
     final ranges = [
-      for (final r in s.demuxerCacheState.seekableRanges)
+      for (final r in s.network.demuxerCacheState.seekableRanges)
         (secondsOf(r.start), secondsOf(r.end)),
     ];
     (double, double)? current;
     for (final r in ranges) {
       if (pos >= r.$1 - 0.25 && pos <= r.$2 + 0.25) current = r;
     }
-    final duration = secondsOf(s.duration);
+    final duration = secondsOf(s.playback.duration);
     double start, end;
     if (duration > 0) {
       start = 0;
@@ -62,7 +62,7 @@ class CacheGeometry {
       final span = math.max(end - start, 10.0);
       end = start + span * 1.15;
     }
-    final secs = s.cache.secs;
+    final secs = s.settings.cache.secs;
     return CacheGeometry(
       axisStart: start,
       axisEnd: math.max(end, start + 1),

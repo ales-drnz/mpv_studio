@@ -151,7 +151,7 @@ void main() {
       await tester.tap(setB);
       await tester.pumpAndSettle();
       expect(player.calls.single, startsWith('setAbLoopB '));
-      expect(player.state.abLoopB, isNotNull);
+      expect(player.state.playback.abLoopB, isNotNull);
       await _settleToast(tester);
     });
   });
@@ -226,7 +226,11 @@ void main() {
     testWidgets('a queue with nothing on offers to play it', (tester) async {
       final player = PlaybackFake(
         const PlayerState(
-          playlist: Playlist([Media('https://example.test/a.flac')], index: -1),
+          playback: PlaybackState(
+            playlist: Playlist([
+              Media('https://example.test/a.flac'),
+            ], index: -1),
+          ),
         ),
       );
       await _pumpPage(tester, player);
@@ -241,9 +245,11 @@ void main() {
         tester,
         PlaybackFake(
           const PlayerState(
-            playlist: Playlist([
-              Media('https://example.test/a.flac'),
-            ], index: -1),
+            playback: PlaybackState(
+              playlist: Playlist([
+                Media('https://example.test/a.flac'),
+              ], index: -1),
+            ),
           ),
         ),
       );
@@ -273,7 +279,7 @@ void main() {
     testWidgets('a failed current track shows Retry and Next', (tester) async {
       final player = playingTrack();
       final failed = ValueNotifier<Set<Media>>({
-        player.state.playlist.items.first,
+        player.state.playback.playlist.items.first,
       });
       addTearDown(failed.dispose);
       await _pumpPage(tester, player, failed: failed);
@@ -419,7 +425,7 @@ void main() {
           '${size.height.round()}', (tester) async {
         final player = playingTrack();
         final failed = ValueNotifier<Set<Media>>({
-          player.state.playlist.items.first,
+          player.state.playback.playlist.items.first,
         });
         addTearDown(failed.dispose);
         await _pumpPage(tester, player, size: size, failed: failed);

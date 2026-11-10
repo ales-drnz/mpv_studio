@@ -51,9 +51,11 @@ void main() {
   setUp(() {
     player = FakePlayer(
       const PlayerState(
-        playlist: _queue,
-        duration: Duration(minutes: 4),
-        position: Duration(minutes: 1),
+        playback: PlaybackState(
+          playlist: _queue,
+          duration: Duration(minutes: 4),
+          position: Duration(minutes: 1),
+        ),
       ),
     );
   });
@@ -247,7 +249,7 @@ void main() {
     });
     await tester.pump();
     expect(rack.bypass, isTrue);
-    expect(player.state.audioEffects.single.enabled, isFalse);
+    expect(player.state.settings.audioEffects.single.enabled, isFalse);
     expect(find.text('Dry'), findsOneWidget);
 
     await tester.runAsync(() async {
@@ -256,7 +258,7 @@ void main() {
     });
     await tester.pump();
     expect(rack.bypass, isFalse);
-    expect(player.state.audioEffects.single.enabled, isTrue);
+    expect(player.state.settings.audioEffects.single.enabled, isTrue);
     expect(find.text('FX'), findsOneWidget);
   });
 
@@ -282,9 +284,9 @@ void main() {
     });
     await tester.pump();
     expect(rack.bypass, isTrue);
-    expect(player.state.audioEffects, hasLength(2));
-    expect(player.state.audioEffects.first.enabled, isFalse);
-    expect(player.state.audioEffects.last.enabled, isTrue);
+    expect(player.state.settings.audioEffects, hasLength(2));
+    expect(player.state.settings.audioEffects.first.enabled, isFalse);
+    expect(player.state.settings.audioEffects.last.enabled, isTrue);
   });
 
   group('the bar fits the rail and sidebar widths', () {

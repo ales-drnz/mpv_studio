@@ -204,9 +204,9 @@ class QueueDetails {
       player.stream.duration,
     ],
     snapshot: () => (
-      metadata: player.state.metadata,
-      mediaTitle: player.state.mediaTitle,
-      duration: player.state.duration,
+      metadata: player.state.file.metadata,
+      mediaTitle: player.state.file.mediaTitle,
+      duration: player.state.playback.duration,
     ),
     endFile: player.stream.endFile,
     errors: player.stream.error,

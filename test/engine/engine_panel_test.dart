@@ -15,46 +15,60 @@ import 'package:mpv_studio/ui/theme.dart';
 import '../support/fake_player.dart';
 
 PlayerState _streaming() => PlayerState(
-  playWhenReady: true,
-  position: const Duration(seconds: 40),
-  duration: const Duration(minutes: 4),
-  demuxerViaNetwork: true,
-  demuxerCacheState: const DemuxerCacheState(
-    seekableRanges: [CacheRange(Duration(seconds: 20), Duration(seconds: 75))],
+  playback: PlaybackState(
+    playWhenReady: true,
+    position: const Duration(seconds: 40),
+    duration: const Duration(minutes: 4),
+    playlist: const Playlist([
+      Media('https://example.test/a.flac'),
+      Media('https://example.test/b.flac', extras: {'title': 'Track B'}),
+    ]),
   ),
-  bufferDuration: const Duration(seconds: 35),
-  cacheSpeed: 1.8e6,
-  cache: const CacheSettings(
-    secs: Duration(seconds: 60),
-    pause: true,
-    pauseWait: Duration(seconds: 3),
+  network: NetworkState(
+    demuxerViaNetwork: true,
+    demuxerCacheState: const DemuxerCacheState(
+      seekableRanges: [
+        CacheRange(Duration(seconds: 20), Duration(seconds: 75)),
+      ],
+    ),
+    bufferDuration: const Duration(seconds: 35),
+    cacheSpeed: 1.8e6,
   ),
-  prefetchPlaylist: true,
-  playlist: const Playlist([
-    Media('https://example.test/a.flac'),
-    Media('https://example.test/b.flac', extras: {'title': 'Track B'}),
-  ]),
-  audioOutputState: AudioOutputState.active,
-  currentAo: 'pipewire',
-  audioDevice: const Device(name: 'pipewire', description: 'Speakers'),
-  audioParams: const AudioParams(
-    codecName: 'flac',
-    format: Format.s32,
-    sampleRate: 96000,
-    hrChannels: 'stereo',
+  settings: PlayerSettings(
+    cache: const CacheSettings(
+      secs: Duration(seconds: 60),
+      pause: true,
+      pauseWait: Duration(seconds: 3),
+    ),
+    prefetchPlaylist: true,
+    audioEffects: const [
+      BassEffect(gain: 4),
+      TrebleEffect(enabled: false),
+      LoudnormEffect(),
+    ],
   ),
-  audioOutParams: const AudioParams(
-    format: Format.float32Planar,
-    sampleRate: 48000,
-    hrChannels: 'stereo',
+  output: OutputState(
+    audioOutputState: AudioOutputState.active,
+    currentAo: 'pipewire',
+    audioDevice: const Device(name: 'pipewire', description: 'Speakers'),
+    audioOutParams: const AudioParams(
+      format: Format.float32Planar,
+      sampleRate: 48000,
+      hrChannels: 'stereo',
+    ),
   ),
-  audioEffects: const [
-    BassEffect(gain: 4),
-    TrebleEffect(enabled: false),
-    LoudnormEffect(),
-  ],
-  mpvVersion: 'mpv v0.41.0+r16',
-  ffmpegVersion: '8.1.1',
+  file: FileState(
+    audioParams: const AudioParams(
+      codecName: 'flac',
+      format: Format.s32,
+      sampleRate: 96000,
+      hrChannels: 'stereo',
+    ),
+  ),
+  versions: LibraryVersions(
+    mpvVersion: 'mpv v0.41.0+r16',
+    ffmpegVersion: '8.1.1',
+  ),
 );
 
 WaveformData _halfWave() {
@@ -174,8 +188,8 @@ void main() {
     );
     // The engine plays a switched-off copy of the same shape; the panel
     // still names the stages of the user's chain.
-    expect(player.state.audioEffects, hasLength(3));
-    expect(player.state.audioEffects.where((e) => e.enabled), isEmpty);
+    expect(player.state.settings.audioEffects, hasLength(3));
+    expect(player.state.settings.audioEffects.where((e) => e.enabled), isEmpty);
     expect(
       find.text(ChainView.nameOf(const BassEffect(gain: 4))),
       findsOneWidget,
@@ -235,11 +249,11 @@ void main() {
   });
 
   test('the waiting note needs something to wait for', () {
-    const asked = PlayerState(playWhenReady: true);
+    const asked = PlayerState(playback: PlaybackState(playWhenReady: true));
     expect(StatusView.mismatch(asked, MpvPlaybackState.idle), isNull);
     expect(StatusView.mismatch(asked, MpvPlaybackState.buffering), isNotNull);
     expect(StatusView.mismatch(asked, MpvPlaybackState.loading), isNotNull);
-    const raw = PlayerState(playing: true);
+    const raw = PlayerState(playback: PlaybackState(playing: true));
     expect(StatusView.mismatch(raw, MpvPlaybackState.playing), isNotNull);
   });
 

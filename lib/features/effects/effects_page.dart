@@ -42,7 +42,7 @@ class EffectsPage extends StatelessWidget {
     final settings = PlayerScope.settingsOf(context);
     return Live<SpectrumSettings>(
       stream: player.stream.spectrum,
-      initial: player.state.spectrum,
+      initial: player.state.settings.spectrum,
       builder: (context, spectrum) => RackEnvironment(
         taps: (f, instance, side) =>
             player.stream.tap(f, instance: instance, side: side),

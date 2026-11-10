@@ -22,7 +22,7 @@ class CacheSection extends StatelessWidget {
     final p = scope.player;
     return Live<CacheSettings>(
       stream: p.stream.cache,
-      initial: p.state.cache,
+      initial: p.state.settings.cache,
       builder: (context, cache) => SettingsGroup(
         label: SettingsSections.cache,
         children: [
@@ -82,7 +82,7 @@ class CacheSection extends StatelessWidget {
           ),
           Live<double>(
             stream: p.stream.cacheSpeed,
-            initial: p.state.cacheSpeed,
+            initial: p.state.network.cacheSpeed,
             builder: (context, v) => InfoRow(
               label: 'Cache speed',
               value: '${(v / 1024).toStringAsFixed(1)} KiB/s',
@@ -90,13 +90,13 @@ class CacheSection extends StatelessWidget {
           ),
           Live<int>(
             stream: p.stream.cacheBufferingState,
-            initial: p.state.cacheBufferingState,
+            initial: p.state.network.cacheBufferingState,
             builder: (context, v) =>
                 InfoRow(label: 'Cache buffering', value: '$v%'),
           ),
           Live<double>(
             stream: p.stream.bufferingPercentage,
-            initial: p.state.bufferingPercentage,
+            initial: p.state.network.bufferingPercentage,
             builder: (context, v) => InfoRow(
               label: 'Buffer fill',
               value: '${v.toStringAsFixed(1)}%',
@@ -104,7 +104,7 @@ class CacheSection extends StatelessWidget {
           ),
           Live<bool>(
             stream: p.stream.pausedForCache,
-            initial: p.state.pausedForCache,
+            initial: p.state.network.pausedForCache,
             builder: (context, v) =>
                 InfoRow(label: 'Paused for cache', value: v ? 'yes' : 'no'),
           ),
@@ -137,7 +137,7 @@ class DemuxerSection extends StatelessWidget {
       children: [
         Live<DemuxerSettings>(
           stream: p.stream.demuxer,
-          initial: p.state.demuxer,
+          initial: p.state.settings.demuxer,
           builder: (context, d) => SettingsGroup(
             label: SettingsSections.demuxer,
             children: [
@@ -199,7 +199,7 @@ class DemuxerSection extends StatelessWidget {
           children: [
             Live<String>(
               stream: p.stream.currentDemuxer,
-              initial: p.state.currentDemuxer,
+              initial: p.state.file.currentDemuxer,
               builder: (context, v) => InfoRow(
                 label: 'Current demuxer',
                 value: v.isEmpty ? Tokens.noValue : v,
@@ -207,7 +207,7 @@ class DemuxerSection extends StatelessWidget {
             ),
             Live<Duration>(
               stream: p.stream.bufferDuration,
-              initial: p.state.bufferDuration,
+              initial: p.state.network.bufferDuration,
               builder: (context, v) => InfoRow(
                 label: 'Cache ahead',
                 value: '${(v.inMicroseconds / 1e6).toStringAsFixed(2)} s',
@@ -215,7 +215,7 @@ class DemuxerSection extends StatelessWidget {
             ),
             Live<bool>(
               stream: p.stream.demuxerViaNetwork,
-              initial: p.state.demuxerViaNetwork,
+              initial: p.state.network.demuxerViaNetwork,
               builder: (context, v) =>
                   InfoRow(label: 'Via network', value: v ? 'yes' : 'no'),
             ),
@@ -223,7 +223,7 @@ class DemuxerSection extends StatelessWidget {
             // that seek directly).
             Live<DemuxerCacheState>(
               stream: p.stream.demuxerCacheState,
-              initial: p.state.demuxerCacheState,
+              initial: p.state.network.demuxerCacheState,
               builder: (context, c) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -268,7 +268,7 @@ class StreamingSection extends StatelessWidget {
       children: [
         Live<bool>(
           stream: p.stream.prefetchPlaylist,
-          initial: p.state.prefetchPlaylist,
+          initial: p.state.settings.prefetchPlaylist,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.prefetch,
@@ -296,7 +296,7 @@ class StreamingSection extends StatelessWidget {
         ),
         Live<HlsBitrate>(
           stream: p.stream.hlsBitrate,
-          initial: p.state.hlsBitrate,
+          initial: p.state.settings.hlsBitrate,
           builder: (context, v) => anchoredSegments(
             scope,
             SettingsCatalog.hlsVariant,

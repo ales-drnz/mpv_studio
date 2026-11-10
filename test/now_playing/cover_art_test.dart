@@ -17,18 +17,22 @@ void main() {
     final file = File('${dir.path}/cover.png')..writeAsBytesSync(_png);
     final player = FakePlayer(
       PlayerState(
-        playlist: const Playlist([Media('file:///music/a.flac')]),
-        tracks: [
-          const MpvTrack(id: 1, type: 'audio', selected: true),
-          MpvTrack(
-            id: 2,
-            type: 'video',
-            image: true,
-            albumArt: true,
-            external: true,
-            externalFilename: file.path,
-          ),
-        ],
+        playback: PlaybackState(
+          playlist: const Playlist([Media('file:///music/a.flac')]),
+        ),
+        file: FileState(
+          tracks: [
+            const MpvTrack(id: 1, type: 'audio', selected: true),
+            MpvTrack(
+              id: 2,
+              type: 'video',
+              image: true,
+              albumArt: true,
+              external: true,
+              externalFilename: file.path,
+            ),
+          ],
+        ),
       ),
     );
     await tester.pumpWidget(

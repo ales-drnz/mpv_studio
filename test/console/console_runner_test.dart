@@ -27,7 +27,7 @@ void main() {
         'routed: via Player.open(play: true)',
       ]);
       expect(player.calls.last, 'open https://x.test/a.mp3 play=true');
-      expect(player.state.playWhenReady, isTrue);
+      expect(player.state.playback.playWhenReady, isTrue);
       expect(player.rawCommands, isEmpty);
     });
 
@@ -36,7 +36,7 @@ void main() {
         'routed: via Player.add(), Player.jump(0)',
       ]);
       expect(player.items.single.uri, '/m/a b.flac');
-      expect(player.state.playWhenReady, isTrue);
+      expect(player.state.playback.playWhenReady, isTrue);
     });
 
     test('loadfile append-play while playing only appends', () async {
@@ -71,7 +71,7 @@ void main() {
         '-1',
         'start=10',
       ]);
-      expect(player.state.playWhenReady, isTrue);
+      expect(player.state.playback.playWhenReady, isTrue);
     });
 
     test('loadlist replace opens the playlist file', () async {
@@ -120,7 +120,7 @@ void main() {
         'routed: via raw stop keep-playlist, then Player.pause()',
       ]);
       expect(player.items, [_a, _b]);
-      expect(player.state.playWhenReady, isFalse);
+      expect(player.state.playback.playWhenReady, isFalse);
       expect(await run('playlist-remove current'), [
         'routed: via Player.remove(1)',
       ]);

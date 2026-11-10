@@ -70,8 +70,8 @@ class MiniPlayer extends StatelessWidget {
           ),
         StudioMenuItem(
           value: _MiniAction.playPause,
-          label: s.playWhenReady ? 'Pause' : 'Play',
-          icon: s.playWhenReady
+          label: s.playback.playWhenReady ? 'Pause' : 'Play',
+          icon: s.playback.playWhenReady
               ? Icons.pause_rounded
               : Icons.play_arrow_rounded,
         ),
@@ -87,8 +87,10 @@ class MiniPlayer extends StatelessWidget {
         ),
         StudioMenuItem(
           value: _MiniAction.mute,
-          label: s.mute ? 'Unmute' : 'Mute',
-          icon: s.mute ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+          label: s.settings.mute ? 'Unmute' : 'Mute',
+          icon: s.settings.mute
+              ? Icons.volume_up_rounded
+              : Icons.volume_off_rounded,
         ),
         const StudioMenuItem(
           value: _MiniAction.stop,
@@ -110,7 +112,7 @@ class MiniPlayer extends StatelessWidget {
       case _MiniAction.next:
         _skip(context, forward: true);
       case _MiniAction.mute:
-        await guard(() => player.setMute(!s.mute));
+        await guard(() => player.setMute(!s.settings.mute));
       case _MiniAction.stop:
         await stopKeepingQueue(player, guard);
     }
@@ -355,10 +357,10 @@ class _TimedProgress extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) => Live<Duration>(
         stream: player.stream.duration,
-        initial: player.state.duration,
+        initial: player.state.playback.duration,
         builder: (context, d) => Live<Duration>(
           stream: player.stream.position,
-          initial: player.state.position,
+          initial: player.state.playback.position,
           builder: (context, p) {
             final at = formatDuration(p);
             final length = formatDuration(d);
@@ -471,10 +473,10 @@ class _RailMini extends StatelessWidget {
         ),
         Live<Duration>(
           stream: player.stream.duration,
-          initial: player.state.duration,
+          initial: player.state.playback.duration,
           builder: (context, duration) => Live<Duration>(
             stream: player.stream.position,
-            initial: player.state.position,
+            initial: player.state.playback.position,
             builder: (context, position) {
               final total = duration.inMilliseconds;
               final f = total <= 0
@@ -529,10 +531,10 @@ class MiniProgressBar extends StatelessWidget {
     final touch = context.layout.isTouch;
     return Live<Duration>(
       stream: player.stream.duration,
-      initial: player.state.duration,
+      initial: player.state.playback.duration,
       builder: (context, duration) => Live<Duration>(
         stream: player.stream.position,
-        initial: player.state.position,
+        initial: player.state.playback.position,
         builder: (context, position) {
           final total = duration.inMilliseconds;
           final f = total <= 0
@@ -671,7 +673,7 @@ class _PlayPause extends StatelessWidget {
       player: player,
       builder: (context, wait) => Live<bool>(
         stream: player.stream.playWhenReady,
-        initial: player.state.playWhenReady,
+        initial: player.state.playback.playWhenReady,
         builder: (context, wants) {
           final action = wants ? 'Pause' : 'Play';
           const dimension = 48.0;

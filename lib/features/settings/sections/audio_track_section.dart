@@ -53,10 +53,10 @@ class AudioTrackSection extends StatelessWidget {
     final p = scope.player;
     return Live<List<MpvTrack>>(
       stream: p.stream.tracks,
-      initial: p.state.tracks,
+      initial: p.state.file.tracks,
       builder: (context, tracks) => Live<MpvTrack?>(
         stream: p.stream.currentAudioTrack,
-        initial: p.state.currentAudioTrack,
+        initial: p.state.file.currentAudioTrack,
         builder: (context, current) {
           final audio = [
             for (final t in tracks)

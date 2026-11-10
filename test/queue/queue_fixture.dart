@@ -33,7 +33,9 @@ Future<(QueueFakePlayer, QueueDetails)> threeEntries(
 ) async {
   final player = QueueFakePlayer(
     const PlayerState(
-      playlist: Playlist([localSong, webSong, serverSong], index: 2),
+      playback: PlaybackState(
+        playlist: Playlist([localSong, webSong, serverSong], index: 2),
+      ),
     ),
   );
   final details = player.details();

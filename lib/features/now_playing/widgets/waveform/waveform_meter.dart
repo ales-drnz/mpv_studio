@@ -102,16 +102,16 @@ class _WaveformMeterState extends State<WaveformMeter>
     _player = scope.player;
     _guard = scope.guard;
     final s = _player.state;
-    _anchor = s.position;
-    _rate = s.rate;
-    _playWhenReady = s.playWhenReady;
-    _seekable = s.seekable;
-    _view = _view.withSource(duration: s.duration);
-    _abA = s.abLoopA;
-    _abB = s.abLoopB;
-    _chapters = s.chapters;
-    _currentChapter = s.currentChapter;
-    _cached = s.demuxerCacheState.seekableRanges;
+    _anchor = s.playback.position;
+    _rate = s.settings.rate;
+    _playWhenReady = s.playback.playWhenReady;
+    _seekable = s.playback.seekable;
+    _view = _view.withSource(duration: s.playback.duration);
+    _abA = s.playback.abLoopA;
+    _abB = s.playback.abLoopB;
+    _chapters = s.file.chapters;
+    _currentChapter = s.playback.currentChapter;
+    _cached = s.network.demuxerCacheState.seekableRanges;
     if (_playWhenReady) {
       _sw.start();
       _frames.start();
@@ -135,7 +135,7 @@ class _WaveformMeterState extends State<WaveformMeter>
     // Re-sync the interpolated playhead so it never runs on from the old
     // position and then snaps back.
     listen(_player.stream.seekCompleted, (_) {
-      _anchor = _player.state.position;
+      _anchor = _player.state.playback.position;
       _sw.reset();
       update(() {});
     });
@@ -299,7 +299,9 @@ class _WaveformMeterState extends State<WaveformMeter>
                   abB: _abB,
                   chapters: _chapters,
                   currentChapter: _currentChapter,
-                  cached: _player.state.demuxerViaNetwork ? _cached : const [],
+                  cached: _player.state.network.demuxerViaNetwork
+                      ? _cached
+                      : const [],
                   scaler: chartTextScaler(context),
                 ),
               ),

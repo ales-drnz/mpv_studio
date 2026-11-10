@@ -18,7 +18,7 @@ class ChainView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bypassed = snapshot.bypassedChain;
-    final chain = bypassed ?? snapshot.state.audioEffects;
+    final chain = bypassed ?? snapshot.state.settings.audioEffects;
     final active = [
       for (final e in chain)
         if (e.enabled) e,

@@ -65,7 +65,7 @@ class OnboardingActions {
     final medias = [
       for (final p in paths) Media(p, extras: {'title': baseNameNoExt(p)}),
     ];
-    if (player.state.playlist.items.isEmpty) {
+    if (player.state.playback.playlist.items.isEmpty) {
       await player.openAll(medias, play: true);
     } else {
       for (final m in medias) {

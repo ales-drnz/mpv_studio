@@ -103,58 +103,58 @@ class PlaybackFakeStream extends FakePlayerStream {
       _fake.watch((p) => pick(p.state));
 
   @override
-  Stream<double> get rate => _s((s) => s.rate);
+  Stream<double> get rate => _s((s) => s.settings.rate);
   @override
-  Stream<double> get volume => _s((s) => s.volume);
+  Stream<double> get volume => _s((s) => s.settings.volume);
   @override
-  Stream<double> get volumeMax => _s((s) => s.volumeMax);
+  Stream<double> get volumeMax => _s((s) => s.settings.volumeMax);
   @override
-  Stream<bool> get seekable => _s((s) => s.seekable);
+  Stream<bool> get seekable => _s((s) => s.playback.seekable);
   @override
-  Stream<bool> get shuffle => _s((s) => s.shuffle);
+  Stream<bool> get shuffle => _s((s) => s.playback.shuffle);
   @override
-  Stream<Loop> get loop => _s((s) => s.loop);
+  Stream<Loop> get loop => _s((s) => s.playback.loop);
   @override
-  Stream<Duration?> get abLoopA => _s((s) => s.abLoopA);
+  Stream<Duration?> get abLoopA => _s((s) => s.playback.abLoopA);
   @override
-  Stream<Duration?> get abLoopB => _s((s) => s.abLoopB);
+  Stream<Duration?> get abLoopB => _s((s) => s.playback.abLoopB);
   @override
-  Stream<int?> get abLoopCount => _s((s) => s.abLoopCount);
+  Stream<int?> get abLoopCount => _s((s) => s.playback.abLoopCount);
   @override
-  Stream<int?> get remainingAbLoops => _s((s) => s.remainingAbLoops);
+  Stream<int?> get remainingAbLoops => _s((s) => s.playback.remainingAbLoops);
   @override
-  Stream<List<Chapter>> get chapters => _s((s) => s.chapters);
+  Stream<List<Chapter>> get chapters => _s((s) => s.file.chapters);
   @override
-  Stream<int?> get currentChapter => _s((s) => s.currentChapter);
+  Stream<int?> get currentChapter => _s((s) => s.playback.currentChapter);
   @override
   Stream<Map<String, String>> get chapterMetadata =>
-      _s((s) => s.chapterMetadata);
+      _s((s) => s.file.chapterMetadata);
   @override
-  Stream<AudioParams> get audioParams => _s((s) => s.audioParams);
+  Stream<AudioParams> get audioParams => _s((s) => s.file.audioParams);
   @override
-  Stream<AudioParams> get audioOutParams => _s((s) => s.audioOutParams);
+  Stream<AudioParams> get audioOutParams => _s((s) => s.output.audioOutParams);
   @override
-  Stream<String> get fileFormat => _s((s) => s.fileFormat);
+  Stream<String> get fileFormat => _s((s) => s.file.fileFormat);
   @override
-  Stream<double?> get audioBitrate => _s((s) => s.audioBitrate);
+  Stream<double?> get audioBitrate => _s((s) => s.file.audioBitrate);
   @override
-  Stream<double> get volumeGain => _s((s) => s.volumeGain);
+  Stream<double> get volumeGain => _s((s) => s.settings.volumeGain);
   @override
-  Stream<String> get streamPath => _s((s) => s.streamPath);
+  Stream<String> get streamPath => _s((s) => s.file.streamPath);
   @override
-  Stream<String> get path => _s((s) => s.path);
+  Stream<String> get path => _s((s) => s.file.path);
   @override
-  Stream<String> get filename => _s((s) => s.filename);
+  Stream<String> get filename => _s((s) => s.file.filename);
   @override
-  Stream<int> get fileSize => _s((s) => s.fileSize);
+  Stream<int> get fileSize => _s((s) => s.file.fileSize);
   @override
-  Stream<Duration> get audioPts => _s((s) => s.audioPts);
+  Stream<Duration> get audioPts => _s((s) => s.playback.audioPts);
   @override
-  Stream<Duration> get timeRemaining => _s((s) => s.timeRemaining);
+  Stream<Duration> get timeRemaining => _s((s) => s.playback.timeRemaining);
   @override
-  Stream<bool> get partiallySeekable => _s((s) => s.partiallySeekable);
+  Stream<bool> get partiallySeekable => _s((s) => s.playback.partiallySeekable);
   @override
-  Stream<bool> get eofReached => _s((s) => s.eofReached);
+  Stream<bool> get eofReached => _s((s) => s.playback.eofReached);
   @override
   Stream<void> get seekCompleted => const Stream.empty();
   @override
@@ -171,28 +171,31 @@ class PlaybackFakeStream extends FakePlayerStream {
 PlaybackFake playingTrack() {
   final fake = PlaybackFake(
     const PlayerState(
-      playlist: Playlist([
-        Media(
-          'https://example.test/one.flac',
-          extras: {
-            'title': 'Paper Lanterns',
-            'artist': 'Halvorsen Trio',
-            'album': 'Portrait in Jazz',
-          },
-        ),
-        Media('https://example.test/two.flac'),
-      ]),
-      duration: Duration(minutes: 5, seconds: 37),
-      position: Duration(minutes: 2, seconds: 3),
-      seekable: true,
-      volume: 80,
-      volumeMax: 130,
-      chapters: [
-        Chapter(time: Duration.zero, title: 'Intro'),
-        Chapter(time: Duration(minutes: 1, seconds: 40), title: 'Theme'),
-        Chapter(time: Duration(minutes: 4), title: 'Coda'),
-      ],
-      currentChapter: 1,
+      playback: PlaybackState(
+        playlist: Playlist([
+          Media(
+            'https://example.test/one.flac',
+            extras: {
+              'title': 'Paper Lanterns',
+              'artist': 'Halvorsen Trio',
+              'album': 'Portrait in Jazz',
+            },
+          ),
+          Media('https://example.test/two.flac'),
+        ]),
+        duration: Duration(minutes: 5, seconds: 37),
+        position: Duration(minutes: 2, seconds: 3),
+        seekable: true,
+        currentChapter: 1,
+      ),
+      settings: PlayerSettings(volume: 80, volumeMax: 130),
+      file: FileState(
+        chapters: [
+          Chapter(time: Duration.zero, title: 'Intro'),
+          Chapter(time: Duration(minutes: 1, seconds: 40), title: 'Theme'),
+          Chapter(time: Duration(minutes: 4), title: 'Coda'),
+        ],
+      ),
     ),
   );
   fake.waveform = demoWaveform(const Duration(minutes: 5, seconds: 37));

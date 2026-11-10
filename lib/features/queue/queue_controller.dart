@@ -74,7 +74,7 @@ class QueueController {
     if (!_disposed) _adding.value = value;
   }
 
-  List<Media> get _items => player.state.playlist.items;
+  List<Media> get _items => player.state.playback.playlist.items;
 
   static Media mediaFor(String path) =>
       Media(path, extras: {'title': baseNameNoExt(path)});
@@ -225,9 +225,9 @@ class QueueController {
   /// failed (the entry stays).
   Future<int?> removeForUndo(int index) async {
     QueueSnapshot.noteEdit();
-    final pl = player.state.playlist;
+    final pl = player.state.playback.playlist;
     final current = index == pl.index;
-    final playing = player.state.playWhenReady;
+    final playing = player.state.playback.playWhenReady;
     final media = await remove(index);
     if (media == null) return null;
     _removals.add(_Removal(media, index, current: current, playing: playing));
@@ -272,7 +272,7 @@ class QueueController {
   /// Moves the entry at [index] right after the current one.
   Future<void> playNext(int index) {
     QueueSnapshot.noteEdit();
-    final current = player.state.playlist.index;
+    final current = player.state.playback.playlist.index;
     if (current < 0 || index == current || index == current + 1) {
       return Future.value();
     }

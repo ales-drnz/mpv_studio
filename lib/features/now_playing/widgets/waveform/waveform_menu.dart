@@ -20,9 +20,10 @@ Future<void> showWaveformMenu(
 }) async {
   final state = player.state;
   final time = formatDuration(at);
-  final hasLoop = state.abLoopA != null || state.abLoopB != null;
-  final chapters = state.chapters;
-  final current = state.currentChapter ?? -1;
+  final hasLoop =
+      state.playback.abLoopA != null || state.playback.abLoopB != null;
+  final chapters = state.file.chapters;
+  final current = state.playback.currentChapter ?? -1;
   final notify = feedbackFor(context);
   final picked = await showStudioMenu<_MeterAction>(
     context,

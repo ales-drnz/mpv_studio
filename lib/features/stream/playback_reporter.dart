@@ -92,7 +92,7 @@ class PlaybackReporter {
   /// The favourite flag the current [Media] carried in its extras (set by
   /// the Stream tab at play time), the fallback before any live toggle.
   bool _currentFavoriteFallback() {
-    final playlist = _player.state.playlist;
+    final playlist = _player.state.playback.playlist;
     final items = playlist.items;
     final i = playlist.index;
     if (i < 0 || i >= items.length) return false;
@@ -103,7 +103,7 @@ class PlaybackReporter {
   /// like control shows filled/empty (no-op when nothing changed, the session
   /// is disabled, or the current item isn't a server track).
   void _syncSessionFavorite() {
-    final session = _player.state.mediaSession;
+    final session = _player.state.settings.mediaSession;
     if (session == null) return;
     final fav = (_kind != null && _itemId != null)
         ? _favorites.resolved(_kind!, _itemId!, _currentFavoriteFallback())
@@ -146,7 +146,7 @@ class PlaybackReporter {
   }
 
   void _readDuration() {
-    final d = _player.state.duration;
+    final d = _player.state.playback.duration;
     if (d > Duration.zero) _duration = d;
   }
 
@@ -174,7 +174,7 @@ class PlaybackReporter {
 
   void _maybeStart() {
     if (_started || _itemId == null) return;
-    if (!_player.state.playing) return; // wait for actual playback
+    if (!_player.state.playback.playing) return; // wait for actual playback
     final server = _servers[_kind];
     if (server == null) return;
     _started = true;
@@ -192,7 +192,7 @@ class PlaybackReporter {
     _readDuration();
     _servers[_kind]?.reportProgress(
       _itemId!,
-      position: _player.state.position,
+      position: _player.state.playback.position,
       duration: _duration,
       paused: paused,
     );
@@ -217,7 +217,9 @@ class PlaybackReporter {
   void _restartTimer() {
     _progressTimer?.cancel();
     _progressTimer = Timer.periodic(_progressInterval, (_) {
-      if (_started && _player.state.playing) _reportProgress(paused: false);
+      if (_started && _player.state.playback.playing) {
+        _reportProgress(paused: false);
+      }
     });
   }
 
@@ -226,7 +228,7 @@ class PlaybackReporter {
   /// The currently-playing track's (server kind, server item id), or
   /// (null, null) when there is no current item or it isn't a server track.
   (ServerKind?, String?) _currentTrack() {
-    final playlist = _player.state.playlist;
+    final playlist = _player.state.playback.playlist;
     final items = playlist.items;
     final i = playlist.index;
     if (i < 0 || i >= items.length) return (null, null);

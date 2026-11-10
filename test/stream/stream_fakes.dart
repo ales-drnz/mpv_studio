@@ -55,14 +55,14 @@ class StreamPlayer extends FakePlayer {
   Future<void> add(Media media) async {
     calls.add('add');
     loaded.add(media);
-    final pl = state.playlist;
+    final pl = state.playback.playlist;
     _setQueue([...pl.items, media], pl.index);
   }
 
   @override
   Future<void> move(int from, int to) async {
     calls.add('move $from $to');
-    final pl = state.playlist;
+    final pl = state.playback.playlist;
     final items = List.of(pl.items);
     final m = items.removeAt(from);
     items.insert(to > from ? to - 1 : to, m);
@@ -88,7 +88,8 @@ class StreamPlayerStream extends FakePlayerStream {
   final StreamPlayer _player;
 
   @override
-  Stream<List<Chapter>> get chapters => _player.watch((p) => p.state.chapters);
+  Stream<List<Chapter>> get chapters =>
+      _player.watch((p) => p.state.file.chapters);
 }
 
 /// A media server with canned answers and no network.

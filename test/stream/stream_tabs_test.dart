@@ -545,7 +545,9 @@ void main() {
 
     testWidgets('a long press offers play next on a phone', (tester) async {
       final player = StreamPlayer(
-        const PlayerState(playlist: Playlist([Media('a'), Media('b')])),
+        const PlayerState(
+          playback: PlaybackState(playlist: Playlist([Media('a'), Media('b')])),
+        ),
       );
       await pumpAt(
         tester,
@@ -561,7 +563,7 @@ void main() {
       await tester.tap(find.text('Play next'));
       await tester.pumpAndSettle();
       expect(player.calls, ['add', 'move 2 1']);
-      expect(player.state.playlist.items[1].extras?['serverId'], 't1');
+      expect(player.state.playback.playlist.items[1].extras?['serverId'], 't1');
     });
   });
 

@@ -35,13 +35,13 @@ class VolumeControl extends StatelessWidget {
     final guard = scope.guard;
     return Live<bool>(
       stream: player.stream.mute,
-      initial: player.state.mute,
+      initial: player.state.settings.mute,
       builder: (context, muted) => Live<double>(
         stream: player.stream.volumeMax,
-        initial: player.state.volumeMax,
+        initial: player.state.settings.volumeMax,
         builder: (context, vmax) => Live<double>(
           stream: player.stream.volume,
-          initial: player.state.volume,
+          initial: player.state.settings.volume,
           builder: (context, vol) {
             final max = vmax < 100 ? 100.0 : vmax;
             final value = vol.clamp(0.0, max).toDouble();

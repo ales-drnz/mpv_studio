@@ -19,7 +19,9 @@ void main() {
 
   setUp(() {
     player = QueueFakePlayer(
-      const PlayerState(playlist: Playlist([_a, _b, _c, _d], index: 1)),
+      const PlayerState(
+        playback: PlaybackState(playlist: Playlist([_a, _b, _c, _d], index: 1)),
+      ),
     );
     guarded = 0;
     queue = QueueController(
@@ -54,7 +56,7 @@ void main() {
     expect(player.items, [_a, _b, _d, _c]);
     await queue.playNext(0);
     expect(player.items, [_b, _a, _d, _c]);
-    expect(player.state.playlist.index, 0);
+    expect(player.state.playback.playlist.index, 0);
     // Already next: nothing to do.
     final before = player.calls.length;
     await queue.playNext(1);

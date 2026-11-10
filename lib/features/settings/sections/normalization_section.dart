@@ -92,7 +92,7 @@ class ReplayGainSection extends StatelessWidget {
     final p = scope.player;
     return Live<ReplayGainSettings>(
       stream: p.stream.replayGain,
-      initial: p.state.replayGain,
+      initial: p.state.settings.replayGain,
       builder: (context, rg) {
         final on = rg.mode != ReplayGain.no;
         return SettingsGroup(

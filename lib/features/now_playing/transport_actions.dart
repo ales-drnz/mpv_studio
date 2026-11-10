@@ -56,7 +56,7 @@ Future<void> skipTrack(
 // TODO(kit 0.7.0): player.stop(keepPlaylist: true) once the kit has it.
 Future<void> stopKeepingQueue(PlayerApi player, CallGuard guard) =>
     guard(() async {
-      final queue = player.state.playlist;
+      final queue = player.state.playback.playlist;
       final current = queue.index >= 0 && queue.index < queue.items.length
           ? queue.items[queue.index]
           : null;
@@ -78,15 +78,15 @@ const _pcmScheme = 'mak-pcm://';
 
 /// Plays when paused and pauses when playing, on the play intent.
 Future<void> togglePlay(PlayerApi player, CallGuard guard) =>
-    guard(player.state.playWhenReady ? player.pause : player.play);
+    guard(player.state.playback.playWhenReady ? player.pause : player.play);
 
 /// The step the A-B loop takes next: set A, then B, then clear.
 enum AbLoopStep { setA, setB, clear }
 
 /// The [AbLoopStep] after the loop points of [state].
 AbLoopStep nextAbLoopStep(PlayerState state) {
-  if (state.abLoopA == null) return AbLoopStep.setA;
-  if (state.abLoopB == null) return AbLoopStep.setB;
+  if (state.playback.abLoopA == null) return AbLoopStep.setA;
+  if (state.playback.abLoopB == null) return AbLoopStep.setB;
   return AbLoopStep.clear;
 }
 
@@ -97,7 +97,7 @@ Future<void> setLoopA(
   Duration at, {
   Notify? notify,
 }) async {
-  final b = player.state.abLoopB;
+  final b = player.state.playback.abLoopB;
   final done = await guard(() async {
     // A point after B would make an empty loop: B moves out of the way.
     if (b != null && at >= b) await player.setAbLoopB(null);
@@ -118,7 +118,7 @@ Future<void> setLoopB(
   Duration at, {
   Notify? notify,
 }) async {
-  final a = player.state.abLoopA;
+  final a = player.state.playback.abLoopA;
   // A B before A swaps the two, so the toast names the range, not "B".
   final Duration start;
   final Duration end;
@@ -134,7 +134,7 @@ Future<void> setLoopB(
     } else {
       await player.setAbLoopB(end);
     }
-    final pos = player.state.position;
+    final pos = player.state.playback.position;
     if (pos < start || pos >= end) await player.seek(start);
     return true;
   });
@@ -154,7 +154,7 @@ Future<void> clearLoop(PlayerApi player, CallGuard guard, {Notify? notify}) {
 
 /// Takes the next [AbLoopStep] at the playhead: the L shortcut.
 Future<void> cycleAbLoop(PlayerApi player, CallGuard guard, {Notify? notify}) {
-  final at = player.state.position;
+  final at = player.state.playback.position;
   return switch (nextAbLoopStep(player.state)) {
     AbLoopStep.setA => setLoopA(player, guard, at, notify: notify),
     AbLoopStep.setB => setLoopB(player, guard, at, notify: notify),
@@ -165,15 +165,15 @@ Future<void> cycleAbLoop(PlayerApi player, CallGuard guard, {Notify? notify}) {
 /// The title of chapter [index] of [state]: the active chapter's own tags
 /// first (`chapterMetadata`), then the chapter list, then its number.
 String chapterTitle(PlayerState state, int index) {
-  if (index == state.currentChapter) {
-    for (final e in state.chapterMetadata.entries) {
+  if (index == state.playback.currentChapter) {
+    for (final e in state.file.chapterMetadata.entries) {
       if (e.key.toLowerCase() == 'title' && e.value.trim().isNotEmpty) {
         return e.value.trim();
       }
     }
   }
-  final listed = index >= 0 && index < state.chapters.length
-      ? state.chapters[index].title?.trim()
+  final listed = index >= 0 && index < state.file.chapters.length
+      ? state.file.chapters[index].title?.trim()
       : null;
   return listed == null || listed.isEmpty ? 'Chapter ${index + 1}' : listed;
 }
@@ -186,12 +186,12 @@ Future<void> stepChapter(
   int delta, {
   Notify? notify,
 }) async {
-  final count = player.state.chapters.length;
+  final count = player.state.file.chapters.length;
   if (count == 0) {
     notify?.call('This track has no chapters');
     return;
   }
-  final target = (player.state.currentChapter ?? -1) + delta;
+  final target = (player.state.playback.currentChapter ?? -1) + delta;
   if (target >= count) {
     notify?.call('Last chapter');
     return;
@@ -213,7 +213,7 @@ Future<void> stepRate(
   bool reset = false,
   Notify? notify,
 }) async {
-  final raw = reset ? 1.0 : player.state.rate + delta;
+  final raw = reset ? 1.0 : player.state.settings.rate + delta;
   final rate = (raw.clamp(minRate, maxRate) * 100).roundToDouble() / 100;
   final done = await guard(() async {
     await player.setRate(rate);
@@ -231,7 +231,9 @@ String formatRate(double rate) {
 
 /// Changes the volume by [delta] percent, within the player's maximum.
 Future<void> stepVolume(PlayerApi player, CallGuard guard, double delta) {
-  final max = player.state.volumeMax < 100 ? 100.0 : player.state.volumeMax;
-  final next = (player.state.volume + delta).clamp(0.0, max);
+  final max = player.state.settings.volumeMax < 100
+      ? 100.0
+      : player.state.settings.volumeMax;
+  final next = (player.state.settings.volume + delta).clamp(0.0, max);
   return guard(() => player.setVolume(next.roundToDouble()));
 }

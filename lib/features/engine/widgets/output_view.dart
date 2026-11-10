@@ -23,13 +23,13 @@ class OutputView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = snapshot.state;
-    final out = s.audioOutputState;
-    final driver = s.currentAo.isNotEmpty
-        ? s.currentAo
-        : (s.audioDriver.isEmpty ? 'auto' : s.audioDriver);
-    final device = s.audioDevice.description.isNotEmpty
-        ? s.audioDevice.description
-        : s.audioDevice.name;
+    final out = s.output.audioOutputState;
+    final driver = s.output.currentAo.isNotEmpty
+        ? s.output.currentAo
+        : (s.settings.audioDriver.isEmpty ? 'auto' : s.settings.audioDriver);
+    final device = s.output.audioDevice.description.isNotEmpty
+        ? s.output.audioDevice.description
+        : s.output.audioDevice.name;
 
     return EngineCard(
       title: 'Audio output',
@@ -50,11 +50,11 @@ class OutputView extends StatelessWidget {
             builder: (context, c) {
               final input = _ParamsColumn(
                 title: 'From the decoder',
-                params: s.audioParams,
+                params: s.file.audioParams,
               );
               final output = _ParamsColumn(
                 title: 'To the device',
-                params: s.audioOutParams,
+                params: s.output.audioOutParams,
               );
               // Side by side when two format boxes fit, else stacked.
               final columns = ResponsiveGrid.columnsFor(

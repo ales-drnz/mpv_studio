@@ -299,8 +299,8 @@ class AboutSection extends StatelessWidget {
           entry: SettingsCatalog.about,
           child: const InfoRow(label: 'App', value: appName),
         ),
-        InfoRow(label: 'Engine', value: or(state.mpvVersion)),
-        InfoRow(label: 'FFmpeg', value: or(state.ffmpegVersion)),
+        InfoRow(label: 'Engine', value: or(state.versions.mpvVersion)),
+        InfoRow(label: 'FFmpeg', value: or(state.versions.ffmpegVersion)),
         SettingAnchor(
           entry: SettingsCatalog.licenses,
           child: SettingTile(

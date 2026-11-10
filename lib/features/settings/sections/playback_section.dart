@@ -22,7 +22,7 @@ class PlaybackSection extends StatelessWidget {
       children: [
         Live<double>(
           stream: p.stream.rate,
-          initial: p.state.rate,
+          initial: p.state.settings.rate,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.speed,
@@ -38,7 +38,7 @@ class PlaybackSection extends StatelessWidget {
         ),
         Live<double>(
           stream: p.stream.pitch,
-          initial: p.state.pitch,
+          initial: p.state.settings.pitch,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.pitch,
@@ -54,7 +54,7 @@ class PlaybackSection extends StatelessWidget {
         ),
         Live<bool>(
           stream: p.stream.pitchCorrection,
-          initial: p.state.pitchCorrection,
+          initial: p.state.settings.pitchCorrection,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.pitchCorrection,
@@ -64,7 +64,7 @@ class PlaybackSection extends StatelessWidget {
         ),
         Live<Loop>(
           stream: p.stream.loop,
-          initial: p.state.loop,
+          initial: p.state.playback.loop,
           builder: (context, v) => anchoredSegments(
             scope,
             SettingsCatalog.repeat,
@@ -79,7 +79,7 @@ class PlaybackSection extends StatelessWidget {
         ),
         Live<bool>(
           stream: p.stream.shuffle,
-          initial: p.state.shuffle,
+          initial: p.state.playback.shuffle,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.shuffle,
@@ -89,7 +89,7 @@ class PlaybackSection extends StatelessWidget {
         ),
         Live<Gapless>(
           stream: p.stream.gapless,
-          initial: p.state.gapless,
+          initial: p.state.settings.gapless,
           builder: (context, v) => anchoredSegments(
             scope,
             SettingsCatalog.gapless,
@@ -120,7 +120,7 @@ class VolumeSection extends StatelessWidget {
       children: [
         Live<double>(
           stream: p.stream.volumeMax,
-          initial: p.state.volumeMax,
+          initial: p.state.settings.volumeMax,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.volumeLimit,
@@ -134,7 +134,7 @@ class VolumeSection extends StatelessWidget {
         ),
         Live<double>(
           stream: p.stream.volumeGain,
-          initial: p.state.volumeGain,
+          initial: p.state.settings.volumeGain,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.volumeGain,
@@ -148,7 +148,7 @@ class VolumeSection extends StatelessWidget {
         ),
         Live<double>(
           stream: p.stream.volumeGainMin,
-          initial: p.state.volumeGainMin,
+          initial: p.state.settings.volumeGainMin,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.gainFloor,
@@ -162,7 +162,7 @@ class VolumeSection extends StatelessWidget {
         ),
         Live<double>(
           stream: p.stream.volumeGainMax,
-          initial: p.state.volumeGainMax,
+          initial: p.state.settings.volumeGainMax,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.gainCeiling,
@@ -179,7 +179,7 @@ class VolumeSection extends StatelessWidget {
         // value is null.
         Live<double?>(
           stream: p.stream.systemVolume,
-          initial: p.state.systemVolume,
+          initial: p.state.output.systemVolume,
           builder: (context, v) => v == null
               ? _unavailable(SettingsCatalog.systemVolume)
               : anchoredSlider(
@@ -194,7 +194,7 @@ class VolumeSection extends StatelessWidget {
         ),
         Live<bool?>(
           stream: p.stream.systemMute,
-          initial: p.state.systemMute,
+          initial: p.state.output.systemMute,
           builder: (context, v) => v == null
               ? _unavailable(SettingsCatalog.systemMute)
               : anchoredSwitch(

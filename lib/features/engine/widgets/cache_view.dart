@@ -18,10 +18,10 @@ class CacheView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = snapshot.state;
-    final cache = s.demuxerCacheState;
+    final cache = s.network.demuxerCacheState;
     final geometry = CacheGeometry.of(s);
-    final local = cache.seekableRanges.isEmpty && !s.demuxerViaNetwork;
-    final pauseOn = s.cache.pause;
+    final local = cache.seekableRanges.isEmpty && !s.network.demuxerViaNetwork;
+    final pauseOn = s.settings.cache.pause;
     final flags = [
       if (cache.bofCached) 'start cached',
       if (cache.eofCached) 'end cached',
@@ -33,12 +33,12 @@ class CacheView extends StatelessWidget {
       caption: local
           ? 'Local source: the demuxer reads the file directly.'
           : 'What the demuxer holds around the playhead.',
-      trailing: s.pausedForCache
+      trailing: s.network.pausedForCache
           ? PhasePill('Paused for cache', color: Tokens.amber)
           : PhasePill(
-              s.demuxerViaNetwork ? 'Network' : 'Local',
+              s.network.demuxerViaNetwork ? 'Network' : 'Local',
               color: Tokens.accent,
-              strong: s.demuxerViaNetwork,
+              strong: s.network.demuxerViaNetwork,
             ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,10 +63,13 @@ class CacheView extends StatelessWidget {
           const SizedBox(height: Tokens.s12),
           ReadoutGrid(
             children: [
-              Readout('Cached ahead', EngineFormat.seconds(s.bufferDuration)),
-              Readout('Buffered to', EngineFormat.seconds(s.buffer)),
+              Readout(
+                'Cached ahead',
+                EngineFormat.seconds(s.network.bufferDuration),
+              ),
+              Readout('Buffered to', EngineFormat.seconds(s.network.buffer)),
               Readout('Behind', EngineFormat.seconds(geometry.behind)),
-              Readout('Speed', EngineFormat.rate(s.cacheSpeed)),
+              Readout('Speed', EngineFormat.rate(s.network.cacheSpeed)),
               Readout(
                 'Cache duration',
                 geometry.cacheSecs == null
@@ -89,7 +92,7 @@ class CacheView extends StatelessWidget {
               Text(
                 pauseOn
                     ? 'pause on, resumes at '
-                          '${EngineFormat.seconds(s.cache.pauseWait)}'
+                          '${EngineFormat.seconds(s.settings.cache.pauseWait)}'
                     : 'pause off',
                 style: Tokens.caption,
               ),
@@ -98,7 +101,7 @@ class CacheView extends StatelessWidget {
           const SizedBox(height: Tokens.s8),
           Semantics(
             label: 'Cached ahead over the last minute',
-            value: EngineFormat.seconds(s.bufferDuration),
+            value: EngineFormat.seconds(s.network.bufferDuration),
             excludeSemantics: true,
             child: SizedBox(
               height: 72,
@@ -107,7 +110,9 @@ class CacheView extends StatelessWidget {
                   scaler: chartTextScaler(context),
                   samples: snapshot.cacheHistory,
                   now: snapshot.now,
-                  pauseWait: pauseOn ? secondsOf(s.cache.pauseWait) : null,
+                  pauseWait: pauseOn
+                      ? secondsOf(s.settings.cache.pauseWait)
+                      : null,
                 ),
               ),
             ),

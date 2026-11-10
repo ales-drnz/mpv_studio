@@ -78,7 +78,7 @@ class FailedTrackBanner extends StatelessWidget {
       valueListenable: failed,
       builder: (context, set, _) => Live<Playlist>(
         stream: player.stream.playlist,
-        initial: player.state.playlist,
+        initial: player.state.playback.playlist,
         builder: (context, pl) {
           final media = currentMedia(pl);
           if (media == null || !set.contains(media)) {
@@ -170,10 +170,10 @@ class MutedOutputBanner extends StatelessWidget {
     final player = scope.player;
     return Live<String>(
       stream: player.stream.currentAo,
-      initial: player.state.currentAo,
+      initial: player.state.output.currentAo,
       builder: (context, ao) => Live<String>(
         stream: player.stream.audioDriver,
-        initial: player.state.audioDriver,
+        initial: player.state.settings.audioDriver,
         builder: (context, driver) {
           if (ao != 'null' || chosenNullOutput(driver)) {
             return const SizedBox.shrink();

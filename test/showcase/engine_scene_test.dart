@@ -110,8 +110,9 @@ void main() {
           buffer: pos + aheadD,
           bufferDuration: aheadD,
           cacheSpeed: phase < 0.72 ? 0 : 3.1e6 + 0.4e6 * (phase - 0.72),
-          percentPos: pos.inMilliseconds / s.duration.inMilliseconds * 100,
-          playtimeRemaining: s.duration - pos,
+          percentPos:
+              pos.inMilliseconds / s.playback.duration.inMilliseconds * 100,
+          playtimeRemaining: s.playback.duration - pos,
         ),
       );
     }

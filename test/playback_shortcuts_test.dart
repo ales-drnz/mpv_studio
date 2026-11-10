@@ -163,8 +163,11 @@ void main() {
       await _pump(tester, fake);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
       await tester.pump();
-      expect(fake.state.abLoopA, const Duration(minutes: 2, seconds: 3));
-      expect(fake.state.abLoopB, const Duration(minutes: 3));
+      expect(
+        fake.state.playback.abLoopA,
+        const Duration(minutes: 2, seconds: 3),
+      );
+      expect(fake.state.playback.abLoopB, const Duration(minutes: 3));
       // The playhead (2:03) is the loop's start, so it stays put.
       expect(fake.calls.where((c) => c.startsWith('seek')), isEmpty);
       // The toast names the swapped range, not the point just set.

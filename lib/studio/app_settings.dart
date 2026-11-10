@@ -410,7 +410,7 @@ class AppSettings {
   /// entry that no longer opens fails as any other would.
   Future<void> restoreQueue(PlayerApi p) async {
     final queue = decodeQueue(_store['queue']);
-    if (queue == null || p.state.playlist.items.isNotEmpty) return;
+    if (queue == null || p.state.playback.playlist.items.isNotEmpty) return;
     await p.openAll(queue.items, index: queue.index, play: false);
   }
 

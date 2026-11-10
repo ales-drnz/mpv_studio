@@ -119,7 +119,7 @@ class TransportControls extends StatelessWidget {
                 children: [
                   Live<bool>(
                     stream: player.stream.shuffle,
-                    initial: player.state.shuffle,
+                    initial: player.state.playback.shuffle,
                     builder: (context, on) => RoundIconButton(
                       icon: Icons.shuffle_rounded,
                       size: 20,
@@ -140,7 +140,7 @@ class TransportControls extends StatelessWidget {
                   SizedBox(width: modeGap),
                   Live<Loop>(
                     stream: player.stream.loop,
-                    initial: player.state.loop,
+                    initial: player.state.playback.loop,
                     builder: (context, loop) => RoundIconButton(
                       icon: loop == Loop.file
                           ? Icons.repeat_one_rounded
@@ -215,7 +215,7 @@ class PlayPauseButton extends StatelessWidget {
       player: player,
       builder: (context, busy) => Live<bool>(
         stream: player.stream.playWhenReady,
-        initial: player.state.playWhenReady,
+        initial: player.state.playback.playWhenReady,
         builder: (context, playing) {
           final action = playing ? 'Pause' : 'Play';
           void onTap() => guard(playing ? player.pause : player.play);
@@ -315,7 +315,7 @@ class PlaybackBusy extends StatelessWidget {
       initial: MpvPlaybackState.idle,
       builder: (context, phase) => Live<bool>(
         stream: player.stream.seeking,
-        initial: player.state.seeking,
+        initial: player.state.playback.seeking,
         builder: (context, seeking) => builder(context, switch (phase) {
           MpvPlaybackState.loading => PlaybackWait.loading,
           MpvPlaybackState.buffering => PlaybackWait.buffering,
@@ -373,7 +373,7 @@ class _SpeedButton extends StatelessWidget {
     final minTap = context.layout.minTap;
     return Live<double>(
       stream: player.stream.rate,
-      initial: player.state.rate,
+      initial: player.state.settings.rate,
       builder: (context, rate) {
         final normal = (rate - 1).abs() < 0.001;
         return Semantics(

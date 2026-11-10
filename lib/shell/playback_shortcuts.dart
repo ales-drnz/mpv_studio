@@ -298,15 +298,15 @@ final Map<LogicalKeyboardKey, _Action> _pressActions = {
   LogicalKeyboardKey.space: (p, g, n) {
     // The play button says it on screen; a screen reader hears it, once
     // the player took it.
-    final playing = !p.state.playWhenReady;
+    final playing = !p.state.playback.playWhenReady;
     togglePlay(p, g).then((_) {
-      if (p.state.playWhenReady == playing) {
+      if (p.state.playback.playWhenReady == playing) {
         _announce(playing ? 'Playing' : 'Paused');
       }
     });
   },
   LogicalKeyboardKey.keyM: (p, g, n) {
-    final mute = !p.state.mute;
+    final mute = !p.state.settings.mute;
     _announce(mute ? 'Muted' : 'Sound on');
     g(() => p.setMute(mute));
   },

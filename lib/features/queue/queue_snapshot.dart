@@ -30,18 +30,18 @@ class QueueSnapshot {
   /// nothing to put back.
   static QueueSnapshot? of(PlayerApi player) {
     final s = player.state;
-    if (s.playlist.items.isEmpty) return null;
+    if (s.playback.playlist.items.isEmpty) return null;
     return QueueSnapshot._(
-      s.playlist.items,
-      s.playlist.index.clamp(0, s.playlist.items.length - 1),
-      s.playWhenReady,
+      s.playback.playlist.items,
+      s.playback.playlist.index.clamp(0, s.playback.playlist.items.length - 1),
+      s.playback.playWhenReady,
     );
   }
 
   /// Whether the queue of [player] is no longer this one: the action
   /// went through (a refused call leaves it as it was).
   bool changedIn(PlayerApi player) =>
-      !identical(player.state.playlist.items, items);
+      !identical(player.state.playback.playlist.items, items);
 
   /// Notes that the action is done: an undo only replaces the queue it
   /// left.

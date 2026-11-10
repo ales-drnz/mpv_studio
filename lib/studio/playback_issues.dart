@@ -105,7 +105,7 @@ class PlaybackIssues {
     duration: player.stream.duration,
     completed: player.stream.completed,
     retry: (media) async {
-      final at = player.state.playlist.items.indexOf(media);
+      final at = player.state.playback.playlist.items.indexOf(media);
       if (at >= 0) {
         await player.jump(at);
       } else {
