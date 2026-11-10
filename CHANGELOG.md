@@ -1,3 +1,8 @@
+## [0.4.8] - 10-11-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.7.0`, with libmpv-r24: the app reads the player's state through its groups, and a track on loop keeps its waveform instead of drawing it again at every pass.
+
 ## [0.4.7] - 8-11-2026
 
 ### Changed
