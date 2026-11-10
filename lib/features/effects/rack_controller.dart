@@ -28,7 +28,7 @@ class PlayerEffectsEngine implements EffectsEngine {
   const PlayerEffectsEngine(this.player);
 
   @override
-  List<AudioEffect> get current => player.state.audioEffects;
+  List<AudioEffect> get current => player.state.settings.audioEffects;
 
   @override
   Stream<List<AudioEffect>> get changes => player.stream.audioEffects;

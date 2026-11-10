@@ -174,13 +174,13 @@ class _InfoBody extends StatelessWidget {
   Widget _source() {
     return Live<AudioParams>(
       stream: player.stream.audioParams,
-      initial: player.state.audioParams,
+      initial: player.state.file.audioParams,
       builder: (context, p) => Live<String>(
         stream: player.stream.fileFormat,
-        initial: player.state.fileFormat,
+        initial: player.state.file.fileFormat,
         builder: (context, container) => Live<double?>(
           stream: player.stream.audioBitrate,
-          initial: player.state.audioBitrate,
+          initial: player.state.file.audioBitrate,
           builder: (context, bitrate) {
             // `file-format` is the protocol for adaptive streams (hls/dash);
             // the true segment container (fMP4) is something only the app
@@ -261,10 +261,10 @@ class _InfoBody extends StatelessWidget {
   Widget _output() {
     return Live<AudioParams>(
       stream: player.stream.audioOutParams,
-      initial: player.state.audioOutParams,
+      initial: player.state.output.audioOutParams,
       builder: (context, p) => Live<double>(
         stream: player.stream.volumeGain,
-        initial: player.state.volumeGain,
+        initial: player.state.settings.volumeGain,
         builder: (context, gain) => _section(
           'Output',
           _statGrid([
@@ -286,20 +286,25 @@ class _InfoBody extends StatelessWidget {
       _card([
         _kvLive(
           player.stream.streamPath,
-          player.state.streamPath,
+          player.state.file.streamPath,
           'Requested',
           _orDash,
         ),
-        _kvLive(player.stream.path, player.state.path, 'Resolved', _orDash),
+        _kvLive(
+          player.stream.path,
+          player.state.file.path,
+          'Resolved',
+          _orDash,
+        ),
         _kvLive(
           player.stream.filename,
-          player.state.filename,
+          player.state.file.filename,
           'Filename',
           _orDash,
         ),
         _kvLive<int>(
           player.stream.fileSize,
-          player.state.fileSize,
+          player.state.file.fileSize,
           'Size',
           _bytes,
         ),
@@ -320,31 +325,31 @@ class _InfoBody extends StatelessWidget {
         ),
         _kvLive<Duration>(
           player.stream.audioPts,
-          player.state.audioPts,
+          player.state.playback.audioPts,
           'Position',
           _secs,
         ),
         _kvLive<Duration>(
           player.stream.timeRemaining,
-          player.state.timeRemaining,
+          player.state.playback.timeRemaining,
           'Remaining',
           _secs,
         ),
         _kvLive<bool>(
           player.stream.seekable,
-          player.state.seekable,
+          player.state.playback.seekable,
           'Seekable',
           _yn,
         ),
         _kvLive<bool>(
           player.stream.partiallySeekable,
-          player.state.partiallySeekable,
+          player.state.playback.partiallySeekable,
           'Partial seek',
           _yn,
         ),
         _kvLive<bool>(
           player.stream.eofReached,
-          player.state.eofReached,
+          player.state.playback.eofReached,
           'EOF',
           _yn,
         ),
@@ -432,7 +437,8 @@ class _InfoBody extends StatelessWidget {
 
   // ── Formatters ──────────────────────────────────────────────────────
 
-  String? _currentExtra(String key) => currentExtra(player.state.playlist, key);
+  String? _currentExtra(String key) =>
+      currentExtra(player.state.playback.playlist, key);
 
   /// Friendly label for mpv's `file-format` (the demuxer name). For
   /// adaptive streams this is the protocol (HLS/DASH); for direct files

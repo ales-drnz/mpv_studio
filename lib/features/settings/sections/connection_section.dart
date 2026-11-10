@@ -41,7 +41,7 @@ class ConnectionSection extends StatelessWidget {
       children: [
         Live<Duration>(
           stream: p.stream.networkTimeout,
-          initial: p.state.networkTimeout,
+          initial: p.state.settings.networkTimeout,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.networkTimeout,
@@ -65,7 +65,7 @@ class ConnectionSection extends StatelessWidget {
         else ...[
           Live<bool>(
             stream: p.stream.tlsVerify,
-            initial: p.state.tlsVerify,
+            initial: p.state.settings.tlsVerify,
             builder: (context, v) => anchoredSwitch(
               scope,
               SettingsCatalog.tlsVerify,
@@ -88,7 +88,7 @@ class ConnectionSection extends StatelessWidget {
           ),
           Live<String>(
             stream: p.stream.httpProxy,
-            initial: p.state.httpProxy,
+            initial: p.state.settings.httpProxy,
             builder: (context, v) => SettingAnchor(
               entry: SettingsCatalog.httpProxy,
               child: TextRow(
@@ -114,7 +114,7 @@ class ConnectionSection extends StatelessWidget {
           ),
           Live<bool>(
             stream: p.stream.cookies,
-            initial: p.state.cookies,
+            initial: p.state.settings.cookies,
             builder: (context, v) => anchoredSwitch(
               scope,
               SettingsCatalog.cookies,

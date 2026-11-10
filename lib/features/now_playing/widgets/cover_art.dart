@@ -46,13 +46,13 @@ class CoverArtView extends StatelessWidget {
         clipper: ShapeBorderClipper(shape: Tokens.shape(radius)),
         child: Live<Playlist>(
           stream: player.stream.playlist,
-          initial: player.state.playlist,
+          initial: player.state.playback.playlist,
           builder: (context, pl) => Live<CoverArt?>(
             stream: player.stream.coverArt,
-            initial: player.state.coverArt,
+            initial: player.state.file.coverArt,
             builder: (context, art) => Live<List<MpvTrack>>(
               stream: player.stream.tracks,
-              initial: player.state.tracks,
+              initial: player.state.file.tracks,
               builder: (context, tracks) {
                 final folder = folderCover(tracks);
                 final hasArt =

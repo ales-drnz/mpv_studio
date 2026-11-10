@@ -31,8 +31,8 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
 void _expectStoppedOnSameEntry(QueueFakePlayer player) {
   expect(player.calls, contains('stop'));
   expect(player.items, [localSong, webSong, serverSong]);
-  expect(player.state.playlist.index, 1);
-  expect(player.state.playWhenReady, isFalse);
+  expect(player.state.playback.playlist.index, 1);
+  expect(player.state.playback.playWhenReady, isFalse);
 }
 
 void main() {
@@ -77,7 +77,9 @@ void main() {
   ) async {
     final player = QueueFakePlayer(
       const PlayerState(
-        playlist: Playlist([Media('mak-pcm://3'), localSong], index: 0),
+        playback: PlaybackState(
+          playlist: Playlist([Media('mak-pcm://3'), localSong], index: 0),
+        ),
       ),
     );
     await _pump(tester, MiniPlayer(player: player));

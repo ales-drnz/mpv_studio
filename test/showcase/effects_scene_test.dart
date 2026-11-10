@@ -31,7 +31,7 @@ Widget effectsPage(
     taps: (f, instance, side) =>
         player.stream.tap(f, instance: instance, side: side),
     pcm: player.stream.pcm,
-    spectrum: player.state.spectrum,
+    spectrum: player.state.settings.spectrum,
     loudness: player.stream.loudnessMeter,
     child: SignalChainView(
       rack: rack,

@@ -52,7 +52,7 @@ class StreamActions {
   /// Says what an action did, with an optional undo.
   final StudioToast? toast;
 
-  bool get _queueEmpty => player.state.playlist.items.isEmpty;
+  bool get _queueEmpty => player.state.playback.playlist.items.isEmpty;
 
   /// Whether every one of [medias] can be loaded from this page.
   bool _loadable(List<Media> medias) {
@@ -123,7 +123,7 @@ class StreamActions {
   Future<void> playNext(List<Media> medias) async {
     if (medias.isEmpty || !_loadable(medias)) return;
     QueueSnapshot.noteEdit();
-    final pl = player.state.playlist;
+    final pl = player.state.playback.playlist;
     if (pl.items.isEmpty) {
       await guard(() => player.openAll(medias, play: true));
       return;

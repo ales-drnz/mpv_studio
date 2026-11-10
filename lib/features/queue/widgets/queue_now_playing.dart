@@ -107,10 +107,10 @@ class _Progress extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Live<Duration>(
     stream: player.stream.duration,
-    initial: player.state.duration,
+    initial: player.state.playback.duration,
     builder: (context, duration) => Live<Duration>(
       stream: player.stream.position,
-      initial: player.state.position,
+      initial: player.state.playback.position,
       builder: (context, position) {
         final total = duration.inMilliseconds;
         final f = total <= 0

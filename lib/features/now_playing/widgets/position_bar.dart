@@ -26,7 +26,7 @@ class PositionBar extends StatelessWidget {
       children: [
         Live<Duration>(
           stream: player.stream.position,
-          initial: player.state.position,
+          initial: player.state.playback.position,
           builder: (context, p) => Text(
             formatDuration(p),
             key: const ValueKey('position-elapsed'),
@@ -53,7 +53,7 @@ class PositionBar extends StatelessWidget {
         const Expanded(child: Center(child: AbLoopChip())),
         Live<Duration>(
           stream: player.stream.duration,
-          initial: player.state.duration,
+          initial: player.state.playback.duration,
           // No length but playing on: a live stream says so.
           builder: (context, d) => d > Duration.zero
               ? Text(formatDuration(d), style: Tokens.numeric)
@@ -63,7 +63,7 @@ class PositionBar extends StatelessWidget {
                   stream: player.stream.position
                       .map((p) => p > Duration.zero)
                       .distinct(),
-                  initial: player.state.position > Duration.zero,
+                  initial: player.state.playback.position > Duration.zero,
                   builder: (context, playing) => playing
                       ? const StatePill('LIVE')
                       : Text('-:--', style: Tokens.numeric),
@@ -85,15 +85,15 @@ class ChapterBar extends StatelessWidget {
     final player = scope.player;
     return Live<List<Chapter>>(
       stream: player.stream.chapters,
-      initial: player.state.chapters,
+      initial: player.state.file.chapters,
       builder: (context, chapters) {
         if (chapters.isEmpty) return const SizedBox.shrink();
         return Live<int?>(
           stream: player.stream.currentChapter,
-          initial: player.state.currentChapter,
+          initial: player.state.playback.currentChapter,
           builder: (context, current) => Live<Map<String, String>>(
             stream: player.stream.chapterMetadata,
-            initial: player.state.chapterMetadata,
+            initial: player.state.file.chapterMetadata,
             builder: (context, _) {
               final notify = feedbackFor(context);
               // Before the first chapter starts, mpv reports none.
@@ -196,9 +196,9 @@ class AbLoopChip extends StatelessWidget {
     CallGuard guard,
   ) async {
     final s = player.state;
-    final at = s.position;
+    final at = s.playback.position;
     final time = formatDuration(at);
-    final hasLoop = s.abLoopA != null || s.abLoopB != null;
+    final hasLoop = s.playback.abLoopA != null || s.playback.abLoopB != null;
     final box = context.findRenderObject() as RenderBox?;
     final position = box?.localToGlobal(box.size.bottomLeft(Offset.zero));
     final notify = feedbackFor(context);
@@ -228,7 +228,7 @@ class AbLoopChip extends StatelessWidget {
           StudioMenuItem(
             value: (_LoopAction.count, n),
             label: _countLabel(n),
-            icon: n == s.abLoopCount
+            icon: n == s.playback.abLoopCount
                 ? Icons.check_rounded
                 : Icons.repeat_rounded,
           ),
@@ -254,16 +254,16 @@ class AbLoopChip extends StatelessWidget {
     final player = scope.player;
     return Live<Duration?>(
       stream: player.stream.abLoopA,
-      initial: player.state.abLoopA,
+      initial: player.state.playback.abLoopA,
       builder: (context, a) => Live<Duration?>(
         stream: player.stream.abLoopB,
-        initial: player.state.abLoopB,
+        initial: player.state.playback.abLoopB,
         builder: (context, b) => Live<int?>(
           stream: player.stream.remainingAbLoops,
-          initial: player.state.remainingAbLoops,
+          initial: player.state.playback.remainingAbLoops,
           builder: (context, left) => Live<int?>(
             stream: player.stream.abLoopCount,
-            initial: player.state.abLoopCount,
+            initial: player.state.playback.abLoopCount,
             builder: (context, count) {
               final on = a != null || b != null;
               final text = switch ((a, b)) {

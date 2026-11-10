@@ -72,11 +72,11 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
   void initState() {
     super.initState();
     final s = _player.state;
-    _title = _titleOf(s.playlist);
-    _chapters = s.chapters;
-    _position = s.position;
-    _duration = s.duration;
-    _chapterTitle = _titleTag(s.chapterMetadata);
+    _title = _titleOf(s.playback.playlist);
+    _chapters = s.file.chapters;
+    _position = s.playback.position;
+    _duration = s.playback.duration;
+    _chapterTitle = _titleTag(s.file.chapterMetadata);
     final st = _player.stream;
     void on<T>(Stream<T> stream, void Function(T v) apply) => _subs.add(
       stream.listen((v) {

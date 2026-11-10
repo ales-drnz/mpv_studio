@@ -197,14 +197,16 @@ class ShellHarness {
 /// show.
 FakePlayer demoPlayer() => FakePlayer(
   const PlayerState(
-    playlist: Playlist([
-      Media(
-        'https://example.test/one.flac',
-        extras: {'title': 'Paper Lanterns', 'artist': 'Halvorsen Trio'},
-      ),
-    ]),
-    duration: Duration(minutes: 5, seconds: 37),
-    position: Duration(minutes: 2, seconds: 3),
+    playback: PlaybackState(
+      playlist: Playlist([
+        Media(
+          'https://example.test/one.flac',
+          extras: {'title': 'Paper Lanterns', 'artist': 'Halvorsen Trio'},
+        ),
+      ]),
+      duration: Duration(minutes: 5, seconds: 37),
+      position: Duration(minutes: 2, seconds: 3),
+    ),
   ),
 );
 

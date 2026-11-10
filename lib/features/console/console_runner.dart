@@ -264,7 +264,7 @@ class ConsoleRunner {
       case 'no':
         pause = false;
       case 'toggle' || 'cycle':
-        pause = player.state.playWhenReady;
+        pause = player.state.playback.playWhenReady;
       default:
         return [ConsoleResult.error('pause takes yes, no or toggle')];
     }
@@ -277,7 +277,7 @@ class ConsoleRunner {
   }
 
   Future<List<ConsoleResult>> _playIndex(String which) async {
-    final current = player.state.playlist.index;
+    final current = player.state.playback.playlist.index;
     switch (which) {
       case 'none':
         return _stopKeepingPlaylist(['playlist-play-index', 'none']);
@@ -305,7 +305,7 @@ class ConsoleRunner {
   /// `playlist-remove <index|current>`.
   Future<List<ConsoleResult>> _remove(String which) async {
     final index = which == 'current'
-        ? player.state.playlist.index
+        ? player.state.playback.playlist.index
         : int.tryParse(which);
     if (index == null || index < 0) {
       return [ConsoleResult.error('Expected an index or current')];
@@ -330,7 +330,7 @@ class ConsoleRunner {
       }
       return _routed('raw loadfile (with options)');
     }
-    final playlist = player.state.playlist;
+    final playlist = player.state.playback.playlist;
     final idle = _idle;
     final end = playlist.items.length;
     final calls = <String>[];
@@ -433,7 +433,7 @@ class ConsoleRunner {
   /// Whether nothing is loaded, the case where mpv's `-play` flags start
   /// playback.
   bool get _idle {
-    final playlist = player.state.playlist;
+    final playlist = player.state.playback.playlist;
     return playlist.items.isEmpty || playlist.index < 0;
   }
 

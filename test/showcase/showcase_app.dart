@@ -99,7 +99,7 @@ Future<ShowcaseApp> pumpShowcaseApp(
     ),
   );
   if (section != Section.nowPlaying) router.go(section.path);
-  final art = player.state.coverArt;
+  final art = player.state.file.coverArt;
   if (art != null) {
     final context = tester.element(find.byType(Navigator).first);
     await tester.runAsync(() => precacheImage(MemoryImage(art.bytes), context));

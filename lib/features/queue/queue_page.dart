@@ -144,7 +144,7 @@ class _QueueViewState extends State<QueueView> {
   }
 
   Future<void> _showInfo(int index, {required bool split}) async {
-    final items = widget.player.state.playlist.items;
+    final items = widget.player.state.playback.playlist.items;
     if (index >= items.length) return;
     if (split) {
       _select(items, index);
@@ -158,7 +158,7 @@ class _QueueViewState extends State<QueueView> {
         padding: const EdgeInsets.symmetric(horizontal: Tokens.s16),
         child: Live<Playlist>(
           stream: widget.player.stream.playlist,
-          initial: widget.player.state.playlist,
+          initial: widget.player.state.playback.playlist,
           builder: (context, pl) {
             final at = ref.resolve(pl.items);
             if (at == null) {
@@ -184,7 +184,7 @@ class _QueueViewState extends State<QueueView> {
     int index, {
     required bool split,
   }) async {
-    final items = widget.player.state.playlist.items;
+    final items = widget.player.state.playback.playlist.items;
     if (index < 0 || index >= items.length) return;
     switch (action) {
       case QueueAction.play:
@@ -222,7 +222,7 @@ class _QueueViewState extends State<QueueView> {
   Future<void> _removing = Future.value();
 
   Future<bool> _removeNow(int index) async {
-    final items = widget.player.state.playlist.items;
+    final items = widget.player.state.playback.playlist.items;
     if (index < 0 || index >= items.length) return false;
     final title = QueueRowInfo.of(
       items[index],
@@ -321,7 +321,7 @@ class _QueueViewState extends State<QueueView> {
     // Drops land anywhere on the window: the shell's FileDropHost.
     return Live<Playlist>(
       stream: player.stream.playlist,
-      initial: player.state.playlist,
+      initial: player.state.playback.playlist,
       builder: (context, playlist) {
         final items = playlist.items;
         final selected = _selected?.resolve(items);
@@ -386,7 +386,7 @@ class _QueueViewState extends State<QueueView> {
                   _summary(playlist),
                   Live<String>(
                     stream: player.stream.playlistPath,
-                    initial: player.state.playlistPath,
+                    initial: player.state.file.playlistPath,
                     builder: (context, path) => path.isEmpty
                         ? const SizedBox.shrink()
                         : PlaylistBanner(

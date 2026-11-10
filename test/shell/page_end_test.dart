@@ -259,13 +259,15 @@ void main() {
     testWidgets('Queue at $size', (tester) async {
       final player = QueueFakePlayer(
         PlayerState(
-          playlist: Playlist([
-            for (var i = 0; i < 40; i++)
-              Media(
-                'https://example.test/$i.flac',
-                extras: {'title': 'Track $i'},
-              ),
-          ], index: 1),
+          playback: PlaybackState(
+            playlist: Playlist([
+              for (var i = 0; i < 40; i++)
+                Media(
+                  'https://example.test/$i.flac',
+                  extras: {'title': 'Track $i'},
+                ),
+            ], index: 1),
+          ),
         ),
       );
       final details = player.details();
@@ -316,17 +318,21 @@ void main() {
       testWidgets('chapters', (tester) async {
         final player = StreamPlayer(
           PlayerState(
-            playlist: const Playlist([
-              Media('https://example.test/long.flac'),
-            ], index: 0),
-            duration: const Duration(minutes: 40),
-            chapters: [
-              for (var i = 0; i < 30; i++)
-                Chapter(
-                  time: Duration(minutes: i),
-                  title: 'Part $i',
-                ),
-            ],
+            playback: PlaybackState(
+              playlist: const Playlist([
+                Media('https://example.test/long.flac'),
+              ], index: 0),
+              duration: const Duration(minutes: 40),
+            ),
+            file: FileState(
+              chapters: [
+                for (var i = 0; i < 30; i++)
+                  Chapter(
+                    time: Duration(minutes: i),
+                    title: 'Part $i',
+                  ),
+              ],
+            ),
           ),
         );
         await stream(
@@ -484,8 +490,12 @@ void main() {
           body: EnginePanel(
             player: FakePlayer(
               const PlayerState(
-                playlist: Playlist([Media('https://example.test/one.flac')]),
-                audioEffects: [BassEffect(gain: 4), LoudnormEffect()],
+                playback: PlaybackState(
+                  playlist: Playlist([Media('https://example.test/one.flac')]),
+                ),
+                settings: PlayerSettings(
+                  audioEffects: [BassEffect(gain: 4), LoudnormEffect()],
+                ),
               ),
             ),
             interval: const Duration(hours: 1),

@@ -49,10 +49,10 @@ class DeviceSection extends StatelessWidget {
       children: [
         Live<List<Device>>(
           stream: p.stream.audioDevices,
-          initial: p.state.audioDevices,
+          initial: p.state.output.audioDevices,
           builder: (context, devices) => Live<Device>(
             stream: p.stream.audioDevice,
-            initial: p.state.audioDevice,
+            initial: p.state.output.audioDevice,
             builder: (context, current) {
               final known = devices.contains(current);
               return anchoredDropdown<Device>(
@@ -82,7 +82,7 @@ class DeviceSection extends StatelessWidget {
         if (!kIsWeb)
           Live<bool>(
             stream: p.stream.audioExclusive,
-            initial: p.state.audioExclusive,
+            initial: p.state.settings.audioExclusive,
             builder: (context, v) => anchoredSwitch(
               scope,
               SettingsCatalog.exclusive,
@@ -92,7 +92,7 @@ class DeviceSection extends StatelessWidget {
           ),
         Live<Format>(
           stream: p.stream.audioFormat,
-          initial: p.state.audioFormat,
+          initial: p.state.settings.audioFormat,
           builder: (context, v) {
             final known = _formats.any((f) => f.$1 == v);
             return anchoredDropdown<Format>(
@@ -110,7 +110,7 @@ class DeviceSection extends StatelessWidget {
         ),
         Live<Channels>(
           stream: p.stream.audioChannels,
-          initial: p.state.audioChannels,
+          initial: p.state.settings.audioChannels,
           builder: (context, v) {
             Channels? match;
             for (final (c, _) in _channels) {
@@ -131,7 +131,7 @@ class DeviceSection extends StatelessWidget {
         ),
         Live<int>(
           stream: p.stream.audioSampleRate,
-          initial: p.state.audioSampleRate,
+          initial: p.state.settings.audioSampleRate,
           builder: (context, v) => anchoredDropdown<int>(
             scope,
             SettingsCatalog.sampleRate,
@@ -145,7 +145,7 @@ class DeviceSection extends StatelessWidget {
         ),
         Live<Duration>(
           stream: p.stream.audioBuffer,
-          initial: p.state.audioBuffer,
+          initial: p.state.settings.audioBuffer,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.outputBuffer,
@@ -159,7 +159,7 @@ class DeviceSection extends StatelessWidget {
         ),
         Live<Duration>(
           stream: p.stream.audioDelay,
-          initial: p.state.audioDelay,
+          initial: p.state.settings.audioDelay,
           builder: (context, v) => anchoredSlider(
             scope,
             SettingsCatalog.audioDelay,
@@ -177,7 +177,7 @@ class DeviceSection extends StatelessWidget {
         // routes the stream as music.
         Live<bool>(
           stream: p.stream.audioMediaRole,
-          initial: p.state.audioMediaRole,
+          initial: p.state.settings.audioMediaRole,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.mediaRole,

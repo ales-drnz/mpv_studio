@@ -22,13 +22,13 @@ Future<void> showSpeedAndPitch(
   title: 'Speed and pitch',
   builder: (context) => Live<double>(
     stream: player.stream.rate,
-    initial: player.state.rate,
+    initial: player.state.settings.rate,
     builder: (context, rate) => Live<double>(
       stream: player.stream.pitch,
-      initial: player.state.pitch,
+      initial: player.state.settings.pitch,
       builder: (context, pitch) => Live<bool>(
         stream: player.stream.pitchCorrection,
-        initial: player.state.pitchCorrection,
+        initial: player.state.settings.pitchCorrection,
         builder: (context, keep) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [

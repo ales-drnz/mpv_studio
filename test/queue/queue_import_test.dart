@@ -96,7 +96,11 @@ void main() {
 
     test('on a queue says what it added', () async {
       player = QueueFakePlayer(
-        const PlayerState(playlist: Playlist([Media('/x.flac')], index: 0)),
+        const PlayerState(
+          playback: PlaybackState(
+            playlist: Playlist([Media('/x.flac')], index: 0),
+          ),
+        ),
       );
       File('${dir.path}/a.mp3').writeAsStringSync('');
       File('${dir.path}/b.mp3').writeAsStringSync('');

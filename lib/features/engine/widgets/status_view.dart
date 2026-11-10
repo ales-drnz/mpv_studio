@@ -33,14 +33,14 @@ class StatusView extends StatelessWidget {
   /// Why the request and the audio differ, or null when they agree or
   /// there is nothing to wait for (no file loaded, the end reached).
   static String? mismatch(PlayerState s, MpvPlaybackState phase) {
-    if (s.playing && !s.playWhenReady) {
+    if (s.playback.playing && !s.playback.playWhenReady) {
       return 'Audio runs without a play request: a raw command started '
           'it. The request follows the next play or pause.';
     }
     final waiting =
         phase == MpvPlaybackState.loading ||
         phase == MpvPlaybackState.buffering;
-    if (s.playWhenReady && !s.playing && waiting) {
+    if (s.playback.playWhenReady && !s.playback.playing && waiting) {
       return 'Play requested, waiting for the engine to load or buffer.';
     }
     return null;
@@ -52,8 +52,10 @@ class StatusView extends StatelessWidget {
     final phase = snapshot.playbackState;
     final color = colorOf(phase);
     final note = mismatch(s, phase);
-    final opened = s.streamOpenFilename;
-    final source = s.streamPath.isNotEmpty ? s.streamPath : s.path;
+    final opened = s.file.streamOpenFilename;
+    final source = s.file.streamPath.isNotEmpty
+        ? s.file.streamPath
+        : s.file.path;
     final rewritten = opened.isNotEmpty && opened != source;
 
     final headline = Semantics(
@@ -96,24 +98,24 @@ class StatusView extends StatelessWidget {
             children: [
               StatePill(
                 'Play requested',
-                on: s.playWhenReady,
+                on: s.playback.playWhenReady,
                 tooltip: 'playWhenReady',
               ),
               StatePill(
                 'Audio running',
-                on: s.playing,
+                on: s.playback.playing,
                 color: Tokens.green,
                 tooltip: 'playing',
               ),
               StatePill(
                 'Reached the end',
-                on: s.completed,
+                on: s.playback.completed,
                 color: Tokens.fgDim,
                 tooltip: 'completed',
               ),
             ],
           ),
-          if (s.completed && s.readError == true) ...[
+          if (s.playback.completed && s.network.readError == true) ...[
             const SizedBox(height: Tokens.s8),
             Text(
               'The connection dropped: the stream ended before its end '
@@ -134,19 +136,22 @@ class StatusView extends StatelessWidget {
             children: [
               Readout(
                 'Position',
-                s.duration > Duration.zero
-                    ? '${EngineFormat.clock(s.position)}, '
-                          '${s.percentPos.round()}%'
-                    : EngineFormat.clock(s.position),
+                s.playback.duration > Duration.zero
+                    ? '${EngineFormat.clock(s.playback.position)}, '
+                          '${s.playback.percentPos.round()}%'
+                    : EngineFormat.clock(s.playback.position),
               ),
-              Readout('Remaining', EngineFormat.minutes(s.playtimeRemaining)),
+              Readout(
+                'Remaining',
+                EngineFormat.minutes(s.playback.playtimeRemaining),
+              ),
             ],
           ),
-          if (s.duration > Duration.zero) ...[
+          if (s.playback.duration > Duration.zero) ...[
             const SizedBox(height: Tokens.s8),
             ThinBar(
               key: const ValueKey('engine-position-bar'),
-              fraction: (s.percentPos / 100).clamp(0.0, 1.0),
+              fraction: (s.playback.percentPos / 100).clamp(0.0, 1.0),
             ),
           ],
           if (source.isNotEmpty) ...[
@@ -166,8 +171,8 @@ class StatusView extends StatelessWidget {
             spacing: Tokens.s16,
             runSpacing: Tokens.s8,
             children: [
-              _Version('libmpv', s.mpvVersion),
-              _Version('FFmpeg', s.ffmpegVersion),
+              _Version('libmpv', s.versions.mpvVersion),
+              _Version('FFmpeg', s.versions.ffmpegVersion),
             ],
           ),
         ],

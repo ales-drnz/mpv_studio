@@ -94,12 +94,14 @@ const _albums = [
 /// A player on the second track of the library.
 StreamPlayer _playingTrack() => StreamPlayer(
   PlayerState(
-    playlist: Playlist([
-      Media(
-        'https://jellyfin.test/2',
-        extras: const {'serverId': '2', 'server': 'jellyfin'},
-      ),
-    ], index: 0),
+    playback: PlaybackState(
+      playlist: Playlist([
+        Media(
+          'https://jellyfin.test/2',
+          extras: const {'serverId': '2', 'server': 'jellyfin'},
+        ),
+      ], index: 0),
+    ),
   ),
 );
 
@@ -139,13 +141,15 @@ void main() {
     Widget page() => streamView(
       player: StreamPlayer(
         PlayerState(
-          playlist: Playlist([
-            tab == StreamTab.lab
-                ? const Media(
-                    'https://streams.radiomast.io/ref-128k-mp3-stereo-preroll',
-                  )
-                : const Media('none'),
-          ], index: 0),
+          playback: PlaybackState(
+            playlist: Playlist([
+              tab == StreamTab.lab
+                  ? const Media(
+                      'https://streams.radiomast.io/ref-128k-mp3-stereo-preroll',
+                    )
+                  : const Media('none'),
+            ], index: 0),
+          ),
         ),
       ),
       resolver: _resolverWithLog(),
@@ -306,13 +310,15 @@ void main() {
         });
         final player = StreamPlayer(
           PlayerState(
-            playlist: Playlist([
-              sambaMedia(
-                const SambaLogin(host: 'nas.local', share: 'Music'),
-                '',
-                'Naima.mp3',
-              ),
-            ], index: 0),
+            playback: PlaybackState(
+              playlist: Playlist([
+                sambaMedia(
+                  const SambaLogin(host: 'nas.local', share: 'Music'),
+                  '',
+                  'Naima.mp3',
+                ),
+              ], index: 0),
+            ),
           ),
         );
         await golden(

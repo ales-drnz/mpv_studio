@@ -44,15 +44,17 @@ void main() {
         ) async {
           final player = FakePlayer(
             const PlayerState(
-              playlist: Playlist([
-                Media(
-                  'https://example.test/long.flac',
-                  extras: {'title': 'Orchard Light', 'artist': 'Mira Okafor'},
-                ),
-              ]),
-              duration: Duration(hours: 1, minutes: 12, seconds: 40),
-              position: Duration(hours: 1, minutes: 2, seconds: 3),
-              audioEffects: [BassEffect(gain: 5)],
+              playback: PlaybackState(
+                playlist: Playlist([
+                  Media(
+                    'https://example.test/long.flac',
+                    extras: {'title': 'Orchard Light', 'artist': 'Mira Okafor'},
+                  ),
+                ]),
+                duration: Duration(hours: 1, minutes: 12, seconds: 40),
+                position: Duration(hours: 1, minutes: 2, seconds: 3),
+              ),
+              settings: PlayerSettings(audioEffects: [BassEffect(gain: 5)]),
             ),
           );
           final rack = RackController(PlayerEffectsEngine(player));

@@ -121,53 +121,54 @@ class FakePlayerStream implements PlayerStream {
       _p.watch((p) => pick(p.state));
 
   @override
-  Stream<bool> get playWhenReady => _s((s) => s.playWhenReady);
+  Stream<bool> get playWhenReady => _s((s) => s.playback.playWhenReady);
   @override
-  Stream<bool> get playing => _s((s) => s.playing);
+  Stream<bool> get playing => _s((s) => s.playback.playing);
   @override
-  Stream<bool> get completed => _s((s) => s.completed);
+  Stream<bool> get completed => _s((s) => s.playback.completed);
   @override
-  Stream<Duration> get position => _s((s) => s.position);
+  Stream<Duration> get position => _s((s) => s.playback.position);
   @override
-  Stream<bool> get seeking => _s((s) => s.seeking);
+  Stream<bool> get seeking => _s((s) => s.playback.seeking);
   @override
-  Stream<Duration> get duration => _s((s) => s.duration);
+  Stream<Duration> get duration => _s((s) => s.playback.duration);
   @override
-  Stream<bool> get mute => _s((s) => s.mute);
+  Stream<bool> get mute => _s((s) => s.settings.mute);
   @override
-  Stream<bool> get shuffle => _s((s) => s.shuffle);
+  Stream<bool> get shuffle => _s((s) => s.playback.shuffle);
   @override
-  Stream<Loop> get loop => _s((s) => s.loop);
+  Stream<Loop> get loop => _s((s) => s.playback.loop);
   @override
-  Stream<double> get rate => _s((s) => s.rate);
+  Stream<double> get rate => _s((s) => s.settings.rate);
   @override
-  Stream<Playlist> get playlist => _s((s) => s.playlist);
+  Stream<Playlist> get playlist => _s((s) => s.playback.playlist);
   @override
-  Stream<Map<String, String>> get metadata => _s((s) => s.metadata);
+  Stream<Map<String, String>> get metadata => _s((s) => s.file.metadata);
   @override
-  Stream<String> get mediaTitle => _s((s) => s.mediaTitle);
+  Stream<String> get mediaTitle => _s((s) => s.file.mediaTitle);
   @override
   Stream<Map<String, String>> get chapterMetadata =>
-      _s((s) => s.chapterMetadata);
+      _s((s) => s.file.chapterMetadata);
   @override
-  Stream<CoverArt?> get coverArt => _s((s) => s.coverArt);
+  Stream<CoverArt?> get coverArt => _s((s) => s.file.coverArt);
   @override
-  Stream<List<MpvTrack>> get tracks => _s((s) => s.tracks);
+  Stream<List<MpvTrack>> get tracks => _s((s) => s.file.tracks);
   @override
-  Stream<SpectrumSettings> get spectrum => _s((s) => s.spectrum);
+  Stream<SpectrumSettings> get spectrum => _s((s) => s.settings.spectrum);
   @override
-  Stream<String> get currentAo => _s((s) => s.currentAo);
+  Stream<String> get currentAo => _s((s) => s.output.currentAo);
   @override
-  Stream<String> get audioDriver => _s((s) => s.audioDriver);
+  Stream<String> get audioDriver => _s((s) => s.settings.audioDriver);
   @override
-  Stream<double> get pitch => _s((s) => s.pitch);
+  Stream<double> get pitch => _s((s) => s.settings.pitch);
   @override
-  Stream<bool> get pitchCorrection => _s((s) => s.pitchCorrection);
+  Stream<bool> get pitchCorrection => _s((s) => s.settings.pitchCorrection);
   @override
   Stream<DemuxerCacheState> get demuxerCacheState =>
-      _s((s) => s.demuxerCacheState);
+      _s((s) => s.network.demuxerCacheState);
   @override
-  Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
+  Stream<List<AudioEffect>> get audioEffects =>
+      _s((s) => s.settings.audioEffects);
   @override
   Stream<MpvPlaybackState> get playbackState =>
       _p.watch((p) => p.playbackState);

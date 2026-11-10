@@ -257,10 +257,10 @@ class _PcmTabState extends State<PcmTab> {
             StatePill(
               !playing
                   ? 'Not playing'
-                  : _player.state.playing
+                  : _player.state.playback.playing
                   ? 'Feeding the engine'
                   : 'Paused, the input waits',
-              on: playing && _player.state.playing,
+              on: playing && _player.state.playback.playing,
               color: Tokens.green,
               tooltip: 'PcmSource',
             ),

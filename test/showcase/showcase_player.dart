@@ -18,7 +18,7 @@ class ShowcasePlayer extends QueueFakePlayer {
   ShowcasePlayer(
     PlayerState super.initial, {
     Map<String, ShowcaseEntry>? tracks,
-  }) : _playhead = initial.position,
+  }) : _playhead = initial.playback.position,
        tracks = tracks ?? {};
 
   final _fft = StreamController<FftFrame>.broadcast();
@@ -62,7 +62,7 @@ class ShowcasePlayer extends QueueFakePlayer {
   Duration? updateInterval;
   int _lastBucket = -1;
 
-  /// Where the song really is; [PlayerState.position] reports it on the
+  /// Where the song really is; [PlayerState.playback.position] reports it on the
   /// [updateInterval] grid.
   Duration get playhead => _playhead;
   Duration _playhead;
@@ -96,18 +96,21 @@ class ShowcasePlayer extends QueueFakePlayer {
   }) {
     final player = ShowcasePlayer(
       PlayerState(
-        playlist: Playlist([for (final t in queue) t.media], index: index),
-        playWhenReady: playing,
-        playing: playing,
-        position: at,
-        seekable: true,
-        volume: 80,
-        volumeMax: 130,
-        audioOutParams: const AudioParams(
-          format: Format.float32,
-          sampleRate: 48000,
-          channelCount: 2,
-          hrChannels: 'stereo',
+        playback: PlaybackState(
+          playlist: Playlist([for (final t in queue) t.media], index: index),
+          playWhenReady: playing,
+          playing: playing,
+          position: at,
+          seekable: true,
+        ),
+        settings: PlayerSettings(volume: 80, volumeMax: 130),
+        output: OutputState(
+          audioOutParams: const AudioParams(
+            format: Format.float32,
+            sampleRate: 48000,
+            channelCount: 2,
+            hrChannels: 'stereo',
+          ),
         ),
       ),
       tracks: {
@@ -136,7 +139,7 @@ class ShowcasePlayer extends QueueFakePlayer {
       uri == null ? null : (tracks[uri] ?? tracks['file://$uri']);
 
   Media? get _current {
-    final pl = state.playlist;
+    final pl = state.playback.playlist;
     return pl.index >= 0 && pl.index < pl.items.length
         ? pl.items[pl.index]
         : null;
@@ -201,7 +204,7 @@ class ShowcasePlayer extends QueueFakePlayer {
   /// The song's time for the playhead: every track follows the showcase
   /// song's shape, stretched to its own length.
   double _songSecs(Duration pos) {
-    final d = state.duration.inMicroseconds;
+    final d = state.playback.duration.inMicroseconds;
     if (d <= 0) return 0;
     return pos.inMicroseconds / d * (ShowcaseSong.length.inMicroseconds / 1e6);
   }
@@ -213,25 +216,27 @@ class ShowcasePlayer extends QueueFakePlayer {
     if (_current == null) return;
     final s = state;
     var pos = _playhead;
-    if (s.playWhenReady) {
-      pos += dt * s.rate;
-      final a = s.abLoopA;
-      final b = s.abLoopB;
+    if (s.playback.playWhenReady) {
+      pos += dt * s.settings.rate;
+      final a = s.playback.abLoopA;
+      final b = s.playback.abLoopB;
       if (a != null && b != null && pos >= b) pos = a + (pos - b);
-      if (pos >= s.duration) {
+      if (pos >= s.playback.duration) {
         // The end of the entry: it played, the next one starts.
         endFile.add(
           const MpvFileEndedEvent(reason: MpvEndFileReason.eof, error: 0),
         );
-        final i = s.playlist.index;
-        if (i + 1 < s.playlist.items.length) {
+        final i = s.playback.playlist.index;
+        if (i + 1 < s.playback.playlist.items.length) {
           emit(
-            (st) => st.copyWith(playlist: st.playlist.copyWith(index: i + 1)),
+            (st) => st.copyWith(
+              playlist: st.playback.playlist.copyWith(index: i + 1),
+            ),
           );
           _load();
           return;
         }
-        pos = s.duration;
+        pos = s.playback.duration;
       }
     }
     _playhead = pos;
@@ -245,11 +250,11 @@ class ShowcasePlayer extends QueueFakePlayer {
         : pos.inMicroseconds ~/ every.inMicroseconds;
     _report(every == null ? pos : every * bucket);
     final t = _songSecs(pos);
-    if (s.playWhenReady && (every == null || bucket != _lastBucket)) {
+    if (s.playback.playWhenReady && (every == null || bucket != _lastBucket)) {
       _lastBucket = bucket;
       _fft.add(ShowcaseSong.spectrum(t));
     }
-    if (!s.playWhenReady) return;
+    if (!s.playback.playWhenReady) return;
     if (!pcmBlocks && _taps.isEmpty) {
       _pcm.add(ShowcaseSong.levels(t));
     } else {
@@ -297,7 +302,7 @@ class ShowcasePlayer extends QueueFakePlayer {
       (s) => s.copyWith(
         position: pos,
         audioPts: pos,
-        timeRemaining: s.duration - pos,
+        timeRemaining: s.playback.duration - pos,
         currentChapter: song ? _chapterAt(pos) : null,
       ),
     );
@@ -331,7 +336,7 @@ class ShowcasePlayer extends QueueFakePlayer {
     if (grid != null && grid > Duration.zero) {
       to = grid * (to.inMicroseconds / grid.inMicroseconds).round();
     }
-    final end = state.duration;
+    final end = state.playback.duration;
     _playhead = to < Duration.zero ? Duration.zero : (to > end ? end : to);
     _report(_playhead);
   }
@@ -395,7 +400,7 @@ class ShowcasePlayer extends QueueFakePlayer {
 
   @override
   Future<void> setChapter(int index) async {
-    final chapters = state.chapters;
+    final chapters = state.file.chapters;
     if (index < 0 || index >= chapters.length) return;
     await seek(chapters[index].time);
   }
@@ -458,55 +463,55 @@ class ShowcaseStream extends QueueFakeStream {
       _p.watch((p) => pick(p.state));
 
   @override
-  Stream<double> get rate => _s((s) => s.rate);
+  Stream<double> get rate => _s((s) => s.settings.rate);
   @override
-  Stream<double> get volume => _s((s) => s.volume);
+  Stream<double> get volume => _s((s) => s.settings.volume);
   @override
-  Stream<double> get volumeMax => _s((s) => s.volumeMax);
+  Stream<double> get volumeMax => _s((s) => s.settings.volumeMax);
   @override
-  Stream<bool> get seekable => _s((s) => s.seekable);
+  Stream<bool> get seekable => _s((s) => s.playback.seekable);
   @override
-  Stream<bool> get shuffle => _s((s) => s.shuffle);
+  Stream<bool> get shuffle => _s((s) => s.playback.shuffle);
   @override
-  Stream<Loop> get loop => _s((s) => s.loop);
+  Stream<Loop> get loop => _s((s) => s.playback.loop);
   @override
-  Stream<Duration?> get abLoopA => _s((s) => s.abLoopA);
+  Stream<Duration?> get abLoopA => _s((s) => s.playback.abLoopA);
   @override
-  Stream<Duration?> get abLoopB => _s((s) => s.abLoopB);
+  Stream<Duration?> get abLoopB => _s((s) => s.playback.abLoopB);
   @override
-  Stream<int?> get abLoopCount => _s((s) => s.abLoopCount);
+  Stream<int?> get abLoopCount => _s((s) => s.playback.abLoopCount);
   @override
-  Stream<int?> get remainingAbLoops => _s((s) => s.remainingAbLoops);
+  Stream<int?> get remainingAbLoops => _s((s) => s.playback.remainingAbLoops);
   @override
-  Stream<List<Chapter>> get chapters => _s((s) => s.chapters);
+  Stream<List<Chapter>> get chapters => _s((s) => s.file.chapters);
   @override
-  Stream<int?> get currentChapter => _s((s) => s.currentChapter);
+  Stream<int?> get currentChapter => _s((s) => s.playback.currentChapter);
   @override
-  Stream<AudioParams> get audioParams => _s((s) => s.audioParams);
+  Stream<AudioParams> get audioParams => _s((s) => s.file.audioParams);
   @override
-  Stream<AudioParams> get audioOutParams => _s((s) => s.audioOutParams);
+  Stream<AudioParams> get audioOutParams => _s((s) => s.output.audioOutParams);
   @override
-  Stream<String> get fileFormat => _s((s) => s.fileFormat);
+  Stream<String> get fileFormat => _s((s) => s.file.fileFormat);
   @override
-  Stream<double?> get audioBitrate => _s((s) => s.audioBitrate);
+  Stream<double?> get audioBitrate => _s((s) => s.file.audioBitrate);
   @override
-  Stream<double> get volumeGain => _s((s) => s.volumeGain);
+  Stream<double> get volumeGain => _s((s) => s.settings.volumeGain);
   @override
-  Stream<String> get streamPath => _s((s) => s.streamPath);
+  Stream<String> get streamPath => _s((s) => s.file.streamPath);
   @override
-  Stream<String> get path => _s((s) => s.path);
+  Stream<String> get path => _s((s) => s.file.path);
   @override
-  Stream<String> get filename => _s((s) => s.filename);
+  Stream<String> get filename => _s((s) => s.file.filename);
   @override
-  Stream<int> get fileSize => _s((s) => s.fileSize);
+  Stream<int> get fileSize => _s((s) => s.file.fileSize);
   @override
-  Stream<Duration> get audioPts => _s((s) => s.audioPts);
+  Stream<Duration> get audioPts => _s((s) => s.playback.audioPts);
   @override
-  Stream<Duration> get timeRemaining => _s((s) => s.timeRemaining);
+  Stream<Duration> get timeRemaining => _s((s) => s.playback.timeRemaining);
   @override
-  Stream<bool> get partiallySeekable => _s((s) => s.partiallySeekable);
+  Stream<bool> get partiallySeekable => _s((s) => s.playback.partiallySeekable);
   @override
-  Stream<bool> get eofReached => _s((s) => s.eofReached);
+  Stream<bool> get eofReached => _s((s) => s.playback.eofReached);
   @override
   Stream<FftFrame> get fft => _p._fft.stream;
   @override
@@ -520,7 +525,9 @@ class ShowcaseStream extends QueueFakeStream {
   @override
   Stream<Loudness> get loudnessMeter => _p._loudness.stream;
   @override
-  Stream<SpectrumSettings> get spectrum => Stream.value(_p.state.spectrum);
+  Stream<SpectrumSettings> get spectrum =>
+      Stream.value(_p.state.settings.spectrum);
   @override
-  Stream<List<AudioEffect>> get audioEffects => _s((s) => s.audioEffects);
+  Stream<List<AudioEffect>> get audioEffects =>
+      _s((s) => s.settings.audioEffects);
 }

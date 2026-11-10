@@ -31,7 +31,7 @@ class _QueueingPlayback extends PlaybackFake {
   @override
   Future<void> add(Media media) async {
     calls.add('add');
-    final pl = state.playlist;
+    final pl = state.playback.playlist;
     _set([...pl.items, media], pl.index);
   }
 
@@ -58,7 +58,7 @@ void main() {
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
       expect(player.items, [localSong, webSong, serverSong]);
-      expect(player.state.playlist.index, 1);
+      expect(player.state.playback.playlist.index, 1);
     });
 
     testWidgets('clearing is at once and can be undone', (tester) async {
@@ -72,7 +72,7 @@ void main() {
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
       expect(player.items, [localSong, webSong, serverSong]);
-      expect(player.state.playlist.index, 1);
+      expect(player.state.playback.playlist.index, 1);
     });
   });
 
@@ -93,7 +93,11 @@ void main() {
 
   testWidgets('Open files on Playback adds to the queue', (tester) async {
     final player = _QueueingPlayback(
-      const PlayerState(playlist: Playlist([localSong, webSong], index: -1)),
+      const PlayerState(
+        playback: PlaybackState(
+          playlist: Playlist([localSong, webSong], index: -1),
+        ),
+      ),
     );
     await pumpStudio(
       tester,
@@ -108,7 +112,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Open files'));
     await tester.pumpAndSettle();
-    final items = player.state.playlist.items;
+    final items = player.state.playback.playlist.items;
     expect(items, hasLength(3));
     expect(items.take(2), [localSong, webSong]);
   });
@@ -117,8 +121,10 @@ void main() {
     test('playing over a queue offers to put it back', () async {
       final player = QueueFakePlayer(
         const PlayerState(
-          playlist: Playlist([localSong, webSong], index: 1),
-          playWhenReady: true,
+          playback: PlaybackState(
+            playlist: Playlist([localSong, webSong], index: 1),
+            playWhenReady: true,
+          ),
         ),
       );
       final toasts = _Toasts();
@@ -133,7 +139,7 @@ void main() {
       toasts.undo!();
       await Future<void>.delayed(Duration.zero);
       expect(player.items, [localSong, webSong]);
-      expect(player.state.playlist.index, 1);
+      expect(player.state.playback.playlist.index, 1);
     });
 
     test('playing on an empty queue has nothing to undo', () async {
@@ -150,7 +156,9 @@ void main() {
 
     test('adding says what it did', () async {
       final player = QueueFakePlayer(
-        const PlayerState(playlist: Playlist([localSong], index: 0)),
+        const PlayerState(
+          playback: PlaybackState(playlist: Playlist([localSong], index: 0)),
+        ),
       );
       final toasts = _Toasts();
       final actions = StreamActions(

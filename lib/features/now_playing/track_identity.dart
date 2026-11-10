@@ -71,13 +71,13 @@ class LiveTrackIdentity extends StatelessWidget {
   Widget build(BuildContext context) {
     return Live<Playlist>(
       stream: player.stream.playlist,
-      initial: player.state.playlist,
+      initial: player.state.playback.playlist,
       builder: (context, pl) => Live<Map<String, String>>(
         stream: player.stream.metadata,
-        initial: player.state.metadata,
+        initial: player.state.file.metadata,
         builder: (context, meta) => Live<String>(
           stream: player.stream.mediaTitle,
-          initial: player.state.mediaTitle,
+          initial: player.state.file.mediaTitle,
           builder: (context, mediaTitle) => builder(
             context,
             TrackIdentity.of(

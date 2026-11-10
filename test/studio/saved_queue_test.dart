@@ -32,8 +32,8 @@ void main() {
     final next = QueueFakePlayer();
     await again.restoreQueue(next);
     expect(next.items, [_file, _radio]);
-    expect(next.state.playlist.index, 1);
-    expect(next.state.playWhenReady, isFalse);
+    expect(next.state.playback.playlist.index, 1);
+    expect(next.state.playback.playWhenReady, isFalse);
     await again.dispose();
   });
 

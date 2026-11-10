@@ -17,10 +17,10 @@ class PlaybackSnapshot {
 
   /// The snapshot of [state].
   factory PlaybackSnapshot.of(PlayerState state) => PlaybackSnapshot(
-    queue: List.unmodifiable(state.playlist.items),
-    index: state.playlist.index,
-    position: state.position,
-    playing: state.playWhenReady,
+    queue: List.unmodifiable(state.playback.playlist.items),
+    index: state.playback.playlist.index,
+    position: state.playback.position,
+    playing: state.playback.playWhenReady,
   );
 
   final List<Media> queue;
@@ -58,7 +58,7 @@ class PlaybackSnapshot {
     }
     if (opened != null &&
         await opened &&
-        player.state.playlist.index == at &&
+        player.state.playback.playlist.index == at &&
         await _seekable(player)) {
       await player.seek(position);
     }
@@ -70,7 +70,7 @@ class PlaybackSnapshot {
   /// changes of the same load, so `seekable` can still be the idle core's
   /// false at that moment.
   static Future<bool> _seekable(PlayerApi player) async {
-    if (player.state.seekable) return true;
+    if (player.state.playback.seekable) return true;
     try {
       return await player.getRawProperty('seekable') == 'yes';
     } on Object {

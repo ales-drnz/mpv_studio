@@ -26,10 +26,12 @@ class _Studio {
   _Studio(this.name, this.settings)
     : player = QueueFakePlayer(
         const PlayerState(
-          playlist: Playlist([
-            Media('https://example.test/a.flac'),
-            Media('https://example.test/b.flac'),
-          ], index: 0),
+          playback: PlaybackState(
+            playlist: Playlist([
+              Media('https://example.test/a.flac'),
+              Media('https://example.test/b.flac'),
+            ], index: 0),
+          ),
         ),
       ) {
     details = player.details();

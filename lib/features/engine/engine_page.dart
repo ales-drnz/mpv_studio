@@ -115,8 +115,8 @@ class _EnginePanelState extends State<EnginePanel> {
     final now = _now;
     _cacheHistory.add((
       t: now,
-      ahead: secondsOf(st.bufferDuration),
-      paused: st.pausedForCache,
+      ahead: secondsOf(st.network.bufferDuration),
+      paused: st.network.pausedForCache,
     ));
     _cacheHistory.removeWhere((c) => c.t < now - 65);
     // Keep the last mark before the window so the first band starts at

@@ -28,9 +28,11 @@ void main() {
   test('takes the queue, entry, position and intent', () {
     final s = PlaybackSnapshot.of(
       const PlayerState(
-        playlist: Playlist([_a, _b], index: 1),
-        position: Duration(seconds: 42),
-        playWhenReady: true,
+        playback: PlaybackState(
+          playlist: Playlist([_a, _b], index: 1),
+          position: Duration(seconds: 42),
+          playWhenReady: true,
+        ),
       ),
     );
     expect(s.queue, [_a, _b]);

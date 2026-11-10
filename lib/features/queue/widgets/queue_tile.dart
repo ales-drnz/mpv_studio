@@ -429,7 +429,7 @@ class QueueThumb extends StatelessWidget {
     } else if (current) {
       image = Live<CoverArt?>(
         stream: player.stream.coverArt,
-        initial: player.state.coverArt,
+        initial: player.state.file.coverArt,
         builder: (context, art) => art == null
             ? _ThumbPlaceholder(size)
             : Image.memory(

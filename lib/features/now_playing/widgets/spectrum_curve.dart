@@ -45,7 +45,7 @@ class SpectrumCurve extends StatelessWidget {
     final scaler = chartTextScaler(context);
     final curve = Live<SpectrumSettings>(
       stream: player.stream.spectrum,
-      initial: player.state.spectrum,
+      initial: player.state.settings.spectrum,
       builder: (context, spec) => StreamBuilder<FftFrame>(
         stream: player.stream.fft,
         builder: (context, snap) => CustomPaint(
@@ -71,7 +71,7 @@ class SpectrumCurve extends StatelessWidget {
             excludeSemantics: true,
             child: Live<bool>(
               stream: player.stream.playWhenReady,
-              initial: player.state.playWhenReady,
+              initial: player.state.playback.playWhenReady,
               builder: (context, playing) => AnimatedOpacity(
                 opacity: playing ? 1 : 0.4,
                 duration: Tokens.motion(context, Tokens.motionMedium),
@@ -144,7 +144,7 @@ Future<void> showSpectrumSettings(BuildContext context, PlayerApi player) =>
       title: 'Spectrum',
       builder: (context) => Live<SpectrumSettings>(
         stream: player.stream.spectrum,
-        initial: player.state.spectrum,
+        initial: player.state.settings.spectrum,
         builder: (context, spec) {
           String db(double v) => '${v.round()} dB';
           String share(double v) => v.toStringAsFixed(2);

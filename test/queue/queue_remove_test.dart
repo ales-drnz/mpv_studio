@@ -69,7 +69,7 @@ void main() {
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
       expect(player.items, [localSong, webSong, serverSong]);
-      expect(player.state.playlist.index, 1);
+      expect(player.state.playback.playlist.index, 1);
     });
   });
 

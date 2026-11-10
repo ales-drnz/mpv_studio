@@ -19,7 +19,7 @@ class OutputStatusSection extends StatelessWidget {
       children: [
         Live<String>(
           stream: p.stream.currentAo,
-          initial: p.state.currentAo,
+          initial: p.state.output.currentAo,
           builder: (context, v) => InfoRow(
             label: 'Active driver',
             value: v.isEmpty ? Tokens.noValue : v,
@@ -27,7 +27,7 @@ class OutputStatusSection extends StatelessWidget {
         ),
         Live<AudioOutputState>(
           stream: p.stream.audioOutputState,
-          initial: p.state.audioOutputState,
+          initial: p.state.output.audioOutputState,
           builder: (context, v) =>
               InfoRow(label: 'Output state', value: v.mpvValue),
         ),
@@ -35,14 +35,14 @@ class OutputStatusSection extends StatelessWidget {
         // audioParams rather than the hardware output.
         Live<AudioParams>(
           stream: p.stream.audioParams,
-          initial: p.state.audioParams,
+          initial: p.state.file.audioParams,
           builder: (context, a) =>
               InfoRow(label: 'Codec', value: codecLabel(a)),
         ),
         // Everything below describes the actual hardware output.
         Live<AudioParams>(
           stream: p.stream.audioOutParams,
-          initial: p.state.audioOutParams,
+          initial: p.state.output.audioOutParams,
           builder: (context, a) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

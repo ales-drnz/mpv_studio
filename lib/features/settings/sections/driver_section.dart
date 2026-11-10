@@ -76,7 +76,7 @@ class _DriverSectionState extends State<DriverSection> {
       children: [
         Live<String>(
           stream: p.stream.audioDriver,
-          initial: p.state.audioDriver,
+          initial: p.state.settings.audioDriver,
           builder: (context, raw) {
             final value = raw.isEmpty ? _auto : raw;
             return anchoredDropdown<String>(
@@ -96,7 +96,7 @@ class _DriverSectionState extends State<DriverSection> {
         ),
         Live<bool>(
           stream: p.stream.audioNullUntimed,
-          initial: p.state.audioNullUntimed,
+          initial: p.state.settings.audioNullUntimed,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.nullFallback,
@@ -106,7 +106,7 @@ class _DriverSectionState extends State<DriverSection> {
         ),
         Live<bool>(
           stream: p.stream.audioStreamSilence,
-          initial: p.state.audioStreamSilence,
+          initial: p.state.settings.audioStreamSilence,
           builder: (context, v) => anchoredSwitch(
             scope,
             SettingsCatalog.streamSilence,
@@ -144,7 +144,7 @@ class PassthroughSection extends StatelessWidget {
       children: [
         Live<Set<Spdif>>(
           stream: p.stream.audioSpdif,
-          initial: p.state.audioSpdif,
+          initial: p.state.settings.audioSpdif,
           builder: (context, selected) => SettingAnchor(
             entry: SettingsCatalog.spdif,
             child: SettingTile(
@@ -175,7 +175,7 @@ class PassthroughSection extends StatelessWidget {
         ),
         Live<String>(
           stream: p.stream.audioClientName,
-          initial: p.state.audioClientName,
+          initial: p.state.settings.audioClientName,
           builder: (context, v) => SettingAnchor(
             entry: SettingsCatalog.clientName,
             child: TextRow(

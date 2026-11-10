@@ -174,7 +174,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
     final player = scope.player;
     return Live<Playlist>(
       stream: player.stream.playlist,
-      initial: player.state.playlist,
+      initial: player.state.playback.playlist,
       builder: (context, pl) {
         if (currentMedia(pl) == null) {
           // The header sits where it will once a track plays, so it does

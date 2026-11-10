@@ -23,7 +23,7 @@ class QueueFakePlayer extends FakePlayer {
   @override
   PlayerStream get stream => _queueStream;
 
-  List<Media> get items => state.playlist.items;
+  List<Media> get items => state.playback.playlist.items;
 
   void _set(List<Media> items, int index) => emit(
     (s) =>
@@ -57,9 +57,9 @@ class QueueFakePlayer extends FakePlayer {
   @override
   Future<void> add(Media media) async {
     calls.add('add ${media.uri}');
-    final index = state.playlist.index < 0 && items.isEmpty
+    final index = state.playback.playlist.index < 0 && items.isEmpty
         ? -1
-        : state.playlist.index;
+        : state.playback.playlist.index;
     _set([...items, media], index);
   }
 
@@ -70,7 +70,7 @@ class QueueFakePlayer extends FakePlayer {
     }
     calls.add('remove $index');
     final next = [...items]..removeAt(index);
-    var current = state.playlist.index;
+    var current = state.playback.playlist.index;
     if (index < current) current--;
     if (current >= next.length) current = next.length - 1;
     _set(next, current);
@@ -79,8 +79,8 @@ class QueueFakePlayer extends FakePlayer {
   @override
   Future<void> move(int from, int to) async {
     calls.add('move $from $to');
-    final current = state.playlist.index >= 0
-        ? items[state.playlist.index]
+    final current = state.playback.playlist.index >= 0
+        ? items[state.playback.playlist.index]
         : null;
     final next = [...items];
     final m = next.removeAt(from);
@@ -101,15 +101,15 @@ class QueueFakePlayer extends FakePlayer {
   @override
   Future<void> replace(int index, Media media) async {
     calls.add('replace $index ${media.uri}');
-    _set([...items]..[index] = media, state.playlist.index);
+    _set([...items]..[index] = media, state.playback.playlist.index);
   }
 
   @override
   Future<void> clearPlaylist({bool keepCurrent = false}) async {
     calls.add(keepCurrent ? 'clearPlaylist keepCurrent' : 'clearPlaylist');
-    final index = state.playlist.index;
+    final index = state.playback.playlist.index;
     if (keepCurrent && index >= 0) {
-      _set([state.playlist.items[index]], 0);
+      _set([state.playback.playlist.items[index]], 0);
     } else {
       _set(const [], -1);
     }
@@ -126,7 +126,7 @@ class QueueFakePlayer extends FakePlayer {
   @override
   Future<bool> next({bool force = false}) async {
     calls.add('next force=$force');
-    final i = state.playlist.index;
+    final i = state.playback.playlist.index;
     if (i + 1 >= items.length) return false;
     _set(items, i + 1);
     return true;
@@ -135,7 +135,7 @@ class QueueFakePlayer extends FakePlayer {
   @override
   Future<bool> previous({bool force = false}) async {
     calls.add('previous force=$force');
-    final i = state.playlist.index;
+    final i = state.playback.playlist.index;
     if (i <= 0) return false;
     _set(items, i - 1);
     return true;
@@ -226,7 +226,7 @@ class QueueFakeStream extends FakePlayerStream {
   final QueueFakePlayer _q;
 
   @override
-  Stream<String> get playlistPath => _q.watch((p) => p.state.playlistPath);
+  Stream<String> get playlistPath => _q.watch((p) => p.state.file.playlistPath);
   @override
   Stream<MpvFileEndedEvent> get endFile => _q.endFile.stream;
   @override

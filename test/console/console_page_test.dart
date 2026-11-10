@@ -48,7 +48,7 @@ void main() {
     );
     expect(find.text('via Player.add(), Player.jump(0)'), findsOneWidget);
     expect(player.items.single.uri, 'https://x.test/a b.mp3');
-    expect(player.state.playWhenReady, isTrue);
+    expect(player.state.playback.playWhenReady, isTrue);
   });
 
   testWidgets('keyboard: history, Tab completion, Escape and Ctrl+L', (

@@ -34,9 +34,9 @@ class PlaylistBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => StreamBuilder<Playlist>(
     stream: player.stream.playlist,
-    initialData: player.state.playlist,
+    initialData: player.state.playback.playlist,
     builder: (context, snap) =>
-        builder(context, snap.data ?? player.state.playlist),
+        builder(context, snap.data ?? player.state.playback.playlist),
   );
 }
 

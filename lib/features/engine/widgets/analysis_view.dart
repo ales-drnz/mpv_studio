@@ -105,7 +105,7 @@ class AnalysisView extends StatelessWidget {
               child: CustomPaint(
                 painter: WaveformFillPainter(
                   wave: wave,
-                  position: secondsOf(snapshot.state.position),
+                  position: secondsOf(snapshot.state.playback.position),
                 ),
               ),
             ),

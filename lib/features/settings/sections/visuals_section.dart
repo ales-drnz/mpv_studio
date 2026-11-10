@@ -20,7 +20,7 @@ class VisualizerSection extends StatelessWidget {
     final p = scope.player;
     return Live<SpectrumSettings>(
       stream: p.stream.spectrum,
-      initial: p.state.spectrum,
+      initial: p.state.settings.spectrum,
       builder: (context, spec) => SettingsGroup(
         label: SettingsSections.visualizer,
         children: [
@@ -81,7 +81,7 @@ class CoverArtSection extends StatelessWidget {
       children: [
         Live<Cover>(
           stream: p.stream.coverArtAuto,
-          initial: p.state.coverArtAuto,
+          initial: p.state.settings.coverArtAuto,
           builder: (context, v) => anchoredSegments(
             scope,
             SettingsCatalog.coverArt,

@@ -93,7 +93,8 @@ void main() {
     await scene.wait(220);
 
     // Loop A from the waveform's menu, a little behind the playhead.
-    final a = player.state.position - const Duration(milliseconds: 2400);
+    final a =
+        player.state.playback.position - const Duration(milliseconds: 2400);
     await scene.moveTo(waveAt(a, dy: 26));
     await scene.rightClick();
     await scene.wait(320);

@@ -40,17 +40,17 @@ class PrefetchView extends StatelessWidget {
     final s = snapshot.state;
     final current = snapshot.prefetchState;
     final cached = snapshot.prefetchCacheDuration;
-    final secs = s.cache.secs;
+    final secs = s.settings.cache.secs;
     // cache-secs is the prefetch target; its default is effectively
     // unbounded, so fall back to a readable scale.
     final target = secs > const Duration(minutes: 10)
         ? const Duration(seconds: 30)
         : secs;
-    final next = _nextTitle(s.playlist);
+    final next = _nextTitle(s.playback.playlist);
 
     return EngineCard(
       title: 'Prefetch',
-      caption: s.prefetchPlaylist
+      caption: s.settings.prefetchPlaylist
           ? (next == null ? 'No next entry.' : 'Next: $next')
           : 'Prefetch is off. Turn it on in Settings, Streaming.',
       trailing: PhasePill(

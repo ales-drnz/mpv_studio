@@ -51,7 +51,7 @@ void main() {
     // so each step settles first.
     Future<void> at(int index) async {
       player.emit(
-        (s) => s.copyWith(playlist: s.playlist.copyWith(index: index)),
+        (s) => s.copyWith(playlist: s.playback.playlist.copyWith(index: index)),
       );
       await tester.pump();
     }
