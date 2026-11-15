@@ -50,6 +50,8 @@ void main() {
       final smb = textOf('libsmb2');
       expect(smb, contains('GNU Lesser General Public License'));
       expect(smb, contains('https://github.com/ales-drnz/libsmb2-scripts'));
+      expect(smb, contains('Version 2.1, February 1999'));
+      expect(smb, contains('Libsmb2 components fall under separate licences'));
       expect(textOf('OpenSSL'), contains('libcrypto'));
       expect(textOf('OpenSSL'), contains('Apache License'));
       expect(textOf('Roboto Mono'), contains('Apache License, Version 2.0'));

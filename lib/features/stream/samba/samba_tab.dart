@@ -403,7 +403,7 @@ class _SambaTabState extends State<SambaTab> {
     return PlaylistBuilder(
       player: widget.actions.player,
       builder: (context, pl) {
-        final playing = currentMedia(pl)?.uri ?? '';
+        final playing = pl.current?.uri ?? '';
         return Stack(
           children: [
             ListView.separated(

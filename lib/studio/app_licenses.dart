@@ -9,7 +9,8 @@ const _libsmb2Notice =
     '(https://github.com/ales-drnz/dart_smb2/releases), which carries its '
     'license texts. libsmb2-scripts '
     '(https://github.com/ales-drnz/libsmb2-scripts), at the commit that '
-    'release names, is its corresponding source.';
+    'release names, is its corresponding source. The COPYING of libsmb2 '
+    'and the text of the LGPL, version 2.1, follow.';
 
 const _opensslNotice =
     'libsmb2 signs and encrypts through libcrypto from OpenSSL '
@@ -24,6 +25,8 @@ const _robotoMonoNotice =
 /// Registers what no package does: Flutter's license page does not list the
 /// Roboto Mono font the app bundles, nor the libsmb2 that dart_smb2
 /// bundles on the native platforms, with OpenSSL's libcrypto inside it.
+/// dart_smb2's NOTICE asks for libsmb2's LGPL-2.1 text and OpenSSL's
+/// Apache-2.0 license: both are the texts of the libsmb2-rN release.
 void registerAppLicenses() {
   LicenseRegistry.addLicense(() async* {
     final text = await rootBundle.loadString(
@@ -34,11 +37,17 @@ void registerAppLicenses() {
     ], '$_robotoMonoNotice\n\n$text');
   });
   if (kIsWeb) return;
-  LicenseRegistry.addLicense(
-    () => Stream.value(
-      const LicenseEntryWithLineBreaks(['libsmb2'], _libsmb2Notice),
-    ),
-  );
+  LicenseRegistry.addLicense(() async* {
+    final copying = await rootBundle.loadString(
+      'assets/licenses/COPYING-libsmb2.txt',
+    );
+    final lgpl = await rootBundle.loadString(
+      'assets/licenses/LICENSE-LGPL-2.1.txt',
+    );
+    yield LicenseEntryWithLineBreaks([
+      'libsmb2',
+    ], '$_libsmb2Notice\n\n$copying\n\n$lgpl');
+  });
   LicenseRegistry.addLicense(() async* {
     final text = await rootBundle.loadString(
       'assets/licenses/LICENSE-OpenSSL.txt',

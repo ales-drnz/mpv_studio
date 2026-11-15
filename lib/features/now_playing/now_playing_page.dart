@@ -18,7 +18,6 @@ import '../../ui/widgets/resize_handle.dart';
 import '../../util/media_import.dart';
 import '../../util/reactive.dart';
 import 'playback_scope.dart';
-import 'track_identity.dart';
 import 'transport_actions.dart';
 import 'widgets/cover_art.dart';
 import 'widgets/double_tap_seek.dart';
@@ -176,7 +175,7 @@ class _PlaybackBodyState extends State<_PlaybackBody> {
       stream: player.stream.playlist,
       initial: player.state.playback.playlist,
       builder: (context, pl) {
-        if (currentMedia(pl) == null) {
+        if (pl.current == null) {
           // The header sits where it will once a track plays, so it does
           // not jump when the first one starts.
           return LayoutBuilder(

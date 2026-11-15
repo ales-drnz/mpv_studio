@@ -321,7 +321,8 @@ class JellyfinServer extends MediaServer {
   String _imageUrl(String itemId) {
     final c = _connected;
     final u = c.images.url(itemId: itemId, fillWidth: 400, fillHeight: 400);
-    final token = c.token ?? '';
+    // Percent-encoded, as dart_jellyfin signs its own URLs from 0.4.2.
+    final token = Uri.encodeQueryComponent(c.token ?? '');
     return u.contains('?') ? '$u&ApiKey=$token' : '$u?ApiKey=$token';
   }
 

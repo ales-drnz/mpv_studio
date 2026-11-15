@@ -67,7 +67,9 @@ Set<MediaAction> unsupportedSessionActions() {
   if (Platform.isLinux) {
     // MPRIS: no stop, skip-interval or like control. Seek, repeat, shuffle
     // and rate render on KDE Plasma (not GNOME's built-in popup), so they
-    // are left enabled.
+    // are left enabled. From mpv_audio_kit 0.7.1 MPRIS follows the
+    // advertised set, as the other platforms do: an action not advertised
+    // (stop from playerctl, say) no longer reaches the player.
     return const {
       MediaAction.stop,
       MediaAction.fastForward,

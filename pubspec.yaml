@@ -1,7 +1,7 @@
 name: mpv_studio
 description: "MPV Studio"
 publish_to: 'none'
-version: 0.4.8
+version: 0.4.9
 
 environment:
   sdk: ^3.10.0
@@ -13,19 +13,19 @@ dependencies:
 
   # mpv_audio_kit
   #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.7.0
+  mpv_audio_kit: ^0.7.1
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}
-  dart_jellyfin: ^0.4.0
+  dart_jellyfin: ^0.4.3
 
   # dart_plex
   #dart_plex: {path: ../../Tools/dart_plex}
-  dart_plex: ^0.3.0
+  dart_plex: ^0.3.2
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}
-  dart_smb2: ^0.3.0
+  dart_smb2: ^0.4.1
 
   # Other dependencies
   file_selector: ^1.1.0
@@ -50,7 +50,11 @@ flutter:
   assets:
     - assets/models/
     - assets/fonts/LICENSE-RobotoMono.txt
-    # OpenSSL's licence, for the libcrypto inside dart_smb2's libsmb2-r11.
+    # The texts of dart_smb2's libsmb2-rN release (r13 for dart_smb2 0.4.1):
+    # libsmb2's COPYING and LGPL-2.1, and OpenSSL's license for the
+    # libcrypto inside it from libsmb2-r11 on.
+    - assets/licenses/COPYING-libsmb2.txt
+    - assets/licenses/LICENSE-LGPL-2.1.txt
     - assets/licenses/LICENSE-OpenSSL.txt
   # Roboto Mono (Apache License 2.0): the log, readouts and figures line up
   # on every platform, where 'monospace' falls back to a proportional face.
