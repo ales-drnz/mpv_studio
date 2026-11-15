@@ -13,19 +13,19 @@ dependencies:
 
   # mpv_audio_kit
   #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.7.0
+  mpv_audio_kit: ^0.7.1
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}
-  dart_jellyfin: ^0.4.0
+  dart_jellyfin: ^0.4.3
 
   # dart_plex
   #dart_plex: {path: ../../Tools/dart_plex}
-  dart_plex: ^0.3.0
+  dart_plex: ^0.3.2
 
   # dart_smb2
   #dart_smb2: {path: ../../Tools/dart_smb2}
-  dart_smb2: ^0.3.0
+  dart_smb2: ^0.4.1
 
   # Other dependencies
   file_selector: ^1.1.0
