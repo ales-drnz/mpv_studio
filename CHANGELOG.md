@@ -1,3 +1,11 @@
+## [Unreleased]
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.7.1`, with libmpv-r25: the spectrum moves more slowly at the same smoothing, and on Linux MPRIS acts only on the controls the Session settings advertise.
+- Updated `dart_smb2` to version `0.4.1`, with libsmb2-r13: a Samba server can no longer stop the app with oplock notifications, and one that stops answering midway fails with a timeout.
+- Updated `dart_plex` to version `0.3.2` and `dart_jellyfin` to version `0.4.3`: neither sends its token to another host, nor after a redirect to one.
+- The license page carries libsmb2's COPYING and the text of the LGPL 2.1.
+
 ## [0.4.8] - 10-11-2026
 
 ### Changed
