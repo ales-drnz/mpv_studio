@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.4.9] - 15-11-2026
 
 ### Changed
 - Updated `mpv_audio_kit` to version `0.7.1`, with libmpv-r25: the spectrum moves more slowly at the same smoothing, and on Linux MPRIS acts only on the controls the Session settings advertise.
