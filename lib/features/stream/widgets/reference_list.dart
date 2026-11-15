@@ -8,14 +8,10 @@ import '../stream_actions.dart';
 import '../stream_catalog.dart';
 import 'stream_row.dart';
 
-/// The current queue entry of [player], or null when nothing is loaded.
-Media? currentMedia(Playlist pl) =>
-    pl.index >= 0 && pl.index < pl.items.length ? pl.items[pl.index] : null;
-
 /// The key that lights up the row that started the current track: the
 /// `origin` extra when set, else the media URI. Empty when nothing plays.
 String playingOrigin(Playlist pl) {
-  final m = currentMedia(pl);
+  final m = pl.current;
   if (m == null) return '';
   return (m.extras?['origin'] as String?) ?? m.uri;
 }

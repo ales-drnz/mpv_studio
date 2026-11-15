@@ -3,13 +3,9 @@ import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 
 import '../../util/reactive.dart';
 
-/// The queue entry mpv is on, or null when there is none.
-Media? currentMedia(Playlist pl) =>
-    pl.index >= 0 && pl.index < pl.items.length ? pl.items[pl.index] : null;
-
 /// A non-empty string [key] from the current queue entry's extras.
 String? currentExtra(Playlist pl, String key) {
-  final v = currentMedia(pl)?.extras?[key];
+  final v = pl.current?.extras?[key];
   return (v is String && v.isNotEmpty) ? v : null;
 }
 

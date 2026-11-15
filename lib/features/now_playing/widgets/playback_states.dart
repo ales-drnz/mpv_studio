@@ -6,7 +6,6 @@ import '../../../ui/widgets/empty_state.dart';
 import '../../../util/media_labels.dart';
 import '../../../util/reactive.dart';
 import '../playback_scope.dart';
-import '../track_identity.dart';
 import '../transport_actions.dart';
 
 /// The Playback page with no current track: what to do to start one.
@@ -80,7 +79,7 @@ class FailedTrackBanner extends StatelessWidget {
         stream: player.stream.playlist,
         initial: player.state.playback.playlist,
         builder: (context, pl) {
-          final media = currentMedia(pl);
+          final media = pl.current;
           if (media == null || !set.contains(media)) {
             return const SizedBox.shrink();
           }

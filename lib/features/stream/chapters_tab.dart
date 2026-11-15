@@ -100,7 +100,7 @@ class _NowPlayingChaptersState extends State<NowPlayingChapters> {
   }
 
   static String _titleOf(Playlist pl) {
-    final m = currentMedia(pl);
+    final m = pl.current;
     return m == null ? '' : titleOf(m);
   }
 
