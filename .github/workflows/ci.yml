@@ -74,8 +74,10 @@ jobs:
       fail-fast: false
       matrix:
         # The floor declared in pubspec.yaml (flutter >=3.47.0, Dart
-        # ^3.10.0) and the current stable.
-        flutter: ['3.47.x', 'any']
+        # ^3.10.0). The current stable is left out until the app moves
+        # to material_ui: Flutter 3.50 deprecates package:flutter/material.dart,
+        # and every file that imports it is an info there.
+        flutter: ['3.47.x']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,9 +88,9 @@ jobs:
           flutter-version: ${{ matrix.flutter }}
           mpv-audio-kit-ref: ${{ env.MPV_AUDIO_KIT_REF }}
       # The formatter's output can change between Dart releases: check it
-      # with one, the stable the code is formatted with.
+      # with one, the Flutter the code is formatted with.
       - name: Format
-        if: matrix.flutter == 'any'
+        if: matrix.flutter == '3.47.x'
         run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
 
