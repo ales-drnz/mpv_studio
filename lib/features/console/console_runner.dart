@@ -74,6 +74,30 @@ const kConsoleHelp = [
       'reports.',
 ];
 
+/// The flags of `loadfile` and `loadlist` as mpv 0.42.0 reads them: at
+/// most one of replace, append, insert-next and insert-at (replace when
+/// none), joined by `+` with play, which starts the entry when nothing
+/// plays. append-play, insert-next-play and insert-at-play, the older form,
+/// read as append+play and the like. Null for flags mpv refuses.
+({String mode, bool play})? parseLoadFlags(String flags) {
+  const modes = {'replace', 'append', 'insert-next', 'insert-at'};
+  const legacy = {'append-play', 'insert-next-play', 'insert-at-play'};
+  String? mode;
+  var play = false;
+  for (final f in flags.split('+')) {
+    final withPlay = f == 'play' || legacy.contains(f);
+    if (withPlay) {
+      if (play) return null;
+      play = true;
+      if (f == 'play') continue;
+    }
+    final m = withPlay ? f.substring(0, f.length - '-play'.length) : f;
+    if (!modes.contains(m) || mode != null) return null;
+    mode = m;
+  }
+  return (mode: mode ?? 'replace', play: play);
+}
+
 /// Runs Console lines against a [PlayerApi].
 ///
 /// mpv only changes the play intent the app shows (`playWhenReady`) when
@@ -318,13 +342,17 @@ class ConsoleRunner {
   Future<List<ConsoleResult>> _loadfile(List<String> a) async {
     final media = Media(a[0]);
     final flag = a.length > 1 ? a[1] : 'replace';
+    final flags = parseLoadFlags(flag);
+    if (flags == null) {
+      return [ConsoleResult.error('Unknown loadfile flag "$flag"')];
+    }
     if (a.length > 3) {
       // Per-file options have no typed form: send the line as typed and
       // bring the intent in step where mpv starts playback: always for
-      // replace, only from idle for the -play flags.
+      // replace, only from idle with play.
       final idle = _idle;
       await player.sendRawCommand(['loadfile', ...a]);
-      if (flag == 'replace' || (flag.endsWith('-play') && idle)) {
+      if (flags.mode == 'replace' || (flags.play && idle)) {
         await player.play();
         return _routed('raw loadfile (with options), then Player.play()');
       }
@@ -354,22 +382,20 @@ class ConsoleRunner {
       calls.add('Player.jump($index)');
     }
 
-    switch (flag) {
+    switch (flags.mode) {
       case 'replace':
         await player.open(media, play: true);
         calls.add('Player.open(play: true)');
       case 'append':
         await add();
-      case 'append-play':
-        await add();
-        await playIfIdle(end);
-      case 'insert-next' || 'insert-next-play':
+        if (flags.play) await playIfIdle(end);
+      case 'insert-next':
         // With nothing current mpv appends.
         final target = idle ? end : playlist.index + 1;
         await add();
         await moveTo(target);
-        if (flag == 'insert-next-play') await playIfIdle(target);
-      case 'insert-at' || 'insert-at-play':
+        if (flags.play) await playIfIdle(target);
+      default: // insert-at
         final target = a.length > 2 ? int.tryParse(a[2]) : null;
         if (target == null) {
           return [ConsoleResult.error('$flag needs an index')];
@@ -378,17 +404,15 @@ class ConsoleRunner {
         final at = target < 0 || target > end ? end : target;
         await add();
         await moveTo(at);
-        if (flag == 'insert-at-play') await playIfIdle(at);
-      default:
-        return [ConsoleResult.error('Unknown loadfile flag "$flag"')];
+        if (flags.play) await playIfIdle(at);
     }
     return _routed(calls.join(', '));
   }
 
   /// `loadlist <url> [<flags> [<index>]]`.
   Future<List<ConsoleResult>> _loadlist(List<String> a) async {
-    final flag = a.length > 1 ? a[1] : 'replace';
-    if (flag == 'replace') {
+    final flags = parseLoadFlags(a.length > 1 ? a[1] : 'replace');
+    if (flags?.mode == 'replace') {
       await player.openPlaylistFile(Media(a[0]), play: true);
       return _routed('Player.openPlaylistFile(play: true)');
     }
@@ -396,7 +420,7 @@ class ConsoleRunner {
     // start playback the way mpv would, through the Player API.
     final idle = _idle;
     await player.sendRawCommand(['loadlist', ...a]);
-    if (flag.endsWith('-play') && idle) {
+    if ((flags?.play ?? false) && idle) {
       await player.play();
       return _routed('raw loadlist, then Player.play()');
     }
@@ -430,7 +454,7 @@ class ConsoleRunner {
     return [const ConsoleResult.error('hooks takes on or off')];
   }
 
-  /// Whether nothing is loaded, the case where mpv's `-play` flags start
+  /// Whether nothing is loaded, the case where mpv's `play` flag starts
   /// playback.
   bool get _idle {
     final playlist = player.state.playback.playlist;

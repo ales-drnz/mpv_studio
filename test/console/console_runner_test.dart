@@ -60,6 +60,36 @@ void main() {
       ]);
     });
 
+    test('loadfile reads the +play flags of mpv 0.42.0', () async {
+      expect(await run('loadfile /a.flac append+play'), [
+        'routed: via Player.add(), Player.jump(0)',
+      ]);
+      expect(player.state.playback.playWhenReady, isTrue);
+      expect(await run('loadfile /c.flac play+insert-at 0'), [
+        'routed: via Player.add(), Player.move(1, 0)',
+      ]);
+      expect(player.items.map((m) => m.uri), ['/c.flac', '/a.flac']);
+      expect(await run('loadfile /d.flac append+insert-next'), [
+        'error: Unknown loadfile flag "append+insert-next"',
+      ]);
+      expect(player.items, hasLength(2));
+    });
+
+    test('parseLoadFlags', () {
+      expect(parseLoadFlags('replace'), (mode: 'replace', play: false));
+      expect(parseLoadFlags('play'), (mode: 'replace', play: true));
+      expect(parseLoadFlags('append'), (mode: 'append', play: false));
+      expect(parseLoadFlags('insert-next+play'), (
+        mode: 'insert-next',
+        play: true,
+      ));
+      expect(parseLoadFlags('insert-at-play'), (mode: 'insert-at', play: true));
+      expect(parseLoadFlags('append-play+play'), isNull);
+      expect(parseLoadFlags('replace+append'), isNull);
+      expect(parseLoadFlags('replace-play'), isNull);
+      expect(parseLoadFlags('append+'), isNull);
+    });
+
     test('loadfile with options goes raw and syncs the intent', () async {
       expect(await run('loadfile /a.flac replace -1 start=10'), [
         'routed: via raw loadfile (with options), then Player.play()',
@@ -79,6 +109,9 @@ void main() {
         'routed: via Player.openPlaylistFile(play: true)',
       ]);
       expect(await run('loadlist /l.m3u append-play'), [
+        'routed: via raw loadlist, then Player.play()',
+      ]);
+      expect(await run('loadlist /l.m3u append+play'), [
         'routed: via raw loadlist, then Player.play()',
       ]);
     });

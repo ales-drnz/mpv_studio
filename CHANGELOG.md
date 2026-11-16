@@ -1,3 +1,9 @@
+## [0.4.10] - 16-11-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.7.2`, with libmpv-r26: mpv 0.42.0 and FFmpeg 9.0.2. An entry added while a file loads shows its title at once, a track restored paused shows its audio format, and the info sheet shows a local file by its absolute path.
+- The Console knows mpv 0.42.0's commands: `loadfile` and `loadlist` take `play` joined to their flags, as in `append+play`, and the list completes `discnav` and `update-clipboard`.
+
 ## [0.4.9] - 15-11-2026
 
 ### Changed

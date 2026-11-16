@@ -3,7 +3,7 @@
 // Use of this source code is governed by BSD 3-Clause license that can be found in the LICENSE file.
 //
 // The command names and argument signatures follow mpv's command table
-// (mp_cmds[] in player/command.c, mpv 0.41.0), in the notation of mpv's
+// (mp_cmds[] in player/command.c, mpv 0.42.0), in the notation of mpv's
 // input reference; the one-line docs are written for the app. Keep them in
 // step with that table when mpv_audio_kit moves to a newer mpv.
 
@@ -115,6 +115,11 @@ const List<MpvCommand> kMpvCommands = [
     'Deprecated: turn off a named input section (kept for mpv\'s own use)',
   ),
   MpvCommand(
+    'discnav',
+    '<action> [<x> <y>]',
+    'Navigate the menu of a DVD or Blu-ray; libmpv as bundled plays no disc, so it does nothing',
+  ),
+  MpvCommand(
     'drop-buffers',
     '',
     'Throw away the buffered audio, video and demuxer data and start reading anew',
@@ -198,7 +203,7 @@ const List<MpvCommand> kMpvCommands = [
   MpvCommand(
     'loadfile',
     '<url> [<flags> [<index> [<options>]]]',
-    'Play a file or URL, or with append, insert-next or insert-at put it in the playlist',
+    'Play a file or URL, or with append, insert-next or insert-at put it in the playlist; +play starts it when nothing plays',
   ),
   MpvCommand(
     'loadlist',
@@ -232,7 +237,7 @@ const List<MpvCommand> kMpvCommands = [
   ),
   MpvCommand(
     'overlay-add',
-    '<id> <x> <y> <file> <offset> <fmt> <w> <h> <stride> <dw> <dh>',
+    '<id> <x> <y> <file> <offset> <fmt> <w> <h> <stride> [<dw> [<dh> [<video_colorspace> [<max_luma> [<primaries> [<transfer>]]]]]]',
     'Draw a raw bitmap from memory or a file over the video, in one of 64 slots',
   ),
   MpvCommand(
@@ -262,7 +267,7 @@ const List<MpvCommand> kMpvCommands = [
   ),
   MpvCommand(
     'playlist-play-index',
-    '<integer|current|none>',
+    '<integer|current|none> [<preserve-options>]',
     'Play the entry at an index (from 0), restart the current one, or stop with none',
   ),
   MpvCommand(
@@ -400,6 +405,11 @@ const List<MpvCommand> kMpvCommands = [
     'subprocess',
     '',
     'Run a program and wait for it, with named args to capture its output and read its exit status',
+  ),
+  MpvCommand(
+    'update-clipboard',
+    '<type> [<timeout>]',
+    'Read the clipboard (text) or the primary selection (text-primary) again into the clipboard property',
   ),
   MpvCommand(
     'vf',
