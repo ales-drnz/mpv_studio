@@ -536,11 +536,12 @@ packages:
   mpv_audio_kit:
     dependency: "direct main"
     description:
-      name: mpv_audio_kit
-      sha256: "11d31c648c1ffb7c76e5275315d83f6f8e5f80e388ae983deaff34a71468209a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.2"
+      path: "."
+      ref: "wip/0.8.0"
+      resolved-ref: "80a95b28d77948f5fb4b8735796ae00dae1088cd"
+      url: "https://github.com/ales-drnz/mpv_audio_kit"
+    source: git
+    version: "0.8.0"
   objective_c:
     dependency: transitive
     description:

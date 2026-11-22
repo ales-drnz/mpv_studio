@@ -29,7 +29,7 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
 }
 
 void _expectStoppedOnSameEntry(QueueFakePlayer player) {
-  expect(player.calls, contains('stop'));
+  expect(player.calls, contains('stop keepPlaylist'));
   expect(player.items, [localSong, webSong, serverSong]);
   expect(player.state.playback.playlist.index, 1);
   expect(player.state.playback.playWhenReady, isFalse);
@@ -69,7 +69,7 @@ void main() {
     );
     await tester.tap(find.byTooltip('Stop'));
     await tester.pumpAndSettle();
-    expect(player.calls, ['stop']);
+    expect(player.calls, ['stop keepPlaylist']);
   });
 
   testWidgets('Stop drops a live PCM entry, which ends with it', (

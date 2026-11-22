@@ -13,7 +13,11 @@ dependencies:
 
   # mpv_audio_kit
   #mpv_audio_kit: {path: ../mpv_audio_kit}
-  mpv_audio_kit: ^0.7.2
+  # Trial of 0.8.0 before its release: back to ^0.8.0 once on pub.dev.
+  mpv_audio_kit:
+    git:
+      url: https://github.com/ales-drnz/mpv_audio_kit
+      ref: wip/0.8.0
 
   # dart_jellyfin
   #dart_jellyfin: {path: ../../Tools/dart_jellyfin}

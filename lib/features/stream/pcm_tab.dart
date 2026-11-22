@@ -104,6 +104,7 @@ class _PcmTabState extends State<PcmTab> {
   }) async => _KitPcm(
     await _player.openPcmStream(
       format,
+      play: true,
       lowLatency: lowLatency,
       maxBuffered: PcmTab.ahead,
       extras: extras,

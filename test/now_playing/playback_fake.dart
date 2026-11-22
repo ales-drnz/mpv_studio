@@ -82,7 +82,8 @@ class PlaybackFake extends FakePlayer {
   }
 
   @override
-  Future<void> stop() async => calls.add('stop');
+  Future<void> stop({bool keepPlaylist = false}) async =>
+      calls.add(keepPlaylist ? 'stop keepPlaylist' : 'stop');
 
   @override
   Future<void> reloadAudio() async => calls.add('reloadAudio');
