@@ -59,7 +59,7 @@ class AlbumGrid extends StatelessWidget {
             );
           default:
         }
-        final albums = state.items ?? const <ServerAlbum>[];
+        final albums = state.items;
         return NotificationListener<ScrollUpdateNotification>(
           onNotification: (n) {
             if (n.metrics.extentAfter < _nearEnd &&

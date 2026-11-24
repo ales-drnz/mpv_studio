@@ -1,3 +1,11 @@
+## [0.4.11] - 24-11-2026
+
+### Changed
+- Updated `mpv_audio_kit` to version `0.8.0`, with libmpv-r27. TLS certificates are verified by default, and the network settings show verification on.
+- Stop keeps the queue through the kit's `stop(keepPlaylist: true)`: the entry that stopped stays current, and play starts it from its beginning. A live PCM entry leaves the queue.
+- Updated `dart_smb2` to version `0.5.0`, with libsmb2-r14 and libsmb2 7.0.0.
+- Updated `infinite_scroll_pagination` to version `6.0.0`.
+
 ## [0.4.10] - 16-11-2026
 
 ### Changed

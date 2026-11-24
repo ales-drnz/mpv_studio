@@ -79,7 +79,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   int? _albumTotal;
   late final _songs = PagingController<int, ServerTrack>(
     getNextPageKey: (s) =>
-        _nextKey(s.items?.length, s.lastPageIsEmpty, _songTotal),
+        _nextKey(s.items.length, s.lastPageIsEmpty, _songTotal),
     fetchPage: (start) => _guarded(() async {
       final page = await _server.fetchTracks(
         startIndex: start,
@@ -92,7 +92,7 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
   );
   late final _albums = PagingController<int, ServerAlbum>(
     getNextPageKey: (s) =>
-        _nextKey(s.items?.length, s.lastPageIsEmpty, _albumTotal),
+        _nextKey(s.items.length, s.lastPageIsEmpty, _albumTotal),
     fetchPage: (start) => _guarded(() async {
       final page = await _server.fetchAlbums(
         startIndex: start,
@@ -392,16 +392,15 @@ class _LibraryBrowserState extends State<LibraryBrowser> {
                     kind: _server.kind,
                     favorites: widget.favorites,
                     current: server == _server.kind.name && id == track.id,
-                    onTap: () =>
-                        _playback.playFrom(state.items ?? const [], index),
+                    onTap: () => _playback.playFrom(state.items, index),
                     onAction: (a) => _playback.run(context, a, [track]),
                   ),
                   firstPageProgressIndicatorBuilder: (_) =>
                       const StreamLoading(label: 'Loading songs'),
                   newPageProgressIndicatorBuilder: (_) => const StreamLoading(),
-                  firstPageErrorIndicatorBuilder: (_) =>
-                      _errorView(state.error!, _songs.refresh),
-                  newPageErrorIndicatorBuilder: (_) => Center(
+                  firstPageErrorIndicatorBuilder: (_, error) =>
+                      _errorView(error, _songs.refresh),
+                  newPageErrorIndicatorBuilder: (_, _) => Center(
                     child: TextButton.icon(
                       onPressed: fetchNextPage,
                       icon: const Icon(Icons.refresh_rounded, size: 18),
